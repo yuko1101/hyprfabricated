@@ -100,7 +100,7 @@ def ensure_matugen_config():
     with open(config_path, 'w') as f:
         toml.dump(merged_config, f)
 
-    os.system(f"matugen image {os.path.expanduser('~')}/.config/Ax-Shell/assets/wallpaper.jpg")
+    os.system(f"matugen image {os.path.expanduser('~')}/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
 
 def ensure_fonts():
     font_path = os.path.expanduser('~/.fonts/zed-sans-1.2.0/')
