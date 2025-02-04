@@ -78,6 +78,9 @@ vol_mute: str = "&#xeb50;"
 vol_medium: str = "&#xeb4f;"
 vol_high: str = "&#xeb51;"
 
+# Overview
+circle_plus: str = "&#xea69;"
+
 # Confirm
 accept: str = "&#xea5e;"
 cancel: str = "&#xeb55;"
