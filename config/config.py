@@ -70,7 +70,7 @@ def ensure_matugen_config():
         'templates': {
             'hyprland': {
                 'input_path': '~/.config/Ax-Shell/config/matugen/templates/hyprland-colors.conf',
-                'output_path': '~/.config/hypr/source/colors.conf'
+                'output_path': '~/.config/Ax-Shell/config/hypr/colors.conf'
             },
             'ax-shell': {
                 'input_path': '~/.config/Ax-Shell/config/matugen/templates/ax-shell.css',
