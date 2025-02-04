@@ -13,6 +13,12 @@
   </tr>
 </table>
 
+<p align="center">
+  <a href="https://ko-fi.com/Axenide" target="_blank">
+    <img src="assets/ko-fi.gif" alt="Apóyame en Ko-fi">
+  </a>
+</p>
+
 ## 📦 Installation
 
 > [!CAUTION]
