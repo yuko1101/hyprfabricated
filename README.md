@@ -1,7 +1,11 @@
-<h1 align="center">🍣 Ax-Shell</h1>
-<p align="center">A hackable and powerful shell for Hyprland, powered by <a href="https://github.com/Fabric-Development/fabric/">Fabric</a>!</p>
+<p align="center">
+  <img src="assets/cover.png">
+</p>
 
-<table>
+<p align="center"><b><sup>A ʜᴀᴄᴋᴀʙʟᴇ ᴀɴᴅ ᴘᴏᴡᴇʀꜰᴜʟ sʜᴇʟʟ ꜰᴏʀ Hʏᴘʀʟᴀɴᴅ, ᴘᴏᴡᴇʀᴇᴅ ʙʏ <a href="https://github.com/Fabric-Development/fabric/">Fᴀʙʀɪᴄ</a>.</sup></i></b></p>
+
+## 📸 Screenshots
+<table align="center">
   <tr>
     <td colspan="4"><img src="assets/screenshots/1.png"></td>
   </tr>
@@ -13,11 +17,20 @@
   </tr>
 </table>
 
-<p align="center">
-  <a href="https://ko-fi.com/Axenide" target="_blank">
-    <img src="assets/ko-fi.gif" alt="Apóyame en Ko-fi">
-  </a>
-</p>
+<table align="center">
+  <tr>
+    <td align="center"><sup>✨ sᴜᴘᴘᴏʀᴛ ᴛʜᴇ ᴘʀᴏᴊᴇᴄᴛ ✨</sup></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href='https://ko-fi.com/Axenide' target='_blank'>
+        <img style='border:0px;height:128px;' 
+             src='https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3N4NzlvZWs2Z2tsaGx4aHgwa3UzMWVpcmNwZTNraTM2NW84ZDlqbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/PaF9a1MpqDzovyqVKj/giphy.gif' 
+             border='0' alt='Support me on Ko-fi!' />
+      </a>
+    </td>
+  </tr>
+</table>
 
 ## 📦 Installation
 

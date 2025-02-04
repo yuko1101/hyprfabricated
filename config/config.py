@@ -2,20 +2,22 @@ import os
 import json
 import shutil
 import gi
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-
-# Import Pillow for image processing
 from PIL import Image
-import toml  # Added for TOML handling
+import toml
 
-# Source string
-source_string = """
+# Constants
+SOURCE_STRING = """
 # Ax-Shell
 source = ~/.config/Ax-Shell/config/hypr/ax-shell.conf
 """
 
-# Initialize default values
+CONFIG_DIR = os.path.expanduser("~/.config/Ax-Shell")
+WALLPAPERS_DIR_DEFAULT = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example")
+
+# Default key binding values
 bind_vars = {
     'prefix_restart': "SUPER ALT",
     'suffix_restart': "B",
@@ -37,21 +39,27 @@ bind_vars = {
     'suffix_toggle': "B",
     'prefix_css': "SUPER SHIFT",
     'suffix_css': "B",
-    'wallpapers_dir': os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example")
+    'wallpapers_dir': WALLPAPERS_DIR_DEFAULT
 }
 
-def deep_update(target, update):
-    """Recursively update a nested dictionary with values from another."""
+
+def deep_update(target: dict, update: dict) -> dict:
+    """
+    Recursively update a nested dictionary with values from another dictionary.
+    """
     for key, value in update.items():
         if isinstance(value, dict):
-            node = target.setdefault(key, {})
-            deep_update(node, value)
+            target[key] = deep_update(target.get(key, {}), value)
         else:
             target[key] = value
     return target
 
+
 def ensure_matugen_config():
-    """Ensure the matugen config.toml has the required entries, creating or updating it if necessary."""
+    """
+    Ensure that the matugen configuration file exists and is updated
+    with the expected settings.
+    """
     expected_config = {
         'config': {
             'reload_apps': True,
@@ -75,63 +83,75 @@ def ensure_matugen_config():
             'ax-shell': {
                 'input_path': '~/.config/Ax-Shell/config/matugen/templates/ax-shell.css',
                 'output_path': '~/.config/Ax-Shell/styles/colors.css',
-                'post_hook': 'fabric-cli exec ax-shell \'app.set_stylesheet_from_file(get_relative_path("main.css"))\' &'
+                'post_hook': (
+                    "fabric-cli exec ax-shell 'app.set_stylesheet_from_file(get_relative_path(\"main.css\"))' &"
+                )
             }
         }
     }
 
     config_path = os.path.expanduser('~/.config/matugen/config.toml')
-    config_dir = os.path.dirname(config_path)
-    os.makedirs(config_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
 
+    # Load any existing configuration
     existing_config = {}
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
             existing_config = toml.load(f)
-
-    # Create backup if existing config is present
-    if os.path.exists(config_path):
+        # Backup existing configuration
         shutil.copyfile(config_path, config_path + '.bak')
 
-    # Merge expected configuration into existing (deep update)
+    # Merge configurations
     merged_config = deep_update(existing_config, expected_config)
-
-    # Write the merged configuration
     with open(config_path, 'w') as f:
         toml.dump(merged_config, f)
 
-    os.system(f"matugen image {os.path.expanduser('~')}/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
+    # Trigger image generation
+    image_path = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
+    os.system(f"matugen image {image_path}")
+
 
 def ensure_fonts():
-    font_zed = os.path.expanduser('~/.fonts/zed-sans/')
-    font_tabler = os.path.expanduser('~/.fonts/tabler-icons/')
+    """
+    Ensure that required fonts are installed.
+    """
+    fonts_to_copy = [
+        ('~/.fonts/zed-sans/', '~/.config/Ax-Shell/assets/fonts/zed-sans/'),
+        ('~/.fonts/tabler-icons/', '~/.config/Ax-Shell/assets/fonts/tabler-icons/')
+    ]
+    for dest_font, src_font in fonts_to_copy:
+        dest_path = os.path.expanduser(dest_font)
+        if not os.path.exists(dest_path):
+            shutil.copytree(os.path.expanduser(src_font), dest_path)
 
-    if not os.path.exists(font_zed):
-        shutil.copytree(os.path.expanduser('~/.config/Ax-Shell/assets/fonts/zed-sans/'), font_zed)
-
-    if not os.path.exists(font_tabler):
-        shutil.copytree(os.path.expanduser('~/.config/Ax-Shell/assets/fonts/tabler-icons/'), font_tabler)
 
 def load_bind_vars():
-    global bind_vars
-    json_config_path = os.path.expanduser('~/.config/Ax-Shell/config/config.json')
+    """
+    Load saved key binding variables from JSON, if available.
+    """
+    config_json = os.path.expanduser('~/.config/Ax-Shell/config/config.json')
     try:
-        with open(json_config_path, 'r') as f:
-            saved_bind_vars = json.load(f)
-            bind_vars.update(saved_bind_vars)
+        with open(config_json, 'r') as f:
+            saved_vars = json.load(f)
+            bind_vars.update(saved_vars)
     except FileNotFoundError:
-        pass  # No saved config, use defaults
+        # Use default values if no saved config exists
+        pass
 
-def generate_hyprconf():
-    return f"""exec-once = uwsm app -- python ~/.config/Ax-Shell/main.py
+
+def generate_hyprconf() -> str:
+    """
+    Generate the Hypr configuration string using the current bind_vars.
+    """
+    home = os.path.expanduser('~')
+    return f"""exec-once = uwsm app -- python {home}/.config/Ax-Shell/main.py
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
 
 $fabricSend = fabric-cli exec ax-shell
-$axMessage = notify-send "Axenide" "What are you doing?" -i "{os.path.expanduser('~')}/.config/Ax-Shell/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
+$axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/Ax-Shell/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
-bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall ax-shell; uwsm app -- python ~/.config/Ax-Shell/main.py # Reload Ax-Shell | Default: SUPER ALT + B
-
+bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall ax-shell; uwsm app -- python {home}/.config/Ax-Shell/main.py # Reload Ax-Shell | Default: SUPER ALT + B
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
@@ -145,7 +165,7 @@ bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend '
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
-source = {os.path.expanduser('~')}/.config/Ax-Shell/config/hypr/colors.conf
+source = {home}/.config/Ax-Shell/config/hypr/colors.conf
 
 general {{
     col.active_border = 0xff$surface_bright
@@ -166,7 +186,6 @@ decoration {{
         brightness = 1
     }}
     rounding = 15
-
     shadow {{
       enabled = true
       range = 10
@@ -185,31 +204,43 @@ animations {{
 }}
 """
 
+
 def ensure_face_icon():
     """
-    If ~/.face.icon does not exist, copy the default image from
-    ~/.config/Ax-Shell/assets/default.png to ~/.face.icon.
+    Ensure the face icon exists. If not, copy the default icon.
     """
     face_icon_path = os.path.expanduser("~/.face.icon")
-    if not os.path.exists(face_icon_path):
-        default_face_icon = os.path.expanduser("~/.config/Ax-Shell/assets/default.png")
-        if os.path.exists(default_face_icon):
-            shutil.copy(default_face_icon, face_icon_path)
+    default_icon_path = os.path.expanduser("~/.config/Ax-Shell/assets/default.png")
+    if not os.path.exists(face_icon_path) and os.path.exists(default_icon_path):
+        shutil.copy(default_icon_path, face_icon_path)
+
+
+def backup_and_replace(src: str, dest: str, config_name: str):
+    """
+    Backup the existing configuration file and replace it with a new one.
+    """
+    if os.path.exists(dest):
+        backup_path = dest + ".bak"
+        shutil.copy(dest, backup_path)
+        print(f"{config_name} config backed up to {backup_path}")
+    shutil.copy(src, dest)
+    print(f"{config_name} config replaced from {src}")
+
 
 class HyprConfGUI(Gtk.Window):
-    def __init__(self, show_lock_checkbox, show_idle_checkbox):
-        Gtk.Window.__init__(self, title="Configure Key Binds")
+    def __init__(self, show_lock_checkbox: bool, show_idle_checkbox: bool):
+        super().__init__(title="Configure Key Binds")
         self.set_border_width(20)
         self.set_default_size(500, 450)
         self.set_resizable(False)
-        
-        self.show_lock_checkbox = show_lock_checkbox
-        self.show_idle_checkbox = show_idle_checkbox
-        
-        vbox = Gtk.VBox(spacing=10)
-        self.add(vbox)
-        
-        # Create input fields for key bindings
+
+        self.selected_face_icon = None
+
+        # Main container
+        main_vbox = Gtk.VBox(spacing=10)
+        self.add(main_vbox)
+
+        # Create input entries for key bindings
         self.entries = []
         bindings = [
             ("Reload Ax-Shell", 'prefix_restart', 'suffix_restart'),
@@ -223,207 +254,203 @@ class HyprConfGUI(Gtk.Window):
             ("Toggle Bar and Notch", 'prefix_toggle', 'suffix_toggle'),
             ("Reload CSS", 'prefix_css', 'suffix_css'),
         ]
-        
+
         for label_text, prefix_key, suffix_key in bindings:
-            hbox = Gtk.HBox(spacing=10)
-            lbl = Gtk.Label(label=label_text)
-            hbox.pack_start(lbl, False, False, 0)
-            
+            entry_box = Gtk.HBox(spacing=10)
+
+            label = Gtk.Label(label=label_text)
+            entry_box.pack_start(label, False, False, 0)
+
             prefix_entry = Gtk.Entry()
             prefix_entry.set_text(bind_vars[prefix_key])
-            hbox.pack_start(prefix_entry, True, True, 0)
-            
-            hbox.pack_start(Gtk.Label(label=" + "), False, False, 0)
-            
+            entry_box.pack_start(prefix_entry, True, True, 0)
+
+            plus_label = Gtk.Label(label=" + ")
+            entry_box.pack_start(plus_label, False, False, 0)
+
             suffix_entry = Gtk.Entry()
             suffix_entry.set_text(bind_vars[suffix_key])
-            hbox.pack_start(suffix_entry, True, True, 0)
-            
-            vbox.pack_start(hbox, False, False, 0)
+            entry_box.pack_start(suffix_entry, True, True, 0)
+
+            main_vbox.pack_start(entry_box, False, False, 0)
             self.entries.append((prefix_key, suffix_key, prefix_entry, suffix_entry))
-        
-        # Add option to select wallpaper directory
-        hbox_wall = Gtk.HBox(spacing=10)
-        lbl_wall = Gtk.Label(label="Wallpapers Directory")
-        hbox_wall.pack_start(lbl_wall, False, False, 0)
-        
-        self.wall_dir_chooser = Gtk.FileChooserButton(title="Select a folder", action=Gtk.FileChooserAction.SELECT_FOLDER)
+
+        # Wallpaper directory chooser
+        wall_box = Gtk.HBox(spacing=10)
+        wall_label = Gtk.Label(label="Wallpapers Directory")
+        wall_box.pack_start(wall_label, False, False, 0)
+        self.wall_dir_chooser = Gtk.FileChooserButton(
+            title="Select a folder",
+            action=Gtk.FileChooserAction.SELECT_FOLDER
+        )
         self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
-        hbox_wall.pack_start(self.wall_dir_chooser, True, True, 0)
-        vbox.pack_start(hbox_wall, False, False, 0)
-        
-        # Add a button to select a face icon image
-        hbox_face = Gtk.HBox(spacing=10)
-        lbl_face = Gtk.Label(label="Profile Icon")
-        hbox_face.pack_start(lbl_face, False, False, 0)
+        wall_box.pack_start(self.wall_dir_chooser, True, True, 0)
+        main_vbox.pack_start(wall_box, False, False, 0)
+
+        # Face icon selection button
+        face_box = Gtk.HBox(spacing=10)
+        face_label = Gtk.Label(label="Profile Icon")
+        face_box.pack_start(face_label, False, False, 0)
         face_btn = Gtk.Button(label="Select Image")
         face_btn.connect("clicked", self.on_select_face_icon)
-        hbox_face.pack_start(face_btn, True, True, 0)
-        vbox.pack_start(hbox_face, False, False, 0)
-        
-        # Initialize variable to hold the selected face icon path
-        self.selected_face_icon = None
+        face_box.pack_start(face_btn, True, True, 0)
+        main_vbox.pack_start(face_box, False, False, 0)
 
-        # --- New: Checkboxes for hyprlock and hypridle config replacement ---
-        if self.show_lock_checkbox:
-            hbox_lock = Gtk.HBox(spacing=10)
+        # Optional checkboxes for replacing configs
+        if show_lock_checkbox:
             self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
             self.lock_checkbox.set_active(False)
-            hbox_lock.pack_start(self.lock_checkbox, False, False, 0)
-            vbox.pack_start(hbox_lock, False, False, 0)
-        # If the destination file did not exist, no checkbox is shown.
-        
-        if self.show_idle_checkbox:
-            hbox_idle = Gtk.HBox(spacing=10)
+            main_vbox.pack_start(self.lock_checkbox, False, False, 0)
+        if show_idle_checkbox:
             self.idle_checkbox = Gtk.CheckButton(label="Replace Hypridle config")
             self.idle_checkbox.set_active(False)
-            hbox_idle.pack_start(self.idle_checkbox, False, False, 0)
-            vbox.pack_start(hbox_idle, False, False, 0)
-        
-        # Buttons for Accept and Cancel
-        btn_box = Gtk.HBox(spacing=10)
-        accept_btn = Gtk.Button(label="Accept")
-        accept_btn.connect("clicked", self.on_accept)
+            main_vbox.pack_start(self.idle_checkbox, False, False, 0)
+
+        # Accept and Cancel buttons
+        button_box = Gtk.HBox(spacing=10)
         cancel_btn = Gtk.Button(label="Cancel")
         cancel_btn.connect("clicked", self.on_cancel)
-        
-        btn_box.pack_end(accept_btn, False, False, 0)
-        btn_box.pack_end(cancel_btn, False, False, 0)
-        vbox.pack_start(btn_box, False, False, 0)
+        accept_btn = Gtk.Button(label="Accept")
+        accept_btn.connect("clicked", self.on_accept)
+        button_box.pack_end(accept_btn, False, False, 0)
+        button_box.pack_end(cancel_btn, False, False, 0)
+        main_vbox.pack_start(button_box, False, False, 0)
 
     def on_select_face_icon(self, widget):
-        """Open a file chooser to select an image and store its path for later processing."""
+        """
+        Open a file chooser dialog for selecting a new face icon image.
+        """
         dialog = Gtk.FileChooserDialog(
             title="Select Face Icon",
             parent=self,
-            action=Gtk.FileChooserAction.OPEN
+            action=Gtk.FileChooserAction.OPEN,
+            buttons=(
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK
+            )
         )
-        dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                           Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
-        
-        # Set up a filter for image files
-        filter_image = Gtk.FileFilter()
-        filter_image.set_name("Image files")
-        filter_image.add_mime_type("image/png")
-        filter_image.add_mime_type("image/jpeg")
-        filter_image.add_pattern("*.png")
-        filter_image.add_pattern("*.jpg")
-        filter_image.add_pattern("*.jpeg")
-        dialog.add_filter(filter_image)
-        
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
+
+        # Filter to allow image files only
+        image_filter = Gtk.FileFilter()
+        image_filter.set_name("Image files")
+        image_filter.add_mime_type("image/png")
+        image_filter.add_mime_type("image/jpeg")
+        image_filter.add_pattern("*.png")
+        image_filter.add_pattern("*.jpg")
+        image_filter.add_pattern("*.jpeg")
+        dialog.add_filter(image_filter)
+
+        if dialog.run() == Gtk.ResponseType.OK:
             self.selected_face_icon = dialog.get_filename()
             print(f"Face icon selected: {self.selected_face_icon}")
         dialog.destroy()
 
     def on_accept(self, widget):
+        """
+        Save the configuration and update the necessary files.
+        """
+        # Update bind_vars from user inputs
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
             bind_vars[prefix_key] = prefix_entry.get_text()
             bind_vars[suffix_key] = suffix_entry.get_text()
-        
-        # Update the wallpaper directory path
+
+        # Update wallpaper directory
         bind_vars['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
-        
-        # Save current bind_vars to JSON
-        json_config_path = os.path.expanduser('~/.config/Ax-Shell/config/config.json')
-        os.makedirs(os.path.dirname(json_config_path), exist_ok=True)
-        with open(json_config_path, 'w') as f:
+
+        # Save the updated bind_vars to a JSON file
+        config_json = os.path.expanduser('~/.config/Ax-Shell/config/config.json')
+        os.makedirs(os.path.dirname(config_json), exist_ok=True)
+        with open(config_json, 'w') as f:
             json.dump(bind_vars, f)
-        
-        # Process face icon if selected
+
+        # Process face icon if one was selected
         if self.selected_face_icon:
             try:
                 img = Image.open(self.selected_face_icon)
-                width, height = img.size
-                # Determine the side length of the square crop (1:1 aspect ratio)
-                side = min(width, height)
-                left = (width - side) / 2
-                top = (height - side) / 2
-                right = left + side
-                bottom = top + side
-                cropped = img.crop((left, top, right, bottom))
-                face_icon_path = os.path.expanduser("~/.face.icon")
-                cropped.save(face_icon_path, format='PNG')
-                print(f"Face icon saved to {face_icon_path}")
+                side = min(img.size)
+                left = (img.width - side) / 2
+                top = (img.height - side) / 2
+                cropped_img = img.crop((left, top, left + side, top + side))
+                cropped_img.save(os.path.expanduser("~/.face.icon"), format='PNG')
+                print("Face icon saved.")
             except Exception as e:
-                print("Error processing face icon image:", e)
-        
-        # Process hyprlock replacement if requested
-        dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
-        src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
-        if hasattr(self, "lock_checkbox") and self.lock_checkbox.get_active():
-            # Create backup
-            backup_lock = dest_lock + ".bak"
-            shutil.copy(dest_lock, backup_lock)
-            print(f"Hyprlock config backed up to {backup_lock}")
-            # Replace file
-            shutil.copy(src_lock, dest_lock)
-            print(f"Hyprlock config replaced from {src_lock}")
-        
-        # Process hypridle replacement if requested
-        dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
-        src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
-        if hasattr(self, "idle_checkbox") and self.idle_checkbox.get_active():
-            # Create backup
-            backup_idle = dest_idle + ".bak"
-            shutil.copy(dest_idle, backup_idle)
-            print(f"Hypridle config backed up to {backup_idle}")
-            # Replace file
-            shutil.copy(src_idle, dest_idle)
-            print(f"Hypridle config replaced from {src_idle}")
-        
-        hypr_conf_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
-        with open(hypr_conf_path, "r") as f:
-            contenido = f.read()
+                print("Error processing face icon:", e)
 
-        if source_string not in contenido:
-            with open(hypr_conf_path, "a") as f:
-                f.write(source_string)
-        
+        # Replace hyprlock config if requested
+        if hasattr(self, "lock_checkbox") and self.lock_checkbox.get_active():
+            src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
+            dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
+            backup_and_replace(src_lock, dest_lock, "Hyprlock")
+
+        # Replace hypridle config if requested
+        if hasattr(self, "idle_checkbox") and self.idle_checkbox.get_active():
+            src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
+            dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
+            backup_and_replace(src_idle, dest_idle, "Hypridle")
+
+        # Append the source string to the Hyprland config if not present
+        hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
+        with open(hyprland_config_path, "r") as f:
+            content = f.read()
+        if SOURCE_STRING not in content:
+            with open(hyprland_config_path, "a") as f:
+                f.write(SOURCE_STRING)
+
         start_config()
         self.destroy()
 
     def on_cancel(self, widget):
         self.destroy()
 
+
 def start_config():
+    """
+    Run final configuration steps: ensure necessary configs, write the hyprconf, and reload.
+    """
     ensure_matugen_config()
     ensure_face_icon()
-    
-    config_dir = os.path.expanduser('~/.config/Ax-Shell/config/hypr/')
-    os.makedirs(config_dir, exist_ok=True)
-    with open(f"{config_dir}/ax-shell.conf", "w") as f:
+
+    # Write the generated hypr configuration to file
+    hypr_config_dir = os.path.expanduser("~/.config/Ax-Shell/config/hypr/")
+    os.makedirs(hypr_config_dir, exist_ok=True)
+    hypr_conf_path = os.path.join(hypr_config_dir, "ax-shell.conf")
+    with open(hypr_conf_path, "w") as f:
         f.write(generate_hyprconf())
 
+    # Reload Hyprland configuration
     os.system("hyprctl reload")
 
-def open_config():
-    ensure_fonts()
-    load_bind_vars()  # Load saved bind_vars before creating the GUI
 
-    # --- Check hyprlock and hypridle config files ---
+def open_config():
+    """
+    Entry point for opening the configuration GUI.
+    """
+    ensure_fonts()
+    load_bind_vars()
+
+    # Check and copy hyprlock config if needed
     dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
     src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
     os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
+    show_lock_checkbox = True
     if not os.path.exists(dest_lock):
         shutil.copy(src_lock, dest_lock)
         show_lock_checkbox = False
-    else:
-        show_lock_checkbox = True
 
+    # Check and copy hypridle config if needed
     dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
     src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
+    show_idle_checkbox = True
     if not os.path.exists(dest_idle):
         shutil.copy(src_idle, dest_idle)
         show_idle_checkbox = False
-    else:
-        show_idle_checkbox = True
 
-    win = HyprConfGUI(show_lock_checkbox, show_idle_checkbox)
-    win.connect("destroy", Gtk.main_quit)
-    win.show_all()
+    # Create and run the GUI
+    window = HyprConfGUI(show_lock_checkbox, show_idle_checkbox)
+    window.connect("destroy", Gtk.main_quit)
+    window.show_all()
     Gtk.main()
+
 
 if __name__ == "__main__":
     open_config()
