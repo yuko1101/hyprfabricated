@@ -60,7 +60,6 @@ echo "Installing required packages..."
 yay -S --needed --noconfirm "${PACKAGES[@]}"
 
 # Launch Ax-Shell without terminal output
-echo "Starting Ax-Shell..."
 uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 
 echo "Installation complete."
