@@ -53,7 +53,7 @@ else
 fi
 
 echo "Installing gray-git..."
-printf "y\n" | yay -S --needed --noconfirm gray-git
+yes | yay -S --needed --noconfirm gray-git
 
 # Install required packages using yay
 echo "Installing required packages..."
