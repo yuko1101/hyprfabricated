@@ -103,9 +103,14 @@ def ensure_matugen_config():
     os.system(f"matugen image {os.path.expanduser('~')}/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
 
 def ensure_fonts():
-    font_path = os.path.expanduser('~/.fonts/zed-sans-1.2.0/')
-    if not os.path.exists(font_path):
-        shutil.copytree(os.path.expanduser('~/.config/Ax-Shell/assets/fonts/zed-sans-1.2.0/'), font_path)
+    font_zed = os.path.expanduser('~/.fonts/zed-sans/')
+    font_tabler = os.path.expanduser('~/.fonts/tabler-icons/')
+
+    if not os.path.exists(font_zed):
+        shutil.copytree(os.path.expanduser('~/.config/Ax-Shell/assets/fonts/zed-sans/'), font_zed)
+
+    if not os.path.exists(font_tabler):
+        shutil.copytree(os.path.expanduser('~/.config/Ax-Shell/assets/fonts/tabler-icons/'), font_tabler)
 
 def load_bind_vars():
     global bind_vars

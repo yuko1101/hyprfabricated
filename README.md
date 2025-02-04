@@ -24,9 +24,45 @@
 > [!CAUTION]
 > PRE-RELEASE STATE. USABLE BUT INCOMPLETE.
 
+> [!NOTE]
+> You need a functioning Hyprland installation.
+
+### Arch Linux
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | bash
 ```
+
+### Manual Installation
+1. Install dependencies:
+    - [Fabric](https://github.com/Fabric-Development/fabric)
+    - [fabric-cli](https://github.com/Fabric-Development/fabric-cli)
+    - [Gray](https://github.com/Fabric-Development/gray)
+    - [Matugen](https://github.com/InioX/matugen)
+    - `gnome-bluetooth-3.0`
+    - `grimblast`
+    - `hypridle`
+    - `hyprlock`
+    - `hyprpicker`
+    - `imagemagick`
+    - `libnotify`
+    - `swww`
+    - `uwsm`
+    - `vte3`
+    - Python dependencies:
+        - pillow
+        - toml
+        - setproctitle
+    - Fonts:
+    > [!NOTE]
+    > Font installation is automatic.
+        - Zed Sans
+        - Tabler Icons
+
+2. Download and run Ax-Shell:
+    ```bash
+    git clone https://github.com/Axenide/Ax-Shell.git ~/.config/Ax-Shell
+    uwsm -- app python ~/.config/Ax-Shell/main.py > /dev/null 2>&1 & disown
+    ```
 
 ## 🚀 Roadmap
 - [x] App Launcher
