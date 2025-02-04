@@ -27,13 +27,19 @@ PACKAGES=(
     vte3
 )
 
-# Install yay-bin if not already installed
+# Ensure the script is run with sudo
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root. Restarting with sudo..."
+    exec sudo bash "$0"
+fi
+
+# Install yay-bin if not installed (as the normal user)
 if ! command -v yay &>/dev/null; then
     echo "Installing yay-bin..."
-    tmpdir=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
+    tmpdir=$(sudo -u "$SUDO_USER" mktemp -d)
+    sudo -u "$SUDO_USER" git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
     cd "$tmpdir/yay-bin"
-    makepkg -si --noconfirm
+    sudo -u "$SUDO_USER" makepkg -si --noconfirm
     cd - > /dev/null
     rm -rf "$tmpdir"
 fi
@@ -41,11 +47,21 @@ fi
 # Clone or update the repository
 if [ -d "$INSTALL_DIR" ]; then
     echo "Updating Ax-Shell..."
-    git -C "$INSTALL_DIR" pull
+    sudo -u "$SUDO_USER" git -C "$INSTALL_DIR" pull
 else
     echo "Cloning Ax-Shell..."
-    git clone "$REPO_URL" "$INSTALL_DIR"
+    sudo -u "$SUDO_USER" git clone "$REPO_URL" "$INSTALL_DIR"
 fi
+
+# Install required packages using yay with --sudoloop
+echo "Installing required packages..."
+sudo -u "$SUDO_USER" yay -S --needed --noconfirm --sudoloop "${PACKAGES[@]}"
+
+# Launch Ax-Shell
+echo "Starting Ax-Shell..."
+sudo -u "$SUDO_USER" uwsm app -- python "$INSTALL_DIR/main.py" & disown
+
+echo "Installation complete."
 
 # Install required packages with yay
 echo "Installing required packages..."

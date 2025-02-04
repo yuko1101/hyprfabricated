@@ -37,7 +37,7 @@ bind_vars = {
     'suffix_toggle': "B",
     'prefix_css': "SUPER SHIFT",
     'suffix_css': "B",
-    'wallpapers_dir': os.path.expanduser("~/Wallpapers")
+    'wallpapers_dir': os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example")
 }
 
 def deep_update(target, update):
@@ -192,11 +192,14 @@ def ensure_face_icon():
             shutil.copy(default_face_icon, face_icon_path)
 
 class HyprConfGUI(Gtk.Window):
-    def __init__(self):
+    def __init__(self, show_lock_checkbox, show_idle_checkbox):
         Gtk.Window.__init__(self, title="Configure Key Binds")
         self.set_border_width(20)
         self.set_default_size(500, 450)
         self.set_resizable(False)
+        
+        self.show_lock_checkbox = show_lock_checkbox
+        self.show_idle_checkbox = show_idle_checkbox
         
         vbox = Gtk.VBox(spacing=10)
         self.add(vbox)
@@ -255,6 +258,22 @@ class HyprConfGUI(Gtk.Window):
         
         # Initialize variable to hold the selected face icon path
         self.selected_face_icon = None
+
+        # --- New: Checkboxes for hyprlock and hypridle config replacement ---
+        if self.show_lock_checkbox:
+            hbox_lock = Gtk.HBox(spacing=10)
+            self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
+            self.lock_checkbox.set_active(False)
+            hbox_lock.pack_start(self.lock_checkbox, False, False, 0)
+            vbox.pack_start(hbox_lock, False, False, 0)
+        # If the destination file did not exist, no checkbox is shown.
+        
+        if self.show_idle_checkbox:
+            hbox_idle = Gtk.HBox(spacing=10)
+            self.idle_checkbox = Gtk.CheckButton(label="Replace Hypridle config")
+            self.idle_checkbox.set_active(False)
+            hbox_idle.pack_start(self.idle_checkbox, False, False, 0)
+            vbox.pack_start(hbox_idle, False, False, 0)
         
         # Buttons for Accept and Cancel
         btn_box = Gtk.HBox(spacing=10)
@@ -307,7 +326,7 @@ class HyprConfGUI(Gtk.Window):
         with open(json_config_path, 'w') as f:
             json.dump(bind_vars, f)
         
-        # If a new face icon was selected, process it now.
+        # Process face icon if selected
         if self.selected_face_icon:
             try:
                 img = Image.open(self.selected_face_icon)
@@ -324,7 +343,31 @@ class HyprConfGUI(Gtk.Window):
                 print(f"Face icon saved to {face_icon_path}")
             except Exception as e:
                 print("Error processing face icon image:", e)
-
+        
+        # Process hyprlock replacement if requested
+        dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
+        src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
+        if hasattr(self, "lock_checkbox") and self.lock_checkbox.get_active():
+            # Create backup
+            backup_lock = dest_lock + ".bak"
+            shutil.copy(dest_lock, backup_lock)
+            print(f"Hyprlock config backed up to {backup_lock}")
+            # Replace file
+            shutil.copy(src_lock, dest_lock)
+            print(f"Hyprlock config replaced from {src_lock}")
+        
+        # Process hypridle replacement if requested
+        dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
+        src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
+        if hasattr(self, "idle_checkbox") and self.idle_checkbox.get_active():
+            # Create backup
+            backup_idle = dest_idle + ".bak"
+            shutil.copy(dest_idle, backup_idle)
+            print(f"Hypridle config backed up to {backup_idle}")
+            # Replace file
+            shutil.copy(src_idle, dest_idle)
+            print(f"Hypridle config replaced from {src_idle}")
+        
         hypr_conf_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
         with open(hypr_conf_path, "r") as f:
             contenido = f.read()
@@ -353,7 +396,26 @@ def start_config():
 def open_config():
     ensure_fonts()
     load_bind_vars()  # Load saved bind_vars before creating the GUI
-    win = HyprConfGUI()
+
+    # --- Check hyprlock and hypridle config files ---
+    dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
+    src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
+    os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
+    if not os.path.exists(dest_lock):
+        shutil.copy(src_lock, dest_lock)
+        show_lock_checkbox = False
+    else:
+        show_lock_checkbox = True
+
+    dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
+    src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
+    if not os.path.exists(dest_idle):
+        shutil.copy(src_idle, dest_idle)
+        show_idle_checkbox = False
+    else:
+        show_idle_checkbox = True
+
+    win = HyprConfGUI(show_lock_checkbox, show_idle_checkbox)
     win.connect("destroy", Gtk.main_quit)
     win.show_all()
     Gtk.main()
