@@ -41,6 +41,11 @@
 > You need a functioning Hyprland installation.
 
 ### Arch Linux
+
+> [!TIP]
+> This command also works for updating an existing installation!
+
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | bash
 ```
