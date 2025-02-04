@@ -1,4 +1,5 @@
 __pycache__
 styles/colors.css
-config/hypr
 config/config.json
+config/hypr/ax-shell.conf
+config/hypr/colors.conf
