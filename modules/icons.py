@@ -56,6 +56,10 @@ bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
 dnd_off: str = "&#xece9;"
 
+# Bluetooth
+bluetooth_connected: str = "&#xecea;"
+bluetooth_disconnected: str = "&#xf081;"
+
 # Player
 pause: str = "&#xed45;"
 play: str = "&#xed46;"

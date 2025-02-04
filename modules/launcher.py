@@ -1,14 +1,11 @@
 import operator
 from collections.abc import Iterator
-from fabric import Application
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler
-from fabric.utils import get_relative_path
 from gi.repository import GLib, Gdk
 import modules.icons as icons
 

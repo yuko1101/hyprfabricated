@@ -5,7 +5,7 @@ from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.bluetooth import BluetoothClient, BluetoothDevice
-
+import modules.icons as icons
 
 class BluetoothDeviceSlot(CenterBox):
     def __init__(self, device: BluetoothDevice, **kwargs):
@@ -16,24 +16,30 @@ class BluetoothDeviceSlot(CenterBox):
             "notify::closed", lambda *_: self.device.closed and self.destroy()
         )
 
-        self.connection_label = Label(label="Disconnected")
+        self.connection_label = Label(name="bluetooth-connection", markup=icons.bluetooth_disconnected)
         self.connect_button = Button(
+            name="bluetooth-connect",
             label="Connect",
             on_clicked=lambda *_: self.device.set_connecting(not self.device.connected),
         )
 
         self.start_children = [
-            Image(icon_name=device.icon_name + "-symbolic", size=32),
-            Label(label=device.name),
+            Box(
+                spacing=8,
+                children=[
+                    Image(icon_name=device.icon_name + "-symbolic", size=32),
+                    Label(label=device.name),
+                    self.connection_label,
+                ],
+            )
         ]
-        self.center_children = self.connection_label
         self.end_children = self.connect_button
 
         self.device.emit("changed")  # to update display status
 
     def on_changed(self, *_):
-        self.connection_label.set_label(
-            "Connected" if self.device.connected else "Disconnected"
+        self.connection_label.set_markup(
+            icons.bluetooth_connected if self.device.connected else icons.bluetooth_disconnected
         )
         if self.device.connecting:
             self.connect_button.set_label(
@@ -50,7 +56,7 @@ class BluetoothConnections(Box):
     def __init__(self, **kwargs):
         super().__init__(
             name="bluetooth",
-            spacing=4,
+            spacing=8,
             orientation="vertical",
             **kwargs,
         )
@@ -76,11 +82,11 @@ class BluetoothConnections(Box):
         self.available_box = Box(spacing=2, orientation="vertical")
 
         self.children = [
-            CenterBox(start_children=self.scan_button, end_children=self.toggle_button),
-            Label("Paired Devices"),
-            ScrolledWindow(min_content_size=(150, -1), child=self.paired_box),
-            Label("Available Devices"),
-            ScrolledWindow(min_content_size=(-1, 150), child=self.available_box),
+            CenterBox(start_children=self.scan_button, center_children=Label(name="bluetooth-text", label="Bluetooth Devices"), end_children=self.toggle_button),
+            Label(name="bluetooth-text", label="Paired"),
+            ScrolledWindow(min_content_size=(-1, -1), child=self.paired_box),
+            Label(name="bluetooth-text", label="Available"),
+            ScrolledWindow(min_content_size=(-1, -1), child=self.available_box),
         ]
 
         # to run notify closures thus display the status

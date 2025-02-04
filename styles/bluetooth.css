@@ -1,19 +1,13 @@
-#bluetooth {
-  background-color: var(--surface);
-  border-radius: 20px;
-  padding: 4px;
-}
-
 #bluetooth-device {
-  background-color: var(--shadow);
+  background-color: var(--surface);
   border-radius: 16px;
-  padding: 8px;
+  padding: 4px;
   margin-bottom: 4px;
 }
 
 #bluetooth-scan,
 #bluetooth-toggle {
-  background-color: var(--shadow);
+  background-color: var(--surface);
   border-radius: 16px;
   padding: 8px 16px;
 }
@@ -21,4 +15,19 @@
 #bluetooth-scan label,
 #bluetooth-toggle label {
   font-weight: bold;
+}
+
+#bluetooth-text {
+  font-weight: bold;
+  color: var(--primary);
+}
+
+#bluetooth-connection {
+  font-size: 20px;
+}
+
+#bluetooth-connect {
+  background-color: var(--shadow);
+  border-radius: 16px;
+  padding: 8px 16px;
 }
