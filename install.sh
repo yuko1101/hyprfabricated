@@ -12,6 +12,7 @@ PACKAGES=(
     gray-git
     grimblast
     hypridle
+    hyprlock
     hyprpicker
     imagemagick
     libnotify
