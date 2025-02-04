@@ -87,12 +87,12 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] Color Picker
 - [ ] Dashboard
 - [ ] Network Manager
-- [ ] Bluetooth Manager
+- [x] Bluetooth Manager
 - [ ] Power Manager
-- [ ] Settings
+- [x] Settings
 - [ ] Screenshot Tool
 - [ ] Screen Recorder
 - [ ] Clipboard Manager
 - [ ] Dock
-- [ ] Workspaces Overview
+- [x] Workspaces Overview
 - [ ] Multimodal AI Assistant

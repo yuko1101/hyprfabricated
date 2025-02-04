@@ -63,12 +63,12 @@ class BluetoothConnections(Box):
 
         self.client = BluetoothClient(on_device_added=self.on_device_added)
         self.scan_button = Button(name="bluetooth-scan", label="Scan", on_clicked=lambda *_: self.client.toggle_scan())
-        self.toggle_button = Button(name="bluetooth-toggle", label="Bluetooth", on_clicked=lambda *_: self.client.toggle_power())
+        self.toggle_button = Button(name="bluetooth-toggle", label="OFF", on_clicked=lambda *_: self.client.toggle_power())
 
         self.client.connect(
             "notify::enabled",
             lambda *_: self.toggle_button.set_label(
-                "Bluetooth " + ("ON" if self.client.enabled else "OFF")
+                "Enabled" if self.client.enabled else "Disabled"
             ),
         )
         self.client.connect(
