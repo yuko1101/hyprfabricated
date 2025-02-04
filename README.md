@@ -52,9 +52,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
         - pillow
         - toml
         - setproctitle
-    - Fonts:
-    > [!NOTE]
-    > Font installation is automatic.
+    - Fonts (automated on first run):
         - Zed Sans
         - Tabler Icons
 
