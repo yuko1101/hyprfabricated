@@ -9,7 +9,6 @@ INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
     fabric-cli-git
     gnome-bluetooth-3.0
-    gray-git
     grimblast
     hypridle
     hyprlock
@@ -52,6 +51,9 @@ else
     echo "Cloning Ax-Shell..."
     git clone "$REPO_URL" "$INSTALL_DIR"
 fi
+
+echo "Installing gray-git..."
+printf "y\n" | yay -S --needed --noconfirm gray-git
 
 # Install required packages using yay
 echo "Installing required packages..."
