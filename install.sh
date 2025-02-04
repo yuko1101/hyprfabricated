@@ -24,8 +24,18 @@ PACKAGES=(
     ttf-tabler-icons
     uwsm
     vte3
-    wl-clipboard
 )
+
+# Install yay-bin if not already installed
+if ! command -v yay &>/dev/null; then
+    echo "Installing yay-bin..."
+    tmpdir=$(mktemp -d)
+    git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
+    cd "$tmpdir/yay-bin"
+    makepkg -si --noconfirm
+    cd - > /dev/null
+    rm -rf "$tmpdir"
+fi
 
 # Clone or update the repository
 if [ -d "$INSTALL_DIR" ]; then
@@ -37,11 +47,6 @@ else
 fi
 
 # Install required packages with yay
-if ! command -v yay &>/dev/null; then
-    echo "Error: 'yay' is not installed. Please install it first." >&2
-    exit 1
-fi
-
 echo "Installing required packages..."
 yay -S --needed --noconfirm "${PACKAGES[@]}"
 
