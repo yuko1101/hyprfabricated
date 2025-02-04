@@ -2,7 +2,7 @@
   <img src="assets/cover.png">
 </p>
 
-<p align="center"><b><sup>A ʜᴀᴄᴋᴀʙʟᴇ ᴀɴᴅ ᴘᴏᴡᴇʀꜰᴜʟ sʜᴇʟʟ ꜰᴏʀ Hʏᴘʀʟᴀɴᴅ, ᴘᴏᴡᴇʀᴇᴅ ʙʏ <a href="https://github.com/Fabric-Development/fabric/">Fᴀʙʀɪᴄ</a>.</sup></i></b></p>
+<p align="center"><sup>A ʜᴀᴄᴋᴀʙʟᴇ ᴀɴᴅ ᴘᴏᴡᴇʀꜰᴜʟ sʜᴇʟʟ ꜰᴏʀ Hʏᴘʀʟᴀɴᴅ, ᴘᴏᴡᴇʀᴇᴅ ʙʏ <a href="https://github.com/Fabric-Development/fabric/">Fᴀʙʀɪᴄ</a>.</sup></p>
 
 ## 📸 Screenshots
 <table align="center">
