@@ -61,6 +61,6 @@ yay -S --needed --noconfirm "${PACKAGES[@]}"
 
 # Launch Ax-Shell
 echo "Starting Ax-Shell..."
-uwsm app -- python "$INSTALL_DIR/main.py" & disown
+uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null & disown
 
 echo "Installation complete."
