@@ -59,7 +59,8 @@ yes | yay -S --needed --noconfirm gray-git
 echo "Installing required packages..."
 yay -S --needed --noconfirm "${PACKAGES[@]}"
 
-# Launch Ax-Shell without terminal output
-uwsm app -- python ~/.config/Ax-Shell/main.py > /dev/null 2>&1 & disown
+# Launch Ax-Shell
+echo "Starting Ax-Shell..."
+uwsm app -- python "$INSTALL_DIR/main.py" & disown
 
 echo "Installation complete."
