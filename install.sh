@@ -8,21 +8,22 @@ REPO_URL="https://github.com/Axenide/Ax-Shell"
 INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
     fabric-cli-git
-    libnotify
-    matugen-bin
-    python-fabric-git
-    python-setproctitle
-    swww
-    uwsm
-    vte3
-    ttf-tabler-icons
+    gray-git
     grimblast
-    wl-clipboard
     hypridle
     hyprpicker
     imagemagick
+    libnotify
+    matugen-bin
+    python-fabric-git
     python-pillow
+    python-setproctitle
     python-toml
+    swww
+    ttf-tabler-icons
+    uwsm
+    vte3
+    wl-clipboard
 )
 
 # Clone or update the repository
