@@ -109,10 +109,15 @@ class Cell(Gtk.EventBox):
 
     def get_file_preview(self, filepath):
         try:
-            content_type, _ = Gio.content_type_guess(filepath, None)
+            file = Gio.File.new_for_path(filepath)
+            info = file.query_info("standard::content-type", Gio.FileQueryInfoFlags.NONE, None)
+            content_type = info.get_content_type()
         except Exception:
             content_type = None
 
+        if content_type == "inode/directory":
+            return Gtk.Image.new_from_icon_name("default-folder", Gtk.IconSize.DIALOG)
+        
         if content_type and content_type.startswith("image/"):
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
