@@ -87,6 +87,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] System Tray
 - [x] Notifications
 - [x] Terminal
+- [x] Pins
 - [x] Kanban Board
 - [x] Calendar (Incomplete)
 - [x] Color Picker
