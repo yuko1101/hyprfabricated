@@ -102,3 +102,4 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [ ] Dock
 - [x] Workspaces Overview
 - [ ] Multimodal AI Assistant
+- [ ] Vertical Layout
