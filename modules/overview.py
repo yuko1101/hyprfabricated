@@ -19,6 +19,10 @@ from utils.icon_resolver import IconResolver
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk
 
+screen = Gdk.Screen.get_default()
+CURRENT_WIDTH = screen.get_width()
+CURRENT_HEIGHT = screen.get_height()
+
 icon_resolver = IconResolver()
 connection = Hyprland()
 SCALE = 0.1
@@ -123,23 +127,17 @@ class WorkspaceEventBox(EventBox):
         super().__init__(
             h_expand=True,
             v_expand=True,
-            size=(int(1920 * SCALE), int(1080 * SCALE)),
+            size=(int(CURRENT_WIDTH * SCALE), int(CURRENT_HEIGHT * SCALE)),
             name="overview-workspace-bg",
             child=fixed
             if fixed
-            # TODO this is lazy, do it right later lol
             else Label(
                 name="overview-add-label",
                 h_expand=True,
                 v_expand=True,
                 markup=icons.circle_plus,
             ),
-            on_drag_data_received=lambda _w,
-            _c,
-            _x,
-            _y,
-            data,
-            *_: connection.send_command(
+            on_drag_data_received=lambda _w, _c, _x, _y, data, *_: connection.send_command(
                 f"/dispatch movetoworkspacesilent {workspace_id},address:{data.get_data().decode()}"
             ),
         )
@@ -150,6 +148,7 @@ class WorkspaceEventBox(EventBox):
         )
         if fixed:
             fixed.show_all()
+
 
 
 class Overview(Box):
