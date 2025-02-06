@@ -62,6 +62,6 @@ yay -S --needed --noconfirm "${PACKAGES[@]}" || true
 
 # Launch Ax-Shell without terminal output
 echo "Starting Ax-Shell..."
-killall ax-shell; uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
+killall ax-shell 2>/dev/null || true; uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 
 echo "Installation complete."
