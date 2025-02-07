@@ -26,12 +26,18 @@ if __name__ == "__main__":
     notch = Notch()
     bar.notch = notch
     app = Application("ax-shell", bar, notch)
-    app.set_stylesheet_from_file(
-        get_relative_path("main.css"),
-        exposed_functions={
-            "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5}px;",
-            "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2}px;",
-        },
-    )
+
+    def set_css():
+        app.set_stylesheet_from_file(
+            get_relative_path("main.css"),
+            exposed_functions={
+                "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5}px;",
+                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2}px;",
+            },
+        )
+
+    app.set_css = set_css
+
+    app.set_css()
 
     app.run()
