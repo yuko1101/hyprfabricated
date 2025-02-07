@@ -62,7 +62,7 @@ class Notch(Window):
             v_expand=True,
             h_expand=True,
             transition_type="crossfade",
-            transition_duration=250,
+            transition_duration=100,
             children=[
                 self.compact,
                 self.launcher,
