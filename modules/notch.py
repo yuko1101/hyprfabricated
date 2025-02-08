@@ -39,7 +39,7 @@ class Notch(Window):
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
 
-        self.bluetooth = BluetoothConnections()
+        self.bluetooth = BluetoothConnections(notch=self)
 
         self.active_window = ActiveWindow(
             name="hyprland-window",
