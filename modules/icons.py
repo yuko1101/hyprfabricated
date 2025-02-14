@@ -71,6 +71,8 @@ next: str = "&#xed4b;"
 shuffle: str = "&#xf000;"
 repeat: str = "&#xeb72;"
 music: str = "&#xeafc;"
+rewind_backward_5: str = "&#xfabf;"
+rewind_forward_5: str = "&#xfac7;"
 
 # Volume
 vol_off: str = "&#xf1c3;"
@@ -87,9 +89,16 @@ copy_plus: str = "&#xfdae;"
 # Confirm
 accept: str = "&#xea5e;"
 cancel: str = "&#xeb55;"
+trash: str = "&#xeb41;"
 
 # Config
 config: str = "&#xeb20;"
+
+# Icons
+firefox: str = "&#xecfd;"
+chromium: str = "&#xec18;"
+spotify: str = "&#xed03;"
+disc: str = "&#xea90;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

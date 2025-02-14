@@ -2,6 +2,7 @@
 @import url("./styles/shadows.css");
 @import url("./styles/notch.css");
 @import url("./styles/dashboard.css");
+@import url("./styles/buttons.css");
 @import url("./styles/pins.css");
 @import url("./styles/kanban.css");
 @import url("./styles/calendar.css");
@@ -10,6 +11,7 @@
 @import url("./styles/notifications.css");
 @import url("./styles/wallpapers.css");
 @import url("./styles/overview.css");
+@import url("./styles/player.css");
 @import url("./styles/bluetooth.css");
 @import url("./styles/power.css");
 

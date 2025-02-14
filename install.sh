@@ -13,6 +13,7 @@ PACKAGES=(
     hypridle
     hyprlock
     hyprpicker
+    hyprsunset
     imagemagick
     libnotify
     matugen-bin
@@ -24,6 +25,7 @@ PACKAGES=(
     swww
     uwsm
     vte3
+    wlinhibit
 )
 
 # Optional: Prevent running as root

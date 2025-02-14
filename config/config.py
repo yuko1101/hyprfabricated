@@ -161,11 +161,13 @@ bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fa
 bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
-bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_stylesheet_from_file(get_relative_path("main.css"))' # Reload CSS | Default: SUPER SHIFT + B
+bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
 source = {home}/.config/Ax-Shell/config/hypr/colors.conf
+
+exec = ln -sf $wallpaper ~/.current.wall
 
 general {{
     col.active_border = 0xff$primary
