@@ -1,6 +1,7 @@
 import os
 import urllib.parse
 import urllib.request
+import tempfile
 from gi.repository import Gtk, GLib, Gio
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
@@ -144,7 +145,7 @@ class PlayerBox(Box):
                 local_arturl = urllib.parse.unquote(parsed.path)
                 self._set_cover_image(local_arturl)
             elif parsed.scheme in ("http", "https"):
-                from gi.repository import GLib
+                # Asynchronously download artwork and update cover image.
                 GLib.Thread.new("download-artwork", self._download_and_set_artwork, mp.arturl)
             else:
                 self._set_cover_image(mp.arturl)
@@ -176,12 +177,15 @@ class PlayerBox(Box):
             self._wallpaper_monitor = monitor
 
     def _download_and_set_artwork(self, arturl):
+        """
+        Download the artwork from the given URL asynchronously and update the cover image
+        using GLib.idle_add to ensure UI updates occur on the main thread.
+        """
         try:
             parsed = urllib.parse.urlparse(arturl)
             suffix = os.path.splitext(parsed.path)[1] or ".png"
             with urllib.request.urlopen(arturl) as response:
                 data = response.read()
-            import tempfile
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
             temp_file.write(data)
             temp_file.close()
@@ -200,6 +204,7 @@ class PlayerBox(Box):
     def on_wallpaper_changed(self, monitor, file, other_file, event):
         self.cover.set_image_from_file(os.path.expanduser("~/.current.wall"))
 
+    # --- Control methods, defined only once each ---
     def _on_prev_clicked(self, button):
         if self.mpris_player:
             self.mpris_player.previous()
@@ -252,7 +257,15 @@ class PlayerBox(Box):
         return True
 
     def _on_mpris_changed(self, *args):
+        # Debounce metadata updates to avoid excessive work on the main thread.
+        if not hasattr(self, "_update_pending") or not self._update_pending:
+            self._update_pending = True
+            GLib.timeout_add(100, self._apply_mpris_properties_debounced)
+
+    def _apply_mpris_properties_debounced(self):
         self._apply_mpris_properties()
+        self._update_pending = False
+        return False
 
 class Player(Box):
     def __init__(self):
