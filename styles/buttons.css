@@ -1,23 +1,24 @@
+#buttons-grid {
+  min-height: 52px;
+}
+
 /* === Botones Base === */
 #network-button,
 #bluetooth-button,
 #night-mode-button,
 #caffeine-button {
   border-radius: 20px;
-  min-height: 52px;
 }
 
 /* Tamaños y estilos específicos */
 #network-button,
 #bluetooth-button {
-  min-width: 150px;
   background-color: unset;
   padding: 0;
 }
 
 #night-mode-button,
 #caffeine-button {
-  min-width: 130px;
   background-color: var(--primary);
   padding: 0 10px;
 }

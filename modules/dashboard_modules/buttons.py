@@ -5,6 +5,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async
 import gi
+from gi.repository import Gtk
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 import modules.icons as icons
@@ -59,7 +60,7 @@ class NetworkButton(Box):
             name="network-button",
             orientation="h",
             h_align="fill",
-            v_align="center",
+            v_align="fill",
             h_expand=True,
             v_expand=True,
             spacing=0,
@@ -73,7 +74,7 @@ class BluetoothButton(Box):
             name="bluetooth-button",
             orientation="h",
             h_align="fill",
-            v_align="center",
+            v_align="fill",
             h_expand=True,
             v_expand=True,
         )
@@ -285,18 +286,15 @@ class CaffeineButton(Button):
                 i.add_style_class("disabled")
 
 
-class Buttons(Box):
+class Buttons(Gtk.Grid):
     def __init__(self, **kwargs):
-        super().__init__(
-            name="buttons",
-            spacing=4,
-            h_align="fill",
-            v_align="fill",
-            h_expand=True,
-            v_expand=False,
-            visible=True,
-            all_visible=True,
-        )
+        super().__init__(name="buttons-grid")
+        self.set_row_homogeneous(True)
+        self.set_column_homogeneous(True)
+        self.set_row_spacing(4)
+        self.set_column_spacing(4)
+        self.set_vexpand(False)  # Prevent vertical expansion
+
         self.notch = kwargs["notch"]
 
         # Instantiate each button
@@ -305,10 +303,10 @@ class Buttons(Box):
         self.night_mode_button = NightModeButton()
         self.caffeine_button = CaffeineButton()
 
-        # Add buttons to the container
-        self.add(self.network_button)
-        self.add(self.bluetooth_button)
-        self.add(self.night_mode_button)
-        self.add(self.caffeine_button)
+        # Attach buttons into the grid (one row, four columns)
+        self.attach(self.network_button, 0, 0, 1, 1)
+        self.attach(self.bluetooth_button, 1, 0, 1, 1)
+        self.attach(self.night_mode_button, 2, 0, 1, 1)
+        self.attach(self.caffeine_button, 3, 0, 1, 1)
 
         self.show_all()

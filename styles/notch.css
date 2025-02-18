@@ -110,3 +110,11 @@
 #compact-mpris-icon-label, #compact-mpris-button-label {
   font-size: 20px;
 }
+
+#compact-mpris-icon {
+  margin-right: 10px;
+}
+
+#compact-mpris-button {
+  margin-left: 10px;
+}

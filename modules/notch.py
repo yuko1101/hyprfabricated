@@ -49,6 +49,10 @@ class Notch(Window):
             ),
         )
 
+        self.mpris_icon = Button(name="compact-mpris-icon", child=Label(name="compact-mpris-icon-label", markup=icons.disc))
+        self.mpris_label = Label(name="compact-mpris-label", label="Nothing Playing")
+        self.mpris_button = Button(name="compact-mpris-button", child=Label(name="compact-mpris-button-label", markup=icons.play))
+
         # Create additional compact views:
         self.mpris_small = CenterBox(
             name="compact-mpris",
@@ -56,9 +60,9 @@ class Notch(Window):
             h_expand=True,
             h_align="fill",
             v_align="center",
-            start_children=Button(name="compact-mpris-icon", child=Label(name="compact-mpris-icon-label", markup=icons.spotify)),
-            center_children=Label(name="compact-mpris-label", label="Skrillex"),
-            end_children=Button(name="compact-mpris-button", child=Label(name="compact-mpris-button-label", markup=icons.play)),
+            start_children=self.mpris_icon,
+            center_children=self.mpris_label,
+            end_children=self.mpris_button,
         )
 
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
@@ -71,9 +75,9 @@ class Notch(Window):
             transition_type="slide-up-down",
             transition_duration=100,
             children=[
+                self.user_label,
                 self.active_window,
                 self.mpris_small,
-                self.user_label,
             ]
         )
         self.compact_stack.set_visible_child(self.active_window)

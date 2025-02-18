@@ -7,7 +7,7 @@ from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
 from fabric.widgets.button import Button
-from widgets.circularprogressbar import CircularProgressBar
+from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.stack import Stack
 from fabric.utils.helpers import exec_shell_command_async
@@ -42,8 +42,8 @@ class PlayerBox(Box):
             size=198,
             h_align="center",
             v_align="center",
-            angle=270,
-            gap_size=180,
+            start_angle=180,
+            end_angle=360,
         )
         self.time = Label(name="player-time", label="--:-- / --:--")
         self.overlay = Overlay(
@@ -118,6 +118,8 @@ class PlayerBox(Box):
             if mpris_player.can_seek:
                 GLib.timeout_add(1000, self._update_progress)
             self.mpris_player.connect("changed", self._on_mpris_changed)
+        else:
+            self.play_pause.get_child().set_markup(icons.stop)
 
     def _apply_mpris_properties(self):
         mp = self.mpris_player

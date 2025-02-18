@@ -238,11 +238,19 @@ class HyprConfGUI(Gtk.Window):
 
         self.selected_face_icon = None
 
-        # Main container
-        main_vbox = Gtk.VBox(spacing=10)
-        self.add(main_vbox)
+        # Use a grid for a more homogeneous layout
+        grid = Gtk.Grid(column_spacing=10, row_spacing=10)
+        grid.set_margin_top(10)
+        grid.set_margin_bottom(10)
+        grid.set_margin_start(10)
+        grid.set_margin_end(10)
+        self.add(grid)
 
-        # Create input entries for key bindings
+        # Header label spanning across columns
+        header = Gtk.Label(label="Configure Key Bindings")
+        header.set_halign(Gtk.Align.CENTER)
+        grid.attach(header, 0, 0, 4, 1)
+
         self.entries = []
         bindings = [
             ("Reload Ax-Shell", 'prefix_restart', 'suffix_restart'),
@@ -257,66 +265,70 @@ class HyprConfGUI(Gtk.Window):
             ("Reload CSS", 'prefix_css', 'suffix_css'),
         ]
 
+        # Populate grid with key binding rows, starting at row 1
+        row = 1
         for label_text, prefix_key, suffix_key in bindings:
-            entry_box = Gtk.HBox(spacing=10)
+            # Binding description
+            binding_label = Gtk.Label(label=label_text)
+            binding_label.set_halign(Gtk.Align.START)
+            grid.attach(binding_label, 0, row, 1, 1)
 
-            label = Gtk.Label(label=label_text)
-            entry_box.pack_start(label, False, False, 0)
-
+            # Prefix entry
             prefix_entry = Gtk.Entry()
             prefix_entry.set_text(bind_vars[prefix_key])
-            entry_box.pack_start(prefix_entry, True, True, 0)
+            grid.attach(prefix_entry, 1, row, 1, 1)
 
+            # Plus label between entries
             plus_label = Gtk.Label(label=" + ")
-            entry_box.pack_start(plus_label, False, False, 0)
+            grid.attach(plus_label, 2, row, 1, 1)
 
+            # Suffix entry
             suffix_entry = Gtk.Entry()
             suffix_entry.set_text(bind_vars[suffix_key])
-            entry_box.pack_start(suffix_entry, True, True, 0)
+            grid.attach(suffix_entry, 3, row, 1, 1)
 
-            main_vbox.pack_start(entry_box, False, False, 0)
             self.entries.append((prefix_key, suffix_key, prefix_entry, suffix_entry))
+            row += 1
 
-        # Wallpaper directory chooser
-        wall_box = Gtk.HBox(spacing=10)
+        # Row for Wallpapers Directory chooser
         wall_label = Gtk.Label(label="Wallpapers Directory")
-        wall_box.pack_start(wall_label, False, False, 0)
+        wall_label.set_halign(Gtk.Align.START)
+        grid.attach(wall_label, 0, row, 1, 1)
         self.wall_dir_chooser = Gtk.FileChooserButton(
             title="Select a folder",
             action=Gtk.FileChooserAction.SELECT_FOLDER
         )
         self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
-        wall_box.pack_start(self.wall_dir_chooser, True, True, 0)
-        main_vbox.pack_start(wall_box, False, False, 0)
+        grid.attach(self.wall_dir_chooser, 1, row, 3, 1)
+        row += 1
 
-        # Face icon selection button
-        face_box = Gtk.HBox(spacing=10)
+        # Row for Profile Icon selection
         face_label = Gtk.Label(label="Profile Icon")
-        face_box.pack_start(face_label, False, False, 0)
+        face_label.set_halign(Gtk.Align.START)
+        grid.attach(face_label, 0, row, 1, 1)
         face_btn = Gtk.Button(label="Select Image")
         face_btn.connect("clicked", self.on_select_face_icon)
-        face_box.pack_start(face_btn, True, True, 0)
-        main_vbox.pack_start(face_box, False, False, 0)
+        grid.attach(face_btn, 1, row, 3, 1)
+        row += 1
 
-        # Optional checkboxes for replacing configs
+        # Row for optional checkboxes
         if show_lock_checkbox:
             self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
             self.lock_checkbox.set_active(False)
-            main_vbox.pack_start(self.lock_checkbox, False, False, 0)
+            grid.attach(self.lock_checkbox, 0, row, 2, 1)
         if show_idle_checkbox:
             self.idle_checkbox = Gtk.CheckButton(label="Replace Hypridle config")
             self.idle_checkbox.set_active(False)
-            main_vbox.pack_start(self.idle_checkbox, False, False, 0)
+            grid.attach(self.idle_checkbox, 2, row, 2, 1)
+        row += 1
 
-        # Accept and Cancel buttons
-        button_box = Gtk.HBox(spacing=10)
+        # Row for Cancel and Accept buttons, aligned to the right
         cancel_btn = Gtk.Button(label="Cancel")
         cancel_btn.connect("clicked", self.on_cancel)
         accept_btn = Gtk.Button(label="Accept")
         accept_btn.connect("clicked", self.on_accept)
-        button_box.pack_end(accept_btn, False, False, 0)
-        button_box.pack_end(cancel_btn, False, False, 0)
-        main_vbox.pack_start(button_box, False, False, 0)
+        grid.attach(cancel_btn, 2, row, 1, 1)
+        grid.attach(accept_btn, 3, row, 1, 1)
 
     def on_select_face_icon(self, widget):
         """
