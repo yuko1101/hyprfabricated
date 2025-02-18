@@ -153,7 +153,10 @@ class MprisPlayer(Service):
 
     @Property(str, "readable")
     def artist(self) -> str:
-        return self._player.get_artist()  # type: ignore
+        artist = self._player.get_artist()  # type: ignore
+        if isinstance(artist, (list, tuple)):
+            return ", ".join(artist)
+        return artist
 
     @Property(str, "readable")
     def album(self) -> str:

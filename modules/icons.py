@@ -61,13 +61,13 @@ bluetooth_connected: str = "&#xecea;"
 bluetooth_disconnected: str = "&#xf081;"
 
 # Player
-pause: str = "&#xed45;"
-play: str = "&#xed46;"
-stop: str = "&#xed4a;"
-skip_back: str = "&#xed48;"
-skip_forward: str = "&#xed49;"
-prev: str = "&#xed4c;"
-next: str = "&#xed4b;"
+pause: str = "&#xf690;"
+play: str = "&#xf691;"
+stop: str = "&#xf695;"
+skip_back: str = "&#xf693;"
+skip_forward: str = "&#xf694;"
+prev: str = "&#xf697;"
+next: str = "&#xf696;"
 shuffle: str = "&#xf000;"
 repeat: str = "&#xeb72;"
 music: str = "&#xeafc;"
@@ -97,8 +97,9 @@ config: str = "&#xeb20;"
 # Icons
 firefox: str = "&#xecfd;"
 chromium: str = "&#xec18;"
-spotify: str = "&#xed03;"
-disc: str = "&#xea90;"
+spotify: str = "&#xfe86;"
+disc: str = "&#x1003e;"
+disc_off: str = "&#xf118;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

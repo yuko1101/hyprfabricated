@@ -34,11 +34,23 @@
 
 #player-btn-label {
   font-size: 24px;
-  color: var(--surface-bright);
+  color: var(--foreground);
+}
+
+#player-btn {
+  padding: 4px;
+}
+
+#player-btn:hover {
+  background-color: var(--foreground);
 }
 
 #player-btn:hover #player-btn-label {
-  color: var(--primary);
+  color: var(--shadow);
+}
+
+#player-btn:active {
+  background-color: var(--primary);
 }
 
 #player-btn:active #player-btn-label {
@@ -63,7 +75,17 @@
   color: var(--surface-bright);
 }
 
+#player-switcher.stack-switcher button:hover label {
+  font-size: 20px;
+  color: var(--outline);
+}
+
 #player-switcher.stack-switcher > *:checked label {
+  font-size: 24px;
+  color: var(--foreground);
+}
+
+#player-switcher.stack-switcher > *:checked:hover label {
   font-size: 24px;
   color: var(--foreground);
 }

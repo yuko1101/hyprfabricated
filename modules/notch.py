@@ -38,24 +38,56 @@ class Notch(Window):
         self.notification = NotificationContainer(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
-
         self.bluetooth = BluetoothConnections(notch=self)
 
         self.active_window = ActiveWindow(
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'{data.USERNAME}@{data.HOSTNAME}' if not win_class or win_class == 'unknown' else truncate(win_class, 32)}}",
+                f"{{'Desktop' if not win_class or win_class == 'unknown' else truncate(win_class, 32)}}",
                 truncate=truncate,
             ),
         )
 
+        # Create additional compact views:
+        self.mpris_small = CenterBox(
+            name="compact-mpris",
+            orientation="h",
+            h_expand=True,
+            h_align="fill",
+            v_align="center",
+            start_children=Button(name="compact-mpris-icon", child=Label(name="compact-mpris-icon-label", markup=icons.spotify)),
+            center_children=Label(name="compact-mpris-label", label="Skrillex"),
+            end_children=Button(name="compact-mpris-button", child=Label(name="compact-mpris-button-label", markup=icons.play)),
+        )
+
+        self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
+
+        # Create a stack to hold the three views:
+        self.compact_stack = Stack(
+            name="notch-compact-stack",
+            v_expand=True,
+            h_expand=True,
+            transition_type="slide-up-down",
+            transition_duration=100,
+            children=[
+                self.active_window,
+                self.mpris_small,
+                self.user_label,
+            ]
+        )
+        self.compact_stack.set_visible_child(self.active_window)
+
+        # Create the compact button and set the stack as its child
         self.compact = Button(
             name="notch-compact",
             h_expand=True,
             on_clicked=lambda *_: self.open_notch("dashboard"),
-            child=self.active_window,
+            child=self.compact_stack,
         )
+        self.compact.add_events(Gdk.EventMask.SCROLL_MASK)  # Enable scroll events
+        # Listen for scroll events to cycle between the views
+        self.compact.connect("scroll-event", self._on_compact_scroll)
 
         self.stack = Stack(
             name="notch-content",
@@ -212,3 +244,16 @@ class Notch(Window):
             self.notch_box.add_style_class("hidden")
         else:
             self.notch_box.remove_style_class("hidden")
+
+    def _on_compact_scroll(self, widget, event):
+        from gi.repository import Gdk
+        children = self.compact_stack.get_children()
+        current = children.index(self.compact_stack.get_visible_child())
+        if event.direction == Gdk.ScrollDirection.UP:
+            new_index = (current - 1) % len(children)
+        elif event.direction == Gdk.ScrollDirection.DOWN:
+            new_index = (current + 1) % len(children)
+        else:
+            return False
+        self.compact_stack.set_visible_child(children[new_index])
+        return True

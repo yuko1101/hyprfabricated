@@ -96,11 +96,7 @@
 #notch-compact {
   font-weight: bold;
   transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
-}
-
-#notch-compact:hover {
-  min-height: 60px;
-  min-width: 300px;
+  padding: 0 10px;
 }
 
 #notch-corner-left {
@@ -109,4 +105,8 @@
 
 #notch-corner-right {
   margin-right: -16px;
+}
+
+#compact-mpris-icon-label, #compact-mpris-button-label {
+  font-size: 20px;
 }

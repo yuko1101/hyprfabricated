@@ -61,7 +61,7 @@ class PlayerBox(Box):
         )
         self.backward = Button(
             name="player-btn",
-            child=Label(name="player-btn-label", markup=icons.rewind_backward_5),
+            child=Label(name="player-btn-label", markup=icons.skip_back),
         )
         self.play_pause = Button(
             name="player-btn",
@@ -69,7 +69,7 @@ class PlayerBox(Box):
         )
         self.forward = Button(
             name="player-btn",
-            child=Label(name="player-btn-label", markup=icons.rewind_forward_5),
+            child=Label(name="player-btn-label", markup=icons.skip_forward),
         )
         self.next = Button(
             name="player-btn",
@@ -164,6 +164,12 @@ class PlayerBox(Box):
         if player_name == "firefox" or (hasattr(mp, "can_seek") and not mp.can_seek):
             self.progressbar.set_visible(False)
             self.time.set_visible(False)
+            # Hide backward and forward buttons if seeking is not supported.
+            self.backward.set_visible(False)
+            self.forward.set_visible(False)
+        else:
+            self.backward.set_visible(True)
+            self.forward.set_visible(True)
 
     def _set_cover_image(self, image_path):
         if image_path and os.path.isfile(image_path):
@@ -216,12 +222,12 @@ class PlayerBox(Box):
 
     def _on_backward_clicked(self, button):
         if self.mpris_player and self.mpris_player.can_seek:
-            new_pos = max(0, self.mpris_player.position - 5000)
+            new_pos = max(0, self.mpris_player.position - 5000000)  # 5 seconds backward
             self.mpris_player.position = new_pos
 
     def _on_forward_clicked(self, button):
         if self.mpris_player and self.mpris_player.can_seek:
-            new_pos = self.mpris_player.position + 5000
+            new_pos = self.mpris_player.position + 5000000  # 5 seconds forward
             self.mpris_player.position = new_pos
 
     def _on_next_clicked(self, button):
