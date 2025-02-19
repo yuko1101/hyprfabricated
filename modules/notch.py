@@ -7,7 +7,7 @@ from fabric.widgets.stack import Stack
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import ActiveWindow
 from fabric.utils.helpers import FormattedString, truncate
-from gi.repository import GLib, Gdk
+from gi.repository import GLib, Gdk, Gtk
 from modules.launcher import AppLauncher
 from modules.dashboard import Dashboard
 from modules.wallpapers import WallpaperSelector
@@ -18,6 +18,7 @@ from modules.bluetooth import BluetoothConnections
 from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
+from modules.player import PlayerSmall
 
 class Notch(Window):
     def __init__(self, **kwargs):
@@ -48,22 +49,11 @@ class Notch(Window):
                 truncate=truncate,
             ),
         )
-
-        self.mpris_icon = Button(name="compact-mpris-icon", child=Label(name="compact-mpris-icon-label", markup=icons.disc))
-        self.mpris_label = Label(name="compact-mpris-label", label="Nothing Playing")
-        self.mpris_button = Button(name="compact-mpris-button", child=Label(name="compact-mpris-button-label", markup=icons.play))
+        # Add the click connection for active_window.
+        self.active_window.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
 
         # Create additional compact views:
-        self.mpris_small = CenterBox(
-            name="compact-mpris",
-            orientation="h",
-            h_expand=True,
-            h_align="fill",
-            v_align="center",
-            start_children=self.mpris_icon,
-            center_children=self.mpris_label,
-            end_children=self.mpris_button,
-        )
+        self.player_small = PlayerSmall()
 
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
 
@@ -77,21 +67,21 @@ class Notch(Window):
             children=[
                 self.user_label,
                 self.active_window,
-                self.mpris_small,
+                self.player_small,
             ]
         )
         self.compact_stack.set_visible_child(self.active_window)
 
         # Create the compact button and set the stack as its child
-        self.compact = Button(
-            name="notch-compact",
-            h_expand=True,
-            on_clicked=lambda *_: self.open_notch("dashboard"),
-            child=self.compact_stack,
-        )
-        self.compact.add_events(Gdk.EventMask.SCROLL_MASK)  # Enable scroll events
-        # Listen for scroll events to cycle between the views
+        self.compact = Gtk.EventBox(name="notch-compact")
+        self.compact.set_visible(True)
+        self.compact.add(self.compact_stack)
+        self.compact.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
         self.compact.connect("scroll-event", self._on_compact_scroll)
+        self.compact.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
+        # Add cursor change on hover.
+        self.compact.connect("enter-notify-event", self.on_button_enter)
+        self.compact.connect("leave-notify-event", self.on_button_leave)
 
         self.stack = Stack(
             name="notch-content",

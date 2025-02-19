@@ -5,10 +5,17 @@ from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async
 import gi
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk  # Added Gdk import
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 import modules.icons as icons
+
+
+def add_hover_cursor(widget):
+    # Add enter/leave events to change the cursor
+    widget.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+    widget.connect("enter-notify-event", lambda w, e: w.get_window().set_cursor(Gdk.Cursor.new_from_name(w.get_display(), "pointer")) if w.get_window() else None)
+    widget.connect("leave-notify-event", lambda w, e: w.get_window().set_cursor(None) if w.get_window() else None)
 
 
 class NetworkButton(Box):
@@ -47,6 +54,8 @@ class NetworkButton(Box):
             h_expand=True,
             child=self.network_status_box,
         )
+        add_hover_cursor(self.network_status_button)  # <-- Added hover
+
         self.network_menu_label = Label(
             name="network-menu-label",
             markup=icons.chevron_right,
@@ -55,6 +64,7 @@ class NetworkButton(Box):
             name="network-menu-button",
             child=self.network_menu_label,
         )
+        add_hover_cursor(self.network_menu_button)  # <-- Added hover
 
         super().__init__(
             name="network-button",
@@ -114,6 +124,7 @@ class BluetoothButton(Box):
             child=self.bluetooth_status_container,
             on_clicked=lambda *_: self.notch.bluetooth.client.toggle_power(),
         )
+        add_hover_cursor(self.bluetooth_status_button)  # <-- Added hover
         self.bluetooth_menu_label = Label(
             name="bluetooth-menu-label",
             markup=icons.chevron_right,
@@ -123,6 +134,7 @@ class BluetoothButton(Box):
             on_clicked=lambda *_: self.notch.open_notch("bluetooth"),
             child=self.bluetooth_menu_label,
         )
+        add_hover_cursor(self.bluetooth_menu_button)  # <-- Added hover
 
         self.add(self.bluetooth_status_button)
         self.add(self.bluetooth_menu_button)
@@ -166,6 +178,7 @@ class NightModeButton(Button):
             child=self.night_mode_box,
             on_clicked=self.toggle_hyprsunset,
         )
+        add_hover_cursor(self)  # <-- Added hover
 
         self.widgets = [self, self.night_mode_label, self.night_mode_status, self.night_mode_icon]
         self.check_hyprsunset()
@@ -177,15 +190,12 @@ class NightModeButton(Button):
           - If not running, start it and mark as 'Enabled'.
         """
         try:
-            # Check if hyprsunset is running
             subprocess.check_output(["pgrep", "hyprsunset"])
-            # Process found – kill it
             exec_shell_command_async("pkill hyprsunset")
             self.night_mode_status.set_label("Disabled")
             for widget in self.widgets:
                 widget.add_style_class("disabled")
         except subprocess.CalledProcessError:
-            # Process not found – start it
             exec_shell_command_async("hyprsunset -t 3500")
             self.night_mode_status.set_label("Enabled")
             for widget in self.widgets:
@@ -218,7 +228,6 @@ class CaffeineButton(Button):
             justification="left",
         )
         self.caffeine_label_box = Box(children=[self.caffeine_label, Box(h_expand=True)])
-        # Save the status label so we can update it when toggling
         self.caffeine_status = Label(
             name="caffeine-status",
             label="Enabled",
@@ -238,16 +247,15 @@ class CaffeineButton(Button):
             spacing=10,
             children=[self.caffeine_icon, self.caffeine_text],
         )
-        # Attach the toggle function to the button click
         super().__init__(
             name="caffeine-button",
             h_expand=True,
             child=self.caffeine_box,
             on_clicked=self.toggle_wlinhibit,
         )
+        add_hover_cursor(self)  # <-- Added hover
 
         self.widgets = [self, self.caffeine_label, self.caffeine_status, self.caffeine_icon]
-
         self.check_wlinhibit()
 
     def toggle_wlinhibit(self, *args):
@@ -257,16 +265,12 @@ class CaffeineButton(Button):
           - If not running, start it and mark as 'Enabled' (remove 'disabled' class).
         """
         try:
-            # Check if wlinhibit is running (pgrep exits with nonzero if not found)
             subprocess.check_output(["pgrep", "wlinhibit"])
-            # Process found – kill it
             exec_shell_command_async("pkill wlinhibit")
             self.caffeine_status.set_label("Disabled")
             for i in self.widgets:
                 i.add_style_class("disabled")
-
         except subprocess.CalledProcessError:
-            # Process not found – start it
             exec_shell_command_async("wlinhibit")
             self.caffeine_status.set_label("Enabled")
             for i in self.widgets:
@@ -274,13 +278,11 @@ class CaffeineButton(Button):
 
     def check_wlinhibit(self, *args):
         try:
-            # Process found – caffeine is active
             subprocess.check_output(["pgrep", "wlinhibit"])
             self.caffeine_status.set_label("Enabled")
             for i in self.widgets:
                 i.remove_style_class("disabled")
         except subprocess.CalledProcessError:
-            # Process not found – caffeine is inactive
             self.caffeine_status.set_label("Disabled")
             for i in self.widgets:
                 i.add_style_class("disabled")

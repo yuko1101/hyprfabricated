@@ -111,10 +111,18 @@
   font-size: 20px;
 }
 
-#compact-mpris-icon {
-  margin-right: 10px;
+#compact-mpris-icon, #compact-mpris-button {
+  margin: 0 10px;
 }
 
-#compact-mpris-button {
-  margin-left: 10px;
+#compact-mpris-icon:hover, #compact-mpris-button:hover {
+  background-color: var(--foreground);
+}
+
+#compact-mpris-icon:active, #compact-mpris-button:active {
+  background-color: var(--primary);
+}
+
+#compact-mpris-icon:hover #compact-mpris-icon-label, #compact-mpris-button:hover #compact-mpris-button-label {
+  color: var(--background);
 }

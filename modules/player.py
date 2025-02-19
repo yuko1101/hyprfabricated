@@ -2,7 +2,7 @@ import os
 import urllib.parse
 import urllib.request
 import tempfile
-from gi.repository import Gtk, GLib, Gio
+from gi.repository import Gtk, GLib, Gio, Gdk
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
@@ -15,6 +15,23 @@ from widgets.circle_image import CircleImage
 import modules.icons as icons
 import modules.data as data
 from services.mpris import MprisPlayerManager, MprisPlayer
+
+def get_player_icon_markup_by_name(player_name):
+    if player_name:
+        pn = player_name.lower()
+        if pn == "firefox":
+            return icons.firefox
+        elif pn == "spotify":
+            return icons.spotify
+        elif pn in ("chromium", "brave"):
+            return icons.chromium
+    return icons.disc
+
+def add_hover_cursor(widget):
+    widget.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+    widget.connect("enter-notify-event", lambda w, event: w.get_window().set_cursor(
+        Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "pointer")))
+    widget.connect("leave-notify-event", lambda w, event: w.get_window().set_cursor(None))
 
 class PlayerBox(Box):
     def __init__(self, mpris_player=None):
@@ -75,6 +92,12 @@ class PlayerBox(Box):
             name="player-btn",
             child=Label(name="player-btn-label", markup=icons.next),
         )
+        # Add hover effect to buttons
+        add_hover_cursor(self.prev)
+        add_hover_cursor(self.backward)
+        add_hover_cursor(self.play_pause)
+        add_hover_cursor(self.forward)
+        add_hover_cursor(self.next)
         self.btn_box = CenterBox(
             name="player-btn-box",
             orientation="h",
@@ -123,31 +146,21 @@ class PlayerBox(Box):
 
     def _apply_mpris_properties(self):
         mp = self.mpris_player
+        self.title.set_visible(bool(mp.title and mp.title.strip()))
         if mp.title and mp.title.strip():
             self.title.set_text(mp.title)
-            self.title.set_visible(True)
-        else:
-            self.title.set_visible(False)
-
+        self.album.set_visible(bool(mp.album and mp.album.strip()))
         if mp.album and mp.album.strip():
             self.album.set_text(mp.album)
-            self.album.set_visible(True)
-        else:
-            self.album.set_visible(False)
-
+        self.artist.set_visible(bool(mp.artist and mp.artist.strip()))
         if mp.artist and mp.artist.strip():
             self.artist.set_text(mp.artist)
-            self.artist.set_visible(True)
-        else:
-            self.artist.set_visible(False)
-
         if mp.arturl:
             parsed = urllib.parse.urlparse(mp.arturl)
             if parsed.scheme == "file":
                 local_arturl = urllib.parse.unquote(parsed.path)
                 self._set_cover_image(local_arturl)
             elif parsed.scheme in ("http", "https"):
-                # Asynchronously download artwork and update cover image.
                 GLib.Thread.new("download-artwork", self._download_and_set_artwork, mp.arturl)
             else:
                 self._set_cover_image(mp.arturl)
@@ -158,7 +171,6 @@ class PlayerBox(Box):
             monitor = file_obj.monitor_file(Gio.FileMonitorFlags.NONE, None)
             monitor.connect("changed", self.on_wallpaper_changed)
             self._wallpaper_monitor = monitor
-
         self.update_play_pause_icon()
         self.progressbar.set_visible(True)
         self.time.set_visible(True)
@@ -166,7 +178,6 @@ class PlayerBox(Box):
         if player_name == "firefox" or (hasattr(mp, "can_seek") and not mp.can_seek):
             self.progressbar.set_visible(False)
             self.time.set_visible(False)
-            # Hide backward and forward buttons if seeking is not supported.
             self.backward.set_visible(False)
             self.forward.set_visible(False)
         else:
@@ -342,14 +353,7 @@ class Player(Box):
                         break
                 if default_label:
                     label_player_name = getattr(default_label, "player_name", default_label.get_text().lower())
-                    if label_player_name == "firefox":
-                        icon_markup = icons.firefox
-                    elif label_player_name == "spotify":
-                        icon_markup = icons.spotify
-                    elif label_player_name in ("chromium", "brave"):
-                        icon_markup = icons.chromium
-                    else:
-                        icon_markup = icons.disc
+                    icon_markup = get_player_icon_markup_by_name(label_player_name)
                     btn.remove(default_label)
                     new_label = Label(name="player-label", markup=icon_markup)
                     new_label.player_name = label_player_name
@@ -368,17 +372,188 @@ class Player(Box):
                 if default_label:
                     label_player_name = getattr(default_label, "player_name", default_label.get_text().lower())
                     if label_player_name == player_name.lower():
-                        if player_name.lower() == "firefox":
-                            icon_markup = icons.firefox
-                        elif player_name.lower() == "spotify":
-                            icon_markup = icons.spotify
-                        elif player_name.lower() in ("chromium", "brave"):
-                            icon_markup = icons.chromium
-                        else:
-                            icon_markup = icons.disc
+                        icon_markup = get_player_icon_markup_by_name(player_name)
                         btn.remove(default_label)
                         new_label = Label(name="player-label", markup=icon_markup)
                         new_label.player_name = player_name.lower()
                         btn.add(new_label)
                         new_label.show_all()
         return False
+    
+
+class PlayerSmall(CenterBox):
+    def __init__(self):
+        super().__init__(orientation="h", h_align="fill", v_align="center")
+        self._show_artist = False  # toggle flag
+
+        self.mpris_icon = Button(
+            name="compact-mpris-icon",
+            child=Label(name="compact-mpris-icon-label", markup=icons.disc)
+        )
+        # Remove scroll events; instead, add button press events.
+        self.mpris_icon.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        self.mpris_icon.connect("button-press-event", self._on_icon_button_press)
+        # Prevent the child from propagating events.
+        child = self.mpris_icon.get_child()
+        child.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        child.connect("button-press-event", lambda widget, event: True)
+        # Add hover effect
+        add_hover_cursor(self.mpris_icon)
+
+        self.mpris_label = Label(
+            name="compact-mpris-label",
+            label="Nothing Playing",
+            ellipsization="end"
+        )
+        self.mpris_button = Button(
+            name="compact-mpris-button",
+            child=Label(name="compact-mpris-button-label", markup=icons.play)
+        )
+        self.mpris_button.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        self.mpris_button.connect("button-press-event", self._on_play_pause_button_press)
+        # Add hover effect
+        add_hover_cursor(self.mpris_button)
+
+        # Create additional compact view.
+        self.mpris_small = CenterBox(
+            name="compact-mpris",
+            orientation="h",
+            h_expand=True,
+            h_align="fill",
+            v_align="center",
+            start_children=self.mpris_icon,
+            center_children=self.mpris_label,
+            end_children=self.mpris_button,
+        )
+        self.add(self.mpris_small)
+
+        self.mpris_manager = MprisPlayerManager()
+        self.mpris_player = None
+        # Almacenar el índice del reproductor actual
+        self.current_index = 0
+
+        players = self.mpris_manager.players
+        if players:
+            mp = MprisPlayer(players[self.current_index])
+            self.mpris_player = mp
+            self._apply_mpris_properties()
+            self.mpris_player.connect("changed", self._on_mpris_changed)
+        else:
+            self._apply_mpris_properties()
+
+        self.mpris_manager.connect("player-appeared", self.on_player_appeared)
+        self.mpris_manager.connect("player-vanished", self.on_player_vanished)
+        self.mpris_button.connect("clicked", self._on_play_pause_clicked)
+
+    def _apply_mpris_properties(self):
+        if not self.mpris_player:
+            self.mpris_label.set_text("Nothing Playing")
+            self.mpris_button.get_child().set_markup(icons.stop)
+            self.mpris_icon.get_child().set_markup(icons.disc)
+            return
+
+        mp = self.mpris_player
+
+        # Toggle between title and artist.
+        text = (mp.artist if self._show_artist and mp.artist
+                else (mp.title if mp.title and mp.title.strip()
+                      else "Nothing Playing"))
+        self.mpris_label.set_text(text)
+
+        # Choose icon based on player name.
+        player_name = mp.player_name.lower() if hasattr(mp, "player_name") and mp.player_name else ""
+        icon_markup = get_player_icon_markup_by_name(player_name)
+        self.mpris_icon.get_child().set_markup(icon_markup)
+        self.update_play_pause_icon()
+
+    def _on_icon_button_press(self, widget, event):
+        from gi.repository import Gdk
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            players = self.mpris_manager.players
+            if not players:
+                return True
+
+            # Cambiar de reproductor según el botón presionado.
+            if event.button == 1:  # Left-click: reproductor anterior
+                self.current_index = (self.current_index - 1) % len(players)
+            elif event.button == 3:  # Right-click: reproductor siguiente
+                self.current_index = (self.current_index + 1) % len(players)
+            elif event.button == 2:  # Middle-click: toggle entre title y artist
+                self._on_icon_clicked(widget)
+                return True
+
+            mp_new = MprisPlayer(players[self.current_index])
+            self.mpris_player = mp_new
+            # Conectar el evento "changed" para que se actualice el botón de play/pausa
+            self.mpris_player.connect("changed", self._on_mpris_changed)
+            # Se remueve el reinicio de self._show_artist para que la selección (artist/title) persista
+            self._apply_mpris_properties()
+            return True  # Se consume el evento
+        return True
+
+    def _on_play_pause_button_press(self, widget, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:  # Click izquierdo -> track anterior
+                if self.mpris_player:
+                    self.mpris_player.previous()
+                    self.mpris_button.get_child().set_markup(icons.prev)
+                    GLib.timeout_add(500, self._restore_play_pause_icon)
+            elif event.button == 3:  # Click derecho -> siguiente track
+                if self.mpris_player:
+                    self.mpris_player.next()
+                    self.mpris_button.get_child().set_markup(icons.next)
+                    GLib.timeout_add(500, self._restore_play_pause_icon)
+            elif event.button == 2:  # Click medio -> play/pausa
+                if self.mpris_player:
+                    self.mpris_player.play_pause()
+                    self.update_play_pause_icon()
+            return True
+        return True
+
+    def _restore_play_pause_icon(self):
+        self.update_play_pause_icon()
+        return False
+
+    def _on_icon_clicked(self, widget):
+        if not self.mpris_player:
+            return
+        # Toggle between showing title and artist.
+        self._show_artist = not self._show_artist
+        text = (self.mpris_player.artist if self._show_artist and self.mpris_player.artist
+                else (self.mpris_player.title if self.mpris_player.title and self.mpris_player.title.strip()
+                      else "Nothing Playing"))
+        self.mpris_label.set_text(text)
+
+    def update_play_pause_icon(self):
+        if self.mpris_player and self.mpris_player.playback_status == "playing":
+            self.mpris_button.get_child().set_markup(icons.pause)
+        else:
+            self.mpris_button.get_child().set_markup(icons.play)
+
+    def _on_play_pause_clicked(self, button):
+        if self.mpris_player:
+            self.mpris_player.play_pause()
+            self.update_play_pause_icon()
+
+    def _on_mpris_changed(self, *args):
+        # Update properties when the player's state changes.
+        self._apply_mpris_properties()
+
+    def on_player_appeared(self, manager, player):
+        # When a new player appears, use it if no player is active.
+        if not self.mpris_player:
+            mp = MprisPlayer(player)
+            self.mpris_player = mp
+            self._apply_mpris_properties()
+            self.mpris_player.connect("changed", self._on_mpris_changed)
+
+    def on_player_vanished(self, manager, player_name):
+        players = self.mpris_manager.players
+        if players and self.mpris_player and self.mpris_player.player_name == player_name:
+            self.current_index = self.current_index % len(players)
+            new_player = MprisPlayer(players[self.current_index])
+            self.mpris_player = new_player
+            self.mpris_player.connect("changed", self._on_mpris_changed)
+        elif not players:
+            self.mpris_player = None
+        self._apply_mpris_properties()
