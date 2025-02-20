@@ -1,5 +1,6 @@
 import os
 import hashlib
+import shutil        # <-- added import for shutil
 from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk  # Se agregó Gdk para capturar teclas
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
@@ -15,9 +16,14 @@ import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 
 class WallpaperSelector(Box):
-    CACHE_DIR = os.path.expanduser("~/.cache/ax-shell/wallpapers")
+    CACHE_DIR = os.path.expanduser("~/.cache/ax-shell/thumbs")  # Changed from wallpapers to thumbs
 
     def __init__(self, **kwargs):
+        # Delete the old cache directory if it exists
+        old_cache_dir = os.path.expanduser("~/.cache/ax-shell/wallpapers")
+        if os.path.exists(old_cache_dir):
+            shutil.rmtree(old_cache_dir)
+        
         super().__init__(name="wallpapers", spacing=4, orientation="v", h_expand=False, v_expand=False, **kwargs)
         os.makedirs(self.CACHE_DIR, exist_ok=True)
         self.files = sorted([f for f in os.listdir(data.WALLPAPERS_DIR) if self._is_image(f)])
