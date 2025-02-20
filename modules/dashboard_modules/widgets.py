@@ -75,7 +75,16 @@ class Widgets(Box):
             orientation="h",
             spacing=8,
             children=[
-                self.box_2,
+                Box(
+                    name="container-sub-1",
+                    h_expand=True,
+                    v_expand=True,
+                    spacing=8,
+                    children=[
+                        Calendar(),
+                        self.box_2,
+                    ]
+                ),
                 self.box_3,
             ]
         )

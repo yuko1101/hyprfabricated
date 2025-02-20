@@ -12,8 +12,12 @@
   border-radius: 20px;
 }
 
+#container-sub-1 {
+  min-width: 750px;
+}
+
 #box-2 {
-  min-width: 610px;
+  min-width: 350px;
 }
 
 #box-3 {

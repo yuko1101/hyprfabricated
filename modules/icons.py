@@ -101,6 +101,9 @@ spotify: str = "&#xfe86;"
 disc: str = "&#x1003e;"
 disc_off: str = "&#xf118;"
 
+# Misc
+dot: str = "&#xf698;"
+
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 
 def apply_span() -> None:

@@ -30,8 +30,8 @@
 
 #notch-content.dashboard {
   padding: 16px;
-  min-height: 407px;
-  min-width: 940px;
+  min-height: 430px;
+  min-width: 1070px;
   border-radius: 0 0 36px 36px;
 }
 
@@ -71,7 +71,6 @@
 
 #app-launcher,
 #dashboard,
-#wallpapers,
 #notification,
 #overview,
 #power-menu,
@@ -83,8 +82,6 @@
 
 #app-launcher.open,
 #dashboard.open,
-#wallpapers.open,
-#wallpapers-viewport.open,
 #notification.open,
 #overview.open,
 #power-menu.open,
@@ -107,22 +104,32 @@
   margin-right: -16px;
 }
 
-#compact-mpris-icon-label, #compact-mpris-button-label {
+#compact-mpris-icon-label {
+  color: var(--primary);
+}
+
+#compact-mpris-icon-label,
+#compact-mpris-button-label {
   font-size: 20px;
 }
 
-#compact-mpris-icon, #compact-mpris-button {
+#compact-mpris-icon,
+#compact-mpris-button {
   margin: 0 10px;
 }
 
-#compact-mpris-icon:hover, #compact-mpris-button:hover {
-  background-color: var(--foreground);
-}
-
-#compact-mpris-icon:active, #compact-mpris-button:active {
+#compact-mpris-icon:hover,
+#compact-mpris-button:hover {
   background-color: var(--primary);
 }
 
-#compact-mpris-icon:hover #compact-mpris-icon-label, #compact-mpris-button:hover #compact-mpris-button-label {
+#compact-mpris-icon:active,
+#compact-mpris-button:active {
+  background-color: var(--primary);
+}
+
+#compact-mpris-icon:hover #compact-mpris-icon-label,
+#compact-mpris-button:hover #compact-mpris-button-label {
   color: var(--background);
 }
+

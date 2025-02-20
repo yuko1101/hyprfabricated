@@ -167,7 +167,7 @@ bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend '
 
 source = {home}/.config/Ax-Shell/config/hypr/colors.conf
 
-exec = ln -sf $wallpaper ~/.current.wall
+exec = cp $wallpaper ~/.current.wall
 
 general {{
     col.active_border = 0xff$primary

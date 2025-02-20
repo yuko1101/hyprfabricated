@@ -93,7 +93,6 @@ class Notch(Window):
                 self.compact,
                 self.launcher,
                 self.dashboard,
-                self.wallpapers,
                 self.notification,
                 self.overview,
                 self.power,
