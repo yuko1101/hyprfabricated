@@ -55,11 +55,11 @@ else
 fi
 
 echo "Installing gray-git..."
-yes | yay -S --needed --noconfirm gray-git || true
+yes | yay -Syy --needed --noconfirm gray-git || true
 
 # Install required packages using yay (only if missing)
 echo "Installing required packages..."
-yay -S --needed --noconfirm "${PACKAGES[@]}" || true
+yay -Syy --needed --noconfirm "${PACKAGES[@]}" || true
 
 # Update outdated packages from the list
 echo "Updating outdated required packages..."
