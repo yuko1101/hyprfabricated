@@ -15,6 +15,7 @@ from modules.power import PowerMenu
 from modules.overview import Overview
 from modules.bluetooth import BluetoothConnections
 from modules.corners import MyCorner
+from modules.cavalcade import SpectrumRender
 import modules.icons as icons
 import modules.data as data
 from modules.player import PlayerSmall
@@ -25,7 +26,7 @@ class Notch(Window):
             name="notch",
             layer="top",
             anchor="top",
-            margin="-40px 10px 10px 10px",
+            margin="-41px 10px 10px 10px",
             keyboard_mode="none",
             exclusivity="normal",
             visible=True,
@@ -43,7 +44,7 @@ class Notch(Window):
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'Desktop' if not win_class or win_class == 'unknown' else truncate(win_class, 32)}}",
+                f"{{'Desktop' if not win_class or win_class == 'unknown' else truncate(win_title, 32)}}",
                 truncate=truncate,
             ),
         )
@@ -55,6 +56,8 @@ class Notch(Window):
 
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
 
+        self.spectrum = SpectrumRender()
+        self.spectrum_box = self.spectrum.get_spectrum_box()
         # Create a stack to hold the three views:
         self.compact_stack = Stack(
             name="notch-compact-stack",
@@ -66,6 +69,7 @@ class Notch(Window):
                 self.user_label,
                 self.active_window,
                 self.player_small,
+                self.spectrum_box,
             ]
         )
         self.compact_stack.set_visible_child(self.active_window)

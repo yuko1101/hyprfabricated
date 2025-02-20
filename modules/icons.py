@@ -44,6 +44,16 @@ logout: str = "&#xeba8;"
 reboot: str = "&#xeb13;"
 shutdown: str = "&#xeb0d;"
 
+# Sensors
+battery_25: str = "&#xea2f;"
+battery_50: str = "&#xea30;"
+battery_75: str = "&#xea31;"
+battery_100: str = "&#xea32;"
+battery_charging: str = "&#xea33;"
+
+update: str = "&#xfa0a;"
+updated: str = "&#xf704;"
+
 # Applets
 wifi: str = "&#xeb52;"
 bluetooth: str = "&#xea37;"

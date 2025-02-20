@@ -12,6 +12,9 @@ from config.config import open_config
 import modules.icons as icons
 import modules.data as data
 
+from modules.updates import UpdatesWidget
+from modules.sensors import BatteryBox
+
 class Bar(Window):
     def __init__(self, **kwargs):
         super().__init__(
@@ -40,6 +43,10 @@ class Bar(Window):
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
         self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
+      
+        self.battery_box = BatteryBox()
+
+        self.updates = UpdatesWidget()
 
         self.button_apps = Button(
             name="button-bar",
@@ -116,10 +123,12 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
+                    self.date_time,
+                    self.updates,
                     self.button_color,
+                    self.battery_box,
                     self.systray,
                     self.button_config,
-                    self.date_time,
                     self.button_power,
                 ],
             ),
