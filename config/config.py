@@ -106,9 +106,11 @@ def ensure_matugen_config():
     with open(config_path, 'w') as f:
         toml.dump(merged_config, f)
 
-    # Trigger image generation
-    image_path = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
-    os.system(f"matugen image {image_path}")
+    # Trigger image generation if "~/.current.wall" does not exist
+    current_wall = os.path.expanduser("~/.current.wall")
+    if not os.path.exists(current_wall):
+        image_path = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
+        os.system(f"matugen image {image_path}")
 
 
 def ensure_fonts():
@@ -155,7 +157,6 @@ bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killa
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
-bind = {bind_vars['prefix_walls']}, {bind_vars['suffix_walls']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpaper Selector | Default: SUPER + COMMA
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE

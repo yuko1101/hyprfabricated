@@ -18,7 +18,6 @@ class WallpaperSelector(Box):
 
     def __init__(self, **kwargs):
         super().__init__(name="wallpapers", spacing=4, orientation="v", h_expand=False, v_expand=False, **kwargs)
-        self.notch = kwargs["notch"]
         os.makedirs(self.CACHE_DIR, exist_ok=True)
         self.files = sorted([f for f in os.listdir(data.WALLPAPERS_DIR) if self._is_image(f)])
         self.thumbnails = []
@@ -140,9 +139,6 @@ class WallpaperSelector(Box):
                     except Exception as e:
                         print(f"Error deleting cache for changed file {file_name}: {e}")
                 self.executor.submit(self._process_file, file_name)
-
-    def close_selector(self):
-        self.notch.close_notch()
 
     def arrange_viewport(self, query: str = ""):
         model = self.viewport.get_model()

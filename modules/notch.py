@@ -10,7 +10,6 @@ from fabric.utils.helpers import FormattedString, truncate
 from gi.repository import GLib, Gdk, Gtk
 from modules.launcher import AppLauncher
 from modules.dashboard import Dashboard
-from modules.wallpapers import WallpaperSelector
 from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
 from modules.overview import Overview
@@ -35,7 +34,6 @@ class Notch(Window):
 
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
-        self.wallpapers = WallpaperSelector(notch=self)
         self.notification = NotificationContainer(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
@@ -140,7 +138,6 @@ class Notch(Window):
 
         self.add(self.notch_box)
         self.show_all()
-        self.wallpapers.viewport.hide()
 
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
@@ -163,12 +160,9 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.wallpapers, self.notification, self.overview, self.power, self.bluetooth]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth]:
             widget.remove_style_class("open")
-            if widget == self.wallpapers:
-                self.wallpapers.viewport.hide()
-                self.wallpapers.viewport.set_property("name", None)
-        for style in ["launcher", "dashboard", "wallpapers", "notification", "overview", "power", "bluetooth"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -182,7 +176,6 @@ class Notch(Window):
         widgets = {
             "launcher": self.launcher,
             "dashboard": self.dashboard,
-            "wallpapers": self.wallpapers,
             "notification": self.notification,
             "overview": self.overview,
             "power": self.power,
@@ -209,21 +202,6 @@ class Notch(Window):
 
             if widget == "notification":
                 self.set_keyboard_mode("none")
-
-            if widget == "wallpapers":
-                self.wallpapers.search_entry.set_text("")
-                self.wallpapers.search_entry.grab_focus()
-                GLib.timeout_add(
-                    500, 
-                    lambda: (
-                        self.wallpapers.viewport.show(), 
-                        self.wallpapers.viewport.set_property("name", "wallpaper-icons")
-                    )
-                )
-
-            if widget != "wallpapers":
-                self.wallpapers.viewport.hide()
-                self.wallpapers.viewport.set_property("name", None)
 
             if widget == "dashboard" and self.dashboard.stack.get_visible_child() != self.dashboard.stack.get_children()[4]:
                 self.dashboard.stack.set_visible_child(self.dashboard.stack.get_children()[0])

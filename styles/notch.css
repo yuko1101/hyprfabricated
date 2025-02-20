@@ -35,13 +35,6 @@
   border-radius: 0 0 36px 36px;
 }
 
-#notch-content.wallpapers {
-  padding: 16px;
-  min-height: 420px;
-  min-width: 620px;
-  border-radius: 0 0 36px 36px;
-}
-
 #notch-content.notification {
   padding: 16px;
   min-height: 45px;

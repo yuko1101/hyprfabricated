@@ -33,7 +33,7 @@ class Dashboard(Box):
         self.widgets = Widgets(notch=self.notch)
         self.pins = Pins()
         self.kanban = Kanban()
-        self.wallpapers = WallpaperSelector(notch=None)
+        self.wallpapers = WallpaperSelector()
 
         self.stack = Stack(
             name="stack",
