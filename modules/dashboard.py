@@ -1,18 +1,23 @@
 import os
+import random
 from fabric.widgets.box import Box
+from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
+from fabric.widgets.image import Image
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
-from gi.repository import GLib, Gtk, Vte, Pango
+gi.require_version('GdkPixbuf', '2.0')
+from gi.repository import GLib, Gtk, Vte, Pango, GdkPixbuf
 import modules.icons as icons
 from modules.dashboard_modules.buttons import Buttons
 from modules.dashboard_modules.widgets import Widgets
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
 from modules.kanban import Kanban
+import modules.data as data
 
 class Dashboard(Box):
     def __init__(self, **kwargs):
@@ -23,7 +28,6 @@ class Dashboard(Box):
             h_align="fill",
             v_align="fill",
             h_expand=True,
-            # v_expand=True,
             visible=True,
             all_visible=True,
         )
@@ -66,27 +70,40 @@ class Dashboard(Box):
             label="Wallpapers",
         )
 
-        self.terminal = Vte.Terminal()
-        user_shell = os.environ.get("SHELL", "/bin/bash")
-        self.terminal.spawn_async(
-            Vte.PtyFlags.DEFAULT,                  # Flags
-            os.path.expanduser("~"),               # Directorio de trabajo
-            [user_shell],                          # Comando (shell del usuario)
-            None,                                  # Variables de entorno
-            GLib.SpawnFlags.DO_NOT_REAP_CHILD,     # Spawn flags
-            None,                                  # Función de configuración (opcional)
-            None,                                  # Datos adicionales para la función (opcional)
-            -1,                                    # Timeout
-            None,                                  # GLib.Cancellable
-            None                                   # Callback de finalización
+        # Create the coming_soon labels as attributes for later update
+        self.coming_soon_start_label = Label(
+            name="coming-soon-label",
+            label="I need... \n\n",
+            justification="center",
         )
-        self.terminal.set_font(Pango.FontDescription("ZedMono Nerd Font"))
+        self.coming_soon_end_label = Label(
+            name="coming-soon-label",
+            label="\n\n To sleep...",
+            justification="center",
+        )
+
+        self.soon = Image(
+            name="coming-soon",
+            pixbuf=GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                f"{data.HOME_DIR}/.config/Ax-Shell/assets/soon.png", 300, 300, True
+            ),
+        )
+
+        self.coming_soon = CenterBox(
+            name="coming-soon",
+            h_align="center",
+            v_align="center",
+            spacing=8,
+            start_children=[self.coming_soon_start_label],
+            center_children=[self.soon],
+            end_children=[self.coming_soon_end_label],
+        )
 
         self.stack.add_titled(self.widgets, "widgets", "Widgets")
         self.stack.add_titled(self.pins, "pins", "Pins")
         self.stack.add_titled(self.kanban, "kanban", "Kanban")
         self.stack.add_titled(self.wallpapers, "wallpapers", "Wallpapers")
-        self.stack.add_titled(self.terminal, "terminal", "Terminal")
+        self.stack.add_titled(self.coming_soon, "coming-soon", "Coming soon...")
 
         self.switcher.set_stack(self.stack)
         self.switcher.set_hexpand(True)
@@ -118,6 +135,18 @@ class Dashboard(Box):
         return children.index(current_child) if current_child in children else -1
 
     def on_visible_child_changed(self, stack, param):
-        if stack.get_visible_child() == self.wallpapers:
+        visible = stack.get_visible_child()
+        if visible == self.wallpapers:
             self.wallpapers.search_entry.set_text("")
             self.wallpapers.search_entry.grab_focus()
+        if visible == self.coming_soon:
+            # Define paired messages for the coming_soon widget
+            text_pairs = [
+                ("I need... \n\n", "\n\n To sleep..."),
+                ("Another day... \n\n", "\n\n Another bug..."),
+                ("I really need... \n\n", "\n\n An energy drink..."),
+                ("I've been\n7 minutes\nwithout ricing... \n\n", "\n\n TIME TO CODE!")
+            ]
+            new_start_text, new_end_text = random.choice(text_pairs)
+            self.coming_soon_start_label.set_text(new_start_text)
+            self.coming_soon_end_label.set_text(new_end_text)
