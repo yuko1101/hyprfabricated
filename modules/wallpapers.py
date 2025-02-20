@@ -2,6 +2,7 @@ import os
 import hashlib
 from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk  # Se agregó Gdk para capturar teclas
 from fabric.widgets.box import Box
+from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
 from fabric.widgets.button import Button
 from fabric.widgets.scrolledwindow import ScrolledWindow
@@ -45,7 +46,7 @@ class WallpaperSelector(Box):
         )
 
         self.search_entry = Entry(
-            name="search-entry",
+            name="search-entry-walls",
             placeholder="Search Wallpapers...",
             h_expand=True,
             notify_text=lambda entry, *_: self.arrange_viewport(entry.get_text()),
@@ -74,28 +75,15 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.set_active_id("scheme-tonal-spot")
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
-        self.dropdown_box = Box(
-            name="dropdown-box",
-            spacing=10,
-            orientation="h",
-            children=[
-                self.scheme_dropdown,
-            ],
-        )
-
-        self.header_box = Box(
+        self.header_box = CenterBox(
             name="header-box",
             spacing=10,
             orientation="h",
-            children=[
+            center_children=[
                 self.search_entry,
-                self.dropdown_box,
-                Button(
-                    name="close-button",
-                    child=Label(name="close-label", markup=icons.cancel),
-                    tooltip_text="Close Selector",
-                    on_clicked=lambda *_: self.close_selector(),
-                ),
+            ],
+            end_children=[
+                self.scheme_dropdown,
             ],
         )
 
@@ -171,7 +159,21 @@ class WallpaperSelector(Box):
         print(f"Color scheme selected: {selected_scheme}")
 
     def on_search_entry_key_press(self, widget, event):
-        # Capturamos las flechas para navegación bidimensional y deshabilitamos el movimiento del cursor en el Entry
+        if event.state & Gdk.ModifierType.SHIFT_MASK:
+            if event.keyval in (Gdk.KEY_Up, Gdk.KEY_Down):
+                schemes_list = list(self.schemes.keys())
+                current_id = self.scheme_dropdown.get_active_id()
+                current_index = schemes_list.index(current_id) if current_id in schemes_list else 0
+                if event.keyval == Gdk.KEY_Up:
+                    new_index = (current_index - 1) % len(schemes_list)
+                else:
+                    new_index = (current_index + 1) % len(schemes_list)
+                self.scheme_dropdown.set_active(new_index)
+                return True
+            elif event.keyval == Gdk.KEY_Right:
+                self.scheme_dropdown.popup()
+                return True
+
         if event.keyval in (Gdk.KEY_Up, Gdk.KEY_Down, Gdk.KEY_Left, Gdk.KEY_Right):
             self.move_selection_2d(event.keyval)
             return True
@@ -179,9 +181,6 @@ class WallpaperSelector(Box):
             if self.selected_index != -1:
                 path = Gtk.TreePath.new_from_indices([self.selected_index])
                 self.on_wallpaper_selected(self.viewport, path)
-            return True
-        elif event.keyval == Gdk.KEY_Escape:
-            self.close_selector()
             return True
         return False
 
