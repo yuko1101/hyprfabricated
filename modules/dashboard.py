@@ -73,30 +73,46 @@ class Dashboard(Box):
         # Create the coming_soon labels as attributes for later update
         self.coming_soon_start_label = Label(
             name="coming-soon-label",
-            label="I need... \n\n",
+            label="I need...",
             justification="center",
         )
         self.coming_soon_end_label = Label(
             name="coming-soon-label",
-            label="\n\n To sleep...",
+            label="To sleep...",
             justification="center",
         )
 
         self.soon = Image(
             name="coming-soon",
             pixbuf=GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                f"{data.HOME_DIR}/.config/Ax-Shell/assets/soon.png", 300, 300, True
+                f"{data.HOME_DIR}/.config/Ax-Shell/assets/soon.png", 366, 300, True
             ),
         )
 
-        self.coming_soon = CenterBox(
+        self.coming_soon = Box(
             name="coming-soon",
-            h_align="center",
-            v_align="center",
+            h_align="fill",
+            v_align="fill",
+            h_expand=True,
+            v_expand=True,
             spacing=8,
-            start_children=[self.coming_soon_start_label],
-            center_children=[self.soon],
-            end_children=[self.coming_soon_end_label],
+            children=[
+            Box(
+                h_align="center",
+                v_align="fill",
+                h_expand=True,
+                v_expand=True,
+                children=[self.coming_soon_start_label],
+            ),
+            self.soon,
+            Box(
+                h_align="center",
+                v_align="fill",
+                h_expand=True,
+                v_expand=True,
+                children=[self.coming_soon_end_label],
+            ),
+            ],
         )
 
         self.stack.add_titled(self.widgets, "widgets", "Widgets")
@@ -142,11 +158,26 @@ class Dashboard(Box):
         if visible == self.coming_soon:
             # Define paired messages for the coming_soon widget
             text_pairs = [
-                ("I need... \n\n", "\n\n To sleep..."),
-                ("Another day... \n\n", "\n\n Another bug..."),
-                ("I really need... \n\n", "\n\n An energy drink..."),
-                ("I've been\n7 minutes\nwithout ricing... \n\n", "\n\n TIME TO CODE!")
+                ("I need...", "To sleep..."),
+                ("Another day...", " Another bug..."),
+                ("I really need...", "An energy drink..."),
+                ("7 minutes without ricing...", "TIME TO CODE!"),
+                ("git commit... git p-", "tf is a merge?"),
+                ("This should work...", "Why doesn't it work?"),
+                ("Just one more line...", "8 hours later..."),
+                ("Hello world...", "Segfault."),
+                ("I'll fix that later...", "Technical debt intensifies."),
+                ("sudo rm -rf /", "Wait, NO—"),
+                ("Almost done...", "SyntaxError: unexpected EOF"),
+                ("AI will take our jobs...", "Meanwhile: writing regex."),
+                ("Arch is unstable!", "3 years, no reinstall."),
+                ("printf(\"Hello world\");", "Where is my semicolon?"),
+                ("I'll sleep early today...", "3AM: still debugging."),
+                ("Oh, a tiny bug...", "Refactoring the whole codebase."),
+                ("rm -rf node_modules", "Project reborn."),
+                ("Pipenv, poetry, venv...", "Which one was I using?"),
             ]
+
             new_start_text, new_end_text = random.choice(text_pairs)
             self.coming_soon_start_label.set_text(new_start_text)
             self.coming_soon_end_label.set_text(new_end_text)
