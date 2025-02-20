@@ -156,8 +156,8 @@ class Dashboard(Box):
             self.wallpapers.search_entry.set_text("")
             self.wallpapers.search_entry.grab_focus()
         if visible == self.coming_soon:
-            # Define paired messages for the coming_soon widget
-            text_pairs = [
+            # Define paired messages for the coming_soon widget using tuples
+            text_pairs = (
                 ("I need...", "To sleep..."),
                 ("Another day...", " Another bug..."),
                 ("I really need...", "An energy drink..."),
@@ -176,7 +176,7 @@ class Dashboard(Box):
                 ("Oh, a tiny bug...", "Refactoring the whole codebase."),
                 ("rm -rf node_modules", "Project reborn."),
                 ("Pipenv, poetry, venv...", "Which one was I using?"),
-            ]
+            )
 
             new_start_text, new_end_text = random.choice(text_pairs)
             self.coming_soon_start_label.set_text(new_start_text)

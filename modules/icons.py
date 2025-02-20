@@ -44,6 +44,11 @@ logout: str = "&#xeba8;"
 reboot: str = "&#xeb13;"
 shutdown: str = "&#xeb0d;"
 
+# Power Manager
+power_saving: str = "&#xed4f;"
+power_balanced: str = "&#xfa77;"
+power_performance: str = "&#xec45;"
+
 # Applets
 wifi: str = "&#xeb52;"
 bluetooth: str = "&#xea37;"

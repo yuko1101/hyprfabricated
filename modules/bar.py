@@ -11,6 +11,7 @@ from modules.systemtray import SystemTray
 from config.config import open_config
 import modules.icons as icons
 import modules.data as data
+from modules.battery import Battery
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -87,6 +88,8 @@ class Bar(Window):
         self.button_color.connect("leave-notify-event", self.on_button_leave)
         self.button_color.connect("button-press-event", self.colorpicker)
 
+        self.battery = Battery()
+
         self.button_config = Button(
             name="button-bar",
             on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
@@ -116,6 +119,7 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
+                    self.battery,
                     self.button_color,
                     self.systray,
                     self.button_config,
