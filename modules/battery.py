@@ -59,6 +59,8 @@ class Battery(Box):
             value=0,
             size=28,
             line_width=2,
+            start_angle=180,
+            end_angle=360,
         )
 
         self.bat_overlay = Overlay(
@@ -159,15 +161,7 @@ class Battery(Box):
 
     def update_battery(self, sender, battery_data):
         """
-        Updates the battery widget.
-          - Hides the battery overlay if no battery is found (value == 0).
-          - Otherwise, makes sure the overlay is visible and updates the circular progress bar.
-        Additionally, updates the battery level label to show the current percentage and sets the
-        battery icon and style based on charging status and battery level:
-            - icons.charging when charging
-            - icons.discharging when discharging
-            - icons.battery when at 100%
-            - icons.alert (and adds "alert" style) when the battery is 10% or lower.
+        Updates the battery widget...
         """
         value, status = battery_data
         if value == 0:
@@ -181,18 +175,20 @@ class Battery(Box):
         percentage = int(value * 100)
         self.bat_level.set_label(f"{percentage}%")
 
-        # Update battery icon and style based on battery level and charging status.
-        if percentage <= 10:
+        # Actualizar el icono de la batería basado en el nivel y el estado de carga.
+        if percentage <= 15:
             self.bat_icon.set_markup(icons.alert)
             self.bat_icon.add_style_class("alert")
+            self.bat_circle.add_style_class("alert")
         else:
             self.bat_icon.remove_style_class("alert")
-            if percentage == 100:
+            self.bat_circle.remove_style_class("alert")
+            if status == "Discharging":  # Muestra discharging en cualquier nivel, incluso al 100%.
+                self.bat_icon.set_markup(icons.discharging)
+            elif percentage == 100:
                 self.bat_icon.set_markup(icons.battery)
             elif status == "Charging":
                 self.bat_icon.set_markup(icons.charging)
-            elif status == "Discharging":
-                self.bat_icon.set_markup(icons.discharging)
             else:
                 self.bat_icon.set_markup(icons.battery)
 

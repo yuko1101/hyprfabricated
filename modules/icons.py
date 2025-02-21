@@ -50,7 +50,7 @@ power_balanced: str = "&#xfa77;"
 power_performance: str = "&#xec45;"
 charging: str = "&#x10063;"
 discharging: str = "&#x1006a;"
-alert: str = "&#xea06;"
+alert: str = "&#xefb4;"
 
 # Applets
 wifi: str = "&#xeb52;"
@@ -93,6 +93,7 @@ circle_plus: str = "&#xea69;"
 
 # Pins
 copy_plus: str = "&#xfdae;"
+paperclip: str = "&#xeb02;"
 
 # Confirm
 accept: str = "&#xea5e;"
