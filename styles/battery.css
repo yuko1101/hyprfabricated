@@ -44,5 +44,5 @@
 #battery-level {
     color: var(--primary);
     font-weight: bold;
-    margin-left: 4px;
+    margin: 0 4px;
 }

@@ -7,6 +7,7 @@ set -o pipefail  # Prevent errors in a pipeline from being masked
 REPO_URL="https://github.com/Axenide/Ax-Shell"
 INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
+    acpi
     auto-cpufreq
     fabric-cli-git
     gnome-bluetooth-3.0
