@@ -145,6 +145,25 @@ tooltip > * {
   background-color: var(--shadow);
   transition: all 0.1s ease;
 }
+.VolumeWidget {
+margin: 20px;
+}
+#button-bar-vol {
+  padding-left: 4px;
+  padding-right: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  margin-top: 4px;
+  border-radius: 16px;
+  background-color: var(--shadow);
+  transition: all 0.1s ease;
+}
+#button-volume {
+  background-color: var(--shadow);
+color: var(--shadow);
+ border: solid 0px var(--primary);
+  transition: all 0.1s ease;
+}
 
 #button-bar-label {
   color: var(--primary);
