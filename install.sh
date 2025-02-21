@@ -7,6 +7,8 @@ set -o pipefail  # Prevent errors in a pipeline from being masked
 REPO_URL="https://github.com/Axenide/Ax-Shell"
 INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
+    acpi
+    auto-cpufreq
     fabric-cli-git
     gnome-bluetooth-3.0
     grimblast
@@ -77,6 +79,19 @@ if [ ${#to_update[@]} -gt 0 ]; then
 else
     echo "All required packages are up-to-date."
 fi
+
+# Configure sudoers so auto-cpufreq commands run without a sudo password
+echo "Configuring sudoers for auto-cpufreq commands..."
+SUDOERS_FILE="/etc/sudoers.d/ax-shell-auto-cpufreq"
+RULE="$USER ALL=(ALL) NOPASSWD: /usr/bin/auto-cpufreq"
+if [ ! -f "$SUDOERS_FILE" ] || ! sudo grep -qF "$RULE" "$SUDOERS_FILE"; then
+    echo "$RULE" | sudo tee "$SUDOERS_FILE" > /dev/null
+    sudo chmod 0440 "$SUDOERS_FILE"
+fi
+
+# Enable auto-cpufreq service
+echo "Enabling auto-cpufreq service..."
+sudo systemctl enable --now auto-cpufreq
 
 # Launch Ax-Shell without terminal output
 echo "Starting Ax-Shell..."

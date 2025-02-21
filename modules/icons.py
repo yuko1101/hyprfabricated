@@ -44,6 +44,14 @@ logout: str = "&#xeba8;"
 reboot: str = "&#xeb13;"
 shutdown: str = "&#xeb0d;"
 
+# Power Manager
+power_saving: str = "&#xed4f;"
+power_balanced: str = "&#xfa77;"
+power_performance: str = "&#xec45;"
+charging: str = "&#x10063;"
+discharging: str = "&#x1006a;"
+alert: str = "&#xefb4;"
+
 # Sensors
 battery_25: str = "&#xea2f;"
 battery_50: str = "&#xea30;"
@@ -95,6 +103,7 @@ circle_plus: str = "&#xea69;"
 
 # Pins
 copy_plus: str = "&#xfdae;"
+paperclip: str = "&#xeb02;"
 
 # Confirm
 accept: str = "&#xea5e;"

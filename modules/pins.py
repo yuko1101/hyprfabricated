@@ -93,7 +93,7 @@ class Cell(Gtk.EventBox):
         for child in self.box.get_children():
             self.box.remove(child)
         if self.content is None:
-            label = Label(name="pin-add", markup=icons.copy_plus)
+            label = Label(name="pin-add", markup=icons.paperclip)
             self.box.pack_start(label, True, True, 0)
         else:
             if self.content_type == 'file':

@@ -37,6 +37,12 @@
   padding: 0 8px;
 }
 
+#network-menu-button,
+#bluetooth-menu-button {
+  border-left: 1px solid var(--outline);
+  min-width: 24px;
+}
+
 /* Estados Hover para todos los botones relevantes */
 #network-status-button:hover,
 #network-menu-button:hover,
@@ -54,6 +60,11 @@
 #bluetooth-status-button.disabled,
 #bluetooth-menu-button.disabled {
   background-color: var(--surface);
+}
+
+#network-menu-button.disabled,
+#bluetooth-menu-button.disabled {
+  border-left: 1px solid var(--surface-bright);
 }
 
 #network-status-button.disabled:hover,
