@@ -18,6 +18,13 @@ from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
 from modules.player import PlayerSmall
+import json
+
+def truncate_title(title):
+    parts = title.rsplit(' - ', 1)
+    if len(parts) == 1:
+        parts = title.rsplit(' — ', 1)
+    return parts[0] if len(parts) > 1 else title
 
 class Notch(Window):
     def __init__(self, **kwargs):
@@ -43,8 +50,9 @@ class Notch(Window):
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'Desktop' if not win_class or win_class == 'unknown' else truncate(win_title, 32)}}",
+                f"{{'Escritorio' if not win_class or win_class == 'unknown' else truncate(truncate_title(win_title), 32)}}",
                 truncate=truncate,
+                truncate_title=truncate_title,
             ),
         )
         # Add the click connection for active_window.
@@ -55,6 +63,20 @@ class Notch(Window):
 
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
 
+        self.window_title_icon = Label(
+            name="icon-label",
+            markup=icons.desktop,
+        )
+
+        self.window_title = Box(
+            h_align="center",
+            v_align="center",
+            children=[
+                self.window_title_icon,
+                self.active_window,
+            ]
+        )
+
         # Create a stack to hold the three views:
         self.compact_stack = Stack(
             name="notch-compact-stack",
@@ -64,11 +86,13 @@ class Notch(Window):
             transition_duration=100,
             children=[
                 self.user_label,
-                self.active_window,
+                self.window_title,
                 self.player_small,
             ]
         )
         self.compact_stack.set_visible_child(self.active_window)
+
+        self.active_window.connection.connect("event::activewindow", self.update_window_title)
 
         # Create the compact button and set the stack as its child
         self.compact = Gtk.EventBox(name="notch-compact")
@@ -142,6 +166,17 @@ class Notch(Window):
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
+
+    def update_window_title(self, *args):
+        win_data: dict = json.loads(
+            self.active_window.connection.send_command("j/activewindow").reply.decode()
+        )
+        win_class = win_data.get("class", "unknown")
+        win_title = win_data.get("title", win_class)
+        icon = self.get_class_icon(win_class)
+        self.window_title_icon.set_markup(icon)
+        
+
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()
@@ -228,3 +263,31 @@ class Notch(Window):
             return False
         self.compact_stack.set_visible_child(children[new_index])
         return True
+    
+    def get_class_icon(self, win_class):
+        icon = icons.ghost
+        if win_class == "unknown":
+            icon = icons.desktop
+        if win_class == "firefox":
+            icon = icons.firefox
+        elif win_class == "org.kde.dolphin":
+            icon = icons.finder
+        elif win_class == "chromium":
+            icon = icons.chromium
+        elif win_class == "Spotify":
+            icon = icons.spotify
+        elif win_class == "code":
+            icon = icons.code
+        elif win_class == "com.discordapp.Discord":
+            icon = icons.discord
+        elif win_class == "kitty":
+            icon = icons.terminal
+        elif win_class == "obsidian":
+            icon = icons.obsidian
+        elif win_class == "anytype":
+            icon = icons.anytype
+        elif win_class == "zen":
+            icon = icons.safari
+        elif win_class == "com.obsproject.Studio":
+            icon = icons.obs
+        return icon

@@ -127,9 +127,9 @@ class Bar(Window):
                 orientation="h",
                 children=[
                     self.date_time,
+                    self.button_color,
                     self.updates,
                     self.battery,
-                    self.button_color,
                     self.battery_box,
                     self.systray,
                     self.button_config,

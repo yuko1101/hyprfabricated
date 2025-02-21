@@ -114,9 +114,24 @@ trash: str = "&#xeb41;"
 config: str = "&#xeb20;"
 
 # Icons
+desktop: str = "&#xea89;"
 firefox: str = "&#xecfd;"
 chromium: str = "&#xec18;"
 spotify: str = "&#xfe86;"
+code: str = "&#xf3a0;"
+discord: str = "&#xece3;"
+obsidian: str = "&#xeff5;"
+anytype: str = "&#xf495;"
+safari: str = "&#xec23;"
+obs: str = "&#xef70;"
+ghost: str = "&#xfc13;"
+
+finder: str = "&#xf218;"
+folder: str = "&#xeaad;"
+
+terminal: str = "&#xebef;"
+
+
 disc: str = "&#x1003e;"
 disc_off: str = "&#xf118;"
 

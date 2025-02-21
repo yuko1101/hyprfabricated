@@ -482,6 +482,10 @@ class PlayerSmall(CenterBox):
         text = (mp.artist if self._show_artist and mp.artist
                 else (mp.title if mp.title and mp.title.strip()
                       else "Nothing Playing"))
+        
+        if len(text) > 25:
+            text = text[:25] + "..."
+
         self.mpris_label.set_text(text)
 
         # Choose icon based on player name.
@@ -552,6 +556,8 @@ class PlayerSmall(CenterBox):
         text = (self.mpris_player.artist if self._show_artist and self.mpris_player.artist
                 else (self.mpris_player.title if self.mpris_player.title and self.mpris_player.title.strip()
                       else "Nothing Playing"))
+        if len(text) > 25:
+            text = text[:25] + "..."
         self.mpris_label.set_text(text)
 
         self.center_stack.set_visible_child(self.mpris_label)
