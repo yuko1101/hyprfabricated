@@ -22,7 +22,7 @@
 
 #battery-save-label, #battery-balanced-label, #battery-performance-label {
     color: var(--outline);
-    font-size: 16px;
+    font-size: 20px;
 }
 
 #battery-save:hover, #battery-balanced:hover, #battery-performance:hover {

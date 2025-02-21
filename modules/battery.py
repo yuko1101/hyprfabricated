@@ -140,28 +140,36 @@ class Battery(Box):
     def poll_battery(self):
         """
         Polls the battery status by running the "acpi -b" command.
-        If no battery information is found, returns 0.
-        Otherwise, returns the battery percentage as a float between 0 and 1.
+        If no battery information is found, returns (0, None).
+        Otherwise, returns a tuple: (battery percentage as a float between 0 and 1, battery status string)
         """
         try:
             output = subprocess.check_output(["acpi", "-b"]).decode("utf-8").strip()
             if "Battery" not in output:
-                return 0
-            match = re.search(r'(\d+)%', output)
-            if match:
-                percent = int(match.group(1))
-                return percent / 100.0
+                return (0, None)
+            match_percent = re.search(r'(\d+)%', output)
+            match_status = re.search(r'Battery \d+: (\w+)', output)
+            if match_percent:
+                percent = int(match_percent.group(1))
+                status = match_status.group(1) if match_status else None
+                return (percent / 100.0, status)
         except Exception:
             pass
-        return 0
+        return (0, None)
 
-    def update_battery(self, sender, value):
+    def update_battery(self, sender, battery_data):
         """
         Updates the battery widget.
           - Hides the battery overlay if no battery is found (value == 0).
           - Otherwise, makes sure the overlay is visible and updates the circular progress bar.
-        Additionally, updates the battery level label to show the current percentage.
+        Additionally, updates the battery level label to show the current percentage and sets the
+        battery icon and style based on charging status and battery level:
+            - icons.charging when charging
+            - icons.discharging when discharging
+            - icons.battery when at 100%
+            - icons.alert (and adds "alert" style) when the battery is 10% or lower.
         """
+        value, status = battery_data
         if value == 0:
             self.bat_overlay.set_visible(False)
             self.bat_revealer.set_visible(False)
@@ -170,9 +178,23 @@ class Battery(Box):
             self.bat_revealer.set_visible(True)
             self.bat_circle.set_value(value)
         
-        # Update the battery level label with the current percentage.
         percentage = int(value * 100)
         self.bat_level.set_label(f"{percentage}%")
+
+        # Update battery icon and style based on battery level and charging status.
+        if percentage <= 10:
+            self.bat_icon.set_markup(icons.alert)
+            self.bat_icon.add_style_class("alert")
+        else:
+            self.bat_icon.remove_style_class("alert")
+            if percentage == 100:
+                self.bat_icon.set_markup(icons.battery)
+            elif status == "Charging":
+                self.bat_icon.set_markup(icons.charging)
+            elif status == "Discharging":
+                self.bat_icon.set_markup(icons.discharging)
+            else:
+                self.bat_icon.set_markup(icons.battery)
 
     def set_power_mode(self, mode):
         """
