@@ -48,7 +48,7 @@ shutdown: str = "&#xeb0d;"
 power_saving: str = "&#xed4f;"
 power_balanced: str = "&#xfa77;"
 power_performance: str = "&#xec45;"
-charging: str = "&#xeeca;;"
+charging: str = "&#xeeca;"
 discharging: str = "&#x1006a;"
 alert: str = "&#xea06;"
 
