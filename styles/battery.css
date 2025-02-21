@@ -23,7 +23,7 @@
 }
 
 #battery-save, #battery-balanced, #battery-performance {
-    border-radius: 16px;
+    border-radius: 12px;
     min-width: 28px;
     min-height: 28px;
 }
