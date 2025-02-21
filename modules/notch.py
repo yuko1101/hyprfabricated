@@ -60,14 +60,8 @@ class Notch(Window):
 
         # Create additional compact views:
         self.player_small = PlayerSmall()
-
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
-
-        self.window_title_icon = Label(
-            name="icon-label",
-            markup=icons.desktop,
-        )
-
+        self.window_title_icon = Label(name="icon-label", markup=icons.desktop)
         self.window_title = Box(
             h_align="center",
             v_align="center",
@@ -98,7 +92,12 @@ class Notch(Window):
         self.compact = Gtk.EventBox(name="notch-compact")
         self.compact.set_visible(True)
         self.compact.add(self.compact_stack)
-        self.compact.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
+        # Se agrega el mask de smooth scroll junto a scroll y button press.
+        self.compact.add_events(
+            Gdk.EventMask.SCROLL_MASK | 
+            Gdk.EventMask.BUTTON_PRESS_MASK | 
+            Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
         self.compact.connect("scroll-event", self._on_compact_scroll)
         self.compact.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
         # Add cursor change on hover.
@@ -160,6 +159,10 @@ class Notch(Window):
 
         self.hidden = False
 
+        # Variables para controlar la sensibilidad del smooth scroll.
+        self._scroll_accumulator = 0.0
+        self.scroll_threshold = 20.0  # Ajusta este valor para modificar la sensibilidad
+
         self.add(self.notch_box)
         self.show_all()
 
@@ -176,8 +179,6 @@ class Notch(Window):
         icon = self.get_class_icon(win_class)
         self.window_title_icon.set_markup(icon)
         
-
-
     def on_button_enter(self, widget, event):
         window = widget.get_window()
         if window:
@@ -240,7 +241,6 @@ class Notch(Window):
 
             if widget == "dashboard" and self.dashboard.stack.get_visible_child() != self.dashboard.stack.get_children()[4]:
                 self.dashboard.stack.set_visible_child(self.dashboard.stack.get_children()[0])
-
         else:
             self.stack.set_visible_child(self.dashboard)
 
@@ -252,15 +252,27 @@ class Notch(Window):
             self.notch_box.remove_style_class("hidden")
 
     def _on_compact_scroll(self, widget, event):
-        from gi.repository import Gdk
         children = self.compact_stack.get_children()
         current = children.index(self.compact_stack.get_visible_child())
-        if event.direction == Gdk.ScrollDirection.UP:
+        # Manejar smooth scroll con acumulador para ajustar la sensibilidad
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            self._scroll_accumulator += event.delta_y
+            if self._scroll_accumulator < -self.scroll_threshold:
+                new_index = (current - 1) % len(children)
+                self.compact_stack.set_visible_child(children[new_index])
+                self._scroll_accumulator = 0.0
+            elif self._scroll_accumulator > self.scroll_threshold:
+                new_index = (current + 1) % len(children)
+                self.compact_stack.set_visible_child(children[new_index])
+                self._scroll_accumulator = 0.0
+            return True
+        elif event.direction == Gdk.ScrollDirection.UP:
             new_index = (current - 1) % len(children)
         elif event.direction == Gdk.ScrollDirection.DOWN:
             new_index = (current + 1) % len(children)
         else:
             return False
+
         self.compact_stack.set_visible_child(children[new_index])
         return True
     

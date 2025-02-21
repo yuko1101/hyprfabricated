@@ -85,6 +85,7 @@ class UpdatesWidget(Button):
                 f"{self.script_file} -arch -up",
                 lambda _: None,
             )
+            self.update()
             return True
         else:
             self.update()

@@ -2,6 +2,7 @@ import psutil
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.label import Label
+from fabric.widgets.overlay import Overlay
 from fabric.utils import invoke_repeater, exec_shell_command_async
 from fabric.widgets.circularprogressbar import CircularProgressBar
 
@@ -10,10 +11,10 @@ import modules.icons as icons
 
 class BatteryBox(Box):
     def __init__(self, **kwargs):
-        super().__init__(name="button-bar", **kwargs)
+        super().__init__(name="button-bar-vol", **kwargs)
 
         self.icon_label = Label(
-            name="battery-icon-label",
+            name="button-bar-label",
             markup = icons.battery
         )
 
@@ -21,8 +22,17 @@ class BatteryBox(Box):
             name="battery-percentage-label",
             markup = ""
         )
-        self.pack_end(self.battery_percentage_label, True, True, 0)
-        self.pack_end(self.icon_label, True, True, 0)
+        #self.pack_end(self.battery_percentage_label, True, True, 0)
+
+
+        self.progress_bar = CircularProgressBar(
+            name="button-volume", pie=False, size=30, line_width=3,
+        )
+
+        self.overlay = Overlay()
+        self.overlay.add_overlay(self.icon_label)
+        self.overlay.add(self.progress_bar)
+        self.pack_end(self.overlay, True, True, 0)
 
         self.battery_lowest_percentage = 4
         invoke_repeater(500, self.update_label)
@@ -32,6 +42,7 @@ class BatteryBox(Box):
         percentage = int(battery.percent)
         plugged = battery.power_plugged
         secsleft = battery.secsleft
+        self.progress_bar.value = percentage / 100
 
 
 
@@ -80,28 +91,3 @@ class VitalsBox(Box):
     def update_label(self):
         self.circular_progress_bar.animate_value(2.04)
         return True
-    
-class AnimatedCircularProgressBar(CircularProgressBar):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.animator = (
-            Animator(
-                # edit the following parameters to customize the animation
-                bezier_curve=(0.34, 1.56, 0.64, 1.0),
-                duration=0.8,
-                min_value=0,
-                max_value=100,
-                tick_widget=self,
-                notify_value=lambda p, *_: self.set_value(p.value),
-            )
-            .build()
-            .play()
-            .unwrap()
-        )
-
-    def animate_value(self, value: float):
-        self.animator.pause()
-        self.animator.min_value = self.value
-        self.animator.max_value = value
-        self.animator.play()
-        return
