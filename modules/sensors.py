@@ -29,9 +29,15 @@ class BatteryBox(Box):
             name="button-volume", pie=False, size=30, line_width=3,
         )
 
+        self.battery_button = Button()
+        self.battery_button_connected = False
+        
+
+
         self.overlay = Overlay()
         self.overlay.add_overlay(self.icon_label)
         self.overlay.add(self.progress_bar)
+        self.overlay.add_overlay(self.battery_button)
         self.pack_end(self.overlay, True, True, 0)
 
         self.battery_lowest_percentage = 4
@@ -39,10 +45,33 @@ class BatteryBox(Box):
 
     def update_label(self):
         battery = psutil.sensors_battery()
-        percentage = int(battery.percent)
-        plugged = battery.power_plugged
         secsleft = battery.secsleft
+
+        if secsleft == psutil.POWER_TIME_UNLIMITED or secsleft < 0:
+            time_str = "∞"
+
+        else:
+            hours = secsleft // 3600
+            minutes = (secsleft % 3600) // 60
+            seconds = secsleft % 60
+            if hours:
+                time_str = f"{hours}h {minutes}m {seconds}s"
+            elif minutes:
+                time_str = f"{minutes}m {seconds}s"
+            else:
+                time_str = f"{seconds}s"
+
+        percentage = int(battery.percent)
+        self.percentage = percentage
+        plugged = battery.power_plugged
+        secsleft = time_str
+        self.secsleft = secsleft
+        self.battery_button.set_tooltip_text(f"Batería: {percentage}% \nTiempo restante: {secsleft}")
         self.progress_bar.value = percentage / 100
+        if self.battery_button_connected == False:
+            self.battery_button.connect("clicked", self.notify)
+            self.battery_button_connected = True
+
 
 
 
@@ -63,12 +92,15 @@ class BatteryBox(Box):
 
             if percentage <= 10:
                 percentage -= self.battery_lowest_percentage - 1
-                self.notify(percentage, secsleft)
+                self.notify_critical()
 
         return True
     
-    def notify(self, percentage, secsleft):
-        exec_shell_command_async(f"notify-send '{percentage}% útil' '{secsleft} segundos restantes' -u critical -a 'Batería crítica'")
+    def notify_critical(self):
+        exec_shell_command_async(f"notify-send '{self.percentage}% útil' '{self.secsleft} restantes' -u critical -a 'Batería crítica'")
+
+    def notify(self, *args):
+        exec_shell_command_async(f"notify-send '{self.percentage}%' '{self.secsleft} segundos restantes' -a 'Batería'")
   
 class VitalsBox(Box):
     def __init__(self, **kwargs):
