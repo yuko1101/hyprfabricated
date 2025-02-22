@@ -161,7 +161,7 @@ class Notch(Window):
 
         # Variables para controlar la sensibilidad del smooth scroll.
         self._scroll_accumulator = 0.0
-        self.scroll_threshold = 20.0  # Ajusta este valor para modificar la sensibilidad
+        self.scroll_threshold = 15.0  # Ajusta este valor para modificar la sensibilidad
 
         self.add(self.notch_box)
         self.show_all()
@@ -260,19 +260,19 @@ class Notch(Window):
             if self._scroll_accumulator < -self.scroll_threshold:
                 self._scroll_accumulator = 0.0
                 new_index = (current - 1) % len(children)
-                self.compact_stack.set_visible_child(children[new_index])
+                
                 
             elif self._scroll_accumulator > self.scroll_threshold:
                 self._scroll_accumulator = 0.0
                 new_index = (current + 1) % len(children)
-                self.compact_stack.set_visible_child(children[new_index])
                 
-            return True
+                
         elif event.direction == Gdk.ScrollDirection.UP:
             new_index = (current - 1) % len(children)
         elif event.direction == Gdk.ScrollDirection.DOWN:
             new_index = (current + 1) % len(children)
         else:
+            new_index = current
             return False
 
         self.compact_stack.set_visible_child(children[new_index])
