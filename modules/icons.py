@@ -126,6 +126,9 @@ safari: str = "&#xec23;"
 obs: str = "&#xef70;"
 ghost: str = "&#xfc13;"
 
+apple: str = "&#xec17;"
+mobile: str = "&#xea8a;"
+
 finder: str = "&#xf218;"
 folder: str = "&#xeaad;"
 

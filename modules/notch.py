@@ -304,4 +304,6 @@ class Notch(Window):
             icon = icons.safari
         elif win_class == "com.obsproject.Studio":
             icon = icons.obs
+        elif win_class == "GStreamer":
+            icon = icons.mobile
         return icon
