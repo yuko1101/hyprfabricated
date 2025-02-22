@@ -258,13 +258,15 @@ class Notch(Window):
         if event.direction == Gdk.ScrollDirection.SMOOTH:
             self._scroll_accumulator += event.delta_y
             if self._scroll_accumulator < -self.scroll_threshold:
+                self._scroll_accumulator = 0.0
                 new_index = (current - 1) % len(children)
                 self.compact_stack.set_visible_child(children[new_index])
-                self._scroll_accumulator = 0.0
+                
             elif self._scroll_accumulator > self.scroll_threshold:
+                self._scroll_accumulator = 0.0
                 new_index = (current + 1) % len(children)
                 self.compact_stack.set_visible_child(children[new_index])
-                self._scroll_accumulator = 0.0
+                
             return True
         elif event.direction == Gdk.ScrollDirection.UP:
             new_index = (current - 1) % len(children)
