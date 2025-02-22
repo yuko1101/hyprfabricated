@@ -254,6 +254,8 @@ class Notch(Window):
     def _on_compact_scroll(self, widget, event):
         children = self.compact_stack.get_children()
         current = children.index(self.compact_stack.get_visible_child())
+        new_index = current
+
         # Manejar smooth scroll con acumulador para ajustar la sensibilidad
         if event.direction == Gdk.ScrollDirection.SMOOTH:
             self._scroll_accumulator += event.delta_y
@@ -272,7 +274,6 @@ class Notch(Window):
         elif event.direction == Gdk.ScrollDirection.DOWN:
             new_index = (current + 1) % len(children)
         else:
-            new_index = current
             return False
 
         self.compact_stack.set_visible_child(children[new_index])
