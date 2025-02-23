@@ -84,7 +84,7 @@ class Notch(Window):
                 self.player_small,
             ]
         )
-        self.compact_stack.set_visible_child(self.active_window)
+        self.compact_stack.set_visible_child(self.window_title)
 
         self.active_window.connection.connect("event::activewindow", self.update_window_title)
 
