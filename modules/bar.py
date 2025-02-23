@@ -133,6 +133,7 @@ class Bar(Window):
                     Box(name="workspaces-container", children=[self.workspaces]),
                     self.button_overview,
                     self.date_time,
+                    self.network_applet,
                 ]
             ),
             end_children=Box(
@@ -143,7 +144,7 @@ class Bar(Window):
                     self.button_color,
                     self.updates,
                     self.battery,
-                    self.network_applet,
+                    
                     self.volume,
                     self.systray,
                     self.button_config,

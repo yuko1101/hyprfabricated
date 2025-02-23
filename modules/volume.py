@@ -17,7 +17,7 @@ class VolumeWidget(Box):
         )
 
         self.volume_label = Label(
-            name="icon-label",
+            name="volume-icon-label",
             markup=icons.vol_high,
         )
 

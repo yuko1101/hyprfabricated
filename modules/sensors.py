@@ -105,7 +105,7 @@ class BatteryBox(Box):
     def notify(self, *args):
         exec_shell_command_async(f"notify-send '{self.percentage}%' '{self.secsleft} segundos restantes' -a 'Batería'")
   
-class NetworkApplet(Box):
+class NetworkApplet(Button):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar", **kwargs)
         self.download_label = Label(name="download-label", markup="Download: 0 B/s")
@@ -128,9 +128,9 @@ class NetworkApplet(Box):
         self.upload_revealer = Revealer(child=self.upload_box, child_revealed=False)
         
 
-        self.pack_end(self.download_revealer, True, True, 0)
-        self.pack_end(self.upload_revealer, True, True, 0)
-        self.pack_end(self.wifi_label, True, True, 0)
+        self.children = Box(
+            children=[self.download_revealer, self.upload_revealer, self.wifi_label],
+        )
         self.last_counters = psutil.net_io_counters()
         self.last_time = time.time()
         invoke_repeater(1000, self.update_network)
@@ -160,10 +160,15 @@ class NetworkApplet(Box):
                     self.wifi_label.set_markup(icons.wifi_1)
                 else:
                     self.wifi_label.set_markup(icons.wifi_0)
+
+                self.set_tooltip_text(self.network_client.wifi_device.ssid)
+
             else:
                 self.wifi_label.set_markup(icons.wifi_off)
         else:
             self.wifi_label.set_markup(icons.wifi_off)
+
+        
 
         self.last_counters = current_counters
         self.last_time = current_time
