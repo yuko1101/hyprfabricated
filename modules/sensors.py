@@ -3,11 +3,14 @@ from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
+from fabric.widgets.revealer import Revealer
 from fabric.utils import invoke_repeater, exec_shell_command_async
 from fabric.widgets.circularprogressbar import CircularProgressBar
-
+import subprocess
+import time
 
 import modules.icons as icons
+from services.network import NetworkClient
 
 class BatteryBox(Box):
     def __init__(self, **kwargs):
@@ -102,24 +105,76 @@ class BatteryBox(Box):
     def notify(self, *args):
         exec_shell_command_async(f"notify-send '{self.percentage}%' '{self.secsleft} segundos restantes' -a 'Batería'")
   
-class VitalsBox(Box):
+class NetworkApplet(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar", **kwargs)
+        self.download_label = Label(name="download-label", markup="Download: 0 B/s")
+        self.network_client = NetworkClient()
+        self.upload_label = Label(name="upload-label", markup="Upload: 0 B/s")
+        self.wifi_label = Label(name="icon-label", markup="WiFi: Unknown")
 
-        self.cpu_label = Label(
-            name="battery-icon-label",
-            markup = icons.cpu
+        self.download_icon = Label(name="download-icon-label", markup=icons.download)
+        self.upload_icon = Label(name="upload-icon-label", markup=icons.upload)
+
+        self.download_box = Box(
+            children=[self.download_icon, self.download_label],
         )
 
-        self.cpu = psutil.cpu_percent()
-        #self.pack_end(self.cpu_label, True, True, 0)
-        self.set_size_request(40, 20)
+        self.upload_box = Box(
+            children=[self.upload_icon, self.upload_label],
+        )
 
-        self.circular_progress_bar = AnimatedCircularProgressBar(min_value=0, max_value=100)
-        self.circular_progress_bar.animate_value(self.cpu)
-        self.pack_end(self.circular_progress_bar, True, True, 0)
-        invoke_repeater(500, self.update_label)
+        self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-left", child_revealed=False)
+        self.upload_revealer = Revealer(child=self.upload_box, child_revealed=False)
+        
 
-    def update_label(self):
-        self.circular_progress_bar.animate_value(2.04)
+        self.pack_end(self.download_revealer, True, True, 0)
+        self.pack_end(self.upload_revealer, True, True, 0)
+        self.pack_end(self.wifi_label, True, True, 0)
+        self.last_counters = psutil.net_io_counters()
+        self.last_time = time.time()
+        invoke_repeater(1000, self.update_network)
+
+    def update_network(self):
+        current_time = time.time()
+        elapsed = current_time - self.last_time
+        current_counters = psutil.net_io_counters()
+        download_speed = (current_counters.bytes_recv - self.last_counters.bytes_recv) / elapsed
+        upload_speed = (current_counters.bytes_sent - self.last_counters.bytes_sent) / elapsed
+        self.download_label.set_markup(self.format_speed(download_speed))
+        self.upload_label.set_markup(self.format_speed(upload_speed))
+
+        self.download_revealer.set_reveal_child(download_speed >= 30e6)
+        self.upload_revealer.set_reveal_child(upload_speed >= 10e6)
+
+        # Verificar el wifi utilizando el NetworkClient con la propiedad strength
+        if self.network_client and self.network_client.wifi_device:
+            if self.network_client.wifi_device.ssid != "Disconnected":
+                strength = self.network_client.wifi_device.strength
+                # Si la intensidad es mayor o igual a 50 usamos wifi_1, de lo contrario wifi_0
+                if strength >= 75:
+                    self.wifi_label.set_markup(icons.wifi)
+                elif strength >= 50:
+                    self.wifi_label.set_markup(icons.wifi_2)
+                elif strength >= 25:
+                    self.wifi_label.set_markup(icons.wifi_1)
+                else:
+                    self.wifi_label.set_markup(icons.wifi_0)
+            else:
+                self.wifi_label.set_markup(icons.wifi_off)
+        else:
+            self.wifi_label.set_markup(icons.wifi_off)
+
+        self.last_counters = current_counters
+        self.last_time = current_time
         return True
+
+    def format_speed(self, speed):
+        if speed < 1024:
+            return f"{speed:.0f} B/s"
+        elif speed < 1024 * 1024:
+            return f"{speed / 1024:.1f} KB/s"
+        else:
+            return f"{speed / (1024 * 1024):.1f} MB/s"
+
+

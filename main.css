@@ -15,6 +15,8 @@
 @import url("./styles/bluetooth.css");
 @import url("./styles/power.css");
 @import url("./styles/battery.css");
+@import url("./styles/volume.css");
+@import url("./styles/sensors.css");
 
 * {
   all: unset;
@@ -147,26 +149,6 @@ tooltip > * {
   transition: all 0.1s ease;
 }
 
-.VolumeWidget {
-  margin: 20px;
-  }
-  #button-bar-vol {
-    padding: 2px;
-    min-width: 28px;
-    min-height: 28px;
-    margin-top: 3px;
-    margin-bottom: 2px;
-    border-radius: 50%;
-    background-color: var(--shadow);
-    transition: all 0.1s ease;
-  }
-  #button-volume {
-    background-color: var(--shadow);
-    color: var(--surface-bright);
-    border: solid 0px var(--primary);
-    transition: all 0.1s ease;
-  }
-
 #button-bar-label {
   color: var(--primary);
   font-size: 20px;
@@ -190,25 +172,6 @@ tooltip > * {
   border-radius: 11px;
   transition: all 0.1s ease;
 }
-
-#battery-percentage-label {
-  color: var(--primary);
-  font-size: 10px;
-  font-weight: bold;
-  padding: 4px;
-  border-radius: 11px;
-  transition: all 0.1s ease;
-}
-
-#battery-icon-label {
-  color: var(--primary);
-  font-size: 22px;
-  margin-right: -4px;
-  padding: 1px;
-  border-radius: 11px;
-  transition: all 0.1s ease;
-}
-
 
 #button-bar:hover #button-bar-label {
   background-color: var(--surface_bright);

@@ -13,6 +13,8 @@ import modules.icons as icons
 import modules.data as data
 from modules.battery import Battery
 
+from modules.sensors import NetworkApplet
+
 from modules.volume import VolumeWidget
 from modules.updates import UpdatesWidget
 
@@ -29,6 +31,8 @@ class Bar(Window):
         )
 
         self.notch = kwargs.get("notch", None)
+
+        self.network_applet = NetworkApplet()
         
         self.workspaces = Workspaces(
             name="workspaces",
@@ -139,6 +143,7 @@ class Bar(Window):
                     self.button_color,
                     self.updates,
                     self.battery,
+                    self.network_applet,
                     self.volume,
                     self.systray,
                     self.button_config,

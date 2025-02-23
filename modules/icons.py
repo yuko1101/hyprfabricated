@@ -74,10 +74,12 @@ bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
 dnd_off: str = "&#xece9;"
 
+# Network
 wifi_0: str = "&#xeba3;"
 wifi_1: str = "&#xeba4;"
 wifi_2: str = "&#xeba5;"
-
+download: str = "&#xea96;"
+upload: str = "&#xeb47;"
 # Bluetooth
 bluetooth_connected: str = "&#xecea;"
 bluetooth_disconnected: str = "&#xf081;"
