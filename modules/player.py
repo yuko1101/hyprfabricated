@@ -430,6 +430,7 @@ class PlayerSmall(CenterBox):
                 self.cavalcade_box,
             ]
         )
+        self.center_stack.set_visible_child(self.cavalcade_box)
      
         # Create additional compact view.
         self.mpris_small = CenterBox(

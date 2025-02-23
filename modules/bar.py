@@ -51,8 +51,12 @@ class Bar(Window):
         self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
       
         self.updates = UpdatesWidget()
+        self.updates.connect("enter-notify-event", self.on_button_enter)
+        self.updates.connect("leave-notify-event", self.on_button_leave)
 
         self.volume = VolumeWidget()
+        self.volume.event_box.connect("enter-notify-event", self.on_button_enter)
+        self.volume.event_box.connect("leave-notify-event", self.on_button_leave)
 
         self.button_apps = Button(
             name="button-bar",
