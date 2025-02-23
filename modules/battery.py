@@ -84,9 +84,11 @@ class Battery(Box):
         )
 
         # Create an inner container to hold the battery elements.
-        inner_container = Box(orientation="h", spacing=0)
+        inner_container = Box(orientation="h", spacing=1)
         inner_container.add(self.bat_overlay)
+        inner_container.add(Label())
         inner_container.add(self.bat_revealer)
+        inner_container.add(Label())
         inner_container.add(self.mode_switcher)
 
         # Wrap the inner container in an EventBox.

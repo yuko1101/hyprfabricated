@@ -13,11 +13,11 @@ class VolumeWidget(Box):
         self.audio = Audio()
 
         self.progress_bar = CircularProgressBar(
-            name="button-volume", pie=False, size=30, start_angle = 90, end_angle = 90+360, line_width=3,
+            name="button-volume", pie=False, size=30, start_angle = 120, end_angle = 60+360, line_width=3,
         )
 
         self.volume_label = Label(
-            name="button-bar-label",
+            name="icon-label",
             markup=icons.vol_high,
         )
 

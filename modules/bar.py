@@ -15,7 +15,6 @@ from modules.battery import Battery
 
 from modules.volume import VolumeWidget
 from modules.updates import UpdatesWidget
-from modules.sensors import BatteryBox
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -51,8 +50,6 @@ class Bar(Window):
 
         self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
       
-        self.battery_box = BatteryBox()
-
         self.updates = UpdatesWidget()
 
         self.volume = VolumeWidget()
@@ -138,7 +135,6 @@ class Bar(Window):
                     self.button_color,
                     self.updates,
                     self.battery,
-                    self.battery_box,
                     self.volume,
                     self.systray,
                     self.button_config,
