@@ -20,9 +20,6 @@ class VolumeWidget(Box):
             name="button-bar-label",
             markup=icons.vol_high,
         )
-        # Añadir variables para soporte de smooth scroll (igual que en Notch)
-        self._scroll_accumulator = 0.0
-        self.scroll_threshold = 5.0
 
         self.event_box = EventBox(
 #            name="button-bar-vol",
@@ -39,17 +36,13 @@ class VolumeWidget(Box):
         self.add(self.event_box)
 
     def on_scroll(self, _, event):
-        print("Scroll event detected")
+        
         if event.direction == Gdk.ScrollDirection.SMOOTH:
-            print("Smooth scroll detected")
-            self._scroll_accumulator += event.delta_y
-            if self._scroll_accumulator < -self.scroll_threshold:
-                self._scroll_accumulator = 0.0
-                self.audio.speaker.volume -= 5
-                
-            elif self._scroll_accumulator > self.scroll_threshold:
-                self._scroll_accumulator = 0.0
-                self.audio.speaker.volume += 5
+            if abs(event.delta_y) > 0:
+                self.audio.speaker.volume += event.delta_y
+            if abs(event.delta_x) > 0:
+                self.audio.speaker.volume -= event.delta_x
+
             
 
         match event.direction:
