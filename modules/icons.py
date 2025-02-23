@@ -131,12 +131,17 @@ anytype: str = "&#xf495;"
 safari: str = "&#xec23;"
 obs: str = "&#xef70;"
 ghost: str = "&#xfc13;"
+appstore: str = "&#xebb6;"
+
+writing: str = "&#xef08;"
+brush: str = "&#xebb8;"
 
 apple: str = "&#xec17;"
 mobile: str = "&#xea8a;"
 
 finder: str = "&#xf218;"
 folder: str = "&#xeaad;"
+zip: str = "&#xed4e;"
 
 terminal: str = "&#xebef;"
 
@@ -156,3 +161,43 @@ def apply_span() -> None:
             global_dict[key] = f"{span}{global_dict[key]}</span>"
 
 apply_span()
+
+def get_class_icon(win_class):
+    icon = ghost
+    if win_class == "unknown":
+        icon = desktop
+    if win_class == "firefox":
+        icon = firefox
+    elif win_class == "org.kde.dolphin":
+        icon = finder
+    elif win_class == "chromium":
+        icon = chromium
+    elif win_class == "Spotify":
+        icon = spotify
+    elif win_class == "code":
+        icon = code
+    elif win_class == "com.discordapp.Discord":
+        icon = discord
+    elif win_class == "kitty":
+        icon = terminal
+    elif win_class == "obsidian":
+        icon = obsidian
+    elif win_class == "anytype":
+        icon = anytype
+    elif win_class == "zen":
+        icon = safari
+    elif win_class == "com.obsproject.Studio":
+        icon = obs
+    elif win_class == "GStreamer":
+        icon = mobile
+    elif win_class == "org.kde.discover":
+        icon = appstore
+    elif win_class == "org.pulseaudio.pavucontrol":
+        icon = vol_high
+    elif win_class == "com.github.flxzt.rnote" or win_class == "com.github.xournalpp.xournalpp":
+        icon = writing
+    elif win_class == "krita":
+        icon = brush
+    elif win_class == "org.kde.ark":
+        icon = zip
+    return icon

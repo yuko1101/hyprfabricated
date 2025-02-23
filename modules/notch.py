@@ -178,7 +178,7 @@ class Notch(Window):
         )
         win_class = win_data.get("class", "unknown")
         win_title = win_data.get("title", win_class)
-        icon = self.get_class_icon(win_class)
+        icon = icons.get_class_icon(win_class)
         self.window_title_icon.set_markup(icon)
         
     def on_button_enter(self, widget, event):
@@ -285,32 +285,4 @@ class Notch(Window):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
             self.compact_stack.set_visible_child(self.window_title)
     
-    def get_class_icon(self, win_class):
-        icon = icons.ghost
-        if win_class == "unknown":
-            icon = icons.desktop
-        if win_class == "firefox":
-            icon = icons.firefox
-        elif win_class == "org.kde.dolphin":
-            icon = icons.finder
-        elif win_class == "chromium":
-            icon = icons.chromium
-        elif win_class == "Spotify":
-            icon = icons.spotify
-        elif win_class == "code":
-            icon = icons.code
-        elif win_class == "com.discordapp.Discord":
-            icon = icons.discord
-        elif win_class == "kitty":
-            icon = icons.terminal
-        elif win_class == "obsidian":
-            icon = icons.obsidian
-        elif win_class == "anytype":
-            icon = icons.anytype
-        elif win_class == "zen":
-            icon = icons.safari
-        elif win_class == "com.obsproject.Studio":
-            icon = icons.obs
-        elif win_class == "GStreamer":
-            icon = icons.mobile
-        return icon
+
