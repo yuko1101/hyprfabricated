@@ -43,7 +43,6 @@ class Bar(Window):
         self.hide_ignored_workspaces()
         self.workspaces.connection.connect("event::workspacev2", self.hide_ignored_workspaces)
         self.workspaces.connection.connect("event::createworkspacev2", self.hide_ignored_workspaces)
-        self.workspaces.connection.connect("event::destroyworkspacev2", self.hide_ignored_workspaces)
         self.workspaces.connection.connect("event::urgent", self.hide_ignored_workspaces)
         
         self.systray = SystemTray()
