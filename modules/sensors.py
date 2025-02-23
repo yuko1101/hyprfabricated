@@ -26,7 +26,7 @@ class BatteryBox(Box):
 
 
         self.progress_bar = CircularProgressBar(
-            name="button-volume", pie=False, size=30, line_width=3,
+            name="button-volume", pie=False, size=30, start_angle = 90, end_angle= 90+360, line_width=3,
         )
 
         self.battery_button = Button()

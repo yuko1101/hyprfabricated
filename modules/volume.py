@@ -13,7 +13,7 @@ class VolumeWidget(Box):
         self.audio = Audio()
 
         self.progress_bar = CircularProgressBar(
-            name="button-volume", pie=False, size=30, line_width=3,
+            name="button-volume", pie=False, size=30, start_angle = 90, end_angle = 90+360, line_width=3,
         )
 
         self.volume_label = Label(
@@ -58,10 +58,12 @@ class VolumeWidget(Box):
     def on_button_press(self, *_):
         
         if self.audio.speaker.volume == 0:
-            self.audio.speaker.volume = 50
+            self.audio.speaker.volume = 75
+            self.update_label()
         else:
             self.audio.speaker.volume = 0
-        self.update_label()
+            self.update_label()
+        
         return
 
 
