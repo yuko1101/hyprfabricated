@@ -71,6 +71,8 @@ class Notch(Window):
             ]
         )
 
+        self.player_small.mpris_manager.connect("player-appeared", lambda *_: self.compact_stack.set_visible_child(self.player_small))
+        self.player_small.mpris_manager.connect("player-vanished", self.on_player_vanished)
         # Create a stack to hold the three views:
         self.compact_stack = Stack(
             name="notch-compact-stack",
@@ -278,6 +280,10 @@ class Notch(Window):
 
         self.compact_stack.set_visible_child(children[new_index])
         return True
+    
+    def on_player_vanished(self, *args):
+        if self.player_small.mpris_label.get_label() == "Nothing Playing":
+            self.compact_stack.set_visible_child(self.window_title)
     
     def get_class_icon(self, win_class):
         icon = icons.ghost
