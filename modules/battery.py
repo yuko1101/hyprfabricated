@@ -178,6 +178,9 @@ class Battery(Box):
         # Actualizar el icono de la batería basado en el nivel y el estado de carga.
         if percentage <= 15:
             self.bat_icon.set_markup(icons.alert)
+            if status == "Charging":
+                self.bat_icon.set_markup(icons.charging)
+            
             self.bat_icon.add_style_class("alert")
             self.bat_circle.add_style_class("alert")
         else:
