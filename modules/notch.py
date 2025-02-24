@@ -164,6 +164,7 @@ class Notch(Window):
         # Variables para controlar la sensibilidad del smooth scroll.
         self._scroll_accumulator = 0.0
         self.scroll_threshold = 15.0  # Ajusta este valor para modificar la sensibilidad
+        self._scrolling = False
 
         self.add(self.notch_box)
         self.show_all()
@@ -252,25 +253,21 @@ class Notch(Window):
             self.notch_box.add_style_class("hidden")
         else:
             self.notch_box.remove_style_class("hidden")
-
     def _on_compact_scroll(self, widget, event):
+        if self._scrolling:
+            return True
+
         children = self.compact_stack.get_children()
         current = children.index(self.compact_stack.get_visible_child())
         new_index = current
 
-        # Manejar smooth scroll con acumulador para ajustar la sensibilidad
         if event.direction == Gdk.ScrollDirection.SMOOTH:
-            self._scroll_accumulator += event.delta_y
-            if self._scroll_accumulator < -self.scroll_threshold:
-                self._scroll_accumulator = 0.0
+            if event.delta_y < -0.1:
                 new_index = (current - 1) % len(children)
-                
-                
-            elif self._scroll_accumulator > self.scroll_threshold:
-                self._scroll_accumulator = 0.0
+            elif event.delta_y > 0.1:
                 new_index = (current + 1) % len(children)
-                
-                
+            else:
+                return False
         elif event.direction == Gdk.ScrollDirection.UP:
             new_index = (current - 1) % len(children)
         elif event.direction == Gdk.ScrollDirection.DOWN:
@@ -279,10 +276,19 @@ class Notch(Window):
             return False
 
         self.compact_stack.set_visible_child(children[new_index])
+        self._scrolling = True
+        GLib.timeout_add(500, self._reset_scrolling)
         return True
+
+    def _reset_scrolling(self):
+        self._scrolling = False
+        return False
+        
     
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
             self.compact_stack.set_visible_child(self.window_title)
+
+
     
 

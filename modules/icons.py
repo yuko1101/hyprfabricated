@@ -132,6 +132,8 @@ safari: str = "&#xec23;"
 obs: str = "&#xef70;"
 ghost: str = "&#xfc13;"
 appstore: str = "&#xebb6;"
+bottle: str = "&#xfa89;"
+theme: str = "&#xeb00;"
 
 writing: str = "&#xef08;"
 brush: str = "&#xebb8;"
@@ -188,7 +190,7 @@ def get_class_icon(win_class):
         icon = safari
     elif win_class == "com.obsproject.Studio":
         icon = obs
-    elif win_class == "GStreamer":
+    elif win_class == "GStreamer" or win_class == "org.kde.kdeconnect.app" or win_class == "org.kde.kdeconnect-settings":
         icon = mobile
     elif win_class == "org.kde.discover":
         icon = appstore
@@ -200,4 +202,8 @@ def get_class_icon(win_class):
         icon = brush
     elif win_class == "org.kde.ark":
         icon = zip
+    elif win_class == "com.usebottles.bottles":
+        icon = bottle
+    elif win_class == "nwg-look":
+        icon = theme
     return icon
