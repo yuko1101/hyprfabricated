@@ -12,6 +12,52 @@ import modules.icons as icons
 import modules.data as data
 from modules.volume import VolumeSmall
 from modules.system import System
+from fabric.widgets.overlay import Overlay
+from fabric.widgets.eventbox import EventBox
+from fabric.widgets.circularprogressbar import CircularProgressBar
+from fabric.audio.service import Audio
+class VolumeWidget(Box):
+    def __init__(self, **kwargs):
+        super().__init__(name="button-bar-vol", **kwargs)
+        self.audio = Audio()
+
+        self.progress_bar = CircularProgressBar(
+            name="button-volume", pie=False, size=30, line_width=3,
+        )
+
+        self.event_box = EventBox(
+#            name="button-bar-vol",
+            events="scroll",
+            child=Overlay(
+                child=self.progress_bar,
+                overlays=Label(
+                name="button-bar-label",
+                markup=icons.vol_high,
+                    #                    style="font-size: 11pt; color: red;",  # to center the icon glyph
+                ),
+            ),
+        )
+
+        self.audio.connect("notify::speaker", self.on_speaker_changed)
+        self.event_box.connect("scroll-event", self.on_scroll)
+        self.add(self.event_box)
+
+    def on_scroll(self, _, event):
+        match event.direction:
+            case 0:
+                self.audio.speaker.volume += 2
+            case 1:
+                self.audio.speaker.volume -= 2
+        return
+
+    def on_speaker_changed(self, *_):
+        if not self.audio.speaker:
+            return
+        self.progress_bar.value = self.audio.speaker.volume / 100
+        self.audio.speaker.bind(
+            "volume", "value", self.progress_bar, lambda _, v: v / 100
+        )
+        return
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -89,7 +135,7 @@ class Bar(Window):
         # self.button_color.connect("button-press-event", self.colorpicker)
         #
         self.system = System()
-
+        self.volume = VolumeWidget()
         self.button_config = Button(
             name="button-bar",
             on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
@@ -122,7 +168,6 @@ class Bar(Window):
                 orientation="h",
                 children=[
                     self.volume,
-                    self.battery,
                     self.system,
                     # self.button_color,
                     self.systray,
