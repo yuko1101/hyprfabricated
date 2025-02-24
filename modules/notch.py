@@ -277,7 +277,7 @@ class Notch(Window):
 
         self.compact_stack.set_visible_child(children[new_index])
         self._scrolling = True
-        GLib.timeout_add(500, self._reset_scrolling)
+        GLib.timeout_add(250, self._reset_scrolling)
         return True
 
     def _reset_scrolling(self):
