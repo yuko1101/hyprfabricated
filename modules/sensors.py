@@ -113,6 +113,8 @@ class NetworkApplet(Button):
         self.upload_label = Label(name="upload-label", markup="Upload: 0 B/s")
         self.wifi_label = Label(name="icon-label", markup="WiFi: Unknown")
 
+        self.is_mouse_over = False
+
         self.download_icon = Label(name="download-icon-label", markup=icons.download)
         self.upload_icon = Label(name="upload-icon-label", markup=icons.upload)
 
@@ -124,16 +126,19 @@ class NetworkApplet(Button):
             children=[self.upload_icon, self.upload_label],
         )
 
-        self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-left", child_revealed=False)
-        self.upload_revealer = Revealer(child=self.upload_box, child_revealed=False)
+        self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-right", child_revealed=False)
+        self.upload_revealer = Revealer(child=self.upload_box, transition_type="slide-left" ,child_revealed=False)
         
 
         self.children = Box(
-            children=[self.download_revealer, self.upload_revealer, self.wifi_label],
+            children=[self.upload_revealer, self.wifi_label, self.download_revealer],
         )
         self.last_counters = psutil.net_io_counters()
         self.last_time = time.time()
         invoke_repeater(1000, self.update_network)
+
+        self.connect("enter-notify-event", self.on_mouse_enter)
+        self.connect("leave-notify-event", self.on_mouse_leave)
 
     def update_network(self):
         current_time = time.time()
@@ -144,8 +149,19 @@ class NetworkApplet(Button):
         self.download_label.set_markup(self.format_speed(download_speed))
         self.upload_label.set_markup(self.format_speed(upload_speed))
 
-        self.download_revealer.set_reveal_child(download_speed >= 30e6)
-        self.upload_revealer.set_reveal_child(upload_speed >= 10e6)
+        self.downloading = (download_speed >= 20e6)
+        self.uploading = (upload_speed >= 2e6)
+
+        if self.downloading and not self.is_mouse_over:
+            self.download_urgent()
+        if self.uploading and not self.is_mouse_over:
+            self.upload_urgent()
+
+        self.download_revealer.set_reveal_child(self.downloading or self.is_mouse_over)
+        self.upload_revealer.set_reveal_child(self.uploading or self.is_mouse_over)
+
+        if not self.downloading and not self.uploading:
+            self.remove_urgent()
 
         # Verificar el wifi utilizando el NetworkClient con la propiedad strength
         if self.network_client and self.network_client.wifi_device:
@@ -181,5 +197,48 @@ class NetworkApplet(Button):
             return f"{speed / 1024:.1f} KB/s"
         else:
             return f"{speed / (1024 * 1024):.1f} MB/s"
+        
+    def on_mouse_enter(self, *_):
+        self.is_mouse_over = True
+        self.remove_urgent()
+        self.download_revealer.set_reveal_child(True)
+        self.upload_revealer.set_reveal_child(True)
+        return
+    
+    def on_mouse_leave(self, *_):
+        self.is_mouse_over = False
+        self.remove_urgent()
+        self.download_revealer.set_reveal_child(False)
+        self.upload_revealer.set_reveal_child(False)
+        return
 
+    def upload_urgent(self):
+        self.add_style_class("upload")
+        self.wifi_label.add_style_class("urgent")
+        self.upload_label.add_style_class("urgent")
+        self.upload_icon.add_style_class("urgent")
+        self.download_icon.add_style_class("urgent")
+        self.upload_revealer.set_reveal_child(True)
+        self.download_revealer.set_reveal_child(self.downloading)
+        return
+    
+    def download_urgent(self):
+        self.add_style_class("download")
+        self.wifi_label.add_style_class("urgent")
+        self.download_label.add_style_class("urgent")
+        self.download_icon.add_style_class("urgent")
+        self.upload_icon.add_style_class("urgent")
+        self.download_revealer.set_reveal_child(True)
+        self.upload_revealer.set_reveal_child(self.uploading)
+        return
+    
+    def remove_urgent(self):
+        self.remove_style_class("download")
+        self.remove_style_class("upload")
+        self.wifi_label.remove_style_class("urgent")
+        self.download_label.remove_style_class("urgent")
+        self.upload_label.remove_style_class("urgent")
+        self.download_icon.remove_style_class("urgent")
+        self.upload_icon.remove_style_class("urgent")
+        return
 
