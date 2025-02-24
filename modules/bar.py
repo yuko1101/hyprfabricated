@@ -10,8 +10,8 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.battery import Battery
 from modules.volume import VolumeSmall
+from modules.system import System
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -26,7 +26,7 @@ class Bar(Window):
         )
 
         self.notch = kwargs.get("notch", None)
-        
+
         self.workspaces = Workspaces(
             name="workspaces",
             invert_scroll=True,
@@ -40,7 +40,7 @@ class Bar(Window):
         self.systray = SystemTray()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
-        self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
+        self.date_time = DateTime(name="date-time", formatters=["%I:%M %P"], h_align="center", v_align="center")
 
         self.button_apps = Button(
             name="button-bar",
@@ -52,7 +52,7 @@ class Bar(Window):
         )
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
-        
+
         self.button_power = Button(
             name="button-bar",
             on_clicked=lambda *_: self.power_menu(),
@@ -75,20 +75,20 @@ class Bar(Window):
         self.button_overview.connect("enter_notify_event", self.on_button_enter)
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
-        self.button_color = Button(
-            name="button-bar",
-            tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB",
-            v_expand=False,
-            child=Label(
-                name="button-bar-label",
-                markup=icons.colorpicker
-            )
-        )
-        self.button_color.connect("enter-notify-event", self.on_button_enter)
-        self.button_color.connect("leave-notify-event", self.on_button_leave)
-        self.button_color.connect("button-press-event", self.colorpicker)
-
-        self.battery = Battery()
+        # self.button_color = Button(
+        #     name="button-bar",
+        #     tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB",
+        #     v_expand=False,
+        #     child=Label(
+        #         name="button-bar-label",
+        #         markup=icons.colorpicker
+        #     )
+        # )
+        # self.button_color.connect("enter-notify-event", self.on_button_enter)
+        # self.button_color.connect("leave-notify-event", self.on_button_leave)
+        # self.button_color.connect("button-press-event", self.colorpicker)
+        #
+        self.system = System()
 
         self.button_config = Button(
             name="button-bar",
@@ -123,7 +123,8 @@ class Bar(Window):
                 children=[
                     self.volume,
                     self.battery,
-                    self.button_color,
+                    self.system,
+                    # self.button_color,
                     self.systray,
                     self.button_config,
                     self.date_time,
@@ -137,7 +138,6 @@ class Bar(Window):
         self.hidden = False
 
         self.show_all()
-        self.systray._update_visibility()
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()

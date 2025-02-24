@@ -1,4 +1,5 @@
 import subprocess
+import psutil
 import re
 from fabric.widgets.box import Box
 from fabric.widgets.eventbox import EventBox  # <-- use our EventBox
@@ -14,12 +15,12 @@ from gi.repository import GLib
 
 import modules.icons as icons
 
-class Battery(Box):
+class System(Box):
     def __init__(self, **kwargs):
         super().__init__(
             name="battery",
             orientation="h",
-            spacing=0,
+            spacing=3,
         )
 
         # Create three buttons for power modes.
@@ -51,6 +52,67 @@ class Battery(Box):
             spacing=4,
             children=[self.bat_save, self.bat_balanced, self.bat_perf],
         )
+        self.cpu_icon = Label(name="memory-usage",markup=icons.cpu)
+
+        self.cpu_circle = CircularProgressBar(
+            name="cpu-circle",
+            value=0,
+            size=28,
+            line_width=2,
+            start_angle=180,
+            end_angle=360,
+        )
+
+        self.cpu_overlay = Overlay(
+            name="cpu-overlay",
+            visible=False,
+            child=self.cpu_circle,
+            overlays=[self.cpu_icon],
+        )
+
+        self.cpu_level = Label(
+            name="cpu-used",
+            label="100%",
+        )
+
+        self.cpu_revealer = Revealer(
+            name="cpu-revealer",
+            transition_duration=250,
+            transition_type="slide-left",
+            child=self.cpu_level,
+            child_revealed=False,
+        )
+
+        self.memory_icon = Label(name="memory-usage",markup=icons.memory)
+
+        self.memory_circle = CircularProgressBar(
+            name="memory-circle",
+            value=0,
+            size=28,
+            line_width=2,
+            start_angle=180,
+            end_angle=360,
+        )
+
+        self.memory_overlay = Overlay(
+            name="memory-overlay",
+            visible=False,
+            child=self.memory_circle,
+            overlays=[self.memory_icon],
+        )
+
+        self.memory_level = Label(
+            name="memory-used",
+            label="100%",
+        )
+
+        self.memory_revealer = Revealer(
+            name="memory-revealer",
+            transition_duration=250,
+            transition_type="slide-left",
+            child=self.memory_level,
+            child_revealed=False,
+        )
 
         self.bat_icon = Label(name="battery-icon", markup=icons.battery)
 
@@ -59,8 +121,8 @@ class Battery(Box):
             value=0,
             size=28,
             line_width=2,
-            start_angle=135,
-            end_angle=395,
+            start_angle=180,
+            end_angle=360,
         )
 
         self.bat_overlay = Overlay(
@@ -84,10 +146,15 @@ class Battery(Box):
         )
 
         # Create an inner container to hold the battery elements.
-        inner_container = Box(orientation="h", spacing=0)
+        inner_container = Box(orientation="h", spacing=5)
         inner_container.add(self.bat_overlay)
         inner_container.add(self.bat_revealer)
-        inner_container.add(self.mode_switcher)
+        # inner_container.add(self.memory)
+        inner_container.add(self.memory_overlay)
+        inner_container.add(self.memory_revealer)
+        inner_container.add(self.cpu_overlay)
+        inner_container.add(self.cpu_revealer)
+        # inner_container.add(self.mode_switcher)
 
         # Wrap the inner container in an EventBox.
         self.event_box = EventBox(
@@ -107,13 +174,21 @@ class Battery(Box):
         # Initialize counter to track hover status across all related widgets.
         self.hover_counter = 0
 
+        self.memory_fabricator = Fabricator(lambda *args, **kwargs: self.poll_ram_usage(), interval=1000, stream=False, default_value=0)
+        self.memory_fabricator.changed.connect(self.update_memory)
+        GLib.idle_add(self.update_memory, None, self.poll_ram_usage())
+
+        self.cpu_fabricator = Fabricator(lambda *args, **kwargs: self.poll_cpu_usage(), interval=1000, stream=False, default_value=0)
+        self.cpu_fabricator.changed.connect(self.update_cpu)
+        GLib.idle_add(self.update_cpu, None, self.poll_cpu_usage())
         # Initialize Fabricator for battery polling every 5 seconds.
-        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
+        # self.set_power_mode("balanced")
+        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=5000, stream=False, default_value=0)
         self.batt_fabricator.changed.connect(self.update_battery)
 
         # Run update_battery immediately at startup.
         GLib.idle_add(self.update_battery, None, self.poll_battery())
-        # self.set_power_mode("balanced")
+        self.set_power_mode("balanced")
 
     def on_mouse_enter(self, widget, event):
         """Reveal battery level on hover."""
@@ -122,6 +197,8 @@ class Battery(Box):
             GLib.source_remove(self.hide_timer)
             self.hide_timer = None
         self.bat_revealer.set_reveal_child(True)
+        self.memory_revealer.set_reveal_child(True)
+        self.cpu_revealer.set_reveal_child(True)
         return False
 
     def on_mouse_leave(self, widget, event):
@@ -137,7 +214,59 @@ class Battery(Box):
     def hide_revealer(self):
         self.bat_revealer.set_reveal_child(False)
         self.hide_timer = None
+        self.memory_revealer.set_reveal_child(False)
+        self.cpu_revealer.set_reveal_child(False)
         return False
+
+
+    def poll_cpu_usage(self):
+        """
+        Polls the current total CPU usage.
+        Returns a tuple: (CPU usage percentage as a float between 0 and 1, status placeholder).
+        """
+        try:
+            # Instantaneous snapshot of total CPU usage
+            usage_percent = psutil.cpu_percent(percpu=False)
+
+            # Return usage and a placeholder status (like 1 for 'active')
+            return (usage_percent / 100.0, 1)
+
+        except Exception:
+            pass
+        return (0.0, 0)
+
+    # def poll_cpu_usage(self):
+    #     """
+    #     Polls the current CPU usage.
+    #     Returns a tuple: (CPU usage percentage as a float between 0 and 1, number of logical cores).
+    #     """
+    #     try:
+    #         # Get the current CPU usage percentage
+    #         usage_percent = psutil.cpu_percent(interval=0.1)
+    #         core_count = psutil.cpu_count(logical=True)
+    #
+    #         return (usage_percent / 100.0, core_count)
+    #
+    #     except Exception:
+    #         pass
+    #     return (0.0, 0)
+
+    def poll_ram_usage(self):
+        """
+        polls the current ram usage.
+        returns a tuple: (ram usage percentage as a float between 0 and 1, total ram in bytes)
+        """
+        try:
+            # get virtual memory stats
+            memory = psutil.virtual_memory()
+            usage_percent = memory.percent
+            total_ram = memory.total
+
+            return (usage_percent / 100.0, total_ram)
+
+        except exception:
+            pass
+        return (0, none)
 
     def poll_battery(self):
         """
@@ -158,6 +287,37 @@ class Battery(Box):
         except Exception:
             pass
         return (0, None)
+    def update_memory(self, sender, memory_data):
+        """
+        Updates the battery widget...
+        """
+        value, status = memory_data
+        if value == 0:
+            self.memory_overlay.set_visible(False)
+            self.memory_revealer.set_visible(False)
+        else:
+            self.memory_overlay.set_visible(True)
+            self.memory_revealer.set_visible(True)
+            self.memory_circle.set_value(value)
+
+        percentage = int(value * 100)
+        self.memory_level.set_label(f"{percentage}%")
+
+    def update_cpu(self, sender, cpu_data):
+        """
+        Updates the battery widget...
+        """
+        value, status = cpu_data
+        if value == 0:
+            self.cpu_overlay.set_visible(False)
+            self.cpu_revealer.set_visible(False)
+        else:
+            self.cpu_overlay.set_visible(True)
+            self.cpu_revealer.set_visible(True)
+            self.cpu_circle.set_value(value)
+
+        percentage = int(value * 100)
+        self.cpu_level.set_label(f"{percentage}%")
 
     def update_battery(self, sender, battery_data):
         """
