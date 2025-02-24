@@ -12,8 +12,8 @@ gi.require_version('Vte', '2.91')
 gi.require_version('GdkPixbuf', '2.0')
 from gi.repository import GLib, Gtk, Vte, Pango, GdkPixbuf
 import modules.icons as icons
-from modules.dashboard_modules.buttons import Buttons
-from modules.dashboard_modules.widgets import Widgets
+from modules.widgets import Widgets
+from modules.buttons import Buttons
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
 from modules.kanban import Kanban
@@ -125,7 +125,7 @@ class Dashboard(Box):
         self.switcher.set_hexpand(True)
         self.switcher.set_homogeneous(True)
         self.switcher.set_can_focus(True)
-        
+
         # Add signal to detect when the visible child changes
         self.stack.connect("notify::visible-child", self.on_visible_child_changed)
 

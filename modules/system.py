@@ -353,23 +353,24 @@ class System(Box):
                 self.bat_icon.set_markup(icons.battery)
 
     def set_power_mode(self, mode):
-        """
-        Switches power mode by running the corresponding auto-cpufreq command.
-        mode: one of 'powersave', 'balanced', or 'performance'
-        """
-        commands = {
-            "powersave": "sudo auto-cpufreq --force powersave",
-            "balanced": "sudo auto-cpufreq --force reset",
-            "performance": "sudo auto-cpufreq --force performance",
-        }
-        if mode in commands:
-            try:
-                exec_shell_command_async(commands[mode])
-                self.current_mode = mode
-                self.update_button_styles()
-            except Exception as err:
-                # Optionally, handle errors or display a notification.
-                print(f"Error setting power mode: {err}")
+        pass
+        # """
+        # Switches power mode by running the corresponding auto-cpufreq command.
+        # mode: one of 'powersave', 'balanced', or 'performance'
+        # """
+        # commands = {
+        #     "powersave": "sudo auto-cpufreq --force powersave",
+        #     "balanced": "sudo auto-cpufreq --force reset",
+        #     "performance": "sudo auto-cpufreq --force performance",
+        # }
+        # if mode in commands:
+        #     try:
+        #         exec_shell_command_async(commands[mode])
+        #         self.current_mode = mode
+        #         self.update_button_styles()
+        #     except Exception as err:
+        #         # Optionally, handle errors or display a notification.
+        #         print(f"Error setting power mode: {err}")
 
     def update_button_styles(self):
         """
