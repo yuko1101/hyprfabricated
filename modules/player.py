@@ -379,7 +379,7 @@ class Player(Box):
                         btn.add(new_label)
                         new_label.show_all()
         return False
-    
+
 
 class PlayerSmall(CenterBox):
     def __init__(self):

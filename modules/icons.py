@@ -19,9 +19,11 @@ media: str = "&#xf00d;"
 temp: str = "&#xeb38;"
 disk: str = "&#xea88;"
 battery: str = "&#xea38;"
+# memory: str = "&#xf108;"
 memory: str = "&#xfa97;"
 cpu: str = "&#xef8e;"
-
+# ram: str = "&#xf085;"  # RAM icon
+# cpu: str = "&#xf2db;"  # CPU iconk
 # AIchat
 reload: str = "&#xf3ae;"
 detach: str = "&#xea99;"

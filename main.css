@@ -14,7 +14,7 @@
 @import url("./styles/player.css");
 @import url("./styles/bluetooth.css");
 @import url("./styles/power.css");
-@import url("./styles/battery.css");
+@import url("./styles/system.css");
 
 * {
   all: unset;
@@ -189,3 +189,5 @@ tooltip > * {
 #bar {
   border-radius: 0px;
 }
+
+@import url("./styles/widgets.css");
