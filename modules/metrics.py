@@ -1,7 +1,7 @@
 import threading
 import time
 import psutil
-from gi.repository import GLib   # << Added import
+from gi.repository import GLib
 
 from fabric.widgets.label import Label
 from fabric.widgets.box import Box
