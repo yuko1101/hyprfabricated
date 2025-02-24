@@ -226,7 +226,7 @@ class System(Box):
         """
         try:
             # Instantaneous snapshot of total CPU usage
-            usage_percent = psutil.cpu_percent(percpu=False)
+            usage_percent = psutil.cpu_percent(interval=0)
 
             # Return usage and a placeholder status (like 1 for 'active')
             return (usage_percent / 100.0, 1)
