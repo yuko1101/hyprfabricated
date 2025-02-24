@@ -1,3 +1,59 @@
+#cpu {
+    background-color: var(--shadow);
+    padding: 4px;
+    border-radius: 16px;
+    margin-top: 4px;
+}
+
+#cpu-circle {
+    color: var(--surface-bright);
+    border: 3px solid var(--primary);
+}
+
+#cpu-circle.alert {
+    border: 2px solid var(--error-dim);
+}
+
+#cpu-icon {
+    font-size: 20px;
+}
+
+#cpu-icon.alert {
+    color: var(--error-dim);
+}
+
+#cpu-save, #cpu-balanced, #cpu-performance {
+    border-radius: 12px;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+#cpu-save-label, #cpu-balanced-label, #cpu-performance-label {
+    color: var(--outline);
+    font-size: 20px;
+}
+
+#cpu-save:hover, #cpu-balanced:hover, #cpu-performance:hover {
+    background-color: var(--surface-bright);
+}
+
+#cpu-save:hover #cpu-save-label, #cpu-balanced:hover #cpu-balanced-label, #cpu-performance:hover #cpu-performance-label {
+    color: var(--primary);
+}
+
+#cpu-save.active, #cpu-balanced.active, #cpu-performance.active {
+    background-color: var(--primary);
+}
+
+#cpu-save.active #cpu-save-label, #cpu-balanced.active #cpu-balanced-label, #cpu-performance.active #cpu-performance-label {
+    color: var(--shadow);
+}
+
+#cpu-used {
+    color: var(--primary);
+    font-weight: bold;
+    margin: 0 4px;
+}
 #battery {
     background-color: var(--shadow);
     padding: 4px;
@@ -79,34 +135,34 @@
     color: var(--error-dim);
 }
 
-#memory-save, #battery-balanced, #battery-performance {
+#memory-save, #memory-balanced, #memory-performance {
     border-radius: 12px;
     min-width: 28px;
     min-height: 28px;
 }
 
-#memory-save-label, #battery-balanced-label, #battery-performance-label {
+#memory-save-label, #memory-balanced-label, #memory-performance-label {
     color: var(--outline);
     font-size: 20px;
 }
 
-#memory-save:hover, #battery-balanced:hover, #battery-performance:hover {
+#memory-save:hover, #memory-balanced:hover, #memory-performance:hover {
     background-color: var(--surface-bright);
 }
 
-#memory-save:hover #battery-save-label, #battery-balanced:hover #battery-balanced-label, #battery-performance:hover #battery-performance-label {
+#memory-save:hover #memory-save-label, #memory-balanced:hover #memory-balanced-label, #memory-performance:hover #memory-performance-label {
     color: var(--primary);
 }
 
-#memory-save.active, #battery-balanced.active, #battery-performance.active {
+#memory-save.active, #memory-balanced.active, #memory-performance.active {
     background-color: var(--primary);
 }
 
-#memory-save.active #battery-save-label, #battery-balanced.active #battery-balanced-label, #battery-performance.active #battery-performance-label {
+#memory-save.active #memory-save-label, #memory-balanced.active #memory-balanced-label, #memory-performance.active #memory-performance-label {
     color: var(--shadow);
 }
 
-#memory-level {
+#memory-used {
     color: var(--primary);
     font-weight: bold;
     margin: 0 4px;
