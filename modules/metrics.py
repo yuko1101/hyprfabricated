@@ -1,5 +1,3 @@
-import threading
-import time
 import psutil
 from gi.repository import GLib
 
