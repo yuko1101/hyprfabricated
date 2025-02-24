@@ -59,8 +59,8 @@ class Battery(Box):
             value=0,
             size=28,
             line_width=2,
-            start_angle=180,
-            end_angle=360,
+            start_angle=90+30,
+            end_angle=90-30+360,
         )
 
         self.bat_overlay = Overlay(
@@ -201,9 +201,9 @@ class Battery(Box):
         mode: one of 'powersave', 'balanced', or 'performance'
         """
         commands = {
-            "powersave": "sudo auto-cpufreq --force powersave",
-            "balanced": "sudo auto-cpufreq --force reset",
-            "performance": "sudo auto-cpufreq --force performance",
+            "powersave": "auto-cpufreq --force powersave",
+            "balanced": "auto-cpufreq --force reset",
+            "performance": "auto-cpufreq --force performance",
         }
         if mode in commands:
             try:
