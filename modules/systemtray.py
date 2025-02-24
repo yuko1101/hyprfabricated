@@ -8,14 +8,16 @@ class SystemTray(Gtk.Box):
     def __init__(self, pixel_size: int = 20, **kwargs) -> None:
         super().__init__(name="systray", orientation=Gtk.Orientation.HORIZONTAL, spacing=8, **kwargs)
         self.pixel_size = pixel_size
+        self.set_visible(False) # Initially hidden when empty.
         self.watcher = Gray.Watcher()
         self.watcher.connect("item-added", self.on_item_added)
 
     def on_item_added(self, _, identifier: str):
         item = self.watcher.get_item_for_identifier(identifier)
         item_button = self.do_bake_item_button(item)
-        item.connect("removed", lambda *args: item_button.destroy())
         item_button.show_all()
+        item.connect("removed", lambda *args: (item_button.destroy(), self._update_visibility()))
+        self._update_visibility()
         self.add(item_button)
 
     def do_bake_item_button(self, item: Gray.Item) -> Gtk.Button:
