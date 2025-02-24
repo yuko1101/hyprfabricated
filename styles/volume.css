@@ -15,7 +15,11 @@
       background-color: var(--shadow);
       color: var(--surface-bright);
       border: solid 0px var(--primary);
-      transition: all 0.1s ease;
+      transition: all 0.05s ease;
+    }
+
+    #button-volume.zero {
+      border: solid 0px var(--surface-bright);
     }
 
     #volume-icon-label {

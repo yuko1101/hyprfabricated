@@ -79,18 +79,30 @@ class VolumeWidget(Box):
         return
     
     def update_label(self):
+        
+        if self.audio.speaker.volume == 0:
+            self.progress_bar.add_style_class("zero")
+
         if self.audio.speaker.icon_name != "audio-headset-bluetooth":
             if self.audio.speaker.muted:
                 self.volume_label.markup = icons.vol_off
-            if self.audio.speaker.volume > 65:
+            elif self.audio.speaker.volume > 65:
+                self.progress_bar.remove_style_class("zero")
                 self.volume_label.set_markup(icons.vol_high)
-            elif self.audio.speaker.volume > 15:
+            elif self.audio.speaker.volume > 10:
+                self.progress_bar.remove_style_class("zero")
                 self.volume_label.set_markup(icons.vol_medium)
-            elif self.audio.speaker.volume < 10:
+            elif self.audio.speaker.volume > 0:
+                self.progress_bar.remove_style_class("zero")
+            elif self.audio.speaker.volume < 5:
+                #self.progress_bar.remove_style_class("zero")
                 self.volume_label.set_markup(icons.vol_mute)
+            
+                
         else:
             if self.audio.speaker.volume == 0:
                 self.volume_label.set_markup(icons.bluetooth_disconnected)
             else:
+                self.progress_bar.remove_style_class("zero")
                 self.volume_label.set_markup(icons.bluetooth_connected)
         return
