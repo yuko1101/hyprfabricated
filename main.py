@@ -5,7 +5,7 @@ from fabric.utils import get_relative_path
 from modules.bar import Bar
 from modules.notch import Notch
 from modules.corners import Corners
-from modules.widgets import Widgets
+from modules.deskwidgets import Deskwidgets
 from config.config import open_config
 
 import gi
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     corners = Corners()
     bar = Bar()
     notch = Notch()
-    widgets = Widgets()
+    widgets = Deskwidgets()
     bar.notch = notch
     app = Application("hyprfabricated", bar, notch)
 
