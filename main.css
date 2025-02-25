@@ -17,7 +17,6 @@
 @import url("./styles/battery.css");
 @import url("./styles/volume.css");
 @import url("./styles/system.css");
-@import url("./styles/widgets.css");
 * {
   all: unset;
   color: var(--foreground);
@@ -210,5 +209,27 @@ margin: 20px;
 color: var(--shadow);
  border: solid 0px var(--primary);
   transition: all 0.1s ease;
+}
+
+@import url("./styles/widgets.css");
+
+
+#clock>label {
+    font-size: 86px;
+    transition: color 0.5s ease;
+    color: alpha(var(--foreground), 0.8);
+    font-family: "Jost*", sans-serif;
+    font-weight: 700;
+    font-weight: 900;
+    margin-bottom: -18px;
+}
+
+#date>label {
+    font-size: 24px;
+    transition: color 0.5s ease;
+    color: alpha(var(--foreground), 0.8);
+    font-family: "Jost*", sans-serif;
+    font-weight: 700;
+    margin-bottom: -18px;
 }
 
