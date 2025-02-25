@@ -22,11 +22,14 @@ class VolumeWidget(Box):
         self.audio = Audio()
 
         self.progress_bar = CircularProgressBar(
-            name="button-volume", pie=False, size=30, line_width=3,
+            name="button-volume", pie=False, size=28, line_width=3,
+
+            start_angle=270,
+            end_angle=620,
         )
 
         self.event_box = EventBox(
-#            name="button-bar-vol",
+            #            name="button-bar-vol",
             events="scroll",
             child=Overlay(
                 child=self.progress_bar,

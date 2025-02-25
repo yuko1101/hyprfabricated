@@ -196,7 +196,7 @@ class NightModeButton(Button):
             for widget in self.widgets:
                 widget.add_style_class("disabled")
         except subprocess.CalledProcessError:
-            exec_shell_command_async("hyprsunset -t 3500")
+            exec_shell_command_async("hyprsunset -t 4500")
             self.night_mode_status.set_label("Enabled")
             for widget in self.widgets:
                 widget.remove_style_class("disabled")

@@ -125,7 +125,7 @@ class Cell(Gtk.EventBox):
             except Exception:
                 print("Error loading folder icon")
                 return Gtk.Image.new_from_icon_name("default-folder", Gtk.IconSize.DIALOG)
-        
+
         if content_type and content_type.startswith("image/"):
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
@@ -133,7 +133,7 @@ class Cell(Gtk.EventBox):
                 return Gtk.Image.new_from_pixbuf(pixbuf)
             except Exception as e:
                 print("Error loading image preview:", e)
-        
+
         elif content_type and content_type.startswith("video/"):
             try:
                 pixbuf = icon_theme.load_icon("video-x-generic", 80, 0)

@@ -38,15 +38,15 @@ class InlineEditor(Gtk.Box):
         buffer.set_text(initial_text)
         # Connect key press events to handle Return and SHIFT+Return.
         self.text_view.connect("key-press-event", self.on_key_press)
-        
+
         confirm_btn = Gtk.Button(name="kanban-btn", child=Label(name="kanban-btn-label", markup=icons.accept))
         confirm_btn.connect("clicked", self.on_confirm)
         confirm_btn.get_style_context().add_class("flat")
-        
+
         cancel_btn = Gtk.Button(name="kanban-btn", child=Label(name="kanban-btn-neg", markup=icons.cancel))
         cancel_btn.connect("clicked", self.on_cancel)
         cancel_btn.get_style_context().add_class("flat")
-        
+
         # Pack the TextView inside a ScrolledWindow for better appearance.
         sw = Gtk.ScrolledWindow()
         sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -112,12 +112,12 @@ class KanbanNote(Gtk.EventBox):
         self.label.set_line_wrap(True)
         # Wrap long lines.
         self.label.set_line_wrap_mode(Gtk.WrapMode.WORD)
-        
+
         self.delete_btn = Gtk.Button(name="kanban-btn", child=Label(name="kanban-btn-neg", markup=icons.trash))
         self.delete_btn.connect("clicked", self.on_delete_clicked)
 
         self.center_btn = CenterBox(orientation="v", start_children=[self.delete_btn])
-        
+
         self.box.pack_start(self.label, True, True, 0)
         self.box.pack_start(self.center_btn, False, False, 0)
         self.add(self.box)
@@ -158,7 +158,7 @@ class KanbanNote(Gtk.EventBox):
     def start_edit(self):
         row = self.get_parent()
         editor = InlineEditor(self.label.get_text())
-        
+
         def on_confirmed(editor, text):
             self.label.set_text(text)
             row.remove(editor)
@@ -173,7 +173,7 @@ class KanbanNote(Gtk.EventBox):
 
         editor.connect('confirmed', on_confirmed)
         editor.connect('canceled', on_canceled)
-        
+
         row.remove(self)
         row.add(editor)
         row.show_all()
@@ -197,18 +197,18 @@ class KanbanColumn(Gtk.Frame):
         self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         self.listbox = Gtk.ListBox()
         self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        
+
         self.add_btn = Gtk.Button(name="kanban-btn-add", child=Label(name="kanban-btn-label", markup=icons.add))
         header = CenterBox(name="kanban-header", center_children=[Label(name="column-header", label=self.title)], end_children=[self.add_btn])
         self.box.pack_start(header, False, False, 0)
-        
+
         self.add_btn.connect("clicked", self.on_add_clicked)
-        
+
         scrolled = Gtk.ScrolledWindow(name="kanban-scroll")
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled.add(self.listbox)
         scrolled.set_vexpand(True)
-        
+
         self.box.pack_start(scrolled, True, True, 0)
         self.box.pack_start(self.add_btn, False, False, 0)
         self.add(self.box)
@@ -220,7 +220,7 @@ class KanbanColumn(Gtk.Frame):
             [Gtk.TargetEntry.new('UTF8_STRING', Gtk.TargetFlags.SAME_APP, 0)],
             Gdk.DragAction.MOVE
         )
-        
+
         self.listbox.connect("drag-data-received", self.on_drag_data_received)
         self.listbox.connect("drag-motion", self.on_drag_motion)
         self.listbox.connect("drag-leave", self.on_drag_leave)
@@ -280,12 +280,12 @@ class KanbanColumn(Gtk.Frame):
             new_row = Gtk.ListBoxRow(name="kanban-row")
             new_row.add(new_note)
             new_row.connect('destroy', lambda x: self.emit('changed'))
-            
+
             if row:
                 self.listbox.insert(new_row, row.get_index())
             else:
                 self.listbox.add(new_row)
-            
+
             self.listbox.show_all()
             drag_context.finish(True, False, time)
             self.emit('changed')  # Emit on move
@@ -302,21 +302,21 @@ class Kanban(Gtk.Box):
 
     def __init__(self):
         super().__init__(name="kanban")
-        
+
         self.grid = Gtk.Grid(column_spacing=4, column_homogeneous=True)
         self.grid.set_vexpand(True)
         self.add(self.grid)
-        
+
         self.columns = [
             KanbanColumn("To Do"),
             KanbanColumn("In Progress"),
             KanbanColumn("Done")
         ]
-        
+
         for i, column in enumerate(self.columns):
             self.grid.attach(column, i, 0, 1, 1)
             column.connect('changed', lambda x: self.save_state())
-        
+
         self.load_state()
         self.show_all()
 
