@@ -27,7 +27,7 @@ if __name__ == "__main__":
     notch = Notch()
     widgets = Deskwidgets()
     bar.notch = notch
-    app = Application("hyprfabricated", bar, notch)
+    app = Application("hyprfabricated", bar, notch,widgets)
 
     def set_css():
         app.set_stylesheet_from_file(
