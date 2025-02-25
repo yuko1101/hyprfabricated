@@ -23,7 +23,7 @@ class WallpaperSelector(Box):
         old_cache_dir = os.path.expanduser("~/.cache/ax-shell/wallpapers")
         if os.path.exists(old_cache_dir):
             shutil.rmtree(old_cache_dir)
-        
+
         super().__init__(name="wallpapers", spacing=4, orientation="v", h_expand=False, v_expand=False, **kwargs)
         os.makedirs(self.CACHE_DIR, exist_ok=True)
         self.files = sorted([f for f in os.listdir(data.WALLPAPERS_DIR) if self._is_image(f)])

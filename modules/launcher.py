@@ -36,7 +36,7 @@ class AppLauncher(Box):
                 self.calc_history = json.load(f)
         else:
             self.calc_history = []
-        
+
         self.viewport = Box(name="viewport", spacing=4, orientation="v")
         self.search_entry = Entry(
             name="search-entry",
@@ -72,7 +72,7 @@ class AppLauncher(Box):
                 ),
             ],
         )
-        
+
         self.launcher_box = Box(
             name="launcher-box",
             spacing=10,
@@ -193,12 +193,12 @@ class AppLauncher(Box):
             alloc = button.get_allocation()
             if alloc.height == 0:
                 return False  # Retry if allocation isn't ready
-            
+
             y = alloc.y
             height = alloc.height
             page_size = adj.get_page_size()
             current_value = adj.get_value()
-            
+
             # Calculate visible boundaries
             visible_top = current_value
             visible_bottom = current_value + page_size
