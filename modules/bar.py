@@ -26,23 +26,38 @@ class VolumeWidget(Box):
         self.progress_bar = CircularProgressBar(
             name="button-volume", pie=False, size=30, line_width=3,
         )
+        self.ico = icons.vol_high
+        self.vollabel = Label(name="button-bar-label", markup=icons.vol_high)
 
+        self.volbutton = Button(
+                on_clicked=self.toggle_mute,
+                child=self.vollabel
+        )
         self.event_box = EventBox(
 #            name="button-bar-vol",
             events="scroll",
             child=Overlay(
                 child=self.progress_bar,
-                overlays=Label(
-                name="button-bar-label",
-                markup=icons.vol_high,
-                    #                    style="font-size: 11pt; color: red;",  # to center the icon glyph
-                ),
+                overlays=self.volbutton
             ),
         )
 
         self.audio.connect("notify::speaker", self.on_speaker_changed)
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
+
+    #        self.button.connect("button", self.on_clicked)
+
+    #thanks https://github.com/rubiin/HyDePanel/blob/master/widgets/volume.python.py
+
+    def toggle_mute(self, event):
+        current_stream = self.audio.speaker
+        if current_stream:
+            current_stream.muted = not current_stream.muted
+            self.volbutton.get_child().set_markup(icons.vol_mute) if current_stream.muted else self.on_speaker_changed()
+    
+    #def Mute():
+    #self.audio.speaker += 2,
 
     def on_scroll(self, _, event):
         match event.direction:
@@ -59,6 +74,7 @@ class VolumeWidget(Box):
         self.audio.speaker.bind(
             "volume", "value", self.progress_bar, lambda _, v: v / 100
         )
+        self.volbutton.get_child().set_markup(icons.vol_high)
         return
 
 
@@ -171,7 +187,7 @@ class Bar(Window):
                 orientation="h",
                 children=[
                     self.volume,
-                    self.battery,
+#                    self.battery,
                     self.button_color,
                     self.systray,
                     self.button_config,
