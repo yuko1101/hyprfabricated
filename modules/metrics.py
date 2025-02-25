@@ -96,6 +96,10 @@ class Metrics(Box):
             self.cpu,
         ]
 
+        self.cpu_usage.set_sensitive(False)
+        self.ram_usage.set_sensitive(False)
+        self.disk_usage.set_sensitive(False)
+
         for x in self.scales:
             self.add(x)
 
