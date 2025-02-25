@@ -123,7 +123,7 @@ class NetworkApplet(Button):
         )
 
         self.upload_box = Box(
-            children=[self.upload_icon, self.upload_label],
+            children=[self.upload_label, self.upload_icon],
         )
 
         self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-right", child_revealed=False)
@@ -180,9 +180,11 @@ class NetworkApplet(Button):
                 self.set_tooltip_text(self.network_client.wifi_device.ssid)
 
             else:
-                self.wifi_label.set_markup(icons.wifi_off)
+                self.wifi_label.set_markup(icons.network_off)
+                self.set_tooltip_text("Disconnected")
         else:
-            self.wifi_label.set_markup(icons.wifi_off)
+            self.wifi_label.set_markup(icons.network_off)
+            self.set_tooltip_text("Disconnected")
 
         
 
