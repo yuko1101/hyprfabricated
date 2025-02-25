@@ -59,8 +59,10 @@ class Bar(Window):
         self.updates.connect("leave-notify-event", self.on_button_leave)
 
         self.volume = VolumeWidget()
-        self.volume.event_box.connect("enter-notify-event", self.on_button_enter)
-        self.volume.event_box.connect("leave-notify-event", self.on_button_leave)
+        self.volume.speaker_event_box.connect("enter-notify-event", self.on_button_enter)
+        self.volume.speaker_event_box.connect("leave-notify-event", self.on_button_leave)
+        self.volume.microphone_event_box.connect("enter-notify-event", self.on_button_enter)
+        self.volume.microphone_event_box.connect("leave-notify-event", self.on_button_leave)
 
         self.button_apps = Button(
             name="button-bar",

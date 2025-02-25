@@ -75,6 +75,7 @@ night_off: str = "&#xf162;"
 dnd_off: str = "&#xece9;"
 
 # Network
+network_off: str = "&#xf414;"
 wifi_0: str = "&#xeba3;"
 wifi_1: str = "&#xeba4;"
 wifi_2: str = "&#xeba5;"
@@ -103,6 +104,9 @@ vol_off: str = "&#xf1c3;"
 vol_mute: str = "&#xeb50;"
 vol_medium: str = "&#xeb4f;"
 vol_high: str = "&#xeb51;"
+
+mic: str = "&#xeaf0;"
+mic_off: str = "&#xed16;"
 
 # Overview
 circle_plus: str = "&#xea69;"
@@ -134,6 +138,8 @@ ghost: str = "&#xfc13;"
 appstore: str = "&#xebb6;"
 bottle: str = "&#xfa89;"
 theme: str = "&#xeb00;"
+
+tex: str = "&#xf4e0;"
 
 writing: str = "&#xef08;"
 brush: str = "&#xebb8;"
@@ -206,4 +212,6 @@ def get_class_icon(win_class):
         icon = bottle
     elif win_class == "nwg-look":
         icon = theme
+    elif win_class == "org.cvfosammmm.Setzer":
+        icon = tex
     return icon

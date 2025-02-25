@@ -29,3 +29,13 @@
         border-radius: 11px;
         transition: all 0.1s ease;
       }
+
+    #microphone-icon-label {
+        color: var(--foreground);
+        margin-top: 1px;
+        font-size: 18px;
+        padding: 4px;
+        border-radius: 11px;
+        transition: all 0.1s ease;
+      }
+    
