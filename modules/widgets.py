@@ -7,10 +7,11 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 from gi.repository import GLib, Gtk, Vte, Pango
 import modules.icons as icons
-from modules.dashboard_modules.buttons import Buttons
+from modules.buttons import Buttons
 from modules.calendar import Calendar
 from modules.kanban import Kanban
 from modules.player import Player
+from modules.metrics import Metrics
 
 class Widgets(Box):
     def __init__(self, **kwargs):
@@ -68,6 +69,8 @@ class Widgets(Box):
 
         self.player = Player()
 
+        self.metrics = Metrics()
+
         self.container_1 = Box(
             name="container-1",
             h_expand=True,
@@ -85,7 +88,7 @@ class Widgets(Box):
                         self.box_2,
                     ]
                 ),
-                self.box_3,
+                self.metrics,
             ]
         )
 
