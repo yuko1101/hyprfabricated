@@ -54,7 +54,7 @@ class VolumeWidget(Box):
         current_stream = self.audio.speaker
         if current_stream:
             current_stream.muted = not current_stream.muted
-            self.volbutton.get_child().set_markup(icons.vol_mute) if current_stream.muted else self.on_speaker_changed()
+            self.volbutton.get_child().set_markup(icons.vol_off) if current_stream.muted else self.on_speaker_changed()
     
     #def Mute():
     #self.audio.speaker += 2,
@@ -65,6 +65,14 @@ class VolumeWidget(Box):
                 self.audio.speaker.volume += 2
             case 1:
                 self.audio.speaker.volume -= 2
+        if self.audio.speaker.volume > 60:
+            self.volbutton.get_child().set_markup(icons.vol_high)
+        elif self.audio.speaker.volume > 30:
+            self.volbutton.get_child().set_markup(icons.vol_medium)
+        elif self.audio.speaker.volume < 30:
+            self.volbutton.get_child().set_markup(icons.vol_mute)
+
+
         return
 
     def on_speaker_changed(self, *_):
@@ -74,7 +82,12 @@ class VolumeWidget(Box):
         self.audio.speaker.bind(
             "volume", "value", self.progress_bar, lambda _, v: v / 100
         )
-        self.volbutton.get_child().set_markup(icons.vol_high)
+        if self.audio.speaker.volume > 60:
+            self.volbutton.get_child().set_markup(icons.vol_high)
+        elif self.audio.speaker.volume > 30:
+            self.volbutton.get_child().set_markup(icons.vol_medium)
+        elif self.audio.speaker.volume < 30:
+            self.volbutton.get_child().set_markup(icons.vol_mute)
         return
 
 
