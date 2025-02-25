@@ -24,7 +24,7 @@ class VolumeWidget(Box):
         self.audio = Audio()
 
         self.progress_bar = CircularProgressBar(
-            name="button-volume", pie=False, size=30, line_width=3,
+            name="button-volume", pie=False, size=28, line_width=2,
         )
         self.ico = icons.vol_high
         self.vollabel = Label(name="button-bar-label", markup=icons.vol_high)
