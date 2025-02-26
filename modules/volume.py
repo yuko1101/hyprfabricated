@@ -13,8 +13,8 @@ class VolumeSmall(Box):
         self.audio = Audio()
 
         self.progress_bar = CircularProgressBar(
-            name="button-volume", size=28, line_width=2,
-            start_angle=135, end_angle=395,
+            name="button-volume", size=28, line_width=3,
+            start_angle=270, end_angle=630,
         )
         self.ico = icons.vol_high
         self.vollabel = Label(name="button-bar-label", markup=icons.vol_high)
@@ -45,7 +45,7 @@ class VolumeSmall(Box):
         if current_stream:
             current_stream.muted = not current_stream.muted
             self.volbutton.get_child().set_markup(icons.vol_off) if current_stream.muted else self.on_speaker_changed()
-    
+
     #def Mute():
     #self.audio.speaker += 2,
 
