@@ -12,55 +12,6 @@ import modules.icons as icons
 import modules.data as data
 from modules.volume import VolumeSmall
 from modules.system import System
-from fabric.widgets.overlay import Overlay
-from fabric.widgets.eventbox import EventBox
-from fabric.widgets.circularprogressbar import CircularProgressBar
-from fabric.audio.service import Audio
-class VolumeWidget(Box):
-    def __init__(self, **kwargs):
-        super().__init__(name="button-bar-vol", **kwargs)
-        self.audio = Audio()
-
-        self.progress_bar = CircularProgressBar(
-            name="button-volume", pie=False, size=28, line_width=3,
-
-            start_angle=270,
-            end_angle=620,
-        )
-
-        self.event_box = EventBox(
-            #            name="button-bar-vol",
-            events="scroll",
-            child=Overlay(
-                child=self.progress_bar,
-                overlays=Label(
-                name="button-bar-label",
-                markup=icons.vol_high,
-                    #                    style="font-size: 11pt; color: red;",  # to center the icon glyph
-                ),
-            ),
-        )
-
-        self.audio.connect("notify::speaker", self.on_speaker_changed)
-        self.event_box.connect("scroll-event", self.on_scroll)
-        self.add(self.event_box)
-
-    def on_scroll(self, _, event):
-        match event.direction:
-            case 0:
-                self.audio.speaker.volume += 2
-            case 1:
-                self.audio.speaker.volume -= 2
-        return
-
-    def on_speaker_changed(self, *_):
-        if not self.audio.speaker:
-            return
-        self.progress_bar.value = self.audio.speaker.volume / 100
-        self.audio.speaker.bind(
-            "volume", "value", self.progress_bar, lambda _, v: v / 100
-        )
-        return
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -124,24 +75,20 @@ class Bar(Window):
         self.button_overview.connect("enter_notify_event", self.on_button_enter)
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
-        # self.button_color = Button(
-        #     name="button-bar",
-        #     tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB",
-        #     v_expand=False,
-        #     child=Label(
-        #         name="button-bar-label",
-        #         markup=icons.colorpicker
-        #     )
-        # )
-        # self.button_color.connect("enter-notify-event", self.on_button_enter)
-        # self.button_color.connect("leave-notify-event", self.on_button_leave)
-        # self.button_color.connect("button-press-event", self.colorpicker)
-        #
+        self.button_color = Button(
+            name="button-bar",
+            tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB",
+            v_expand=False,
+            child=Label(
+                name="button-bar-label",
+                markup=icons.colorpicker
+            )
+        )
+        self.button_color.connect("enter-notify-event", self.on_button_enter)
+        self.button_color.connect("leave-notify-event", self.on_button_leave)
+        self.button_color.connect("button-press-event", self.colorpicker)
+
         self.system = System()
-<<<<<<< HEAD
-        self.volume = VolumeWidget()
-=======
->>>>>>> f590bbaa1da1d39be1b19ef7af1e386d83ee47e5
         self.button_config = Button(
             name="button-bar",
             on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
@@ -175,7 +122,7 @@ class Bar(Window):
                 children=[
                     self.volume,
                     self.system,
-                    self.button_color,
+                    # self.button_color,
                     self.systray,
                     self.button_config,
                     self.date_time,
