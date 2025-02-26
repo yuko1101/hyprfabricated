@@ -19,6 +19,7 @@ PACKAGES=(
     imagemagick
     libnotify
     matugen-bin
+    playerctl
     python-fabric-git
     python-pillow
     python-setproctitle
