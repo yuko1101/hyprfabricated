@@ -207,25 +207,23 @@ tooltip > * {
   border-radius: 0px;
 }
 
-@import url("./styles/widgets.css");
 
 
 #clock>label {
     font-size: 86px;
     transition: color 0.5s ease;
-    color: alpha(var(--foreground), 0.8);
+    color: alpha(var(--primary), 0.7);
     font-family: "Jost*", sans-serif;
-    font-weight: 700;
     font-weight: 900;
-    margin-bottom: -18px;
+    margin-bottom: -25px;
 }
 
 #date>label {
     font-size: 24px;
     transition: color 0.5s ease;
-    color: alpha(var(--foreground), 0.8);
+    color: alpha(var(--primary), 0.7);
     font-family: "Jost*", sans-serif;
     font-weight: 700;
-    margin-bottom: -18px;
+    margin-bottom: -25px;
 }
 

@@ -8,14 +8,13 @@ REPO_URL="https://github.com/tr1xem/hyprfabricated.git"
 INSTALL_DIR="$HOME/.config/hyprfabricated"
 PACKAGES=(
     acpi
-    auto-cpufreq
     fabric-cli-git
     gnome-bluetooth-3.0
     grimblast
     hypridle
     hyprlock
     hyprpicker
-    hyprsunset
+    gammastep
     imagemagick
     libnotify
     matugen-bin
@@ -81,19 +80,6 @@ if [ ${#to_update[@]} -gt 0 ]; then
 else
     echo "All required packages are up-to-date."
 fi
-
-# Configure sudoers so auto-cpufreq commands run without a sudo password
-echo "Configuring sudoers for auto-cpufreq commands..."
-SUDOERS_FILE="/etc/sudoers.d/ax-shell-auto-cpufreq"
-RULE="$USER ALL=(ALL) NOPASSWD: /usr/bin/auto-cpufreq"
-if [ ! -f "$SUDOERS_FILE" ] || ! sudo grep -qF "$RULE" "$SUDOERS_FILE"; then
-    echo "$RULE" | sudo tee "$SUDOERS_FILE" > /dev/null
-    sudo chmod 0440 "$SUDOERS_FILE"
-fi
-
-# Enable auto-cpufreq service
-echo "Enabling auto-cpufreq service..."
-sudo systemctl enable --now auto-cpufreq
 
 echo "Starting hyprfabricated..."
 killall ax-shell 2>/dev/null || true

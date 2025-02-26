@@ -24,6 +24,7 @@
 
 > [!NOTE]
 > You need a functioning Hyprland installation.
+> You need to install plasma-browser-integration for mpris and cava to work as it is intended
 
 ### Arch Linux
 
