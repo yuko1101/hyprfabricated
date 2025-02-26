@@ -190,13 +190,13 @@ class NightModeButton(Button):
           - If not running, start it and mark as 'Enabled'.
         """
         try:
-            subprocess.check_output(["pgrep", "hyprsunset"])
-            exec_shell_command_async("pkill hyprsunset")
+            subprocess.check_output(["pgrep", 'gammastep'])
+            exec_shell_command_async("pkill gammastep")
             self.night_mode_status.set_label("Disabled")
             for widget in self.widgets:
                 widget.add_style_class("disabled")
         except subprocess.CalledProcessError:
-            exec_shell_command_async("hyprsunset -t 4500")
+            exec_shell_command_async("gammastep")
             self.night_mode_status.set_label("Enabled")
             for widget in self.widgets:
                 widget.remove_style_class("disabled")
@@ -206,7 +206,7 @@ class NightModeButton(Button):
         Update the button state based on whether hyprsunset is running.
         """
         try:
-            subprocess.check_output(["pgrep", "hyprsunset"])
+            subprocess.check_output(["pgrep", "gammastep"])
             self.night_mode_status.set_label("Enabled")
             for widget in self.widgets:
                 widget.remove_style_class("disabled")
@@ -287,6 +287,9 @@ class CaffeineButton(Button):
             for i in self.widgets:
                 i.add_style_class("disabled")
 
+
+    def check_gamma():
+        pass
 
 class Buttons(Gtk.Grid):
     def __init__(self, **kwargs):
