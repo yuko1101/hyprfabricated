@@ -94,4 +94,5 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 
 # Credits
 
-<b>Huge Thanks to the original Project https://github.com/Axenide/Ax-Shell/ </b>
+- <b>Huge Thanks to the original Project https://github.com/Axenide/Ax-Shell/ </b>
+- [Amariokhz](https://github.com/mariokhz)
