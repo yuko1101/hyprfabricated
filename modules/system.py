@@ -222,6 +222,19 @@ class System(Box):
     def poll_cpu_usage(self):
         """
         Polls the current total CPU usage.
+    def update_status(self):
+        # Note: psutil.cpu_percent(interval=1) blocks. If blocking is not desired,
+        # consider using interval=0 to get a non-blocking value.
+        cpu = psutil.cpu_percent(interval=0)
+        mem = psutil.virtual_memory().percent
+        disk = psutil.disk_usage("/").percent
+
+        # Normalize percentage values to range 0.0 - 1.0
+        self.cpu_usage.value = cpu / 100.0
+        self.ram_usage.value = mem / 100.0
+        self.disk_usage.value = disk / 100.0
+
+        return True  # Continue calling this function.
         Returns a tuple: (CPU usage percentage as a float between 0 and 1, status placeholder).
         """
         try:
@@ -308,13 +321,9 @@ class System(Box):
         Updates the battery widget...
         """
         value, status = cpu_data
-        if value == 0:
-            self.cpu_overlay.set_visible(False)
-            self.cpu_revealer.set_visible(False)
-        else:
-            self.cpu_overlay.set_visible(True)
-            self.cpu_revealer.set_visible(True)
-            self.cpu_circle.set_value(value)
+        self.cpu_overlay.set_visible(True)
+        self.cpu_revealer.set_visible(True)
+        self.cpu_circle.set_value(value)
 
         percentage = int(value * 100)
         self.cpu_level.set_label(f"{percentage}%")

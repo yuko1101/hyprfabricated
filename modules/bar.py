@@ -130,7 +130,7 @@ class Bar(Window):
                     self.system,
                     # self.button_color,
                     self.systray,
-                    self.button_config,
+                    # self.button_config,
                     self.date_time,
                     self.button_power,
                 ],
