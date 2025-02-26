@@ -530,9 +530,8 @@ class PlayerSmall(CenterBox):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             if event.button == 1:  # Click izquierdo -> track anterior
                 if self.mpris_player:
-                    self.mpris_player.previous()
-                    self.mpris_button.get_child().set_markup(icons.prev)
-                    GLib.timeout_add(500, self._restore_play_pause_icon)
+                    self.mpris_player.play_pause()
+                    self.update_play_pause_icon()
             elif event.button == 3:  # Click derecho -> siguiente track
                 if self.mpris_player:
                     self.mpris_player.next()
@@ -540,8 +539,9 @@ class PlayerSmall(CenterBox):
                     GLib.timeout_add(500, self._restore_play_pause_icon)
             elif event.button == 2:  # Click medio -> play/pausa
                 if self.mpris_player:
-                    self.mpris_player.play_pause()
-                    self.update_play_pause_icon()
+                    self.mpris_player.previous()
+                    self.mpris_button.get_child().set_markup(icons.prev)
+                    GLib.timeout_add(500, self._restore_play_pause_icon)
             return True
         return True
 
