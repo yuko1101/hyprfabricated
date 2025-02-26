@@ -138,7 +138,10 @@ class Bar(Window):
         # self.button_color.connect("button-press-event", self.colorpicker)
         #
         self.system = System()
+<<<<<<< HEAD
         self.volume = VolumeWidget()
+=======
+>>>>>>> f590bbaa1da1d39be1b19ef7af1e386d83ee47e5
         self.button_config = Button(
             name="button-bar",
             on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
@@ -172,7 +175,7 @@ class Bar(Window):
                 children=[
                     self.volume,
                     self.system,
-                    # self.button_color,
+                    self.button_color,
                     self.systray,
                     self.button_config,
                     self.date_time,
