@@ -84,6 +84,7 @@ class MicSlider(Scale):
             return
         self.value = self.audio.microphone.volume / 100
 
+
 class BrightnessSlider(Scale):
     def __init__(self, **kwargs):
         super().__init__(
@@ -103,15 +104,39 @@ class BrightnessSlider(Scale):
         self.connect("value-changed", self.on_value_changed)
         self.on_brightness_changed()
         self.add_style_class("brightness")
+        
+        # Variables for debouncing
+        self.timeout_id = None
+        self.pending_value = None
 
     def on_value_changed(self, _):
         if self.brightness.max_screen != -1:
             new_brightness = int(self.value * self.brightness.max_screen)
-            self.brightness.screen_brightness = new_brightness
+            
+            # Cancel any pending timeout
+            if self.timeout_id:
+                GLib.source_remove(self.timeout_id)
+            
+            # Store the pending value
+            self.pending_value = new_brightness
+            
+            # Set a timeout to update brightness after 100ms
+            self.timeout_id = GLib.timeout_add(100, self._update_brightness)
+
+    def _update_brightness(self):
+        # Apply the pending brightness value
+        if self.pending_value is not None:
+            self.brightness.screen_brightness = self.pending_value
+            self.pending_value = None
+        
+        # Return False to ensure the timeout doesn't repeat
+        self.timeout_id = None
+        return False
 
     def on_brightness_changed(self, *args):
         if self.brightness.max_screen != -1:
             self.value = self.brightness.screen_brightness / self.brightness.max_screen
+
 
 class VolumeSmall(Box):
     def __init__(self, **kwargs):
