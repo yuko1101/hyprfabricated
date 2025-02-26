@@ -96,7 +96,7 @@ class WallpaperSelector(Box):
             name="header-box",
             spacing=8,
             orientation="h",
-            start_children=[self.mat_icon, self.matugen_switcher],  # <-- added here
+            start_children=[self.matugen_switcher, self.mat_icon],  # <-- added here
             center_children=[self.search_entry],
             end_children=[self.scheme_dropdown],
         )
