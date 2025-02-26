@@ -34,6 +34,11 @@
   background-size: contain;
 }
 
+#control-slider.brightness slider {
+  background-image: url("/home/adriano/.config/Ax-Shell/assets/icons/brightness.png");
+  background-size: contain;
+}
+
 #control-small {
   padding: 4px;
   margin-top: 4px;
@@ -41,7 +46,7 @@
   background-color: var(--shadow);
 }
 
-#button-volume, #button-mic {
+#button-volume, #button-mic, #button-brightness {
   color: var(--surface-bright);
   border: 3px solid var(--primary);
 }
@@ -51,7 +56,7 @@
   border: 3px solid var(--outline);
 }
 
-#vol-label, #mic-label {
+#vol-label, #mic-label, #brightness-label {
   font-size: 20px;
 }
 

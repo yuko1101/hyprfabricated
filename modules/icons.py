@@ -114,6 +114,11 @@ spotify: str = "&#xfe86;"
 disc: str = "&#x1003e;"
 disc_off: str = "&#xf118;"
 
+# Brightness
+brightness_low: str = "&#xeb7d;"
+brightness_medium: str = "&#xeb7e;"
+brightness_high: str = "&#xeb30;"
+
 # Misc
 dot: str = "&#xf698;"
 palette: str = "&#xeb01;"

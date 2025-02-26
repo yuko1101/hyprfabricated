@@ -101,5 +101,3 @@ class Widgets(Box):
         )
 
         self.add(self.container_3)
-
-        self.show_all()
