@@ -12,6 +12,7 @@ from modules.calendar import Calendar
 from modules.kanban import Kanban
 from modules.player import Player
 from modules.metrics import Metrics
+from modules.volume import VolumeSlider
 
 class Widgets(Box):
     def __init__(self, **kwargs):
@@ -47,23 +48,16 @@ class Widgets(Box):
             v_expand=True,
         )
 
+        self.volume = VolumeSlider()
+
         self.box_4 = Box(
             name="box-4",
             orientation="h",
             spacing=4,
             children=[
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
+                self.volume,
+                VolumeSlider(),
+                VolumeSlider(),
             ]
         )
 

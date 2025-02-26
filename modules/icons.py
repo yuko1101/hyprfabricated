@@ -113,6 +113,7 @@ disc_off: str = "&#xf118;"
 
 # Misc
 dot: str = "&#xf698;"
+palette: str = "&#xeb01;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

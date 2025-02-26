@@ -78,7 +78,8 @@
 }
 
 #cpu-usage trough highlight {
-  border-radius: 0 0 20px 20px;
+  border-radius: 20px;
+  min-height: 16px;
   background-color: var(--primary);
 }
 
@@ -86,7 +87,7 @@
   border-radius: 100%;
   min-width: 16px;
   min-height: 16px;
-  background-color: var(--primary);
+  background-color: transparent;
 }
 
 #cpu-label {
@@ -103,7 +104,8 @@
 }
 
 #ram-usage trough highlight {
-  border-radius: 0 0 20px 20px;
+  border-radius: 20px;
+  min-height: 16px;
   background-color: var(--secondary);
 }
 
@@ -111,7 +113,7 @@
   border-radius: 100%;
   min-width: 16px;
   min-height: 16px;
-  background-color: var(--secondary);
+  background-color: transparent;
 }
 
 #ram-label {
@@ -128,7 +130,8 @@
 }
 
 #disk-usage trough highlight {
-  border-radius: 0 0 20px 20px;
+  border-radius: 20px;
+  min-height: 16px;
   background-color: var(--tertiary);
 }
 
@@ -136,7 +139,7 @@
   border-radius: 100%;
   min-width: 16px;
   min-height: 16px;
-  background-color: var(--tertiary);
+  background-color: transparent;
 }
 
 #disk-label {

@@ -22,3 +22,27 @@
 #vol-label.muted {
   color: var(--outline);
 }
+
+#volume-slider {
+  background-color: var(--surface);
+}
+
+#volume-slider trough {
+  min-height: 28px;
+  padding: 0 14px;
+}
+
+#volume-slider trough highlight {
+  border-radius: 20px;
+  min-width: 28px;
+  min-height: 28px;
+  margin: 0 -14px;
+  background-color: var(--foreground);
+}
+
+#volume-slider slider {
+  border-radius: 100%;
+  min-width: 28px;
+  min-height: 28px;
+  background-color: var(--foreground);
+}
