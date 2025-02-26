@@ -10,6 +10,8 @@ from fabric.widgets.circularprogressbar import CircularProgressBar
 from services.brightness import Brightness
 import modules.icons as icons
 
+from gi.repository import GLib
+
 def supports_backlight():
     try:
         output = subprocess.check_output(["brightnessctl", "-l"]).decode("utf-8").lower()
