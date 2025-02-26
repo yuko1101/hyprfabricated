@@ -12,7 +12,7 @@ from math import pi
 
 from fabric.widgets.overlay import Overlay
 
-file_path = os.path.expanduser("~/.config/Ax-Shell/styles/colors.css")
+file_path = os.path.expanduser("~/.config/hyprfabricated/styles/colors.css")
 class Cava:
 	"""
 	CAVA wrapper.
@@ -27,7 +27,7 @@ class Cava:
 		self.bars = 20
 		self.path = "/tmp/cava.fifo"
 
-		self.cava_config_file = os.path.expanduser("~/.config/Ax-Shell/config/cavalcade/cava.ini")
+		self.cava_config_file = os.path.expanduser("~/.config/hyprfabricated/config/cavalcade/cava.ini")
 		self.data_handler = mainapp.draw.update
 		self.command = ["cava", "-p", self.cava_config_file]
 		self.state = self.NONE

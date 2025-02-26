@@ -10,12 +10,12 @@ import toml
 
 # Constants
 SOURCE_STRING = """
-# Ax-Shell
-source = ~/.config/Ax-Shell/config/hypr/ax-shell.conf
+# hyprfabricated
+source = ~/.config/hyprfabricated/config/hypr/hyprfabricated.conf
 """
 
-CONFIG_DIR = os.path.expanduser("~/.config/Ax-Shell")
-WALLPAPERS_DIR_DEFAULT = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example")
+CONFIG_DIR = os.path.expanduser("~/.config/hyprfabricated")
+WALLPAPERS_DIR_DEFAULT = os.path.expanduser("~/.config/hyprfabricated/assets/wallpapers_example")
 
 # Default key binding values
 bind_vars = {
@@ -75,14 +75,14 @@ def ensure_matugen_config():
         },
         'templates': {
             'hyprland': {
-                'input_path': '~/.config/Ax-Shell/config/matugen/templates/hyprland-colors.conf',
-                'output_path': '~/.config/Ax-Shell/config/hypr/colors.conf'
+                'input_path': '~/.config/hyprfabricated/config/matugen/templates/hyprland-colors.conf',
+                'output_path': '~/.config/hyprfabricated/config/hypr/colors.conf'
             },
-            'ax-shell': {
-                'input_path': '~/.config/Ax-Shell/config/matugen/templates/ax-shell.css',
-                'output_path': '~/.config/Ax-Shell/styles/colors.css',
+            'hyprfabricated': {
+                'input_path': '~/.config/hyprfabricated/config/matugen/templates/hyprfabricated.css',
+                'output_path': '~/.config/hyprfabricated/styles/colors.css',
                 'post_hook': (
-                    "fabric-cli exec ax-shell 'app.set_css()' &"
+                    "fabric-cli exec hyprfabricated 'app.set_css()' &"
                 )
             }
         }
@@ -107,7 +107,7 @@ def ensure_matugen_config():
     # Trigger image generation if "~/.current.wall" does not exist
     current_wall = os.path.expanduser("~/.current.wall")
     if not os.path.exists(current_wall):
-        image_path = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
+        image_path = os.path.expanduser("~/.config/hyprfabricated/assets/wallpapers_example/example-1.jpg")
         os.system(f"matugen image {image_path}")
 
 
@@ -116,8 +116,8 @@ def ensure_fonts():
     Ensure that required fonts are installed.
     """
     fonts_to_copy = [
-        ('~/.fonts/zed-sans/', '~/.config/Ax-Shell/assets/fonts/zed-sans/'),
-        ('~/.fonts/tabler-icons/', '~/.config/Ax-Shell/assets/fonts/tabler-icons/')
+        ('~/.fonts/zed-sans/', '~/.config/hyprfabricated/assets/fonts/zed-sans/'),
+        ('~/.fonts/tabler-icons/', '~/.config/hyprfabricated/assets/fonts/tabler-icons/')
     ]
     for dest_font, src_font in fonts_to_copy:
         dest_path = os.path.expanduser(dest_font)
@@ -129,7 +129,7 @@ def load_bind_vars():
     """
     Load saved key binding variables from JSON, if available.
     """
-    config_json = os.path.expanduser('~/.config/Ax-Shell/config/config.json')
+    config_json = os.path.expanduser('~/.config/hyprfabricated/config/config.json')
     try:
         with open(config_json, 'r') as f:
             saved_vars = json.load(f)
@@ -144,14 +144,14 @@ def generate_hyprconf() -> str:
     Generate the Hypr configuration string using the current bind_vars.
     """
     home = os.path.expanduser('~')
-    return f"""exec-once = uwsm app -- python {home}/.config/Ax-Shell/main.py
+    return f"""exec-once = uwsm app -- python {home}/.config/hyprfabricated/main.py
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
 
-$fabricSend = fabric-cli exec ax-shell
-$axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/Ax-Shell/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
+$fabricSend = fabric-cli exec hyprfabricated
+$axMessage = notify-send "tr1x_em" "What are you doing?" -i "{home}/.config/hyprfabricated/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
-bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall ax-shell; uwsm app -- python {home}/.config/Ax-Shell/main.py # Reload Ax-Shell | Default: SUPER ALT + B
+bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall hyprfabricated cava; uwsm app -- python {home}/.config/hyprfabricated/main.py # Reload hyprfabricated | Default: SUPER ALT + B
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
@@ -164,7 +164,7 @@ bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend '
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
-source = {home}/.config/Ax-Shell/config/hypr/colors.conf
+source = {home}/.config/hyprfabricated/config/hypr/colors.conf
 
 exec = cp $wallpaper ~/.current.wall
 
@@ -211,7 +211,7 @@ def ensure_face_icon():
     Ensure the face icon exists. If not, copy the default icon.
     """
     face_icon_path = os.path.expanduser("~/.face.icon")
-    default_icon_path = os.path.expanduser("~/.config/Ax-Shell/assets/default.png")
+    default_icon_path = os.path.expanduser("~/.config/hyprfabricated/assets/default.png")
     if not os.path.exists(face_icon_path) and os.path.exists(default_icon_path):
         shutil.copy(default_icon_path, face_icon_path)
 
@@ -252,7 +252,7 @@ class HyprConfGUI(Gtk.Window):
 
         self.entries = []
         bindings = [
-            ("Reload Ax-Shell", 'prefix_restart', 'suffix_restart'),
+            ("Reload hyprfabricated", 'prefix_restart', 'suffix_restart'),
             ("Message", 'prefix_axmsg', 'suffix_axmsg'),
             ("Dashboard", 'prefix_dash', 'suffix_dash'),
             ("Bluetooth", 'prefix_bluetooth', 'suffix_bluetooth'),
@@ -370,7 +370,7 @@ class HyprConfGUI(Gtk.Window):
         bind_vars['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
 
         # Save the updated bind_vars to a JSON file
-        config_json = os.path.expanduser('~/.config/Ax-Shell/config/config.json')
+        config_json = os.path.expanduser('~/.config/hyprfabricated/config/config.json')
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
         with open(config_json, 'w') as f:
             json.dump(bind_vars, f)
@@ -390,13 +390,13 @@ class HyprConfGUI(Gtk.Window):
 
         # Replace hyprlock config if requested
         if hasattr(self, "lock_checkbox") and self.lock_checkbox.get_active():
-            src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
+            src_lock = os.path.expanduser("~/.config/hyprfabricated/config/hypr/hyprlock.conf")
             dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
             backup_and_replace(src_lock, dest_lock, "Hyprlock")
 
         # Replace hypridle config if requested
         if hasattr(self, "idle_checkbox") and self.idle_checkbox.get_active():
-            src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
+            src_idle = os.path.expanduser("~/.config/hyprfabricated/config/hypr/hypridle.conf")
             dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
             backup_and_replace(src_idle, dest_idle, "Hypridle")
 
@@ -423,9 +423,9 @@ def start_config():
     ensure_face_icon()
 
     # Write the generated hypr configuration to file
-    hypr_config_dir = os.path.expanduser("~/.config/Ax-Shell/config/hypr/")
+    hypr_config_dir = os.path.expanduser("~/.config/hyprfabricated/config/hypr/")
     os.makedirs(hypr_config_dir, exist_ok=True)
-    hypr_conf_path = os.path.join(hypr_config_dir, "ax-shell.conf")
+    hypr_conf_path = os.path.join(hypr_config_dir, "hyprfabricated.conf")
     with open(hypr_conf_path, "w") as f:
         f.write(generate_hyprconf())
 
@@ -442,7 +442,7 @@ def open_config():
 
     # Check and copy hyprlock config if needed
     dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
-    src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
+    src_lock = os.path.expanduser("~/.config/hyprfabricated/config/hypr/hyprlock.conf")
     os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
     show_lock_checkbox = True
     if not os.path.exists(dest_lock):
@@ -451,7 +451,7 @@ def open_config():
 
     # Check and copy hypridle config if needed
     dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
-    src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
+    src_idle = os.path.expanduser("~/.config/hyprfabricated/config/hypr/hypridle.conf")
     show_idle_checkbox = True
     if not os.path.exists(dest_idle):
         shutil.copy(src_idle, dest_idle)

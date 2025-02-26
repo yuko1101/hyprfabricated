@@ -85,7 +85,7 @@ class Dashboard(Box):
         self.soon = Image(
             name="coming-soon",
             pixbuf=GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                f"{data.HOME_DIR}/.config/Ax-Shell/assets/soon.png", 366, 300, True
+                f"{data.HOME_DIR}/.config/hyprfabricated/assets/soon.png", 366, 300, True
             ),
         )
 

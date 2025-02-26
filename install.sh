@@ -4,8 +4,8 @@ set -e  # Exit immediately if a command fails
 set -u  # Treat unset variables as errors
 set -o pipefail  # Prevent errors in a pipeline from being masked
 
-REPO_URL="https://github.com/Axenide/Ax-Shell"
-INSTALL_DIR="$HOME/.config/Ax-Shell"
+REPO_URL="https://github.com/tr1xem/hyprfabricated.git"
+INSTALL_DIR="$HOME/.config/hyprfabricated"
 PACKAGES=(
     acpi
     auto-cpufreq
@@ -29,6 +29,7 @@ PACKAGES=(
     uwsm
     vte3
     wlinhibit
+    cantarell-fonts-0.100
 )
 
 # Prevent running as root
@@ -50,10 +51,10 @@ fi
 
 # Clone or update the repository
 if [ -d "$INSTALL_DIR" ]; then
-    echo "Updating Ax-Shell..."
+    echo "Updating hyprfabricated..."
     git -C "$INSTALL_DIR" pull
 else
-    echo "Cloning Ax-Shell..."
+    echo "Cloning hyprfabricated..."
     git clone "$REPO_URL" "$INSTALL_DIR"
 fi
 
@@ -94,8 +95,7 @@ fi
 echo "Enabling auto-cpufreq service..."
 sudo systemctl enable --now auto-cpufreq
 
-# Launch Ax-Shell without terminal output
-echo "Starting Ax-Shell..."
+echo "Starting hyprfabricated..."
 killall ax-shell 2>/dev/null || true
 uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 

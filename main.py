@@ -16,7 +16,7 @@ screen = Gdk.Screen.get_default()
 CURRENT_WIDTH = screen.get_width()
 CURRENT_HEIGHT = screen.get_height()
 
-config_path = os.path.expanduser("~/.config/Ax-Shell/config/config.json")
+config_path = os.path.expanduser("~/.config/hyprfabricated/config/config.json")
 
 if __name__ == "__main__":
     setproctitle.setproctitle("hyprfabricated")
