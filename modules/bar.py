@@ -6,61 +6,11 @@ from fabric.widgets.button import Button
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
-from gi.repository import GLib, Gdk
+from gi.repository import Gdk
 from modules.systemtray import SystemTray
-from config.config import open_config
 import modules.icons as icons
 import modules.data as data
-from modules.system import System
-from fabric.widgets.overlay import Overlay
-from fabric.widgets.eventbox import EventBox
-from fabric.widgets.circularprogressbar import CircularProgressBar
-from fabric.audio.service import Audio
-class VolumeWidget(Box):
-    def __init__(self, **kwargs):
-        super().__init__(name="button-bar-vol", **kwargs)
-        self.audio = Audio()
-
-        self.progress_bar = CircularProgressBar(
-            name="button-volume", pie=False, size=28, line_width=3,
-
-            start_angle=270,
-            end_angle=620,
-        )
-
-        self.event_box = EventBox(
-            #            name="button-bar-vol",
-            events="scroll",
-            child=Overlay(
-                child=self.progress_bar,
-                overlays=Label(
-                name="button-bar-label",
-                markup=icons.vol_high,
-                    #                    style="font-size: 11pt; color: red;",  # to center the icon glyph
-                ),
-            ),
-        )
-
-        self.audio.connect("notify::speaker", self.on_speaker_changed)
-        self.event_box.connect("scroll-event", self.on_scroll)
-        self.add(self.event_box)
-
-    def on_scroll(self, _, event):
-        match event.direction:
-            case 0:
-                self.audio.speaker.volume += 2
-            case 1:
-                self.audio.speaker.volume -= 2
-        return
-
-    def on_speaker_changed(self, *_):
-        if not self.audio.speaker:
-            return
-        self.progress_bar.value = self.audio.speaker.volume / 100
-        self.audio.speaker.bind(
-            "volume", "value", self.progress_bar, lambda _, v: v / 100
-        )
-        return
+from modules.volume import VolumeSmall
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -138,7 +88,6 @@ class Bar(Window):
         # self.button_color.connect("button-press-event", self.colorpicker)
         #
         self.system = System()
-        self.volume = VolumeWidget()
         self.button_config = Button(
             name="button-bar",
             on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
@@ -148,6 +97,8 @@ class Bar(Window):
             )
         )
 
+
+        self.volume = VolumeSmall()
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h",
@@ -170,7 +121,7 @@ class Bar(Window):
                 children=[
                     self.volume,
                     self.system,
-                    # self.button_color,
+                    self.button_color,
                     self.systray,
                     self.button_config,
                     self.date_time,

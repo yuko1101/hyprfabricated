@@ -1,0 +1,11 @@
+#button-bar-vol {
+  padding: 4px;
+  margin-top: 4px;
+  border-radius: 16px;
+  background-color: var(--shadow);
+}
+
+#button-volume {
+  color: var(--shadow);
+  border: 2px solid var(--primary);
+}

@@ -15,6 +15,8 @@
 @import url("./styles/bluetooth.css");
 @import url("./styles/power.css");
 @import url("./styles/system.css");
+@import url("./styles/volume.css");
+
 * {
   all: unset;
   color: var(--foreground);
