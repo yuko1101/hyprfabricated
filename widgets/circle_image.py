@@ -116,3 +116,4 @@ class CircleImage(Gtk.DrawingArea, Widget):
         if self._orig_image:
             self._image = self._process_image(self._orig_image)
         self.queue_draw()
+

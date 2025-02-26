@@ -58,6 +58,7 @@ class MprisPlayer(Service):
             lambda *args: self.update_status(),
         )
         GLib.idle_add(lambda *args: self.update_status_once())
+
     def update_status(self):
         # schedule each notifier asynchronously.
         def notify_property(prop):
@@ -126,7 +127,6 @@ class MprisPlayer(Service):
     def player_name(self) -> int:
         return self._player.get_property("player-name")  # type: ignore
 
-
     @Property(int, "read-write", default_value=0)
     def position(self) -> int:
         return self._player.get_property("position")  # type: ignore
@@ -138,12 +138,6 @@ class MprisPlayer(Service):
     @Property(object, "readable")
     def metadata(self) -> dict:
         return self._player.get_property("metadata")  # type: ignore
-
-    @Property(str or None, "readable")
-    def trackid(self) -> str | None:
-        if "mpris:trackid" in self.metadata.keys():  # type: ignore  # noqa: SIM118
-            return self.metadata["mpris:trackid"]  # type: ignore
-        return None
 
     @Property(str or None, "readable")
     def arturl(self) -> str | None:
@@ -266,7 +260,6 @@ class MprisPlayerManager(Service):
     def on_name_appeard(self, manager, player_name: Playerctl.PlayerName):
         logger.info(f"[MprisPlayer] {player_name.name} appeared")
         new_player = Playerctl.Player.new_from_name(player_name)
-
         manager.manage_player(new_player)
         self.emit("player-appeared", new_player)  # type: ignore
 
@@ -274,11 +267,12 @@ class MprisPlayerManager(Service):
         logger.info(f"[MprisPlayer] {player_name.name} vanished")
         self.emit("player-vanished", player_name.name)  # type: ignore
 
+    @Property(object, "readable")
+    def players(self):
+        return self._manager.get_property("players")  # type: ignore
+
     def add_players(self):
         for player in self._manager.get_property("player-names"):  # type: ignore
             if player.name.startswith(("chromium", "firefox")) is not True:
                 self._manager.manage_player(Playerctl.Player.new_from_name(player))  # type: ignore
 
-    @Property(object, "readable")
-    def players(self):
-        return self._manager.get_property("players")  # type: ignore
