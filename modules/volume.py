@@ -13,7 +13,8 @@ class VolumeSmall(Box):
         self.audio = Audio()
 
         self.progress_bar = CircularProgressBar(
-            name="button-volume", pie=False, size=28, line_width=2,
+            name="button-volume", size=28, line_width=2,
+            start_angle=135, end_angle=395,
         )
         self.ico = icons.vol_high
         self.vollabel = Label(name="button-bar-label", markup=icons.vol_high)
@@ -51,14 +52,14 @@ class VolumeSmall(Box):
     def on_scroll(self, _, event):
         match event.direction:
             case 0:
-                self.audio.speaker.volume += 2
+                self.audio.speaker.volume += 1
             case 1:
-                self.audio.speaker.volume -= 2
-        if self.audio.speaker.volume > 60:
+                self.audio.speaker.volume -= 1
+        if self.audio.speaker.volume >= 75:
             self.volbutton.get_child().set_markup(icons.vol_high)
-        elif self.audio.speaker.volume > 30:
+        elif self.audio.speaker.volume >= 1:
             self.volbutton.get_child().set_markup(icons.vol_medium)
-        elif self.audio.speaker.volume < 30:
+        elif self.audio.speaker.volume < 1:
             self.volbutton.get_child().set_markup(icons.vol_mute)
 
 
@@ -71,10 +72,10 @@ class VolumeSmall(Box):
         self.audio.speaker.bind(
             "volume", "value", self.progress_bar, lambda _, v: v / 100
         )
-        if self.audio.speaker.volume > 60:
+        if self.audio.speaker.volume >= 75:
             self.volbutton.get_child().set_markup(icons.vol_high)
-        elif self.audio.speaker.volume > 30:
+        elif self.audio.speaker.volume >= 1:
             self.volbutton.get_child().set_markup(icons.vol_medium)
-        elif self.audio.speaker.volume < 30:
+        elif self.audio.speaker.volume < 1:
             self.volbutton.get_child().set_markup(icons.vol_mute)
         return
