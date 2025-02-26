@@ -26,8 +26,8 @@ class VolumeSlider(Scale):
             name="control-slider",
             orientation="h",
             h_expand=True,
-            value=1,
             has_origin=True,
+            increments=(0.01, 0.1),
             **kwargs,
         )
         self.audio = Audio()
@@ -58,8 +58,8 @@ class MicSlider(Scale):
             name="control-slider",
             orientation="h",
             h_expand=True,
-            value=1,
             has_origin=True,
+            increments=(0.01, 0.1),
             **kwargs,
         )
         self.audio = Audio()
@@ -90,8 +90,8 @@ class BrightnessSlider(Scale):
             name="control-slider",
             orientation="h",
             h_expand=True,
-            value=1,
             has_origin=True,
+            increments=(0.01, 0.1),
             **kwargs,
         )
         # If backlight isn't supported, do not proceed.
