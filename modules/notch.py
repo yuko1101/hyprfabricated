@@ -49,7 +49,6 @@ class Notch(Window):
         )
         # Add the click connection for active_window.
         self.active_window.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
-
         # Create additional compact views:
         self.player_small = PlayerSmall()
 
