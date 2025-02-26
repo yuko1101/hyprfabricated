@@ -50,7 +50,7 @@ class Notch(Window):
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'Escritorio' if not win_class or win_class == 'unknown' else truncate(truncate_title(win_title), 32)}}",
+                f"{{'Escritorio' if not win_class or win_class == 'unknown' else truncate(truncate_title(win_title), 25)}}",
                 truncate=truncate,
                 truncate_title=truncate_title,
             ),

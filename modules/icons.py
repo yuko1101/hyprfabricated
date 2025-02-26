@@ -138,9 +138,12 @@ ghost: str = "&#xfc13;"
 appstore: str = "&#xebb6;"
 bottle: str = "&#xfa89;"
 theme: str = "&#xeb00;"
+brand_office: str = "&#xf398;"
 
 tex: str = "&#xf4e0;"
+pdf_file: str = "&#xfb10;"
 
+eyeglasses: str = "&#xee8a;"
 writing: str = "&#xef08;"
 brush: str = "&#xebb8;"
 
@@ -214,4 +217,10 @@ def get_class_icon(win_class):
         icon = theme
     elif win_class == "org.cvfosammmm.Setzer":
         icon = tex
+    elif win_class == "org.pwmt.zathura":
+        icon = pdf_file
+    elif win_class == "org.kde.okular":
+        icon = eyeglasses
+    elif win_class == "ONLYOFFICE":
+        icon = brand_office
     return icon
