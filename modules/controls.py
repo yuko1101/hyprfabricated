@@ -103,21 +103,11 @@ class BrightnessSlider(Scale):
         self.connect("value-changed", self.on_value_changed)
         self.on_brightness_changed()
         self.add_style_class("brightness")
-        self.brightness_timeout_id = None  # Store the timeout ID
 
     def on_value_changed(self, _):
         if self.brightness.max_screen != -1:
-            if self.brightness_timeout_id:
-                GLib.source_remove(self.brightness_timeout_id)
-            self.brightness_timeout_id = GLib.timeout_add(
-                100,  # Delay of 100 milliseconds
-                lambda: self.set_brightness()
-            )
-
-    def set_brightness(self):
-        new_brightness = int(self.value * self.brightness.max_screen)
-        self.brightness.screen_brightness = new_brightness
-        self.brightness_timeout_id = None  # Reset timeout ID
+            new_brightness = int(self.value * self.brightness.max_screen)
+            self.brightness.screen_brightness = new_brightness
 
     def on_brightness_changed(self, *args):
         if self.brightness.max_screen != -1:
