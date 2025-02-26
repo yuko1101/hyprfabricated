@@ -99,6 +99,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] Volume
 - [x] Updates
 - [x] Download and Upload Speed Monitor
+- [x] Stylized Audio Spectrum
 - [ ] Dashboard
 - [ ] Network Manager
 - [x] Bluetooth Manager
