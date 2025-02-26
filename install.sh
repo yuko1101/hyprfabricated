@@ -37,8 +37,11 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
+wasYayInstalled=1
+
 # Install yay-bin if not installed
 if ! command -v yay &>/dev/null; then
+    wasYayInstalled=0
     echo "Installing yay-bin..."
     tmpdir=$(mktemp -d)
     git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
@@ -81,8 +84,13 @@ else
     echo "All required packages are up-to-date."
 fi
 
+
 echo "Starting hyprfabricated..."
 killall ax-shell 2>/dev/null || true
 uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
+
+if [ "$wasYayInstalled" -eq 0 ]; then
+    sudo pacman -Rns yay
+fi
 
 echo "Installation complete."
