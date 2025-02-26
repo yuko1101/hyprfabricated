@@ -94,7 +94,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [ ] Dashboard
 - [ ] Network Manager
 - [x] Bluetooth Manager
-- [ ] Power Manager
+- [x] Power Manager
 - [x] Settings
 - [ ] Screenshot Tool
 - [ ] Screen Recorder
