@@ -17,18 +17,18 @@ class VolumeSmall(Box):
             start_angle=135, end_angle=395,
         )
         self.ico = icons.vol_high
-        self.vollabel = Label(name="button-bar-label", markup=icons.vol_high)
+        self.vol_label = Label(name="vol-label", markup=icons.vol_high)
 
-        self.volbutton = Button(
-                on_clicked=self.toggle_mute,
-                child=self.vollabel
+        self.vol_button = Button(
+            on_clicked=self.toggle_mute,
+            child=self.vol_label
         )
         self.event_box = EventBox(
-#            name="button-bar-vol",
+            #            name="button-bar-vol",
             events="scroll",
             child=Overlay(
                 child=self.progress_bar,
-                overlays=self.volbutton
+                overlays=self.vol_button
             ),
         )
 
@@ -36,18 +36,22 @@ class VolumeSmall(Box):
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
 
-    #        self.button.connect("button", self.on_clicked)
-
-    #thanks https://github.com/rubiin/HyDePanel/blob/master/widgets/volume.python.py
+        # Check and update initial mute/volume state
+        self.on_speaker_changed()
 
     def toggle_mute(self, event):
         current_stream = self.audio.speaker
         if current_stream:
             current_stream.muted = not current_stream.muted
-            self.volbutton.get_child().set_markup(icons.vol_off) if current_stream.muted else self.on_speaker_changed()
-    
-    #def Mute():
-    #self.audio.speaker += 2,
+            if current_stream.muted:
+                self.vol_button.get_child().set_markup(icons.vol_off)
+                self.progress_bar.add_style_class("muted")
+                self.vol_label.add_style_class("muted")
+            else:
+                # Update display based on volume on unmute
+                self.on_speaker_changed()
+                self.progress_bar.remove_style_class("muted")
+                self.vol_label.remove_style_class("muted")
 
     def on_scroll(self, _, event):
         match event.direction:
@@ -56,26 +60,35 @@ class VolumeSmall(Box):
             case 1:
                 self.audio.speaker.volume -= 1
         if self.audio.speaker.volume >= 75:
-            self.volbutton.get_child().set_markup(icons.vol_high)
+            self.vol_button.get_child().set_markup(icons.vol_high)
         elif self.audio.speaker.volume >= 1:
-            self.volbutton.get_child().set_markup(icons.vol_medium)
+            self.vol_button.get_child().set_markup(icons.vol_medium)
         elif self.audio.speaker.volume < 1:
-            self.volbutton.get_child().set_markup(icons.vol_mute)
-
-
+            self.vol_button.get_child().set_markup(icons.vol_mute)
         return
 
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
             return
+
+        # Handle muted state first
+        if self.audio.speaker.muted:
+            self.vol_button.get_child().set_markup(icons.vol_off)
+            self.progress_bar.add_style_class("muted")
+            self.vol_label.add_style_class("muted")
+            return
+        else:
+            self.progress_bar.remove_style_class("muted")
+            self.vol_label.remove_style_class("muted")
+
         self.progress_bar.value = self.audio.speaker.volume / 100
         self.audio.speaker.bind(
             "volume", "value", self.progress_bar, lambda _, v: v / 100
         )
         if self.audio.speaker.volume >= 75:
-            self.volbutton.get_child().set_markup(icons.vol_high)
+            self.vol_button.get_child().set_markup(icons.vol_high)
         elif self.audio.speaker.volume >= 1:
-            self.volbutton.get_child().set_markup(icons.vol_medium)
+            self.vol_button.get_child().set_markup(icons.vol_medium)
         elif self.audio.speaker.volume < 1:
-            self.volbutton.get_child().set_markup(icons.vol_mute)
+            self.vol_button.get_child().set_markup(icons.vol_mute)
         return
