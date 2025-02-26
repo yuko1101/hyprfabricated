@@ -1,5 +1,6 @@
 import subprocess
 import re
+import psutil
 from fabric.widgets.box import Box
 from fabric.widgets.eventbox import EventBox  # <-- use our EventBox
 from fabric.widgets.button import Button
@@ -141,22 +142,18 @@ class Battery(Box):
 
     def poll_battery(self):
         """
-        Polls the battery status by running the "acpi -b" command.
+        Polls the battery status with psutil.
         If no battery information is found, returns (0, None).
         Otherwise, returns a tuple: (battery percentage as a float between 0 and 1, battery status string)
         """
-        try:
-            output = subprocess.check_output(["acpi", "-b"]).decode("utf-8").strip()
-            if "Battery" not in output:
-                return (0, None)
-            match_percent = re.search(r'(\d+)%', output)
-            match_status = re.search(r'Battery \d+: (\w+)', output)
-            if match_percent:
-                percent = int(match_percent.group(1))
-                status = match_status.group(1) if match_status else None
-                return (percent / 100.0, status)
-        except Exception:
-            pass
+        battery = psutil.sensors_battery()
+        if battery is not None:
+            percent = battery.percent / 100.0
+            charging = battery.power_plugged
+            if charging or charging is None:
+                return (percent, "Charging")
+            else:
+                return (percent, "Discharging")
         return (0, None)
 
     def update_battery(self, sender, battery_data):
@@ -201,9 +198,9 @@ class Battery(Box):
         mode: one of 'powersave', 'balanced', or 'performance'
         """
         commands = {
-            "powersave": "auto-cpufreq --force powersave",
-            "balanced": "auto-cpufreq --force reset",
-            "performance": "auto-cpufreq --force performance",
+            "powersave": "sudo auto-cpufreq --force powersave",
+            "balanced": "sudo auto-cpufreq --force reset",
+            "performance": "sudo auto-cpufreq --force performance",
         }
         if mode in commands:
             try:
