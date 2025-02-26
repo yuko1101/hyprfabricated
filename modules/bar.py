@@ -11,7 +11,7 @@ from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
 from modules.battery import Battery
-from modules.volume import VolumeSmall
+from modules.controls import ControlSmall
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -100,7 +100,7 @@ class Bar(Window):
         )
 
 
-        self.volume = VolumeSmall()
+        self.control = ControlSmall()
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h",
@@ -121,7 +121,7 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-                    self.volume,
+                    self.control,
                     self.battery,
                     self.button_color,
                     self.systray,
