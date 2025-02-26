@@ -21,7 +21,7 @@ from modules.cavalcade import SpectrumRender
 def get_player_icon_markup_by_name(player_name):
     if player_name:
         pn = player_name.lower()
-        if pn == "firefox":
+        if pn == "firefox" or pn == "plasma-browser-integration":
             return icons.firefox
         elif pn == "spotify":
             return icons.spotify
@@ -582,6 +582,7 @@ class PlayerSmall(CenterBox):
         # When a new player appears, use it if no player is active.
         if not self.mpris_player:
             mp = MprisPlayer(player)
+            print(player.name)
             self.mpris_player = mp
             self._apply_mpris_properties()
             self.mpris_player.connect("changed", self._on_mpris_changed)
