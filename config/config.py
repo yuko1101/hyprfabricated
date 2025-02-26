@@ -180,7 +180,7 @@ general {{
 decoration {{
     blur {{
         enabled = yes
-        size = 5
+        size = 8
         passes = 3
         new_optimizations = yes
         contrast = 1
