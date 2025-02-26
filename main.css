@@ -16,7 +16,7 @@
 @import url("./styles/power.css");
 @import url("./styles/system.css");
 @import url("./styles/volume.css");
-
+@import url("./styles/system.css");
 * {
   all: unset;
   color: var(--foreground);

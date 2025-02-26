@@ -6,6 +6,6 @@
 }
 
 #button-volume {
-  color: var(--shadow);
-  border: 2px solid var(--primary);
+  color: var(--surface-bright);
+  border: 3px solid var(--primary);
 }
