@@ -5,13 +5,9 @@ from fabric.utils import get_relative_path
 from modules.bar import Bar
 from modules.notch import Notch
 from modules.corners import Corners
-<<<<<<< HEAD
 from modules.deskwidgets import Deskwidgets
-from config.config import open_config
-=======
 from config.config import open_config, ensure_fonts
 from datetime import datetime
->>>>>>> 4c7647fc68b41f0dc7845d9c60c868c97473a7ec
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -21,7 +17,6 @@ screen = Gdk.Screen.get_default()
 CURRENT_WIDTH = screen.get_width()
 CURRENT_HEIGHT = screen.get_height()
 
-<<<<<<< HEAD
 config_path = os.path.expanduser("~/.config/hyprfabricated/config/config.json")
 
 fonts_updated_file = os.path.expanduser("~/.cache/hyprfabricated/fonts_updated")
