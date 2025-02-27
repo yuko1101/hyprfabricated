@@ -48,12 +48,13 @@ shutdown: str = "&#xeb0d;"
 power_saving: str = "&#xed4f;"
 power_balanced: str = "&#xfa77;"
 power_performance: str = "&#xec45;"
-charging: str = "&#x10063;"
-discharging: str = "&#x1006a;"
+charging: str = "&#xefef;"
+discharging: str = "&#xefe9;"
 alert: str = "&#xefb4;"
 
 # Applets
 wifi: str = "&#xeb52;"
+world: str = "&#xeb54;"
 bluetooth: str = "&#xea37;"
 night: str = "&#xeaf8;"
 coffee: str = "&#xef0e;"
@@ -88,6 +89,9 @@ vol_mute: str = "&#xeb50;"
 vol_medium: str = "&#xeb4f;"
 vol_high: str = "&#xeb51;"
 
+mic: str = "&#xeaf0;"
+mic_mute: str = "&#xed16;"
+
 # Overview
 circle_plus: str = "&#xea69;"
 
@@ -110,8 +114,14 @@ spotify: str = "&#xfe86;"
 disc: str = "&#x1003e;"
 disc_off: str = "&#xf118;"
 
+# Brightness
+brightness_low: str = "&#xeb7d;"
+brightness_medium: str = "&#xeb7e;"
+brightness_high: str = "&#xeb30;"
+
 # Misc
 dot: str = "&#xf698;"
+palette: str = "&#xeb01;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

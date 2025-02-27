@@ -59,8 +59,8 @@ class Battery(Box):
             value=0,
             size=28,
             line_width=2,
-            start_angle=180,
-            end_angle=360,
+            start_angle=135,
+            end_angle=395,
         )
 
         self.bat_overlay = Overlay(
@@ -108,7 +108,7 @@ class Battery(Box):
         self.hover_counter = 0
 
         # Initialize Fabricator for battery polling every 5 seconds.
-        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=5000, stream=False, default_value=0)
+        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
         self.batt_fabricator.changed.connect(self.update_battery)
 
         # Run update_battery immediately at startup.

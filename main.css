@@ -15,6 +15,7 @@
 @import url("./styles/bluetooth.css");
 @import url("./styles/power.css");
 @import url("./styles/battery.css");
+@import url("./styles/volume.css");
 
 * {
   all: unset;
