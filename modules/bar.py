@@ -10,8 +10,8 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.volume import VolumeSmall
 from modules.system import System
+from modules.controls import ControlSmall
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -105,7 +105,7 @@ class Bar(Window):
         )
 
 
-        self.volume = VolumeSmall()
+        self.control = ControlSmall()
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h",
@@ -126,9 +126,8 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-                    self.volume,
                     self.system,
-                    # self.button_color,
+                    self.control,
                     self.systray,
                     # self.button_config,
                     self.date_time,

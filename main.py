@@ -5,8 +5,13 @@ from fabric.utils import get_relative_path
 from modules.bar import Bar
 from modules.notch import Notch
 from modules.corners import Corners
+<<<<<<< HEAD
 from modules.deskwidgets import Deskwidgets
 from config.config import open_config
+=======
+from config.config import open_config, ensure_fonts
+from datetime import datetime
+>>>>>>> 4c7647fc68b41f0dc7845d9c60c868c97473a7ec
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -16,10 +21,35 @@ screen = Gdk.Screen.get_default()
 CURRENT_WIDTH = screen.get_width()
 CURRENT_HEIGHT = screen.get_height()
 
+<<<<<<< HEAD
 config_path = os.path.expanduser("~/.config/hyprfabricated/config/config.json")
+
+fonts_updated_file = os.path.expanduser("~/.cache/hyprfabricated/fonts_updated")
+cache_dir = os.path.expanduser("~/.cache/hyprfabricated/")
 
 if __name__ == "__main__":
     setproctitle.setproctitle("hyprfabricated")
+
+    # Check if the current date is after February 25, 2025
+    current_date = datetime.now()
+    target_date = datetime(2025, 2, 25)
+
+    #Check if fonts_updated file exist, so we dont repeat this part every time.
+    if current_date > target_date and not os.path.exists(fonts_updated_file):
+        tabler_icons_path = os.path.expanduser("~/.fonts/tabler-icons")
+        if os.path.exists(tabler_icons_path):
+            import shutil
+            try:
+                shutil.rmtree(tabler_icons_path)
+                print(f"Removed directory: {tabler_icons_path}")
+            except Exception as e:
+                print(f"Error removing {tabler_icons_path}: {e}")
+        ensure_fonts()
+        # Create the fonts_updated file to indicate that the process has been done.
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(fonts_updated_file, "w") as f:
+            f.write("Fonts updated after February 25, 2025")
+
     if not os.path.isfile(config_path):
         open_config()
     corners = Corners()

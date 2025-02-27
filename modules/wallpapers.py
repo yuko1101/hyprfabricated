@@ -1,7 +1,7 @@
 import os
 import hashlib
-import shutil        # <-- added import for shutil
-from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk  # Se agregó Gdk para capturar teclas
+import shutil
+from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
@@ -81,16 +81,24 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.set_active_id("scheme-tonal-spot")
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
+        # New: Declare a switcher to enable/disable Matugen (enabled by default)
+        self.matugen_switcher = Gtk.Switch(name="matugen-switcher")
+        self.matugen_switcher.set_vexpand(False)
+        self.matugen_switcher.set_hexpand(False)
+        self.matugen_switcher.set_valign(Gtk.Align.CENTER)
+        self.matugen_switcher.set_halign(Gtk.Align.CENTER)
+        self.matugen_switcher.set_active(True)
+
+        self.mat_icon = Label(name="mat-label", markup=icons.palette)
+
+        # Add the switcher to the header_box's start_children
         self.header_box = CenterBox(
             name="header-box",
-            spacing=10,
+            spacing=8,
             orientation="h",
-            center_children=[
-                self.search_entry,
-            ],
-            end_children=[
-                self.scheme_dropdown,
-            ],
+            start_children=[self.matugen_switcher, self.mat_icon],  # <-- added here
+            center_children=[self.search_entry],
+            end_children=[self.scheme_dropdown],
         )
 
         self.add(self.header_box)
@@ -158,7 +166,14 @@ class WallpaperSelector(Box):
         file_name = model[path][1]
         full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
         selected_scheme = self.scheme_dropdown.get_active_id()
-        exec_shell_command_async(f'matugen image {full_path} -t {selected_scheme}')
+        if self.matugen_switcher.get_active():
+            # Matugen is enabled: run the normal command.
+            exec_shell_command_async(f'matugen image {full_path} -t {selected_scheme}')
+        else:
+            # Matugen is disabled: run the alternative swww command.
+            exec_shell_command_async(
+                f'swww img {full_path} -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
+            )
 
     def on_scheme_changed(self, combo):
         selected_scheme = combo.get_active_id()

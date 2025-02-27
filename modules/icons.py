@@ -104,6 +104,9 @@ vol_mute: str = "&#xeb50;"
 vol_medium: str = "&#xeb4f;"
 vol_high: str = "&#xeb51;"
 
+mic: str = "&#xeaf0;"
+mic_mute: str = "&#xed16;"
+
 # Overview
 circle_plus: str = "&#xea69;"
 
@@ -151,8 +154,14 @@ terminal: str = "&#xebef;"
 disc: str = "&#x1003e;"
 disc_off: str = "&#xf118;"
 
+# Brightness
+brightness_low: str = "&#xeb7d;"
+brightness_medium: str = "&#xeb7e;"
+brightness_high: str = "&#xeb30;"
+
 # Misc
 dot: str = "&#xf698;"
+palette: str = "&#xeb01;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

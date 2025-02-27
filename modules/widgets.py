@@ -12,6 +12,7 @@ from modules.calendar import Calendar
 from modules.kanban import Kanban
 from modules.player import Player
 from modules.metrics import Metrics
+from modules.controls import ControlSliders
 
 class Widgets(Box):
     def __init__(self, **kwargs):
@@ -47,25 +48,7 @@ class Widgets(Box):
             v_expand=True,
         )
 
-        self.box_4 = Box(
-            name="box-4",
-            orientation="h",
-            spacing=4,
-            children=[
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
-            ]
-        )
+        self.controls = ControlSliders()
 
         self.player = Player()
 
@@ -100,7 +83,7 @@ class Widgets(Box):
             spacing=8,
             children=[
                 self.buttons,
-                self.box_4,
+                self.controls,
                 self.container_1,
             ]
         )
@@ -118,5 +101,3 @@ class Widgets(Box):
         )
 
         self.add(self.container_3)
-
-        self.show_all()
