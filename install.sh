@@ -84,7 +84,7 @@ else
     echo "All required packages are up-to-date."
 fi
 
-
+python "$INSTALL_DIR/config/config.py"
 echo "Starting hyprfabricated..."
 killall ax-shell 2>/dev/null || true
 uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
