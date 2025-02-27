@@ -30,6 +30,10 @@
         transition: all 0.1s ease;
       }
 
+    #volume-icon-label.zero {
+        color: var(--surface-bright);
+    }
+
     #microphone-icon-label {
         color: var(--foreground);
         margin-top: 1px;
@@ -39,3 +43,6 @@
         transition: all 0.1s ease;
       }
     
+    #microphone-icon-label.zero {
+        color: var(--surface-bright);
+    }

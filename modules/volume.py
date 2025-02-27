@@ -50,15 +50,19 @@ class VolumeWidget(Box):
         )
 
         self.audio.connect("notify::speaker", self.on_speaker_changed)
+        if self.audio.speaker:
+            self.audio.speaker.connect("changed", self.on_speaker_changed)
         self.audio.connect("notify::microphone", self.on_microphone_changed)
+        if self.audio.microphone:
+            self.audio.microphone.connect("changed", self.on_microphone_changed)
         self.speaker_event_box.connect("scroll-event", self.on_speaker_scroll)
         self.speaker_event_box.connect("button-press-event", self.on_speaker_button_press)
-        self.microphone_event_box.connect("scroll-event", self.on_micropone_scroll)
+        self.microphone_event_box.connect("scroll-event", self.on_microphone_scroll)
         self.microphone_event_box.connect("button-press-event", self.on_microphone_button_press)
         self.add(self.speaker_event_box)
         self.add(self.microphone_event_box)
 
-    def on_micropone_scroll(self, _, event):
+    def on_microphone_scroll(self, _, event):
         if event.direction == Gdk.ScrollDirection.SMOOTH:
             if abs(event.delta_y) > 0:
                 self.audio.microphone.volume += event.delta_y
@@ -108,19 +112,19 @@ class VolumeWidget(Box):
 
 
     def on_speaker_changed(self, *_):
-        print("Nombre del icono de volumen: " + self.audio.speaker.icon_name)
+        self.update_speaker_label()
         if not self.audio.speaker:
             return
         self.speaker_progress_bar.value = self.audio.speaker.volume / 100
         self.audio.speaker.bind(
             "volume", "value", self.speaker_progress_bar, lambda _, v: v / 100
         )
-        self.update_speaker_label()
         return
     
     def update_speaker_label(self):
         
         if self.audio.speaker.volume == 0:
+            self.volume_label.add_style_class("zero")
             self.speaker_progress_bar.add_style_class("zero")
 
         if self.audio.speaker.icon_name != "audio-headset-bluetooth":
@@ -128,12 +132,15 @@ class VolumeWidget(Box):
                 self.volume_label.markup = icons.vol_off
             elif self.audio.speaker.volume > 65:
                 self.speaker_progress_bar.remove_style_class("zero")
+                self.volume_label.remove_style_class("zero")
                 self.volume_label.set_markup(icons.vol_high)
             elif self.audio.speaker.volume > 10:
                 self.speaker_progress_bar.remove_style_class("zero")
+                self.volume_label.remove_style_class("zero")
                 self.volume_label.set_markup(icons.vol_medium)
             elif self.audio.speaker.volume > 0:
                 self.speaker_progress_bar.remove_style_class("zero")
+                self.volume_label.remove_style_class("zero")
             elif self.audio.speaker.volume < 5:
                 #self.speaker_progress_bar.remove_style_class("zero")
                 self.volume_label.set_markup(icons.vol_mute)
@@ -144,6 +151,7 @@ class VolumeWidget(Box):
                 self.volume_label.set_markup(icons.bluetooth_disconnected)
             else:
                 self.speaker_progress_bar.remove_style_class("zero")
+                self.volume_label.remove_style_class("zero")
                 self.volume_label.set_markup(icons.bluetooth_connected)
         return
     
@@ -171,7 +179,9 @@ class VolumeWidget(Box):
         if self.audio.microphone.volume == 0:
             self.microphone_label.set_markup(icons.mic_off)
             self.microphone_progress_bar.add_style_class("zero")
+            self.microphone_label.add_style_class("zero")
         else:
             self.microphone_label.set_markup(icons.mic)
             self.microphone_progress_bar.remove_style_class("zero")
+            self.microphone_label.remove_style_class("zero")
         return
