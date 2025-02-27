@@ -259,9 +259,10 @@ class MprisPlayerManager(Service):
 
     def on_name_appeard(self, manager, player_name: Playerctl.PlayerName):
         logger.info(f"[MprisPlayer] {player_name.name} appeared")
-        new_player = Playerctl.Player.new_from_name(player_name)
-        manager.manage_player(new_player)
-        self.emit("player-appeared", new_player)  # type: ignore
+        if not player_name.name.startswith(("chromium", "firefox")):
+            new_player = Playerctl.Player.new_from_name(player_name)
+            manager.manage_player(new_player)
+            self.emit("player-appeared", new_player)  # type: ignore
 
     def on_name_vanished(self, manager, player_name: Playerctl.PlayerName):
         logger.info(f"[MprisPlayer] {player_name.name} vanished")
@@ -273,6 +274,6 @@ class MprisPlayerManager(Service):
 
     def add_players(self):
         for player in self._manager.get_property("player-names"):  # type: ignore
-            if player.name.startswith(("chromium", "firefox")) is not True:
+            if not player.name.startswith(("chromium", "firefox")):
                 self._manager.manage_player(Playerctl.Player.new_from_name(player))  # type: ignore
 

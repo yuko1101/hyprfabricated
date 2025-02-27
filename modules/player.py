@@ -582,7 +582,6 @@ class PlayerSmall(CenterBox):
         # When a new player appears, use it if no player is active.
         if not self.mpris_player:
             mp = MprisPlayer(player)
-            print(player.name)
             self.mpris_player = mp
             self._apply_mpris_properties()
             self.mpris_player.connect("changed", self._on_mpris_changed)
