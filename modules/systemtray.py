@@ -36,7 +36,7 @@ class SystemTray(Gtk.Box):
 
         try:
             if pixmap is not None:
-                pixbuf = pixmap.as_pixbuf(self.pixel_size, GdkPixbuf.InterpType.HYPER)
+                pixbuf = pixmap.as_pixbuf(self.pixel_size, GdkPixbuf.InterpType.BILINEAR)
             else:
                 icon_name = item.get_icon_name()
                 icon_theme_path = item.get_icon_theme_path()
