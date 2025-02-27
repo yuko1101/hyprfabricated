@@ -149,6 +149,7 @@ brush: str = "&#xebb8;"
 
 apple: str = "&#xec17;"
 mobile: str = "&#xea8a;"
+parsec: str = "&#xeef6;"
 
 finder: str = "&#xf218;"
 folder: str = "&#xeaad;"
@@ -223,4 +224,6 @@ def get_class_icon(win_class):
         icon = eyeglasses
     elif win_class == "ONLYOFFICE":
         icon = brand_office
+    elif win_class == "parsecd":
+        icon = parsec
     return icon
