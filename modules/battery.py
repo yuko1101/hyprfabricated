@@ -109,7 +109,7 @@ class Battery(Box):
         self.hover_counter = 0
 
         # Initialize Fabricator for battery polling every 5 seconds.
-        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=5000, stream=False, default_value=0)
+        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
         self.batt_fabricator.changed.connect(self.update_battery)
 
         # Run update_battery immediately at startup.

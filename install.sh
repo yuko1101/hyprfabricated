@@ -19,6 +19,7 @@ PACKAGES=(
     imagemagick
     libnotify
     matugen-bin
+    playerctl
     python-fabric-git
     python-pillow
     python-setproctitle
@@ -36,8 +37,14 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-# Install yay-bin if not installed
-if ! command -v yay &>/dev/null; then
+aur_helper=""
+if command -v yay &>/dev/null; then
+    aur_helper="yay"
+    echo $aur_helper
+elif command -v paru &>/dev/null; then
+    aur_helper="paru"
+    echo $aur_helper
+else
     echo "Installing yay-bin..."
     tmpdir=$(mktemp -d)
     git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
@@ -45,7 +52,9 @@ if ! command -v yay &>/dev/null; then
     makepkg -si --noconfirm
     cd - > /dev/null
     rm -rf "$tmpdir"
+    aur_helper="yay"
 fi
+
 
 # Clone or update the repository
 if [ -d "$INSTALL_DIR" ]; then
@@ -57,16 +66,16 @@ else
 fi
 
 echo "Installing gray-git..."
-yes | yay -Syy --needed --noconfirm gray-git || true
+yes | $aur_helper -Syy --needed --noconfirm gray-git || true
 
-# Install required packages using yay (only if missing)
+# Install required packages using $aur_helper (only if missing)
 echo "Installing required packages..."
-yay -Syy --needed --noconfirm "${PACKAGES[@]}" || true
+$aur_helper -Syy --needed --noconfirm "${PACKAGES[@]}" || true
 
 # Update outdated packages from the list
 echo "Updating outdated required packages..."
 # Get a list of outdated packages
-outdated=$(yay -Qu | awk '{print $1}')
+outdated=$($aur_helper -Qu | awk '{print $1}')
 to_update=()
 for pkg in "${PACKAGES[@]}"; do
     if echo "$outdated" | grep -q "^$pkg\$"; then
@@ -75,7 +84,7 @@ for pkg in "${PACKAGES[@]}"; do
 done
 
 if [ ${#to_update[@]} -gt 0 ]; then
-    yay -S --noconfirm "${to_update[@]}" || true
+    $aur_helper -S --noconfirm "${to_update[@]}" || true
 else
     echo "All required packages are up-to-date."
 fi

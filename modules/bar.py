@@ -6,12 +6,12 @@ from fabric.widgets.button import Button
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
-from gi.repository import GLib, Gdk
+from gi.repository import Gdk
 from modules.systemtray import SystemTray
-from config.config import open_config
 import modules.icons as icons
 import modules.data as data
 from modules.battery import Battery
+from modules.controls import ControlSmall
 
 from modules.sensors import NetworkApplet
 
@@ -121,6 +121,8 @@ class Bar(Window):
             )
         )
 
+
+        self.control = ControlSmall()
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h",
@@ -143,6 +145,8 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
+                    self.control,
+                    self.battery,
                     self.button_color,
                     self.updates,
                     self.battery,
@@ -160,6 +164,7 @@ class Bar(Window):
         self.hidden = False
 
         self.show_all()
+        self.systray._update_visibility()
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()
