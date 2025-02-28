@@ -127,7 +127,7 @@ class VolumeWidget(Box):
             self.volume_label.add_style_class("zero")
             self.speaker_progress_bar.add_style_class("zero")
 
-        if self.audio.speaker.icon_name != "audio-headset-bluetooth":
+        if "bluetooth" not in self.audio.speaker.icon_name:
             if self.audio.speaker.muted:
                 self.volume_label.markup = icons.vol_off
             elif self.audio.speaker.volume > 65:
