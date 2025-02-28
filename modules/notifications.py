@@ -190,8 +190,8 @@ class NotificationBox(Box):
 
     def create_close_button(self):
         close_button = Button(
-            name="close-button",
-            child=Label(name="close-label", markup=icons.cancel),
+            name="notif-close-button",
+            child=Label(name="notif-close-label", markup=icons.cancel),
             on_clicked=lambda *_: self.notification.close("dismissed-by-user"),
         )
         close_button.connect("enter-notify-event", lambda *_: self.hover_button(close_button))
@@ -340,8 +340,8 @@ class NotificationHistory(ScrolledWindow):
                     orientation="v",
                     children=[
                         Button(
-                            name="close-button",
-                            child=Label(name="close-label", markup=icons.cancel),
+                            name="notif-close-button",
+                            child=Label(name="notif-close-label", markup=icons.cancel),
                             on_clicked=lambda *_: on_container_destroy(container),
                         ),
                         Box(v_expand=True),

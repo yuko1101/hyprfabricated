@@ -57,6 +57,30 @@
     padding: 4px;
 }
 
+#notif-close-button {
+  background-color: var(--surface);
+  border-radius: 16px;
+  padding: 4px;
+}
+
+#notif-close-button:hover,
+#notif-close-button:focus {
+  background-color: var(--surface-bright);
+}
+
+#notif-close-button:active {
+  background-color: var(--error-dim);
+}
+
+#notif-close-label {
+  color: var(--error-dim);
+  font-size: 20px;
+}
+
+#notif-close-button:active #notif-close-label {
+  color: var(--shadow);
+}
+
 #nav-button {
     padding: 8px;
     border-radius: 16px;
