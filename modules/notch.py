@@ -173,8 +173,6 @@ class Notch(Window):
     def open_notch(self, widget):
         self.set_keyboard_mode("exclusive")
 
-        self.bar.revealer.set_reveal_child(False)
-
         if self.hidden:
             self.notch_box.remove_style_class("hidden")
             self.notch_box.add_style_class("hideshow")
@@ -214,6 +212,11 @@ class Notch(Window):
 
         else:
             self.stack.set_visible_child(self.dashboard)
+
+        if widget == "dashboard":
+            self.bar.revealer.set_reveal_child(False)
+        else:
+            self.bar.revealer.set_reveal_child(True)
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
