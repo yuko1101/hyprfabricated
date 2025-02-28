@@ -94,6 +94,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [ ] Screenshot Tool
 - [ ] Screen Recorder
 - [ ] Clipboard Manager
+- [x] Emoji Manager
 - [ ] Dock
 - [x] Workspaces Overview
 - [ ] Multimodal AI Assistant
