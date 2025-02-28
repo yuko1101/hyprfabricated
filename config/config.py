@@ -161,6 +161,7 @@ bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSe
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
+bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, pkill -x rofi && rofimoji --action type # Toggles Emoji Menu | Default: SUPER + R
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
