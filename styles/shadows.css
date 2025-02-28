@@ -5,7 +5,9 @@
 #systray,
 #battery,
 #button-bar-vol,
-#control-small {
+#control-small,
+#notification-stack-box,
+#nav-button {
   box-shadow: 0 0 4px alpha(black, 0.5);
 }
 
