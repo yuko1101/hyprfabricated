@@ -273,6 +273,8 @@ class NotificationContainer(Box):
         # Crear Box para contener el stack
         self.stack_box = Box(
             name="notification-stack-box",
+            h_align="center",
+            h_expand=False,
             children=[self.stack]
         )
         
