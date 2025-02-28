@@ -12,11 +12,26 @@ Here is a quick comparison with Ax-Shell. I am in direct contact with the origin
   <img src="assets/screenshots/cavalcade.png">
 </p>
 
+### Network speed
+<p align="center">
+  <img src="assets/screenshots/default-wifi.png">
+  <img src="assets/screenshots/hover.png">
+  <img src="assets/screenshots/download.png">
+  <img src="assets/screenshots/upload.png">
+</p>
+
+## Personal changes
+
 ### Window Title
 <p align="center">
   <img src="assets/screenshots/windowtitle.png">
 </p>
 I use win_class for the icons, and win_title as the text
+
+### Icons in launcher
+<p align="center">
+  <img src="assets/screenshots/launcher.png">
+</p>
 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" /></sub> Screenshots</h2>
 <table align="center">
