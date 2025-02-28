@@ -98,7 +98,7 @@ class Bar(Window):
         self.system = System()
         self.button_config = Button(
             name="button-bar",
-            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
+            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/hyprfabricated/config/config.py"),
             child=Label(
                 name="button-bar-label",
                 markup=icons.config
@@ -118,7 +118,7 @@ class Bar(Window):
                 spacing=4,
                 children=[
                     self.control,
-                    self.battery,
+                    self.system,
                 ],
             ),
         )
@@ -150,11 +150,9 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-                    self.system,
-                    self.control,
                     self.boxed_revealer,
                     self.systray,
-                    # self.button_config,
+                    self.button_config,
                     self.date_time,
                     self.button_power,
                 ],
