@@ -8,6 +8,7 @@ REPO_URL="https://github.com/tr1xem/hyprfabricated.git"
 INSTALL_DIR="$HOME/.config/hyprfabricated"
 PACKAGES=(
     acpi
+    brightnessctl
     fabric-cli-git
     gnome-bluetooth-3.0
     grimblast

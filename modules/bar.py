@@ -3,6 +3,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
+from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
@@ -97,7 +98,7 @@ class Bar(Window):
         self.system = System()
         self.button_config = Button(
             name="button-bar",
-            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
+            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/hyprfabricated/config/config.py"),
             child=Label(
                 name="button-bar-label",
                 markup=icons.config
@@ -106,6 +107,29 @@ class Bar(Window):
 
 
         self.control = ControlSmall()
+
+        self.revealer = Revealer(
+            name="bar-revealer",
+            transition_type="slide-left",
+            child_revealed=True,
+            child=Box(
+                name="bar-revealer-box",
+                orientation="h",
+                spacing=4,
+                children=[
+                    self.control,
+                    self.system,
+                ],
+            ),
+        )
+
+        self.boxed_revealer = Box(
+            name="boxed-revealer",
+            children=[
+                self.revealer,
+            ],
+        )
+
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h",
@@ -126,10 +150,9 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-                    self.system,
-                    self.control,
+                    self.boxed_revealer,
                     self.systray,
-                    # self.button_config,
+                    self.button_config,
                     self.date_time,
                     self.button_power,
                 ],

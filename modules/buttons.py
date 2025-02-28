@@ -5,10 +5,11 @@ from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async
 import gi
-from gi.repository import Gtk, Gdk  # Added Gdk import
+from gi.repository import Gtk, Gdk, GLib  # Added GLib import
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 import modules.icons as icons
+from services.network import NetworkClient
 
 
 def add_hover_cursor(widget):
@@ -20,9 +21,14 @@ def add_hover_cursor(widget):
 
 class NetworkButton(Box):
     def __init__(self):
+        self.network_client = NetworkClient()
+        self._animation_timeout_id = None
+        self._animation_step = 0
+        self._animation_direction = 1
+        
         self.network_icon = Label(
             name="network-icon",
-            markup=icons.wifi,
+            markup=None,
         )
         self.network_label = Label(
             name="network-label",
@@ -32,7 +38,6 @@ class NetworkButton(Box):
         self.network_label_box = Box(children=[self.network_label, Box(h_expand=True)])
         self.network_ssid = Label(
             name="network-ssid",
-            label="ARGOS_5GHz",
             justification="left",
         )
         self.network_ssid_box = Box(children=[self.network_ssid, Box(h_expand=True)])
@@ -47,12 +52,14 @@ class NetworkButton(Box):
             h_align="start",
             v_align="center",
             spacing=10,
+            
             children=[self.network_icon, self.network_text],
         )
         self.network_status_button = Button(
             name="network-status-button",
             h_expand=True,
             child=self.network_status_box,
+            on_clicked=lambda *_: self.network_client.wifi_device.toggle_wifi() if self.network_client.wifi_device else None,
         )
         add_hover_cursor(self.network_status_button)  # <-- Added hover
 
@@ -76,6 +83,121 @@ class NetworkButton(Box):
             spacing=0,
             children=[self.network_status_button, self.network_menu_button],
         )
+
+        self.widgets = [self, self.network_icon, self.network_label, 
+                       self.network_ssid, self.network_status_button, 
+                       self.network_menu_button, self.network_menu_label]
+
+        # Connect to wifi device signals when ready
+        self.network_client.connect('device-ready', self._on_wifi_ready)
+        
+        # Check initial state if wifi device is already available
+        if self.network_client.wifi_device:
+            self.update_state()
+
+    def _on_wifi_ready(self, *args):
+        if self.network_client.wifi_device:
+            self.network_client.wifi_device.connect('notify::enabled', self.update_state)
+            self.network_client.wifi_device.connect('notify::ssid', self.update_state)
+            self.update_state()
+
+    def _animate_searching(self):
+        """Animate wifi icon when searching for networks"""
+        wifi_icons = [icons.wifi_0, icons.wifi_1, icons.wifi_2, icons.wifi_3, icons.wifi_2, icons.wifi_1]
+        
+        # Si el widget no existe o el WiFi está desactivado, detener la animación
+        wifi = self.network_client.wifi_device
+        if not self.network_icon or not wifi or not wifi.enabled:
+            self._stop_animation()
+            return False
+            
+        # Si estamos conectados, detener la animación
+        if wifi.state == "activated" and wifi.ssid != "Disconnected":
+            self._stop_animation()
+            return False
+            
+        GLib.idle_add(self.network_icon.set_markup, wifi_icons[self._animation_step])
+        
+        # Reiniciar al principio cuando llegamos al final
+        self._animation_step = (self._animation_step + 1) % len(wifi_icons)
+            
+        return True  # Mantener la animación activa
+
+    def _start_animation(self):
+        if self._animation_timeout_id is None:
+            self._animation_step = 0
+            self._animation_direction = 1
+            # Ejecuta la animación cada 500ms sin usar idle_add
+            self._animation_timeout_id = GLib.timeout_add(500, self._animate_searching)
+
+
+    def _stop_animation(self):
+        if self._animation_timeout_id is not None:
+            GLib.source_remove(self._animation_timeout_id)
+            self._animation_timeout_id = None
+
+    def update_state(self, *args):
+        """Update the button state based on network status"""
+        wifi = self.network_client.wifi_device
+        ethernet = self.network_client.ethernet_device
+
+        # Primero actualizamos el estado enabled/disabled
+        if wifi and not wifi.enabled:
+            self._stop_animation()
+            self.network_icon.set_markup(icons.wifi_off)
+            for widget in self.widgets:
+                widget.add_style_class("disabled")
+            self.network_ssid.set_label("Disabled")
+            return
+
+        # Removemos la clase disabled si llegamos aquí
+        for widget in self.widgets:
+            widget.remove_style_class("disabled")
+
+        # Actualizar el texto y la animación según el estado
+        if wifi and wifi.enabled:
+            if wifi.state == "activated" and wifi.ssid != "Disconnected":
+                self._stop_animation()
+                self.network_ssid.set_label(wifi.ssid)
+                # Actualizar icono según la intensidad de la señal
+                if wifi.strength > 0:
+                    strength = wifi.strength
+                    if strength < 25:
+                        self.network_icon.set_markup(icons.wifi_0)
+                    elif strength < 50:
+                        self.network_icon.set_markup(icons.wifi_1)
+                    elif strength < 75:
+                        self.network_icon.set_markup(icons.wifi_2)
+                    else:
+                        self.network_icon.set_markup(icons.wifi_3)
+            else:
+                self.network_ssid.set_label("Enabled")
+                self._start_animation()
+
+        # Manejar el caso de conexión por cable
+        if self.network_client.primary_device == "wired":
+            self._stop_animation()
+            if ethernet and ethernet.internet == "activated":
+                self.network_icon.set_markup(icons.world)
+            else:
+                self.network_icon.set_markup(icons.world_off)
+        else:
+            if not wifi:
+                self._stop_animation()
+                self.network_icon.set_markup(icons.wifi_off)
+            elif wifi.state == "activated" and wifi.ssid != "Disconnected" and wifi.strength > 0:
+                self._stop_animation()
+                strength = wifi.strength
+                if strength < 25:
+                    self.network_icon.set_markup(icons.wifi_0)
+                elif strength < 50:
+                    self.network_icon.set_markup(icons.wifi_1)
+                elif strength < 75:
+                    self.network_icon.set_markup(icons.wifi_2)
+                else:
+                    self.network_icon.set_markup(icons.wifi_3)
+            else:
+                self._start_animation()
 
 
 class BluetoothButton(Box):
