@@ -35,9 +35,13 @@ class Notch(Window):
 
         self.bar = kwargs.get("bar", None)
 
+        # Primero inicializamos NotificationContainer
+        self.notification = NotificationContainer(notch=self)
+        self.notification_history = self.notification.history
+
+        # Luego inicializamos el resto de componentes que dependen de notification_history
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
-        self.notification = NotificationContainer(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
         self.bluetooth = BluetoothConnections(notch=self)
@@ -94,7 +98,6 @@ class Notch(Window):
                 self.compact,
                 self.launcher,
                 self.dashboard,
-                self.notification,
                 self.overview,
                 self.power,
                 self.bluetooth,

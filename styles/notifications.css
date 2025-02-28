@@ -41,7 +41,7 @@
     margin-top: 8px;
 }
 
-#notification-box {
+#notification-stack-box {
     border-radius: 32px;
     padding: 16px;
     background-color: var(--shadow);
@@ -51,4 +51,45 @@
 
 #boxed-notification-revealer {
     margin-top: -14px;
+}
+
+#notification-navigation {
+    padding: 4px;
+}
+
+#nav-button {
+    padding: 8px;
+    border-radius: 16px;
+    background: var(--shadow);
+    margin-top: -12px;
+}
+
+#nav-button:hover {
+    background: var(--surface-bright);
+}
+
+#nav-button:disabled #nav-button-label {
+    color: var(--surface-bright);
+}
+
+#nav-button-label {
+    font-size: 16px;
+}
+
+#nav-button-label.close {
+    color: var(--error-dim);
+}
+
+#nav-button:hover #nav-button-label {
+    color: var(--primary);
+}
+
+#nav-button:hover #nav-button-label.close {
+    color: var(--error-dim);
+}
+
+#notifications-list {
+  min-width: 420px;
+  border-radius: 20px;
+  border: 4px solid var(--surface);
 }
