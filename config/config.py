@@ -167,6 +167,8 @@ bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, pkill -
 
 source = {home}/.config/hyprfabricated/config/hypr/colors.conf
 
+layerrule = noanim, fabric
+
 exec = cp $wallpaper ~/.current.wall
 
 general {{
