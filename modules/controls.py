@@ -146,7 +146,7 @@ class VolumeSmall(Box):
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
             name="button-volume", size=28, line_width=2,
-            start_angle=135, end_angle=395,
+            start_angle=150, end_angle=390,
         )
         self.vol_label = Label(name="vol-label", markup=icons.vol_high)
         self.vol_button = Button(
@@ -218,7 +218,7 @@ class MicSmall(Box):
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
             name="button-mic", size=28, line_width=2,
-            start_angle=135, end_angle=395,
+            start_angle=150, end_angle=390,
         )
         self.mic_label = Label(name="mic-label", markup=icons.mic)
         self.mic_button = Button(
@@ -294,7 +294,7 @@ class BrightnessSmall(Box):
         self.brightness = Brightness.get_initial()
         self.progress_bar = CircularProgressBar(
             name="button-brightness", size=28, line_width=2,
-            start_angle=135, end_angle=395,
+            start_angle=150, end_angle=390,
         )
         self.brightness_label = Label(name="brightness-label", markup=icons.brightness_high)
         self.brightness_button = Button(child=self.brightness_label)
