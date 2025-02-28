@@ -4,6 +4,17 @@
 #date-time,
 #systray,
 #battery,
-#button-bar-vol {
+#button-bar-vol,
+#control-small,
+#notification-stack-box,
+#nav-button {
   box-shadow: 0 0 4px alpha(black, 0.5);
+}
+
+#bar-revealer {
+  padding: 10px;
+}
+
+#boxed-revealer {
+  margin: -10px;
 }

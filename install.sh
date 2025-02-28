@@ -9,6 +9,7 @@ INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
     acpi
     auto-cpufreq
+    brightnessctl
     fabric-cli-git
     gnome-bluetooth-3.0
     grimblast

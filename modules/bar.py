@@ -3,6 +3,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
+from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
@@ -123,6 +124,29 @@ class Bar(Window):
 
 
         self.control = ControlSmall()
+        
+        self.revealer = Revealer(
+            name="bar-revealer",
+            transition_type="slide-left",
+            child_revealed=True,
+            child=Box(
+                name="bar-revealer-box",
+                orientation="h",
+                spacing=4,
+                children=[
+                    self.control,
+                    self.battery,
+                ],
+            ),
+        )
+
+        self.boxed_revealer = Box(
+            name="boxed-revealer",
+            children=[
+                self.revealer,
+            ],
+        )
+
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h",
@@ -145,8 +169,7 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-            
-                
+                    self.boxed_revealer,
                     self.button_color,
                     self.updates,
                     self.battery,

@@ -63,8 +63,12 @@ update: str = "&#xfa0a;"
 updated: str = "&#xf704;"
 
 # Applets
-wifi: str = "&#xeb52;"
+wifi_0: str = "&#xeba3;"
+wifi_1: str = "&#xeba4;"
+wifi_2: str = "&#xeba5;"
+wifi_3: str = "&#xeb52;"
 world: str = "&#xeb54;"
+world_off: str = "&#xf1ca;"
 bluetooth: str = "&#xea37;"
 night: str = "&#xeaf8;"
 coffee: str = "&#xef0e;"

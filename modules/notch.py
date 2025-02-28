@@ -4,6 +4,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
+from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import ActiveWindow
 from fabric.utils.helpers import FormattedString, truncate
@@ -39,9 +40,15 @@ class Notch(Window):
             all_visible=True,
         )
 
+        self.bar = kwargs.get("bar", None)
+
+        # Primero inicializamos NotificationContainer
+        self.notification = NotificationContainer(notch=self)
+        self.notification_history = self.notification.history
+
+        # Luego inicializamos el resto de componentes que dependen de notification_history
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
-        self.notification = NotificationContainer(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
         self.bluetooth = BluetoothConnections(notch=self)
@@ -116,7 +123,6 @@ class Notch(Window):
                 self.compact,
                 self.launcher,
                 self.dashboard,
-                self.notification,
                 self.overview,
                 self.power,
                 self.bluetooth,
@@ -159,6 +165,30 @@ class Notch(Window):
             )
         )
 
+        self.notification_revealer = Revealer(
+            name="notification-revealer",
+            transition_type="slide-down",
+            transition_duration=250,
+            child_revealed=False,
+        )
+
+        self.boxed_notification_revealer = Box(
+            name="boxed-notification-revealer",
+            orientation="v",
+            children=[
+                self.notification_revealer,
+            ]
+        )
+
+        self.notch_complete = Box(
+            name="notch-complete",
+            orientation="v",
+            children=[
+                self.notch_box,
+                self.boxed_notification_revealer,
+            ]
+        )
+
         self.hidden = False
 
         # Variables para controlar la sensibilidad del smooth scroll.
@@ -167,6 +197,7 @@ class Notch(Window):
         self._scrolling = False
 
         self.add(self.notch_box)
+        self.add(self.notch_complete)
         self.show_all()
 
         self.add_keybinding("Escape", lambda *_: self.close_notch())
@@ -195,6 +226,8 @@ class Notch(Window):
     def close_notch(self):
         self.set_keyboard_mode("none")
 
+        self.bar.revealer.set_reveal_child(True)
+
         if self.hidden:
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
@@ -215,7 +248,6 @@ class Notch(Window):
         widgets = {
             "launcher": self.launcher,
             "dashboard": self.dashboard,
-            "notification": self.notification,
             "overview": self.overview,
             "power": self.power,
             "bluetooth": self.bluetooth
@@ -246,6 +278,11 @@ class Notch(Window):
                 self.dashboard.stack.set_visible_child(self.dashboard.stack.get_children()[0])
         else:
             self.stack.set_visible_child(self.dashboard)
+
+        if widget == "dashboard" or widget == "overview":
+            self.bar.revealer.set_reveal_child(False)
+        else:
+            self.bar.revealer.set_reveal_child(True)
 
     def toggle_hidden(self):
         self.hidden = not self.hidden

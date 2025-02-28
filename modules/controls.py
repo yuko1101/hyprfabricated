@@ -146,7 +146,7 @@ class VolumeSmall(Box):
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
             name="button-volume", size=28, line_width=2,
-            start_angle=135, end_angle=395,
+            start_angle=150, end_angle=390,
         )
         self.vol_label = Label(name="vol-label", markup=icons.vol_high)
         self.vol_button = Button(
@@ -205,9 +205,9 @@ class VolumeSmall(Box):
             self.progress_bar.remove_style_class("muted")
             self.vol_label.remove_style_class("muted")
         self.progress_bar.value = self.audio.speaker.volume / 100
-        if self.audio.speaker.volume >= 75:
+        if self.audio.speaker.volume > 74:
             self.vol_button.get_child().set_markup(icons.vol_high)
-        elif self.audio.speaker.volume >= 1:
+        elif self.audio.speaker.volume > 0:
             self.vol_button.get_child().set_markup(icons.vol_medium)
         else:
             self.vol_button.get_child().set_markup(icons.vol_mute)
@@ -218,7 +218,7 @@ class MicSmall(Box):
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
             name="button-mic", size=28, line_width=2,
-            start_angle=135, end_angle=395,
+            start_angle=150, end_angle=390,
         )
         self.mic_label = Label(name="mic-label", markup=icons.mic)
         self.mic_button = Button(
@@ -294,7 +294,7 @@ class BrightnessSmall(Box):
         self.brightness = Brightness.get_initial()
         self.progress_bar = CircularProgressBar(
             name="button-brightness", size=28, line_width=2,
-            start_angle=135, end_angle=395,
+            start_angle=150, end_angle=390,
         )
         self.brightness_label = Label(name="brightness-label", markup=icons.brightness_high)
         self.brightness_button = Button(child=self.brightness_label)
@@ -332,9 +332,9 @@ class BrightnessSmall(Box):
             return
         self.progress_bar.value = self.brightness.screen_brightness / self.brightness.max_screen
         brightness_percentage = (self.brightness.screen_brightness / self.brightness.max_screen) * 100
-        if brightness_percentage >= 75:
+        if brightness_percentage > 74:
             self.brightness_label.set_markup(icons.brightness_high)
-        elif brightness_percentage >= 25:
+        elif brightness_percentage > 24:
             self.brightness_label.set_markup(icons.brightness_medium)
         else:
             self.brightness_label.set_markup(icons.brightness_low)
