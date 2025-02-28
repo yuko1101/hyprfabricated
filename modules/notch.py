@@ -4,6 +4,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
+from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import ActiveWindow
 from fabric.utils.helpers import FormattedString, truncate
@@ -25,7 +26,7 @@ class Notch(Window):
             name="notch",
             layer="top",
             anchor="top",
-            margin="-40px 10px 10px 10px",
+            margin="-40px 40px 10px 10px",
             keyboard_mode="none",
             exclusivity="normal",
             visible=True,
@@ -136,9 +137,33 @@ class Notch(Window):
             )
         )
 
+        self.notification_revealer = Revealer(
+            name="notification-revealer",
+            transition_type="slide-down",
+            transition_duration=250,
+            child_revealed=False,
+        )
+
+        self.boxed_notification_revealer = Box(
+            name="boxed-notification-revealer",
+            orientation="v",
+            children=[
+                self.notification_revealer,
+            ]
+        )
+
+        self.notch_complete = Box(
+            name="notch-complete",
+            orientation="v",
+            children=[
+                self.notch_box,
+                self.boxed_notification_revealer,
+            ]
+        )
+
         self.hidden = False
 
-        self.add(self.notch_box)
+        self.add(self.notch_complete)
         self.show_all()
 
         self.add_keybinding("Escape", lambda *_: self.close_notch())
@@ -180,7 +205,6 @@ class Notch(Window):
         widgets = {
             "launcher": self.launcher,
             "dashboard": self.dashboard,
-            "notification": self.notification,
             "overview": self.overview,
             "power": self.power,
             "bluetooth": self.bluetooth
@@ -213,7 +237,7 @@ class Notch(Window):
         else:
             self.stack.set_visible_child(self.dashboard)
 
-        if widget == "dashboard":
+        if widget == "dashboard" or widget == "overview":
             self.bar.revealer.set_reveal_child(False)
         else:
             self.bar.revealer.set_reveal_child(True)

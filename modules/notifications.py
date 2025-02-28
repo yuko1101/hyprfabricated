@@ -45,6 +45,7 @@ class NotificationBox(Box):
             name="notification-box",
             # spacing=8,
             orientation="v",
+            h_align="center",
             children=[
                 # self.create_header(notification),
                 self.create_content(notification),
@@ -223,10 +224,11 @@ class NotificationBox(Box):
 
 class NotificationContainer(Box):
     def __init__(self, **kwargs):
-        super().__init__(name="notification", orientation="v", spacing=4, v_expand=True, h_expand=True)
+        super().__init__(name="notification", orientation="v", spacing=4)
         self.notch = kwargs["notch"]
         self._server = Notifications()
         self._server.connect("notification-added", self.on_new_notification)
+        self._pending_removal = False
 
     def set_pointer_cursor(self, widget, cursor_name):
         """Cambia el cursor sobre un widget."""
@@ -236,18 +238,34 @@ class NotificationContainer(Box):
             window.set_cursor(cursor)
 
     def on_new_notification(self, fabric_notif, id):
-        for child in self.get_children():
-            child.destroy()
         notification = fabric_notif.get_notification_from_id(id)
         new_box = NotificationBox(notification)
-        self.add(new_box)
         notification.connect("closed", self.on_notification_closed)
-        self.notch.open_notch("notification")
+        
+        self._pending_removal = False
+        
+        for child in self.notch.notification_revealer:
+            child.destroy()
+            
+        self.notch.notification_revealer.add(new_box)
+        self.notch.notification_revealer.show_all()
+        self.notch.notification_revealer.set_reveal_child(True)
 
     def on_notification_closed(self, notification, reason):
-        self.notch.close_notch()
-        # Set cursor to default
+        self.notch.notification_revealer.set_reveal_child(False)
         self.set_pointer_cursor(self, "arrow")
         logger.info(f"Notification {notification.id} closed with reason: {reason}")
-        for child in self.get_children():
-            child.destroy()
+        
+        self._pending_removal = True
+        # Esperamos a que termine la transición antes de eliminar el hijo
+        GLib.timeout_add(
+            self.notch.notification_revealer.get_transition_duration(),
+            self._remove_notification_children
+        )
+    
+    def _remove_notification_children(self):
+        if self._pending_removal:
+            for child in self.notch.notification_revealer:
+                child.destroy()
+            self._pending_removal = False
+        return False  # Para que el timeout no se repita
