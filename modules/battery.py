@@ -59,8 +59,8 @@ class Battery(Box):
             value=0,
             size=28,
             line_width=2,
-            start_angle=135,
-            end_angle=395,
+            start_angle=150,
+            end_angle=390,
         )
 
         self.bat_overlay = Overlay(
