@@ -11,7 +11,7 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.battery import Battery
+from modules.metrics import MetricsSmall
 from modules.controls import ControlSmall
 
 class Bar(Window):
@@ -89,19 +89,8 @@ class Bar(Window):
         self.button_color.connect("leave-notify-event", self.on_button_leave)
         self.button_color.connect("button-press-event", self.colorpicker)
 
-        self.battery = Battery()
-
-        self.button_config = Button(
-            name="button-bar",
-            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.config
-            )
-        )
-
-
         self.control = ControlSmall()
+        self.metrics = MetricsSmall()
         
         self.revealer = Revealer(
             name="bar-revealer",
@@ -113,7 +102,7 @@ class Bar(Window):
                 spacing=4,
                 children=[
                     self.control,
-                    self.battery,
+                    self.metrics,
                 ],
             ),
         )
@@ -148,9 +137,8 @@ class Bar(Window):
                     self.boxed_revealer,
                     self.button_color,
                     self.systray,
-                    self.button_config,
-                    self.date_time,
                     self.button_power,
+                    self.date_time,
                 ],
             ),
         )
