@@ -26,7 +26,7 @@ class Bar(Window):
             all_visible=True,
         )
 
-        self.notch = kwargs.get("notch", None)
+        self.notch = kwargs.get("notch")
 
         self.workspaces = Workspaces(
             name="workspaces",
@@ -152,7 +152,7 @@ class Bar(Window):
                 children=[
                     self.boxed_revealer,
                     self.systray,
-                    self.button_config,
+                    # self.button_config,
                     self.date_time,
                     self.button_power,
                 ],

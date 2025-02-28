@@ -50,8 +50,9 @@ if __name__ == "__main__":
     corners = Corners()
     bar = Bar()
     notch = Notch()
-    widgets = Deskwidgets()
+    bar.notch = notch
     notch.bar = bar
+    widgets = Deskwidgets()
     app = Application("hyprfabricated", bar, notch,widgets)
 
     def set_css():
