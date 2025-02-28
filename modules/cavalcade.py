@@ -141,6 +141,7 @@ class Spectrum:
 
 	def update(self, data):
 		"""Audio data processing"""
+		self.color_update()
 		self.audio_sample = data
 		if not self.is_silence(self.audio_sample[0]):
 			self.area.queue_draw()
