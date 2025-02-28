@@ -32,6 +32,8 @@ class Notch(Window):
             all_visible=True,
         )
 
+        self.bar = kwargs.get("bar", None)
+
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
         self.notification = NotificationContainer(notch=self)
@@ -156,6 +158,8 @@ class Notch(Window):
     def close_notch(self):
         self.set_keyboard_mode("none")
 
+        self.bar.revealer.set_reveal_child(True)
+
         if self.hidden:
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
@@ -168,6 +172,8 @@ class Notch(Window):
 
     def open_notch(self, widget):
         self.set_keyboard_mode("exclusive")
+
+        self.bar.revealer.set_reveal_child(False)
 
         if self.hidden:
             self.notch_box.remove_style_class("hidden")

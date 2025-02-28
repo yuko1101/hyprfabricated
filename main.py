@@ -49,6 +49,7 @@ if __name__ == "__main__":
     bar = Bar()
     notch = Notch()
     bar.notch = notch
+    notch.bar = bar
     app = Application("ax-shell", bar, notch)
 
     def set_css():
