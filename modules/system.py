@@ -121,8 +121,8 @@ class System(Box):
             value=0,
             size=28,
             line_width=2,
-            start_angle=180,
-            end_angle=360,
+            start_angle=150,
+            end_angle=390,
         )
 
         self.bat_overlay = Overlay(
