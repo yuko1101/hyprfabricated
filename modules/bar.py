@@ -145,12 +145,12 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-                    self.control,
-                    self.battery,
+            
+                
                     self.button_color,
                     self.updates,
                     self.battery,
-                    
+                    #self.control,
                     self.volume,
                     self.systray,
                     self.button_config,

@@ -61,7 +61,7 @@ class UpdatesWidget(Button):
         self.connect("button-press-event", self.on_button_press)
 
         # Set up a repeater to call the update method at specified intervals
-        invoke_repeater(60000, self.update, initial_call=True)
+        invoke_repeater(600000, self.update, initial_call=True)
 
     def update_values(self, value: str):
         # Parse the JSON value
