@@ -1,5 +1,5 @@
 import os
-from gi.repository import GdkPixbuf, GLib, Gdk
+from gi.repository import GdkPixbuf, GLib, Gtk
 from loguru import logger
 from widgets.rounded_image import CustomImage
 
@@ -13,6 +13,7 @@ from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.image import Image
 from fabric.widgets.label import Label
+from fabric.widgets.scrolledwindow import ScrolledWindow
 import modules.icons as icons
 
 class ActionButton(Button):
@@ -43,10 +44,10 @@ class NotificationBox(Box):
     def __init__(self, notification: Notification, timeout_ms=5000, **kwargs):
         super().__init__(
             name="notification-box",
-            # spacing=8,
             orientation="v",
+            h_align="fill",
+            h_expand=True,
             children=[
-                # self.create_header(notification),
                 self.create_content(notification),
                 self.create_action_buttons(notification),
             ],
@@ -54,7 +55,22 @@ class NotificationBox(Box):
         self.notification = notification
         self.timeout_ms = timeout_ms
         self._timeout_id = None
+        self._container = None  # Usar un nombre con guión bajo
         self.start_timeout()
+        
+        # Modificar los eventos de hover para afectar a todas las notificaciones
+        self.connect("enter-notify-event", self.on_hover_enter)
+        self.connect("leave-notify-event", self.on_hover_leave)
+
+        self._destroyed = False  # Agregar flag para tracking
+
+    def set_container(self, container):
+        """Método setter para el contenedor"""
+        self._container = container
+
+    def get_container(self):
+        """Método getter para el contenedor"""
+        return self._container
 
     def create_header(self, notification):
         app_icon = (
@@ -181,6 +197,14 @@ class NotificationBox(Box):
         close_button.connect("leave-notify-event", lambda *_: self.unhover_button(close_button))
         return close_button
 
+    def on_hover_enter(self, *args):
+        if self._container:
+            self._container.pause_and_reset_all_timeouts()
+            
+    def on_hover_leave(self, *args):
+        if self._container:
+            self._container.resume_all_timeouts()
+
     def start_timeout(self):
         self.stop_timeout()
         self._timeout_id = GLib.timeout_add(self.timeout_ms, self.close_notification)
@@ -191,63 +215,284 @@ class NotificationBox(Box):
             self._timeout_id = None
 
     def close_notification(self):
-        self.notification.close("expired")
-        self.stop_timeout()
+        if not self._destroyed:
+            self.notification.close("expired")
+            self.stop_timeout()
         return False
 
-    def pause_timeout(self):
-        self.stop_timeout()
-
-    def resume_timeout(self):
-        self.start_timeout()
-
     def destroy(self):
+        self._destroyed = True
         self.stop_timeout()
         super().destroy()
 
-    # @staticmethod
-    def set_pointer_cursor(self, widget, cursor_name):
-        """Cambia el cursor sobre un widget."""
-        window = widget.get_window()
-        if window:
-            cursor = Gdk.Cursor.new_from_name(widget.get_display(), cursor_name)
-            window.set_cursor(cursor)
-
     def hover_button(self, button):
-        self.pause_timeout()
-        self.set_pointer_cursor(button, "hand2")
+        if self._container:
+            self._container.pause_and_reset_all_timeouts()
 
     def unhover_button(self, button):
-        self.resume_timeout()
-        self.set_pointer_cursor(button, "arrow")
+        if self._container:
+            self._container.resume_all_timeouts()
+
+# This is a ScrolledWindow that contains a Box with notifications added to it when they timeout from the NotificationContainer
+class NotificationHistory(ScrolledWindow):
+    def __init__(self, **kwargs):
+        super().__init__(
+            name="notification-history",
+            orientation="v",
+            )
+
+        self.notch = kwargs["notch"]
+
+        self.notifications_list = Box(
+            name="notifications-list",
+            orientation="v",
+            spacing=4,
+        )
+        self.add(self.notifications_list)
+
 
 class NotificationContainer(Box):
     def __init__(self, **kwargs):
-        super().__init__(name="notification", orientation="v", spacing=4, v_expand=True, h_expand=True)
+        super().__init__(name="notification", orientation="v", spacing=4)
         self.notch = kwargs["notch"]
         self._server = Notifications()
         self._server.connect("notification-added", self.on_new_notification)
+        self._pending_removal = False
+        self._is_destroying = False
 
-    def set_pointer_cursor(self, widget, cursor_name):
-        """Cambia el cursor sobre un widget."""
-        window = widget.get_window()
-        if window:
-            cursor = Gdk.Cursor.new_from_name(widget.get_display(), cursor_name)
-            window.set_cursor(cursor)
+        self.history = NotificationHistory(notch=self.notch)
+        
+        # Crear Stack y botones de navegación
+        self.stack = Gtk.Stack(
+            name="notification-stack",
+            transition_type=Gtk.StackTransitionType.SLIDE_LEFT_RIGHT,
+            transition_duration=200,
+            visible=True,
+        )
+        
+        # Crear Box para contener el stack
+        self.stack_box = Box(
+            name="notification-stack-box",
+            h_align="center",
+            h_expand=False,
+            children=[self.stack]
+        )
+        
+        self.navigation = Box(
+            name="notification-navigation",
+            spacing=4,
+            h_align="center"
+        )
+        
+        self.prev_button = Button(
+            name="nav-button",
+            child=Label(name="nav-button-label", markup=icons.chevron_left),
+            on_clicked=self.show_previous,
+        )
+        
+        self.close_all_button = Button(
+            name="nav-button",
+            child=Label(name="nav-button-label", markup=icons.cancel),
+            on_clicked=self.close_all_notifications,
+        )
+        
+        self.next_button = Button(
+            name="nav-button", 
+            child=Label(name="nav-button-label", markup=icons.chevron_right),
+            on_clicked=self.show_next,
+        )
+        
+        # Agregar eventos de hover a los botones de navegación
+        for button in [self.prev_button, self.close_all_button, self.next_button]:
+            button.connect("enter-notify-event", lambda *_: self.pause_and_reset_all_timeouts())
+            button.connect("leave-notify-event", lambda *_: self.resume_all_timeouts())
+        
+        self.navigation.add(self.prev_button)
+        self.navigation.add(self.close_all_button)
+        self.close_all_button.get_child().add_style_class("close")
+        self.navigation.add(self.next_button)
+        
+        self.notification_box = Box(
+            orientation="v",
+            spacing=4,
+            children=[self.stack_box, self.navigation]  # Usar stack_box en lugar de stack
+        )
+        
+        self.notifications = []
+        self.current_index = 0
+        
+        self.update_navigation_buttons()
+
+        self._destroyed_notifications = set()  # Agregar set para tracking
+
+    def show_previous(self, *args):
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.stack.set_visible_child(self.notifications[self.current_index])
+            self.update_navigation_buttons()
+
+    def show_next(self, *args):
+        if self.current_index < len(self.notifications) - 1:
+            self.current_index += 1
+            self.stack.set_visible_child(self.notifications[self.current_index])
+            self.update_navigation_buttons()
+
+    def update_navigation_buttons(self):
+        self.prev_button.set_sensitive(self.current_index > 0)
+        self.next_button.set_sensitive(self.current_index < len(self.notifications) - 1)
+        
+        # Ocultar navegación si solo hay una notificación
+        self.navigation.set_visible(len(self.notifications) > 1)
 
     def on_new_notification(self, fabric_notif, id):
-        for child in self.get_children():
-            child.destroy()
         notification = fabric_notif.get_notification_from_id(id)
         new_box = NotificationBox(notification)
-        self.add(new_box)
+        new_box.set_container(self)
         notification.connect("closed", self.on_notification_closed)
-        self.notch.open_notch("notification")
+        
+        # Limitar a 5 notificaciones
+        while len(self.notifications) >= 5:
+            oldest_notification = self.notifications[0]
+            self.stack.remove(oldest_notification)
+            self.notifications.pop(0)
+            if self.current_index > 0:
+                self.current_index -= 1
+        
+        # Agregar nueva notificación al stack
+        self.stack.add_named(new_box, str(id))
+        self.notifications.append(new_box)
+        self.current_index = len(self.notifications) - 1
+        
+        # Mostrar la nueva notificación
+        self.stack.set_visible_child(new_box)
+        
+        # Resetear los timeouts de todas las notificaciones
+        for notification_box in self.notifications:
+            notification_box.start_timeout()
+        
+        # Actualizar UI
+        if len(self.notifications) == 1:
+            if not self.notification_box.get_parent():
+                self.notch.notification_revealer.add(self.notification_box)
+            
+        self.notch.notification_revealer.show_all()
+        self.notch.notification_revealer.set_reveal_child(True)
+        self.update_navigation_buttons()
 
     def on_notification_closed(self, notification, reason):
-        self.notch.close_notch()
-        # Set cursor to default
-        self.set_pointer_cursor(self, "arrow")
+        if self._is_destroying:
+            return
+            
+        if notification.id in self._destroyed_notifications:
+            return
+        
+        self._destroyed_notifications.add(notification.id)
+        
+        try:
+            # Encontrar la notificación a remover
+            notif_to_remove = None
+            for i, notif_box in enumerate(self.notifications):
+                if notif_box.notification.id == notification.id:
+                    notif_to_remove = (i, notif_box)
+                    break
+            
+            if not notif_to_remove:
+                return
+            
+            i, notif_box = notif_to_remove
+            
+            # Si es la última notificación
+            if len(self.notifications) == 1:
+                self._is_destroying = True
+                # Ocultar el revealer primero
+                self.notch.notification_revealer.set_reveal_child(False)
+                # Programar la limpieza después de la animación
+                GLib.timeout_add(
+                    self.notch.notification_revealer.get_transition_duration(),
+                    self._destroy_container
+                )
+                return
+            
+            # Si hay más notificaciones
+            # Primero actualizamos el índice
+            new_index = i
+            if i == self.current_index:
+                new_index = max(0, i - 1)
+            elif i < self.current_index:
+                new_index = self.current_index - 1
+            
+            # Cambiamos a la siguiente notificación antes de remover
+            next_notification = self.notifications[new_index if new_index < i else i]
+            self.stack.set_visible_child(next_notification)
+            
+            # Ahora sí removemos la notificación
+            if notif_box.get_parent() == self.stack:
+                self.stack.remove(notif_box)
+            self.notifications.remove(notif_box)
+            
+            # Actualizamos el índice y la UI
+            self.current_index = new_index
+            self.update_navigation_buttons()
+
+        except Exception as e:
+            logger.error(f"Error al cerrar notificación: {e}")
+            
         logger.info(f"Notification {notification.id} closed with reason: {reason}")
-        for child in self.get_children():
-            child.destroy()
+
+    def _destroy_container(self):
+        """Limpia las notificaciones manteniendo la estructura base"""
+        try:
+            # Limpiar las listas
+            self.notifications.clear()
+            self._destroyed_notifications.clear()
+            
+            # Limpiar el stack pero mantener la estructura
+            for child in self.stack.get_children():
+                self.stack.remove(child)
+            
+            # Reiniciar el índice
+            self.current_index = 0
+            
+            # Ocultar la navegación
+            self.navigation.set_visible(False)
+            
+            # Remover el notification_box del revealer pero sin destruirlo
+            if self.notification_box.get_parent():
+                self.notification_box.get_parent().remove(self.notification_box)
+            
+        except Exception as e:
+            logger.error(f"Error al limpiar el contenedor: {e}")
+        finally:
+            self._is_destroying = False
+            return False
+
+    def pause_and_reset_all_timeouts(self):
+        """Pausa y reinicia todos los timeouts"""
+        if self._is_destroying:
+            return
+            
+        for notification in self.notifications[:]:
+            try:
+                if not notification._destroyed and notification.get_parent():
+                    notification.stop_timeout()
+            except Exception as e:
+                logger.error(f"Error al pausar timeout: {e}")
+
+    def resume_all_timeouts(self):
+        """Reanuda todos los timeouts desde el inicio"""
+        if self._is_destroying:
+            return
+            
+        for notification in self.notifications[:]:
+            try:
+                if not notification._destroyed and notification.get_parent():
+                    notification.start_timeout()
+            except Exception as e:
+                logger.error(f"Error al reanudar timeout: {e}")
+
+    def close_all_notifications(self, *args):
+        """Cierra todas las notificaciones en el stack"""
+        # Crear una copia de la lista para evitar problemas durante la iteración
+        notifications_to_close = self.notifications.copy()
+        for notification_box in notifications_to_close:
+            notification_box.notification.close("dismissed-by-user")

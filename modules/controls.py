@@ -205,9 +205,9 @@ class VolumeSmall(Box):
             self.progress_bar.remove_style_class("muted")
             self.vol_label.remove_style_class("muted")
         self.progress_bar.value = self.audio.speaker.volume / 100
-        if self.audio.speaker.volume >= 75:
+        if self.audio.speaker.volume > 74:
             self.vol_button.get_child().set_markup(icons.vol_high)
-        elif self.audio.speaker.volume >= 1:
+        elif self.audio.speaker.volume > 0:
             self.vol_button.get_child().set_markup(icons.vol_medium)
         else:
             self.vol_button.get_child().set_markup(icons.vol_mute)
@@ -325,9 +325,9 @@ class BrightnessSmall(Box):
             return
         self.progress_bar.value = self.brightness.screen_brightness / self.brightness.max_screen
         brightness_percentage = (self.brightness.screen_brightness / self.brightness.max_screen) * 100
-        if brightness_percentage >= 75:
+        if brightness_percentage > 74:
             self.brightness_label.set_markup(icons.brightness_high)
-        elif brightness_percentage >= 25:
+        elif brightness_percentage > 24:
             self.brightness_label.set_markup(icons.brightness_medium)
         else:
             self.brightness_label.set_markup(icons.brightness_low)
