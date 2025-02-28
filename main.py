@@ -51,7 +51,7 @@ if __name__ == "__main__":
     bar = Bar()
     notch = Notch()
     widgets = Deskwidgets()
-    bar.notch = notch
+    notch.bar = bar
     app = Application("hyprfabricated", bar, notch,widgets)
 
     def set_css():
