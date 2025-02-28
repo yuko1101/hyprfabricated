@@ -93,4 +93,6 @@ if [ "$wasYayInstalled" -eq 0 ]; then
     sudo pacman -Rns yay
 fi
 
+echo "Doing Fallback Image..."
+cp ./assets/wallpapers_example/example-1.jpg ~/.current.wall
 echo "Installation complete."
