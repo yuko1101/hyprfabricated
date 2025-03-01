@@ -166,6 +166,8 @@ bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend '
 
 source = {home}/.config/hyprfabricated/config/hypr/colors.conf
 
+layerrule = noanim, fabric
+
 exec = cp $wallpaper ~/.current.wall
 
 general {{

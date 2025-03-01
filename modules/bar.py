@@ -119,7 +119,7 @@ class Bar(Window):
                 children=[
                     self.control,
                     self.system,
-                ],
+               ],
             ),
         )
 
