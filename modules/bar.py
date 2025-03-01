@@ -26,7 +26,7 @@ class Bar(Window):
             all_visible=True,
         )
 
-        self.notch = kwargs.get("notch")
+        self.notch = kwargs.get("notch", None)
 
         self.workspaces = Workspaces(
             name="workspaces",

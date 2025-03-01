@@ -266,7 +266,8 @@ class MprisPlayerManager(Service):
 
     def on_name_vanished(self, manager, player_name: Playerctl.PlayerName):
         logger.info(f"[MprisPlayer] {player_name.name} vanished")
-        self.emit("player-vanished", player_name.name)  # type: ignore
+        if not player_name.name.startswith(("chromium", "firefox")):
+            self.emit("player-vanished", player_name.name)  # type: ignore
 
     @Property(object, "readable")
     def players(self):
