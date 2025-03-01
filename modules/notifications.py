@@ -353,25 +353,6 @@ class NotificationHistory(ScrolledWindow):
         # Agregamos el contenido principal al hist_box
         hist_box.add(content_box)
 
-        # Si hay acciones, creamos y agregamos los botones
-        if notification_box.notification.actions:
-            action_buttons = Box(
-                name="notification-action-buttons",
-                spacing=4,
-                h_expand=True,
-                children=[
-                    HistoryActionButton(
-                        action, 
-                        i, 
-                        len(notification_box.notification.actions), 
-                        container,
-                        on_destroy=lambda: on_container_destroy(container)
-                    )
-                    for i, action in enumerate(notification_box.notification.actions)
-                ],
-            )
-            hist_box.add(action_buttons)
-
         # Modificar el botón de cerrar para que use nuestro método personalizado
         content_box.get_children()[3].get_children()[0].connect(  # Box con botón de cerrar
             "clicked", 
@@ -524,6 +505,8 @@ class NotificationContainer(Box):
         # Limitar a 5 notificaciones
         while len(self.notifications) >= 5:
             oldest_notification = self.notifications[0]
+            # Enviar al historial en lugar de marcar como expirada
+            self.notch.notification_history.add_notification(oldest_notification)
             self.stack.remove(oldest_notification)
             self.notifications.pop(0)
             if self.current_index > 0:
@@ -677,25 +660,3 @@ class NotificationContainer(Box):
         notifications_to_close = self.notifications.copy()
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
-
-class HistoryActionButton(Button):
-    def __init__(self, action: NotificationAction, index: int, total: int, hist_box, on_destroy=None):
-        super().__init__(
-            name="action-button",
-            h_expand=True,
-            on_clicked=self.on_clicked,
-            child=Label(name="button-label", label=action.label),
-        )
-        self.action = action
-        self.hist_box = hist_box
-        self.on_destroy = on_destroy if on_destroy else lambda: self.hist_box.destroy()  # Valor por defecto
-        style_class = (
-            "start-action" if index == 0
-            else "end-action" if index == total - 1
-            else "middle-action"
-        )
-        self.add_style_class(style_class)
-
-    def on_clicked(self, *_):
-        self.action.invoke()
-        self.on_destroy()
