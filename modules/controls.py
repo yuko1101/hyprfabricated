@@ -119,9 +119,8 @@ class BrightnessSlider(Scale):
             try:
                 if self.timeout_id:
                     GLib.source_remove(self.timeout_id)
-            except:
+            except Exception as e:
                 pass
-
             # Store the pending value
             self.pending_value = new_brightness
 

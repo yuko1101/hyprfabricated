@@ -164,7 +164,10 @@ class Notch(Window):
                 ]
             )
         )
-
+        self._scroll_accumulator = 0.0
+        self.hidden = False
+        self.scroll_threshold = 15.0  # Ajusta este valor para modificar la sensibilidad
+        self._scrolling = False
         self.notification_revealer = Revealer(
             name="notification-revealer",
             transition_type="slide-down",
