@@ -7,6 +7,7 @@ from fabric.notifications.service import (
     Notification,
     NotificationAction,
     Notifications,
+    NotificationCloseReason,
 )
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
@@ -189,8 +190,8 @@ class NotificationBox(Box):
 
     def create_close_button(self):
         close_button = Button(
-            name="close-button",
-            child=Label(name="close-label", markup=icons.cancel),
+            name="notif-close-button",
+            child=Label(name="notif-close-label", markup=icons.cancel),
             on_clicked=lambda *_: self.notification.close("dismissed-by-user"),
         )
         close_button.connect("enter-notify-event", lambda *_: self.hover_button(close_button))
@@ -239,7 +240,9 @@ class NotificationHistory(ScrolledWindow):
         super().__init__(
             name="notification-history",
             orientation="v",
-            )
+            min_content_size=(-1, -1),
+            max_content_size=(-1, -1),
+        )
 
         self.notch = kwargs["notch"]
 
@@ -248,7 +251,156 @@ class NotificationHistory(ScrolledWindow):
             orientation="v",
             spacing=4,
         )
+        
         self.add(self.notifications_list)
+
+    def update_last_separator(self):
+        """Actualiza la visibilidad del último separador"""
+        children = self.notifications_list.get_children()
+        for child in children:
+            # Buscar el separador dentro de cada container
+            separator = [c for c in child.get_children() if c.get_name() == "notification-separator"]
+            if separator:
+                # Mostrar el separador solo si no es el último container
+                separator[0].set_visible(child != children[-1])
+
+    def add_notification(self, notification_box):
+        """Agrega una notificación al historial"""
+        # Crear un método de destrucción personalizado
+        def on_container_destroy(container):
+            container.destroy()
+            # Actualizar separadores después de la destrucción
+            GLib.idle_add(self.update_separators)
+
+        # Primero creamos el contenedor
+        container = Box(
+            name="notification-container",
+            orientation="v",
+            h_align="fill",
+            h_expand=True,
+        )
+
+        # Crear el hist_box sin los botones
+        hist_box = Box(
+            name="notification-box-hist",
+            orientation="v",
+            h_align="fill",
+            h_expand=True,
+        )
+
+        # Creamos el contenido principal
+        content_box = Box(
+            name="notification-content",
+            spacing=8,
+            children=[
+                Box(
+                    name="notification-image",
+                    children=[
+                        CustomImage(
+                            pixbuf=notification_box.notification.image_pixbuf.scale_simple(
+                                48, 48, GdkPixbuf.InterpType.BILINEAR
+                            ) if notification_box.notification.image_pixbuf else 
+                            self.get_pixbuf(notification_box.notification.app_icon, 48, 48)
+                        )
+                    ]
+                ),
+                Box(
+                    name="notification-text",
+                    orientation="v",
+                    v_align="center",
+                    children=[
+                        Box(
+                            name="notification-summary-box",
+                            orientation="h",
+                            children=[
+                                Label(
+                                    name="notification-summary",
+                                    markup=notification_box.notification.summary.replace("\n", " "),
+                                    h_align="start",
+                                    ellipsization="end",
+                                ),
+                                Label(
+                                    name="notification-app-name",
+                                    markup=f" | {notification_box.notification.app_name}",
+                                    h_align="start",
+                                    ellipsization="end",
+                                ),
+                            ],
+                        ),
+                        Label(
+                            name="notification-body",
+                            markup=notification_box.notification.body.replace("\n", " "),
+                            h_align="start",
+                            ellipsization="end",
+                        ) if notification_box.notification.body else Box(),
+                    ],
+                ),
+                Box(h_expand=True),
+                Box(
+                    orientation="v",
+                    children=[
+                        Button(
+                            name="notif-close-button",
+                            child=Label(name="notif-close-label", markup=icons.cancel),
+                            on_clicked=lambda *_: on_container_destroy(container),
+                        ),
+                        Box(v_expand=True),
+                    ],
+                ),
+            ],
+        )
+
+        # Agregamos el contenido principal al hist_box
+        hist_box.add(content_box)
+
+        # Modificar el botón de cerrar para que use nuestro método personalizado
+        content_box.get_children()[3].get_children()[0].connect(  # Box con botón de cerrar
+            "clicked", 
+            lambda *_: on_container_destroy(container)
+        )
+
+        # Agregamos la notificación y el separador al container
+        container.add(hist_box)
+        container.add(Box(name="notification-separator"))
+
+        # Agregar el container al inicio de la lista
+        self.notifications_list.pack_start(container, False, False, 0)
+        
+        # Actualizar separadores
+        self.update_separators()
+        
+        self.show_all()
+
+    def get_pixbuf(self, icon_path, width, height):
+        if icon_path.startswith("file://"):
+            icon_path = icon_path[7:]
+
+        if not os.path.exists(icon_path):
+            logger.warning(f"Icon path does not exist: {icon_path}")
+            return None
+
+        try:
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon_path)
+            return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
+        except Exception as e:
+            logger.error(f"Failed to load or scale icon: {e}")
+            return None
+
+    def update_separators(self):
+        """Actualiza los separadores para todas las notificaciones"""
+        children = self.notifications_list.get_children()
+        
+        # Primero removemos todos los separadores existentes
+        for child in children:
+            for widget in child.get_children():
+                if widget.get_name() == "notification-separator":
+                    child.remove(widget)
+        
+        # Luego agregamos separadores solo donde corresponde
+        for i, child in enumerate(children):
+            if i < len(children) - 1:  # No agregar separador al último
+                separator = Box(name="notification-separator")
+                child.add(separator)
 
 
 class NotificationContainer(Box):
@@ -353,6 +505,8 @@ class NotificationContainer(Box):
         # Limitar a 5 notificaciones
         while len(self.notifications) >= 5:
             oldest_notification = self.notifications[0]
+            # Enviar al historial en lugar de marcar como expirada
+            self.notch.notification_history.add_notification(oldest_notification)
             self.stack.remove(oldest_notification)
             self.notifications.pop(0)
             if self.current_index > 0:
@@ -389,7 +543,8 @@ class NotificationContainer(Box):
         self._destroyed_notifications.add(notification.id)
         
         try:
-            # Encontrar la notificación a remover
+            logger.info(f"Notification {notification.id} closing with reason: {reason}")
+            
             notif_to_remove = None
             for i, notif_box in enumerate(self.notifications):
                 if notif_box.notification.id == notification.id:
@@ -400,6 +555,15 @@ class NotificationContainer(Box):
                 return
             
             i, notif_box = notif_to_remove
+
+            # Modificar la lógica para agregar al historial
+            # Agregar al historial si expiró o fue cerrada por otra razón que no sea el usuario
+            reason_str = str(reason)
+            if (reason_str == "NotificationCloseReason.EXPIRED" or 
+                reason_str == "NotificationCloseReason.CLOSED" or
+                reason_str == "NotificationCloseReason.UNDEFINED"):
+                logger.info(f"Adding notification {notification.id} to history")
+                self.notch.notification_history.add_notification(notif_box)
             
             # Si es la última notificación
             if len(self.notifications) == 1:

@@ -73,12 +73,12 @@ world_off: str = "&#xf1ca;"
 bluetooth: str = "&#xea37;"
 night: str = "&#xeaf8;"
 coffee: str = "&#xef0e;"
-dnd: str = "&#xea35;"
+notifications: str = "&#xea35;"
 
 wifi_off: str = "&#xecfa;"
 bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
-dnd_off: str = "&#xece9;"
+notifications_off: str = "&#xece9;"
 
 # Network
 wifi_0: str = "&#xeba3;"
