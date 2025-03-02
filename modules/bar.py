@@ -161,9 +161,9 @@ class Bar(Window):
                     self.boxed_revealer,
                     self.systray,
                     # self.button_config,
+                    self.button_tools,
                     self.date_time,
                     self.button_power,
-                    self.button_tools
                 ],
             ),
         )

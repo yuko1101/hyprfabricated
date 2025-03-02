@@ -3,7 +3,10 @@ from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async
 import modules.icons as icons
-
+from fabric.utils.helpers import get_relative_path, exec_shell_command_async
+SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
+OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
+SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 class Toolbox(Box):
     def __init__(self, **kwargs):
         super().__init__(
@@ -20,42 +23,42 @@ class Toolbox(Box):
 
         self.notch = kwargs["notch"]
 
-        self.btn_screenshot = Button(
+        self.btn_ssregion = Button(
             name="toolbox-button",
-            child=Label(name="button-label", markup=icons.screenshot),
-            on_clicked=self.lock,
+            child=Label(name="button-label", markup=icons.ssregion),
+            on_clicked=self.ssregion,
+        )
+        self.btn_ssfull = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.ssfull),
+            on_clicked=self.ssfull,
         )
 
         self.btn_screenrecord = Button(
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.screenrecord),
-            on_clicked=self.suspend,
+            on_clicked=self.screenrecord,
         )
 
         self.btn_ocr = Button(
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.ocr),
-            on_clicked=self.logout,
+            on_clicked=self.ocr,
         )
 
         self.btn_close = Button(
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.close),
-            # on_clicked=self.close_menu(),
+            # on_clicked=self.close,
         )
 
-        # self.btn_shutdown = Button(
-        #     name="toolbox-button",
-        #     child=Label(name="button-label", markup=icons.shutdown),
-        #     on_clicked=self.poweroff,
-        # )
 
         self.buttons = [
-            self.btn_screenshot,
+            self.btn_ssregion,
+            self.btn_ssfull,
             self.btn_screenrecord,
             self.btn_ocr,
             self.btn_close,
-            # self.btn_shutdown,
         ]
 
         for button in self.buttons:
@@ -67,27 +70,21 @@ class Toolbox(Box):
         self.notch.close_notch()
 
     # Métodos de acción
-    def lock(self, *args):
-        print("Locking screen...")
-        exec_shell_command_async("loginctl lock-session")
+    def ssfull(self, *args):
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p")
         self.close_menu()
 
-    def suspend(self, *args):
-        print("Suspending system...")
-        exec_shell_command_async("systemctl suspend")
+    def screenrecord(self, *args):
+        exec_shell_command_async(f"bash {SCREENRECORD_SCRIPT}")
         self.close_menu()
 
-    def logout(self, *args):
-        print("Logging out...")
-        exec_shell_command_async("hyprctl dispatch exit")
+    def ocr(self, *args):
+        exec_shell_command_async(f"bash {OCR_SCRIPT} sf")
         self.close_menu()
 
-    def reboot(self, *args):
-        print("Rebooting system...")
-        exec_shell_command_async("systemctl reboot")
-        self.close_menu()
 
-    def poweroff(self, *args):
-        print("Powering off...")
-        exec_shell_command_async("systemctl poweroff")
+    def ssregion(self, *args):
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
         self.close_menu()
+    # def close():
+    #     self.close_menu()

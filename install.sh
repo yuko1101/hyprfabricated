@@ -30,6 +30,7 @@ PACKAGES=(
     vte3
     wlinhibit
     cantarell-fonts-0.100
+    wl-screenrec
     grimblast-git
 )
 
