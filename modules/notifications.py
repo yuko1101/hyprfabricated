@@ -2,7 +2,6 @@ import os
 from gi.repository import GdkPixbuf, GLib, Gtk
 from loguru import logger
 from widgets.rounded_image import CustomImage
-
 from fabric.notifications.service import (
     Notification,
     NotificationAction,
@@ -16,6 +15,7 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
 import modules.icons as icons
+from datetime import datetime, timedelta  # <-- Importamos para manejar fechas
 
 class ActionButton(Button):
     def __init__(self, action: NotificationAction, index: int, total: int, notification_box):
@@ -128,11 +128,10 @@ class NotificationBox(Box):
                         Box(
                             name="notification-summary-box",
                             orientation="h",
-                            # spacing=4,
                             children=[
                                 Label(
                                     name="notification-summary",
-                                    markup=notification.summary.replace("\n", " "),
+                                    markup=notification.summary,
                                     h_align="start",
                                     ellipsization="end",
                                 ),
@@ -145,7 +144,7 @@ class NotificationBox(Box):
                             ],
                         ),
                         Label(
-                            markup=notification.body.replace("\n", " "),
+                            markup=notification.body,
                             h_align="start",
                             ellipsization="end",
                         ) if notification.body else Box(),
@@ -234,6 +233,7 @@ class NotificationBox(Box):
         if self._container:
             self._container.resume_all_timeouts()
 
+
 # This is a ScrolledWindow that contains a Box with notifications added to it when they timeout from the NotificationContainer
 class NotificationHistory(ScrolledWindow):
     def __init__(self, **kwargs):
@@ -271,8 +271,10 @@ class NotificationHistory(ScrolledWindow):
             oldest_notification = self.notifications_list.get_children()[0]
             self.notifications_list.remove(oldest_notification)
 
-        # Crear un método de destrucción personalizado
+        # Modificar el método de destrucción para remover el timer del timestamp
         def on_container_destroy(container):
+            if hasattr(container, "_timestamp_timer_id") and container._timestamp_timer_id:
+                GLib.source_remove(container._timestamp_timer_id)
             container.destroy()
             # Actualizar separadores después de la destrucción
             GLib.idle_add(self.update_separators)
@@ -285,15 +287,34 @@ class NotificationHistory(ScrolledWindow):
             h_expand=True,
         )
 
-        # Crear el hist_box sin los botones
-        hist_box = Box(
-            name="notification-box-hist",
-            orientation="v",
-            h_align="fill",
-            h_expand=True,
-        )
+        # Guardamos el momento de llegada de la notificación
+        container.arrival_time = datetime.now()
 
-        # Creamos el contenido principal
+        # Función para calcular el texto del label según el tiempo transcurrido
+        def compute_time_label(arrival_time):
+            now = datetime.now()
+            if arrival_time.date() != now.date():
+                if arrival_time.date() == (now - timedelta(days=1)).date():
+                    return " | Yesterday " + arrival_time.strftime("%H:%M")
+                else:
+                    return arrival_time.strftime("| %d/%m/%Y %H:%M")
+            
+            # Para el mismo día, aplicamos las reglas de tiempo transcurrido.
+            delta = now - arrival_time
+            seconds = delta.total_seconds()
+            if seconds < 60:
+                return " | Now"
+            elif seconds < 3600:
+                minutes = int(seconds // 60)
+                return f" | {minutes} min" if minutes == 1 else f" | {minutes} mins"
+            else:
+                return arrival_time.strftime(" | %H:%M")
+
+
+        # Creamos el label de timestamp usando la hora de llegada
+        time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
+
+        # Creamos el contenido principal, insertando el label de timestamp en la sección de texto
         content_box = Box(
             name="notification-content",
             spacing=8,
@@ -313,6 +334,7 @@ class NotificationHistory(ScrolledWindow):
                     name="notification-text",
                     orientation="v",
                     v_align="center",
+                    h_expand=True,
                     children=[
                         Box(
                             name="notification-summary-box",
@@ -320,7 +342,7 @@ class NotificationHistory(ScrolledWindow):
                             children=[
                                 Label(
                                     name="notification-summary",
-                                    markup=notification_box.notification.summary.replace("\n", " "),
+                                    markup=notification_box.notification.summary,
                                     h_align="start",
                                     ellipsization="end",
                                 ),
@@ -330,17 +352,17 @@ class NotificationHistory(ScrolledWindow):
                                     h_align="start",
                                     ellipsization="end",
                                 ),
+                                time_label,
                             ],
                         ),
                         Label(
                             name="notification-body",
-                            markup=notification_box.notification.body.replace("\n", " "),
+                            markup=notification_box.notification.body,
                             h_align="start",
                             ellipsization="end",
                         ) if notification_box.notification.body else Box(),
                     ],
                 ),
-                Box(h_expand=True),
                 Box(
                     orientation="v",
                     children=[
@@ -355,11 +377,24 @@ class NotificationHistory(ScrolledWindow):
             ],
         )
 
+        # Programamos la actualización asíncrona del label cada 10 segundos
+        def update_timestamp():
+            time_label.set_markup(compute_time_label(container.arrival_time))
+            return True  # seguir llamando
+
+        container._timestamp_timer_id = GLib.timeout_add_seconds(10, update_timestamp)
+
         # Agregamos el contenido principal al hist_box
+        hist_box = Box(
+            name="notification-box-hist",
+            orientation="v",
+            h_align="fill",
+            h_expand=True,
+        )
         hist_box.add(content_box)
 
         # Modificar el botón de cerrar para que use nuestro método personalizado
-        content_box.get_children()[3].get_children()[0].connect(  # Box con botón de cerrar
+        content_box.get_children()[2].get_children()[0].connect(
             "clicked", 
             lambda *_: on_container_destroy(container)
         )

@@ -89,6 +89,15 @@ class Bar(Window):
         self.button_color.connect("leave-notify-event", self.on_button_leave)
         self.button_color.connect("button-press-event", self.colorpicker)
 
+        self.button_config = Button(
+            name="button-bar",
+            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
+            child=Label(
+                name="button-bar-label",
+                markup=icons.config
+            )
+        )  
+
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
         
@@ -137,8 +146,9 @@ class Bar(Window):
                     self.boxed_revealer,
                     self.button_color,
                     self.systray,
-                    self.button_power,
+                    self.button_config,
                     self.date_time,
+                    self.button_power,
                 ],
             ),
         )
