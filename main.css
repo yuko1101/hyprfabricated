@@ -16,6 +16,7 @@
 @import url("./styles/power.css");
 @import url("./styles/metrics.css");
 
+@import url("./styles/tools.css");
 * {
   all: unset;
   color: var(--foreground);
