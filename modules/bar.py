@@ -105,7 +105,6 @@ class Bar(Window):
             )
         )
 
-
         self.control = ControlSmall()
 
         self.revealer = Revealer(
