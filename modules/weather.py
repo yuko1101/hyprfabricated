@@ -5,7 +5,7 @@ from gi.repository import Gtk, GLib
 
 from fabric.widgets.label import Label
 from fabric.widgets.box import Box
-
+from urllib.parse import quote
 gi.require_version("Gtk", "3.0")
 
 import modules.icons as icons
@@ -37,11 +37,11 @@ class Weather(Box):
         return True
 
     def _fetch_weather_thread(self):
-        location = self.get_location()
+        location = (quote(self.get_location(), safe=":/?=&+%"))
         if location:
             url = f"https://wttr.in/{location}?format=%c+%t"
         else:
-            url = "https://wttr.in/?format=%c+%t"
+            GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Unavailable")
         try:
             response = requests.get(url)
             if response.status_code == 200:
