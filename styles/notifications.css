@@ -57,6 +57,30 @@
     padding: 4px;
 }
 
+#notif-close-button {
+  background-color: var(--surface);
+  border-radius: 16px;
+  padding: 4px;
+}
+
+#notif-close-button:hover,
+#notif-close-button:focus {
+  background-color: var(--surface-bright);
+}
+
+#notif-close-button:active {
+  background-color: var(--error-dim);
+}
+
+#notif-close-label {
+  color: var(--error-dim);
+  font-size: 20px;
+}
+
+#notif-close-button:active #notif-close-label {
+  color: var(--shadow);
+}
+
 #nav-button {
     padding: 8px;
     border-radius: 16px;
@@ -88,8 +112,41 @@
     color: var(--error-dim);
 }
 
-#notifications-list {
+#notification-history {
   min-width: 420px;
   border-radius: 20px;
   border: 4px solid var(--surface);
+  padding: 4px;
+}
+
+#notification-history scrollbar {
+  background: transparent;
+}
+
+#notification-history scrollbar.vertical slider {
+  background: var(--primary);
+  border-radius: 16px;
+  min-width:16px;
+  margin: 4px;
+}
+
+#notification-history scrollbar.vertical trough {
+  background: var(--surface);
+  border: none;
+  margin: 4px;
+}
+
+#notification-box-hist {
+    padding: 8px;
+}
+
+#notification-separator {
+    padding: 1px;
+    border-radius: 16px;
+    background-color: var(--surface);
+    margin: 0 16px;
+}
+
+#notification-timestamp {
+    color: var(--surface-bright);
 }

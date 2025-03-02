@@ -72,12 +72,12 @@ world_off: str = "&#xf1ca;"
 bluetooth: str = "&#xea37;"
 night: str = "&#xeaf8;"
 coffee: str = "&#xef0e;"
-dnd: str = "&#xea35;"
+notifications: str = "&#xea35;"
 
 wifi_off: str = "&#xecfa;"
 bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
-dnd_off: str = "&#xece9;"
+notifications_off: str = "&#xece9;"
 
 # Network
 network_off: str = "&#xf414;"
@@ -176,6 +176,8 @@ brightness_high: str = "&#xeb30;"
 # Misc
 dot: str = "&#xf698;"
 palette: str = "&#xeb01;"
+cloud_off: str = "&#xed3e;"
+loader: str = "&#xeca3;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

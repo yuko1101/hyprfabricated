@@ -11,13 +11,14 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.battery import Battery
+from modules.metrics import MetricsSmall
 from modules.controls import ControlSmall
 
 from modules.sensors import NetworkApplet
 
 from modules.volume import VolumeWidget
 from modules.updates import UpdatesWidget
+from modules.weather import Weather
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -51,6 +52,7 @@ class Bar(Window):
         self.workspaces.connection.connect("event::urgent", self.hide_ignored_workspaces)
         
         self.systray = SystemTray()
+        self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
         self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
@@ -75,7 +77,7 @@ class Bar(Window):
         )
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
-        
+
         self.button_power = Button(
             name="button-bar",
             on_clicked=lambda *_: self.power_menu(),
@@ -111,8 +113,6 @@ class Bar(Window):
         self.button_color.connect("leave-notify-event", self.on_button_leave)
         self.button_color.connect("button-press-event", self.colorpicker)
 
-        self.battery = Battery()
-
         self.button_config = Button(
             name="button-bar",
             on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
@@ -122,9 +122,9 @@ class Bar(Window):
             )
         )
 
-
         self.control = ControlSmall()
-        
+        self.metrics = MetricsSmall()
+
         self.revealer = Revealer(
             name="bar-revealer",
             transition_type="slide-left",
@@ -134,9 +134,9 @@ class Bar(Window):
                 orientation="h",
                 spacing=4,
                 children=[
+                    self.metrics,
                     #self.control,
                     self.volume,
-                    self.battery,
                 ],
             ),
         )
@@ -163,6 +163,7 @@ class Bar(Window):
                     self.button_overview,
                     self.date_time,
                     self.network_applet,
+                    self.weather
                 ]
             ),
             end_children=Box(
