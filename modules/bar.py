@@ -45,6 +45,7 @@ class Bar(Window):
         self.workspaces.connection.connect("event::urgent", self.hide_ignored_workspaces)
 
         self.systray = SystemTray()
+        self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
         self.weather = Weather()
@@ -142,8 +143,8 @@ class Bar(Window):
                 children=[
                     self.button_apps,
                     Box(name="workspaces-container", children=[self.workspaces]),
-                    self.button_overview,
                     self.weather,
+                    self.button_overview,
                 ]
             ),
             end_children=Box(
