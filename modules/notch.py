@@ -20,6 +20,7 @@ import modules.icons as icons
 import modules.data as data
 from modules.player import PlayerSmall
 import json
+from modules.tools import Toolbox
 
 def truncate_title(title):
     parts = title.rsplit(' - ', 1)
@@ -51,6 +52,7 @@ class Notch(Window):
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
+        self.tools = Toolbox(notch=self)
         self.bluetooth = BluetoothConnections(notch=self)
 
         self.active_window = ActiveWindow(
@@ -125,6 +127,7 @@ class Notch(Window):
                 self.dashboard,
                 self.overview,
                 self.power,
+                self.tools,
                 self.bluetooth,
             ]
         )
@@ -229,9 +232,9 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth,self.tools]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth","tools"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -247,6 +250,7 @@ class Notch(Window):
             "dashboard": self.dashboard,
             "overview": self.overview,
             "power": self.power,
+            "tools": self.tools,
             "bluetooth": self.bluetooth
         }
 

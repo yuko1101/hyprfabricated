@@ -14,6 +14,7 @@ import modules.data as data
 from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.metrics import MetricsSmall
+from modules.tools import Toolbox
 class Bar(Window):
     def __init__(self, **kwargs):
         super().__init__(
@@ -55,6 +56,17 @@ class Bar(Window):
         )
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
+
+        self.button_tools = Button(
+            name="tool-bar",
+            on_clicked=lambda *_: self.tools_menu(),
+            child=Label(
+                name="button-bar-label",
+                markup=icons.toolbox
+            )
+        )
+        self.button_tools.connect("enter_notify_event", self.on_button_enter)
+        self.button_tools.connect("leave_notify_event", self.on_button_leave)
 
         self.metrics = MetricsSmall()
         self.button_power = Button(
@@ -151,6 +163,7 @@ class Bar(Window):
                     # self.button_config,
                     self.date_time,
                     self.button_power,
+                    self.button_tools
                 ],
             ),
         )
@@ -183,6 +196,9 @@ class Bar(Window):
 
     def power_menu(self):
         self.notch.open_notch("power")
+
+    def tools_menu(self):
+        self.notch.open_notch("tools")
 
     def colorpicker(self, button, event):
         if event.button == 1:

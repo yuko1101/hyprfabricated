@@ -15,6 +15,14 @@ windows: str = "&#xefe6;"
 colorpicker: str = "&#xebe6;"
 media: str = "&#xf00d;"
 
+#Toolbox
+
+toolbox: str = "&#xebca;"       # toolbox
+screenshot: str = "&#xea54;"    # camera
+screenrecord: str = "&#xed22;"  # video
+ocr: str = "&#xfcc3;"          # text-recognition
+close : str = "&#xeb55;"
+
 # Circles
 temp: str = "&#xeb38;"
 disk: str = "&#xea88;"
