@@ -16,6 +16,32 @@ from fabric.utils.helpers import exec_shell_command_async
 
 import modules.icons as icons
 
+class MetricsProvider:
+    """
+    Class responsible for obtaining centralized CPU, memory, and disk usage metrics.
+    It updates periodically so that all widgets querying it display the same values.
+    """
+    def __init__(self):
+        self.cpu = 0.0
+        self.mem = 0.0
+        self.disk = 0.0
+        # Updates every 1 second
+        GLib.timeout_add_seconds(1, self._update)
+
+    def _update(self):
+        # Get non-blocking usage percentages (interval=0)
+        # The first call may return 0, but subsequent calls will provide consistent values.
+        self.cpu = psutil.cpu_percent(interval=0)
+        self.mem = psutil.virtual_memory().percent
+        self.disk = psutil.disk_usage("/").percent
+        return True
+
+    def get_metrics(self):
+        return (self.cpu, self.mem, self.disk)
+
+# Global instance to share data between both widgets.
+shared_provider = MetricsProvider()
+
 class Metrics(Box):
     def __init__(self, **kwargs):
         super().__init__(
@@ -112,17 +138,14 @@ class Metrics(Box):
         for x in self.scales:
             self.add(x)
 
-        # Start updating status using GLib.
+        # Update the widget every second
         GLib.timeout_add_seconds(1, self.update_status)
 
     def update_status(self):
-        # Note: psutil.cpu_percent(interval=1) blocks. If blocking is not desired,
-        # consider using interval=0 to get a non-blocking value.
-        cpu = psutil.cpu_percent(interval=0)
-        mem = psutil.virtual_memory().percent
-        disk = psutil.disk_usage("/").percent
+        # Retrieve centralized data
+        cpu, mem, disk = shared_provider.get_metrics()
 
-        # Normalize percentage values to range 0.0 - 1.0
+        # Normalize to 0.0 - 1.0
         self.cpu_usage.value = cpu / 100.0
         self.ram_usage.value = mem / 100.0
         self.disk_usage.value = disk / 100.0
@@ -220,25 +243,24 @@ class MetricsSmall(Box):
         self.add(self.bat_overlay)
         self.add(self.bat_revealer)
 
-        # Initialize state
+        # Initial state
         self.hide_timer = None
         self.hover_counter = 0
 
-        # Setup event handlers
+        # Configure event handlers to display battery details
         for widget in [self.cpu_overlay, self.ram_overlay, self.disk_overlay, self.bat_overlay]:
             event_box = EventBox(events=["enter-notify-event", "leave-notify-event"])
             event_box.connect("enter-notify-event", self.on_mouse_enter)
             event_box.connect("leave-notify-event", self.on_mouse_leave)
             event_box.add(widget)
 
-        # Initialize metrics update
+        # Update indicators every second using centralized data.
         GLib.timeout_add_seconds(1, self.update_metrics)
         
-        # Initialize battery polling
+        # Initialize battery update
         self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
         self.batt_fabricator.changed.connect(self.update_battery)
         
-        # Initial updates
         GLib.idle_add(self.update_battery, None, self.poll_battery())
 
     def on_mouse_enter(self, widget, event):
@@ -264,14 +286,11 @@ class MetricsSmall(Box):
         return False
 
     def update_metrics(self):
-        cpu = psutil.cpu_percent(interval=0)
-        mem = psutil.virtual_memory().percent
-        disk = psutil.disk_usage("/").percent
-        
+        # Use centralized data
+        cpu, mem, disk = shared_provider.get_metrics()
         self.cpu_circle.set_value(cpu / 100.0)
         self.ram_circle.set_value(mem / 100.0)
         self.disk_circle.set_value(disk / 100.0)
-        
         return True
 
     def poll_battery(self):

@@ -93,6 +93,10 @@ menu > menuitem > label,
   margin-top: 4px;
 }
 
+#weather-label {
+  font-weight: bold;
+}
+
 #systray {
   background-color: var(--shadow);
   padding: 8px;
