@@ -15,6 +15,7 @@ from modules.metrics import MetricsSmall
 from modules.controls import ControlSmall
 
 from modules.sensors import NetworkApplet
+from modules.battery import Battery
 
 from modules.volume import VolumeWidget
 from modules.updates import UpdatesWidget
@@ -60,6 +61,8 @@ class Bar(Window):
         self.updates = UpdatesWidget()
         self.updates.connect("enter-notify-event", self.on_button_enter)
         self.updates.connect("leave-notify-event", self.on_button_leave)
+
+        self.battery = Battery()
 
         self.volume = VolumeWidget()
         self.volume.speaker_event_box.connect("enter-notify-event", self.on_button_enter)
@@ -134,9 +137,10 @@ class Bar(Window):
                 orientation="h",
                 spacing=4,
                 children=[
+                    self.volume,
                     self.metrics,
                     #self.control,
-                    self.volume,
+                    
                 ],
             ),
         )
@@ -171,14 +175,13 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-                    self.boxed_revealer,
+                    
                     self.button_color,
-                    self.updates,
+                    self.boxed_revealer,
                     self.battery,
-                    #self.control,
-                    self.volume,
+                    
                     self.systray,
-                    self.button_config,
+                    #self.button_config,
                     self.button_power,
                 ],
             ),

@@ -170,8 +170,8 @@ class MetricsSmall(Overlay):
             value=0,
             size=28,
             line_width=2,
-            start_angle=150,
-            end_angle=390,
+            start_angle=90+30,
+            end_angle=90-30+360,
             style_classes="cpu",
         )
         self.cpu_overlay = Overlay(
@@ -201,8 +201,8 @@ class MetricsSmall(Overlay):
             value=0,
             size=28,
             line_width=2,
-            start_angle=150,
-            end_angle=390,
+            start_angle=90+30,
+            end_angle=90-30+360,
             style_classes="ram",
         )
         self.ram_overlay = Overlay(
@@ -232,8 +232,8 @@ class MetricsSmall(Overlay):
             value=0,
             size=28,
             line_width=2,
-            start_angle=150,
-            end_angle=390,
+            start_angle=90+30,
+            end_angle=90-30+360,
             style_classes="disk",
         )
         self.disk_overlay = Overlay(
@@ -263,8 +263,8 @@ class MetricsSmall(Overlay):
             value=0,
             size=28,
             line_width=2,
-            start_angle=150,
-            end_angle=390,
+            start_angle=90+30,
+            end_angle=90-30+360,
             style_classes="bat",
         )
         self.bat_overlay = Overlay(
@@ -291,7 +291,7 @@ class MetricsSmall(Overlay):
         main_box.add(self.disk_box)
         main_box.add(self.ram_box)
         main_box.add(self.cpu_box)
-        main_box.add(self.bat_box)
+        #main_box.add(self.bat_box)
 
         # Se crea un único EventBox que envuelve todo el contenedor, para que
         # los eventos de hover se capturen de forma central y siempre queden por encima
@@ -367,18 +367,19 @@ class MetricsSmall(Overlay):
         return True
 
     def poll_battery(self):
-        try:
-            output = subprocess.check_output(["acpi", "-b"]).decode("utf-8").strip()
-            if "Battery" not in output:
-                return (0, None)
-            match_percent = re.search(r'(\d+)%', output)
-            match_status = re.search(r'Battery \d+: (\w+)', output)
-            if match_percent:
-                percent = int(match_percent.group(1))
-                status = match_status.group(1) if match_status else None
-                return (percent / 100.0, status)
-        except Exception:
-            pass
+        """
+        Polls the battery status with psutil.
+        If no battery information is found, returns (0, None).
+        Otherwise, returns a tuple: (battery percentage as a float between 0 and 1, battery status string)
+        """
+        battery = psutil.sensors_battery()
+        if battery is not None:
+            percent = battery.percent / 100.0
+            charging = battery.power_plugged
+            if charging or charging is None:
+                return (percent, "Charging")
+            else:
+                return (percent, "Discharging")
         return (0, None)
 
     def update_battery(self, sender, battery_data):
