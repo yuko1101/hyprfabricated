@@ -61,8 +61,11 @@ class Notch(Window):
 
         # Create additional compact views:
         self.player_small = PlayerSmall()
-
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
+
+        self.player_small.mpris_manager.connect("player-appeared", lambda *_: self.compact_stack.set_visible_child(self.player_small))
+        self.player_small.mpris_manager.connect("player-vanished", self.on_player_vanished)
+
         # Create a stack to hold the three views:
         self.compact_stack = Stack(
             name="notch-compact-stack",
@@ -82,7 +85,12 @@ class Notch(Window):
         self.compact = Gtk.EventBox(name="notch-compact")
         self.compact.set_visible(True)
         self.compact.add(self.compact_stack)
-        self.compact.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
+        # Se agrega el mask de smooth scroll junto a scroll y button press.
+        self.compact.add_events(
+            Gdk.EventMask.SCROLL_MASK | 
+            Gdk.EventMask.BUTTON_PRESS_MASK | 
+            Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
         self.compact.connect("scroll-event", self._on_compact_scroll)
         self.compact.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
         # Add cursor change on hover.
@@ -169,6 +177,9 @@ class Notch(Window):
 
         self.hidden = False
 
+        self._scrolling = False
+
+        self.add(self.notch_box)
         self.add(self.notch_complete)
         self.show_all()
 
@@ -258,14 +269,41 @@ class Notch(Window):
             self.notch_box.remove_style_class("hidden")
 
     def _on_compact_scroll(self, widget, event):
-        from gi.repository import Gdk
+        if self._scrolling:
+            return True
+
         children = self.compact_stack.get_children()
         current = children.index(self.compact_stack.get_visible_child())
-        if event.direction == Gdk.ScrollDirection.UP:
+        new_index = current
+
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if event.delta_y < -0.1:
+                new_index = (current - 1) % len(children)
+            elif event.delta_y > 0.1:
+                new_index = (current + 1) % len(children)
+            else:
+                return False
+        elif event.direction == Gdk.ScrollDirection.UP:
             new_index = (current - 1) % len(children)
         elif event.direction == Gdk.ScrollDirection.DOWN:
             new_index = (current + 1) % len(children)
         else:
             return False
+
         self.compact_stack.set_visible_child(children[new_index])
+        self._scrolling = True
+        GLib.timeout_add(250, self._reset_scrolling)
         return True
+
+    def _reset_scrolling(self):
+        self._scrolling = False
+        return False
+        
+    
+    def on_player_vanished(self, *args):
+        if self.player_small.mpris_label.get_label() == "Nothing Playing":
+            self.compact_stack.set_visible_child(self.window_title)
+
+
+    
+
