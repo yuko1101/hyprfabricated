@@ -178,7 +178,7 @@ class MetricsSmall(Overlay):
             child=self.cpu_circle,
             overlays=[self.cpu_icon],
         )
-        self.cpu_level = Label(name="metrics-level", label="000")
+        self.cpu_level = Label(name="metrics-level", label="0%")
         self.cpu_revealer = Revealer(
             name="metrics-cpu-revealer",
             transition_duration=250,
@@ -208,7 +208,7 @@ class MetricsSmall(Overlay):
             child=self.ram_circle,
             overlays=[self.ram_icon],
         )
-        self.ram_level = Label(name="metrics-level", label="000")
+        self.ram_level = Label(name="metrics-level", label="0%")
         self.ram_revealer = Revealer(
             name="metrics-ram-revealer",
             transition_duration=250,
@@ -238,7 +238,7 @@ class MetricsSmall(Overlay):
             child=self.disk_circle,
             overlays=[self.disk_icon],
         )
-        self.disk_level = Label(name="metrics-level", label="000")
+        self.disk_level = Label(name="metrics-level", label="0%")
         self.disk_revealer = Revealer(
             name="metrics-disk-revealer",
             transition_duration=250,
@@ -268,7 +268,7 @@ class MetricsSmall(Overlay):
             child=self.bat_circle,
             overlays=[self.bat_icon],
         )
-        self.bat_level = Label(name="metrics-level", label="100")
+        self.bat_level = Label(name="metrics-level", label="100%")
         self.bat_revealer = Revealer(
             name="metrics-bat-revealer",
             transition_duration=250,
@@ -318,13 +318,8 @@ class MetricsSmall(Overlay):
         self.hover_counter = 0
 
     def _format_percentage(self, value: int) -> str:
-        """Formatea el porcentaje en tres caracteres, usando 'MAX' para el 100%."""
-        if value == 100:
-            return "MAX"
-        elif value < 10:
-            return f"0{value}%"
-        else:
-            return f"{value}%"
+        """Formato natural del porcentaje sin forzar ancho fijo."""
+        return f"{value}%"
 
     def on_mouse_enter(self, widget, event):
         self.hover_counter += 1
@@ -361,7 +356,7 @@ class MetricsSmall(Overlay):
         self.cpu_circle.set_value(cpu / 100.0)
         self.ram_circle.set_value(mem / 100.0)
         self.disk_circle.set_value(disk / 100.0)
-        # Actualizar etiquetas formateando los porcentajes a tres caracteres
+        # Actualizar etiquetas con el porcentaje formateado
         self.cpu_level.set_label(self._format_percentage(int(cpu)))
         self.ram_level.set_label(self._format_percentage(int(mem)))
         self.disk_level.set_label(self._format_percentage(int(disk)))
