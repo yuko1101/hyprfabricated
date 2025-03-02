@@ -194,6 +194,7 @@ bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabric
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
 bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall hyprfabricated; GTK_DEBUG=interactive uwsm app -- python {home}/.config/hyprfabricated/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
+$scrPath = ~/.local/share/bin
 bind = $mainMod, P, exec, $scrPath/screenshot.sh s # partial screenshot capture
 bind = $mainMod+Ctrl, P, exec, $scrPath/screenshot.sh sf # partial screenshot capture (frozen screen)
 bind = $mainMod+Alt, P, exec, $scrPath/screenshot.sh m # monitor screenshot capture
