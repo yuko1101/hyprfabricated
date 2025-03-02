@@ -199,7 +199,8 @@ class Spectrum:
 		"""Set drawing color according current settings by reading primary color from CSS"""
 		color = "#a5c8ff"  # default value
 		try:
-			with open("/home/khz/.config/Ax-Shell/styles/colors.css", "r") as f:
+			colors_file = os.path.expanduser("~/.config/Ax-Shell/styles/colors.css")
+			with open(colors_file, "r") as f:
 				content = f.read()
 				m = re.search(r"--primary:\s*(#[0-9a-fA-F]{6})", content)
 				if m:
