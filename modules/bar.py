@@ -91,18 +91,6 @@ class Bar(Window):
         self.button_overview.connect("enter_notify_event", self.on_button_enter)
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
-        self.button_color = Button(
-            name="button-bar",
-            tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB",
-            v_expand=False,
-            child=Label(
-                name="button-bar-label",
-                markup=icons.colorpicker
-            )
-        )
-        self.button_color.connect("enter-notify-event", self.on_button_enter)
-        self.button_color.connect("leave-notify-event", self.on_button_leave)
-        self.button_color.connect("button-press-event", self.colorpicker)
 
         self.button_config = Button(
             name="button-bar",
@@ -200,13 +188,6 @@ class Bar(Window):
     def tools_menu(self):
         self.notch.open_notch("tools")
 
-    def colorpicker(self, button, event):
-        if event.button == 1:
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hex.sh')}")
-        elif event.button == 2:
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hsv.sh')}")
-        elif event.button == 3:
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-rgb.sh')}")
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
