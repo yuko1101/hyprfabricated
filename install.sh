@@ -32,6 +32,7 @@ PACKAGES=(
     cantarell-fonts-0.100
     wl-screenrec
     grimblast-git
+    tesseract
 )
 
 # Prevent running as root
