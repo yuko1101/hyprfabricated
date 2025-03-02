@@ -192,7 +192,7 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.tools]:
             widget.remove_style_class("open")
         for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
             self.stack.remove_style_class(style)
@@ -218,13 +218,13 @@ class Notch(Window):
             self.stack.remove_style_class(style)
         for w in widgets.values():
             w.remove_style_class("open")
-        
+
         # Configurar según el widget solicitado
         if widget in widgets:
             self.stack.add_style_class(widget)
             self.stack.set_visible_child(widgets[widget])
             widgets[widget].add_style_class("open")
-            
+
             # Acciones específicas para el launcher
             if widget == "launcher":
                 self.launcher.open_launcher()
