@@ -14,6 +14,7 @@ import modules.data as data
 from modules.system import System
 from modules.controls import ControlSmall
 from modules.weather import Weather
+from modules.metrics import MetricsSmall
 class Bar(Window):
     def __init__(self, **kwargs):
         super().__init__(
@@ -62,6 +63,7 @@ class Bar(Window):
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
 
+        self.metrics = MetricsSmall()
         self.button_power = Button(
             name="button-bar",
             on_clicked=lambda *_: self.power_menu(),
@@ -120,6 +122,7 @@ class Bar(Window):
                 children=[
                     self.control,
                     self.system,
+                    # self.metrics
                ],
             ),
         )

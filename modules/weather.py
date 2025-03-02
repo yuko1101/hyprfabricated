@@ -1,41 +1,54 @@
 import gi
 import requests
-
-gi.require_version("Gtk", "3.0")
+import threading
 from gi.repository import Gtk, GLib
 
-class Weather(Gtk.Box):
-    def __init__(self, pixel_size: int = 20, **kwargs) -> None:
-        super().__init__(name="weather", orientation=Gtk.Orientation.HORIZONTAL, spacing=8, **kwargs)
-        self.pixel_size = pixel_size
-        self.label = Gtk.Label(label="Fetching Weather...")
-        self.pack_start(self.label, False, False, 0)
-        self.set_visible(True)
+from fabric.widgets.label import Label
+from fabric.widgets.box import Box
+
+gi.require_version("Gtk", "3.0")
+
+import modules.icons as icons
+
+class Weather(Box):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(name="weather", orientation="h", spacing=8, **kwargs)
+        self.label = Label(name="weather-label", markup=icons.loader)
+        self.add(self.label)
+        self.show_all()
+        # Update every 10 mins
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
 
     def get_location(self):
         try:
-            response = requests.get("http://ip-api.com/json")
+            response = requests.get("https://ipinfo.io/json")
             if response.status_code == 200:
                 data = response.json()
                 return data.get("city", "")
+            else:
+                print("Error getting location from ipinfo.")
         except Exception as e:
-            print(f"Location fetch error: {e}")
+            print(f"Error getting location: {e}")
         return ""
 
     def fetch_weather(self):
+        threading.Thread(target=self._fetch_weather_thread, daemon=True).start()
+        return True
+
+    def _fetch_weather_thread(self):
         location = self.get_location()
-        url = f"https://wttr.in/{location}?format=%c+%t" if location else "https://wttr.in/?format=%c+%t"
+        if location:
+            url = f"https://wttr.in/{location}?format=%c+%t"
+        else:
+            url = "https://wttr.in/?format=%c+%t"
         try:
             response = requests.get(url)
             if response.status_code == 200:
                 weather_data = response.text.strip()
-                self.label.set_text(weather_data)
+                GLib.idle_add(self.label.set_label, weather_data.replace(" ", ""))
             else:
-                self.label.set_text("Weather unavailable")
+                GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Unavailable")
         except Exception as e:
-            self.label.set_text("Weather error")
-            print(f"Weather fetch error: {e}")
-        return True
-
+            print(f"Error al obtener clima: {e}")
+            GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Error")
