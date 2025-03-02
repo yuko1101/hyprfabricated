@@ -4,6 +4,7 @@ from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async
 import modules.icons as icons
 from gi.repository import Gdk
+import modules.data as data
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
@@ -57,6 +58,14 @@ class Toolbox(Box):
                 markup=icons.colorpicker
             )
         )
+        self.btn_config = Button(
+            name="toolbox-button",
+            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/hyprfabricated/config/config.py"),
+            child=Label(
+                name="button-bar-label",
+                markup=icons.config
+            )
+        )
         self.btn_color.connect("button-press-event", self.colorpicker)
         self.buttons = [
             self.btn_ssregion,
@@ -64,6 +73,7 @@ class Toolbox(Box):
             self.btn_screenrecord,
             self.btn_ocr,
             self.btn_color,
+            self.btn_config,
         ]
 
         for button in self.buttons:

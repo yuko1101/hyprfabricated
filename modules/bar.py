@@ -92,14 +92,6 @@ class Bar(Window):
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
 
-        self.button_config = Button(
-            name="button-bar",
-            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/hyprfabricated/config/config.py"),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.config
-            )
-        )
 
         self.control = ControlSmall()
 
