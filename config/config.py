@@ -199,6 +199,8 @@ bind = $mainMod, P, exec, $scrPath/screenshot.sh s # partial screenshot capture
 bind = $mainMod+Ctrl, P, exec, $scrPath/screenshot.sh sf # partial screenshot capture (frozen screen)
 bind = $mainMod+Alt, P, exec, $scrPath/screenshot.sh m # monitor screenshot capture
 bind = , Print, exec, $scrPath/screenshot.sh p # all monitors screenshot capture
+bind = $mainMod+Shift, J, exec, $scrPath/screenrecord.sh r # Full screen recording
+bind = $mainMod+Shift, K, exec, $scrPath/screenrecord.sh s # Stops screen recording
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 

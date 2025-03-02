@@ -92,7 +92,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Power Manager
 - [x] Settings
 - [x] Screenshot Tool
-- [ ] Screen Recorder
+- [x] Screen Recorder
 - [ ] Clipboard Manager
 - [x] Emoji Manager
 - [ ] Dock
