@@ -186,7 +186,7 @@ class MetricsSmall(Overlay):
             child=self.cpu_level,
             child_revealed=False,
         )
-        cpu_box = Box(
+        self.cpu_box = Box(
             name="metrics-cpu-box",
             orientation="h",
             spacing=2,
@@ -216,7 +216,7 @@ class MetricsSmall(Overlay):
             child=self.ram_level,
             child_revealed=False,
         )
-        ram_box = Box(
+        self.ram_box = Box(
             name="metrics-ram-box",
             orientation="h",
             spacing=2,
@@ -246,7 +246,7 @@ class MetricsSmall(Overlay):
             child=self.disk_level,
             child_revealed=False,
         )
-        disk_box = Box(
+        self.disk_box = Box(
             name="metrics-disk-box",
             orientation="h",
             spacing=2,
@@ -276,7 +276,7 @@ class MetricsSmall(Overlay):
             child=self.bat_level,
             child_revealed=False,
         )
-        bat_box = Box(
+        self.bat_box = Box(
             name="metrics-bat-box",
             orientation="h",
             spacing=2,
@@ -284,10 +284,10 @@ class MetricsSmall(Overlay):
         )
 
         # Agregamos cada widget métrico al contenedor principal
-        main_box.add(disk_box)
-        main_box.add(ram_box)
-        main_box.add(cpu_box)
-        main_box.add(bat_box)
+        main_box.add(self.disk_box)
+        main_box.add(self.ram_box)
+        main_box.add(self.cpu_box)
+        main_box.add(self.bat_box)
 
         # Se crea un único EventBox que envuelve todo el contenedor, para que
         # los eventos de hover se capturen de forma central y siempre queden por encima
@@ -380,11 +380,9 @@ class MetricsSmall(Overlay):
     def update_battery(self, sender, battery_data):
         value, status = battery_data
         if value == 0:
-            self.bat_overlay.set_visible(False)
-            self.bat_revealer.set_visible(False)
+            self.bat_box.set_visible(False)
         else:
-            self.bat_overlay.set_visible(True)
-            self.bat_revealer.set_visible(True)
+            self.bat_box.set_visible(True)
             self.bat_circle.set_value(value)
         percentage = int(value * 100)
         self.bat_level.set_label(self._format_percentage(percentage))
