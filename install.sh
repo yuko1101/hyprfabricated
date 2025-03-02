@@ -29,6 +29,10 @@ PACKAGES=(
     uwsm
     vte3
     wlinhibit
+    wl-screenrec
+    grimblast-git
+    tesseract
+
 )
 
 # Prevent running as root
