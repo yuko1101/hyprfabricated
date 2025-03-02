@@ -271,7 +271,7 @@ class MicSmall(Box):
         if not self.audio.microphone:
             return
         if self.audio.microphone.muted:
-            self.mic_button.get_child().set_markup(icons.mic_off)
+            self.mic_button.get_child().set_markup(icons.mic_mute)
             self.progress_bar.add_style_class("muted")
             self.mic_label.add_style_class("muted")
             return
