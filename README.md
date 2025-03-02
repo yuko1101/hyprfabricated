@@ -29,7 +29,7 @@
 ### Arch Linux
 
 > [!TIP]
-> This command also works for updating an existing installation!
+> This command also works for updating an existing installation!!!
 
 
 ```bash
