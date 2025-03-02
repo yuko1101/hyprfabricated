@@ -1,28 +1,34 @@
 #!/bin/bash
 
-# Directory to save recordings
-SAVE_DIR="$XDG_VIDEOS_DIR/Screenrecords"
-SAVE_FILE="$SAVE_DIR/record_$(date +'%y%m%d_%H%M%S').mp4"
-random_string=$(LC_ALL=C tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 7)
-audiodev="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
-focused_window=$(hyprctl activewindow)
-app_name=$(echo "$focused_window" | grep "class:" | awk '{print $2}')
-file="${random_string}-${app_name}"
-output_file=$HOME/Videos/Recordings/"${file}-tmp.mp4"
+# Directorio donde se guardarán las grabaciones
+SAVE_DIR="$XDG_VIDEOS_DIR/Recordings"
+mkdir -p "$SAVE_DIR"
 
-# Create directory if it doesn't exist
-mkdir -p $HOME/Videos/Recordings
+# Si ya está corriendo gpu-screen-recorder, se envía SIGINT para detenerlo correctamente
+if pgrep -f "gpu-screen-recorder" >/dev/null; then
+    pkill -SIGINT -f "gpu-screen-recorder"
+    
+    # Espera un momento para asegurarse de que la grabación se haya detenido y el archivo esté listo
+    sleep 1 
 
-# Check if wl-screenrec is already running
-if pgrep -x "wl-screenrec" >/dev/null; then
-    pkill wl-screenrec
-    notify-send -a "Fabric" "Screen Recording" "Recording stopped ✅"
+    # Obtiene el último archivo grabado
+    LAST_VIDEO=$(ls -t "$SAVE_DIR"/*.mp4 2>/dev/null | head -n 1)
+
+    # Notificación con acciones: "View" abre el archivo, "Open folder" abre la carpeta
+    ACTION=$(notify-send -a "Ax-Shell" "⬜ Recording started" \
+        -A "view=View" -A "open=Open folder")
+
+    if [ "$ACTION" = "view" ] && [ -n "$LAST_VIDEO" ]; then
+        xdg-open "$LAST_VIDEO"
+    elif [ "$ACTION" = "open" ]; then
+        xdg-open "$SAVE_DIR"
+    fi
     exit 0
 fi
 
-# Start Recording
-notify-send -a "Fabric" "Screen Recording" "Recording started 🎥"
-wl-screenrec --audio --audio-device "$audiodev" -f "$output_file" -g "$(slurp -d)" 2>/dev/null
+# Nombre del archivo de salida para la nueva grabación
+OUTPUT_FILE="$SAVE_DIR/$(date +%Y-%m-%d-%H-%M-%S).mp4"
 
-notify-send -a "Fabric" "Recording saved to:" "$output_file"
-
+# Iniciar la grabación
+notify-send -a "Ax-Shell" "🔴 Recording started"
+gpu-screen-recorder -w portal -q ultra -ac opus -cr full -f 60 -o "$OUTPUT_FILE"
