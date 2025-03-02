@@ -40,7 +40,7 @@ class Bar(Window):
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
         self.button_tools = Button(
-            name="tool-bar",
+            name="button-bar",
             on_clicked=lambda *_: self.tools_menu(),
             child=Label(
                 name="button-bar-label",

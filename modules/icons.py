@@ -18,9 +18,9 @@ media: str = "&#xf00d;"
 #Toolbox
 
 toolbox: str = "&#xebca;"       # toolbox
-ssfull: str = "&#xea89;"    # camera
-ssregion: str = "&#xea85;"    # camera
-screenrecord: str = "&#xed22;"  # video
+ssfull: str = "&#xeaea;"    # camera
+ssregion: str = "&#xf201;"    # camera
+screenrecord: str = "&#xeafa;"  # video
 ocr: str = "&#xfcc3;"          # text-recognition
 close : str = "&#xeb55;"
 
