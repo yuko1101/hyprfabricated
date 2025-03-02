@@ -286,7 +286,7 @@ class MetricsSmall(Overlay):
         # Agregamos cada widget métrico al contenedor principal
         main_box.add(cpu_box)
         main_box.add(ram_box)
-        main_box.add(disk_box)
+        # main_box.add(disk_box)
         main_box.add(bat_box)
 
         # Se crea un único EventBox que envuelve todo el contenedor, para que
@@ -319,12 +319,7 @@ class MetricsSmall(Overlay):
 
     def _format_percentage(self, value: int) -> str:
         """Formatea el porcentaje en tres caracteres, usando 'MAX' para el 100%."""
-        if value == 100:
-            return "MAX"
-        elif value < 10:
-            return f"0{value}%"
-        else:
-            return f"{value}%"
+        return f"{value}%"
 
     def on_mouse_enter(self, widget, event):
         self.hover_counter += 1

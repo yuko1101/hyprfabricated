@@ -11,7 +11,6 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.system import System
 from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.metrics import MetricsSmall
@@ -99,7 +98,6 @@ class Bar(Window):
         self.button_color.connect("leave-notify-event", self.on_button_leave)
         self.button_color.connect("button-press-event", self.colorpicker)
 
-        self.system = System()
         self.button_config = Button(
             name="button-bar",
             on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/hyprfabricated/config/config.py"),
@@ -120,9 +118,8 @@ class Bar(Window):
                 orientation="h",
                 spacing=4,
                 children=[
+                    self.metrics,
                     self.control,
-                    self.system,
-                    # self.metrics
                ],
             ),
         )
