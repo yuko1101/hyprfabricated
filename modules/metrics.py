@@ -284,9 +284,9 @@ class MetricsSmall(Overlay):
         )
 
         # Agregamos cada widget métrico al contenedor principal
-        main_box.add(cpu_box)
-        main_box.add(ram_box)
         main_box.add(disk_box)
+        main_box.add(ram_box)
+        main_box.add(cpu_box)
         main_box.add(bat_box)
 
         # Se crea un único EventBox que envuelve todo el contenedor, para que
