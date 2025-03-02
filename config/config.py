@@ -73,6 +73,36 @@ def ensure_matugen_config():
                     '-f', 'Nearest'
                 ],
                 'set': True
+            },
+            'custom_colors': {
+                'red': {
+                    'color': "#FF0000",
+                    'blend': True
+                },
+                'green': {
+                    'color': "#00FF00",
+                    'blend': True
+                },
+                'yellow': {
+                    'color': "#FFFF00",
+                    'blend': True
+                },
+                'blue': {
+                    'color': "#0000FF",
+                    'blend': True
+                },
+                'magenta': {
+                    'color': "#FF00FF",
+                    'blend': True
+                },
+                'cyan': {
+                    'color': "#00FFFF",
+                    'blend': True
+                },
+                'white': {
+                    'color': "#FFFFFF",
+                    'blend': True
+                }
             }
         },
         'templates': {
@@ -83,9 +113,7 @@ def ensure_matugen_config():
             'ax-shell': {
                 'input_path': '~/.config/Ax-Shell/config/matugen/templates/ax-shell.css',
                 'output_path': '~/.config/Ax-Shell/styles/colors.css',
-                'post_hook': (
-                    "fabric-cli exec ax-shell 'app.set_css()' &"
-                )
+                'post_hook': "fabric-cli exec ax-shell 'app.set_css()' &"
             }
         }
     }

@@ -172,6 +172,7 @@ class MetricsSmall(Overlay):
             line_width=2,
             start_angle=150,
             end_angle=390,
+            style_classes="cpu",
         )
         self.cpu_overlay = Overlay(
             name="metrics-cpu-overlay",
@@ -202,6 +203,7 @@ class MetricsSmall(Overlay):
             line_width=2,
             start_angle=150,
             end_angle=390,
+            style_classes="ram",
         )
         self.ram_overlay = Overlay(
             name="metrics-ram-overlay",
@@ -232,6 +234,7 @@ class MetricsSmall(Overlay):
             line_width=2,
             start_angle=150,
             end_angle=390,
+            style_classes="disk",
         )
         self.disk_overlay = Overlay(
             name="metrics-disk-overlay",
@@ -262,6 +265,7 @@ class MetricsSmall(Overlay):
             line_width=2,
             start_angle=150,
             end_angle=390,
+            style_classes="bat",
         )
         self.bat_overlay = Overlay(
             name="metrics-bat-overlay",
