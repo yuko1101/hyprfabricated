@@ -13,7 +13,7 @@ import modules.icons as icons
 import modules.data as data
 from modules.system import System
 from modules.controls import ControlSmall
-
+from modules.weather import Weather
 class Bar(Window):
     def __init__(self, **kwargs):
         super().__init__(
@@ -47,6 +47,7 @@ class Bar(Window):
         self.systray = SystemTray()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
+        self.weather = Weather()
         self.date_time = DateTime(name="date-time", formatters=["%I:%M %P"], h_align="center", v_align="center")
 
         self.button_apps = Button(
@@ -142,6 +143,7 @@ class Bar(Window):
                     self.button_apps,
                     Box(name="workspaces-container", children=[self.workspaces]),
                     self.button_overview,
+                    self.weather,
                 ]
             ),
             end_children=Box(
