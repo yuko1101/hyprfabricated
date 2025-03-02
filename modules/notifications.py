@@ -15,7 +15,21 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
 import modules.icons as icons
-from datetime import datetime, timedelta  # <-- Importamos para manejar fechas
+from datetime import datetime, timedelta
+
+# Directorio de caché
+CACHE_DIR = os.path.expanduser("~/.cache/ax-shell")
+
+def cache_notification_pixbuf(notification):
+    """Guarda el pixbuf de la notificación en el directorio de caché si existe."""
+    if notification.image_pixbuf:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        cache_file = os.path.join(CACHE_DIR, f"notification_{notification.id}.png")
+        try:
+            notification.image_pixbuf.savev(cache_file, "png", [], [])
+            notification.cached_image_path = cache_file
+        except Exception as e:
+            logger.error(f"Error al cachear la imagen: {e}")
 
 class ActionButton(Button):
     def __init__(self, action: NotificationAction, index: int, total: int, notification_box):
@@ -40,7 +54,6 @@ class ActionButton(Button):
         self.action.invoke()
         self.action.parent.close("dismissed-by-user")
 
-
 class NotificationBox(Box):
     def __init__(self, notification: Notification, timeout_ms=5000, **kwargs):
         super().__init__(
@@ -56,21 +69,18 @@ class NotificationBox(Box):
         self.notification = notification
         self.timeout_ms = timeout_ms
         self._timeout_id = None
-        self._container = None  # Usar un nombre con guión bajo
+        self._container = None
         self.start_timeout()
         
-        # Modificar los eventos de hover para afectar a todas las notificaciones
         self.connect("enter-notify-event", self.on_hover_enter)
         self.connect("leave-notify-event", self.on_hover_leave)
 
-        self._destroyed = False  # Agregar flag para tracking
+        self._destroyed = False
 
     def set_container(self, container):
-        """Método setter para el contenedor"""
         self._container = container
 
     def get_container(self):
-        """Método getter para el contenedor"""
         return self._container
 
     def create_header(self, notification):
@@ -106,19 +116,18 @@ class NotificationBox(Box):
         )
 
     def create_content(self, notification):
+        # En la notificación activa se utiliza el pixbuf original
+        pixbuf = (notification.image_pixbuf.scale_simple(
+                        48, 48, GdkPixbuf.InterpType.BILINEAR
+                    ) if notification.image_pixbuf else 
+                    self.get_pixbuf(notification.app_icon, 48, 48))
         return Box(
             name="notification-content",
             spacing=8,
             children=[
                 Box(
                     name="notification-image",
-                    children=CustomImage(
-                        pixbuf=notification.image_pixbuf.scale_simple(
-                            48, 48, GdkPixbuf.InterpType.BILINEAR
-                        ) if notification.image_pixbuf else self.get_pixbuf(
-                            notification.app_icon, 48, 48
-                        )
-                    ),
+                    children=CustomImage(pixbuf=pixbuf),
                 ),
                 Box(
                     name="notification-text",
@@ -137,7 +146,7 @@ class NotificationBox(Box):
                                 ),
                                 Label(
                                     name="notification-app-name",
-                                    markup= " | " + notification.app_name,
+                                    markup=" | " + notification.app_name,
                                     h_align="start",
                                     ellipsization="end",
                                 ),
@@ -164,11 +173,9 @@ class NotificationBox(Box):
     def get_pixbuf(self, icon_path, width, height):
         if icon_path.startswith("file://"):
             icon_path = icon_path[7:]
-
         if not os.path.exists(icon_path):
             logger.warning(f"Icon path does not exist: {icon_path}")
             return None
-
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon_path)
             return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
@@ -233,8 +240,6 @@ class NotificationBox(Box):
         if self._container:
             self._container.resume_all_timeouts()
 
-
-# This is a ScrolledWindow that contains a Box with notifications added to it when they timeout from the NotificationContainer
 class NotificationHistory(ScrolledWindow):
     def __init__(self, **kwargs):
         super().__init__(
@@ -255,42 +260,50 @@ class NotificationHistory(ScrolledWindow):
         self.add(self.notifications_list)
 
     def update_last_separator(self):
-        """Actualiza la visibilidad del último separador"""
         children = self.notifications_list.get_children()
         for child in children:
-            # Buscar el separador dentro de cada container
             separator = [c for c in child.get_children() if c.get_name() == "notification-separator"]
             if separator:
-                # Mostrar el separador solo si no es el último container
                 separator[0].set_visible(child != children[-1])
 
+    def get_cached_pixbuf(self, notification, width, height):
+        # Si la notificación tiene imagen cacheada, se carga desde allí
+        if hasattr(notification, "cached_image_path") and os.path.exists(notification.cached_image_path):
+            try:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file(notification.cached_image_path)
+                return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
+            except Exception as e:
+                logger.error(f"Error al cargar la imagen cacheada: {e}")
+        # Fallback: cargar desde el icono original
+        return self.get_pixbuf(notification.app_icon, width, height)
+
     def add_notification(self, notification_box):
-        """Agrega una notificación al historial"""
-        # Limitar a 50 notificaciones en el historial
         if len(self.notifications_list.get_children()) >= 50:
             oldest_notification = self.notifications_list.get_children()[0]
             self.notifications_list.remove(oldest_notification)
 
-        # Modificar el método de destrucción para remover el timer del timestamp
         def on_container_destroy(container):
             if hasattr(container, "_timestamp_timer_id") and container._timestamp_timer_id:
                 GLib.source_remove(container._timestamp_timer_id)
+            # Eliminar el archivo cacheado si existe
+            if hasattr(container, "notification"):
+                notif = container.notification
+                if hasattr(notif, "cached_image_path") and os.path.exists(notif.cached_image_path):
+                    try:
+                        os.remove(notif.cached_image_path)
+                    except Exception as e:
+                        logger.error(f"Error al eliminar la imagen cacheada: {e}")
             container.destroy()
-            # Actualizar separadores después de la destrucción
             GLib.idle_add(self.update_separators)
 
-        # Primero creamos el contenedor
         container = Box(
             name="notification-container",
             orientation="v",
             h_align="fill",
             h_expand=True,
         )
-
-        # Guardamos el momento de llegada de la notificación
         container.arrival_time = datetime.now()
 
-        # Función para calcular el texto del label según el tiempo transcurrido
         def compute_time_label(arrival_time):
             now = datetime.now()
             if arrival_time.date() != now.date():
@@ -298,8 +311,6 @@ class NotificationHistory(ScrolledWindow):
                     return " | Yesterday " + arrival_time.strftime("%H:%M")
                 else:
                     return arrival_time.strftime("| %d/%m/%Y %H:%M")
-            
-            # Para el mismo día, aplicamos las reglas de tiempo transcurrido.
             delta = now - arrival_time
             seconds = delta.total_seconds()
             if seconds < 60:
@@ -310,11 +321,9 @@ class NotificationHistory(ScrolledWindow):
             else:
                 return arrival_time.strftime(" | %H:%M")
 
-
-        # Creamos el label de timestamp usando la hora de llegada
         time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
 
-        # Creamos el contenido principal, insertando el label de timestamp en la sección de texto
+        # Se usa la imagen cacheada para el historial
         content_box = Box(
             name="notification-content",
             spacing=8,
@@ -323,10 +332,7 @@ class NotificationHistory(ScrolledWindow):
                     name="notification-image",
                     children=[
                         CustomImage(
-                            pixbuf=notification_box.notification.image_pixbuf.scale_simple(
-                                48, 48, GdkPixbuf.InterpType.BILINEAR
-                            ) if notification_box.notification.image_pixbuf else 
-                            self.get_pixbuf(notification_box.notification.app_icon, 48, 48)
+                            pixbuf=self.get_cached_pixbuf(notification_box.notification, 48, 48)
                         )
                     ]
                 ),
@@ -377,14 +383,13 @@ class NotificationHistory(ScrolledWindow):
             ],
         )
 
-        # Programamos la actualización asíncrona del label cada 10 segundos
         def update_timestamp():
             time_label.set_markup(compute_time_label(container.arrival_time))
-            return True  # seguir llamando
+            return True
 
         container._timestamp_timer_id = GLib.timeout_add_seconds(10, update_timestamp)
-
-        # Agregamos el contenido principal al hist_box
+        # Guardamos la notificación en el contenedor para poder acceder a ella luego
+        container.notification = notification_box.notification
         hist_box = Box(
             name="notification-box-hist",
             orientation="v",
@@ -392,33 +397,22 @@ class NotificationHistory(ScrolledWindow):
             h_expand=True,
         )
         hist_box.add(content_box)
-
-        # Modificar el botón de cerrar para que use nuestro método personalizado
         content_box.get_children()[2].get_children()[0].connect(
             "clicked", 
             lambda *_: on_container_destroy(container)
         )
-
-        # Agregamos la notificación y el separador al container
         container.add(hist_box)
         container.add(Box(name="notification-separator"))
-
-        # Agregar el container al inicio de la lista
         self.notifications_list.pack_start(container, False, False, 0)
-        
-        # Actualizar separadores
         self.update_separators()
-        
         self.show_all()
 
     def get_pixbuf(self, icon_path, width, height):
         if icon_path.startswith("file://"):
             icon_path = icon_path[7:]
-
         if not os.path.exists(icon_path):
             logger.warning(f"Icon path does not exist: {icon_path}")
             return None
-
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon_path)
             return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
@@ -427,21 +421,15 @@ class NotificationHistory(ScrolledWindow):
             return None
 
     def update_separators(self):
-        """Actualiza los separadores para todas las notificaciones"""
         children = self.notifications_list.get_children()
-        
-        # Primero removemos todos los separadores existentes
         for child in children:
             for widget in child.get_children():
                 if widget.get_name() == "notification-separator":
                     child.remove(widget)
-        
-        # Luego agregamos separadores solo donde corresponde
         for i, child in enumerate(children):
-            if i < len(children) - 1:  # No agregar separador al último
+            if i < len(children) - 1:
                 separator = Box(name="notification-separator")
                 child.add(separator)
-
 
 class NotificationContainer(Box):
     def __init__(self, **kwargs):
@@ -454,7 +442,6 @@ class NotificationContainer(Box):
 
         self.history = NotificationHistory(notch=self.notch)
         
-        # Crear Stack y botones de navegación
         self.stack = Gtk.Stack(
             name="notification-stack",
             transition_type=Gtk.StackTransitionType.SLIDE_LEFT_RIGHT,
@@ -462,7 +449,6 @@ class NotificationContainer(Box):
             visible=True,
         )
         
-        # Crear Box para contener el stack
         self.stack_box = Box(
             name="notification-stack-box",
             h_align="center",
@@ -494,7 +480,6 @@ class NotificationContainer(Box):
             on_clicked=self.show_next,
         )
         
-        # Agregar eventos de hover a los botones de navegación
         for button in [self.prev_button, self.close_all_button, self.next_button]:
             button.connect("enter-notify-event", lambda *_: self.pause_and_reset_all_timeouts())
             button.connect("leave-notify-event", lambda *_: self.resume_all_timeouts())
@@ -507,7 +492,7 @@ class NotificationContainer(Box):
         self.notification_box = Box(
             orientation="v",
             spacing=4,
-            children=[self.stack_box, self.navigation]  # Usar stack_box en lugar de stack
+            children=[self.stack_box, self.navigation]
         )
         
         self.notifications = []
@@ -515,7 +500,7 @@ class NotificationContainer(Box):
         
         self.update_navigation_buttons()
 
-        self._destroyed_notifications = set()  # Agregar set para tracking
+        self._destroyed_notifications = set()
 
     def show_previous(self, *args):
         if self.current_index > 0:
@@ -532,39 +517,34 @@ class NotificationContainer(Box):
     def update_navigation_buttons(self):
         self.prev_button.set_sensitive(self.current_index > 0)
         self.next_button.set_sensitive(self.current_index < len(self.notifications) - 1)
-        
-        # Ocultar navegación si solo hay una notificación
         self.navigation.set_visible(len(self.notifications) > 1)
 
     def on_new_notification(self, fabric_notif, id):
         notification = fabric_notif.get_notification_from_id(id)
+        # Cachear la imagen (si existe) para evitar problemas al mover al historial
+        if notification.image_pixbuf:
+            cache_notification_pixbuf(notification)
         new_box = NotificationBox(notification)
         new_box.set_container(self)
         notification.connect("closed", self.on_notification_closed)
         
-        # Limitar a 5 notificaciones
+        # Limitar a 5 notificaciones activas
         while len(self.notifications) >= 5:
             oldest_notification = self.notifications[0]
-            # Enviar al historial en lugar de marcar como expirada
             self.notch.notification_history.add_notification(oldest_notification)
             self.stack.remove(oldest_notification)
             self.notifications.pop(0)
             if self.current_index > 0:
                 self.current_index -= 1
         
-        # Agregar nueva notificación al stack
         self.stack.add_named(new_box, str(id))
         self.notifications.append(new_box)
         self.current_index = len(self.notifications) - 1
-        
-        # Mostrar la nueva notificación
         self.stack.set_visible_child(new_box)
         
-        # Resetear los timeouts de todas las notificaciones
         for notification_box in self.notifications:
             notification_box.start_timeout()
         
-        # Actualizar UI
         if len(self.notifications) == 1:
             if not self.notification_box.get_parent():
                 self.notch.notification_revealer.add(self.notification_box)
@@ -596,8 +576,6 @@ class NotificationContainer(Box):
             
             i, notif_box = notif_to_remove
 
-            # Modificar la lógica para agregar al historial
-            # Agregar al historial si expiró o fue cerrada por otra razón que no sea el usuario
             reason_str = str(reason)
             if (reason_str == "NotificationCloseReason.EXPIRED" or 
                 reason_str == "NotificationCloseReason.CLOSED" or
@@ -605,36 +583,28 @@ class NotificationContainer(Box):
                 logger.info(f"Adding notification {notification.id} to history")
                 self.notch.notification_history.add_notification(notif_box)
             
-            # Si es la última notificación
             if len(self.notifications) == 1:
                 self._is_destroying = True
-                # Ocultar el revealer primero
                 self.notch.notification_revealer.set_reveal_child(False)
-                # Programar la limpieza después de la animación
                 GLib.timeout_add(
                     self.notch.notification_revealer.get_transition_duration(),
                     self._destroy_container
                 )
                 return
             
-            # Si hay más notificaciones
-            # Primero actualizamos el índice
             new_index = i
             if i == self.current_index:
                 new_index = max(0, i - 1)
             elif i < self.current_index:
                 new_index = self.current_index - 1
             
-            # Cambiamos a la siguiente notificación antes de remover
             next_notification = self.notifications[new_index if new_index < i else i]
             self.stack.set_visible_child(next_notification)
             
-            # Ahora sí removemos la notificación
             if notif_box.get_parent() == self.stack:
                 self.stack.remove(notif_box)
             self.notifications.remove(notif_box)
             
-            # Actualizamos el índice y la UI
             self.current_index = new_index
             self.update_navigation_buttons()
 
@@ -644,23 +614,13 @@ class NotificationContainer(Box):
         logger.info(f"Notification {notification.id} closed with reason: {reason}")
 
     def _destroy_container(self):
-        """Limpia las notificaciones manteniendo la estructura base"""
         try:
-            # Limpiar las listas
             self.notifications.clear()
             self._destroyed_notifications.clear()
-            
-            # Limpiar el stack pero mantener la estructura
             for child in self.stack.get_children():
                 self.stack.remove(child)
-            
-            # Reiniciar el índice
             self.current_index = 0
-            
-            # Ocultar la navegación
             self.navigation.set_visible(False)
-            
-            # Remover el notification_box del revealer pero sin destruirlo
             if self.notification_box.get_parent():
                 self.notification_box.get_parent().remove(self.notification_box)
             
@@ -671,10 +631,8 @@ class NotificationContainer(Box):
             return False
 
     def pause_and_reset_all_timeouts(self):
-        """Pausa y reinicia todos los timeouts"""
         if self._is_destroying:
             return
-            
         for notification in self.notifications[:]:
             try:
                 if not notification._destroyed and notification.get_parent():
@@ -683,10 +641,8 @@ class NotificationContainer(Box):
                 logger.error(f"Error al pausar timeout: {e}")
 
     def resume_all_timeouts(self):
-        """Reanuda todos los timeouts desde el inicio"""
         if self._is_destroying:
             return
-            
         for notification in self.notifications[:]:
             try:
                 if not notification._destroyed and notification.get_parent():
@@ -695,8 +651,6 @@ class NotificationContainer(Box):
                 logger.error(f"Error al reanudar timeout: {e}")
 
     def close_all_notifications(self, *args):
-        """Cierra todas las notificaciones en el stack"""
-        # Crear una copia de la lista para evitar problemas durante la iteración
         notifications_to_close = self.notifications.copy()
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
