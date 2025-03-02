@@ -172,13 +172,14 @@ class MetricsSmall(Overlay):
             line_width=2,
             start_angle=150,
             end_angle=390,
+            style_classes="cpu",
         )
         self.cpu_overlay = Overlay(
             name="metrics-cpu-overlay",
             child=self.cpu_circle,
             overlays=[self.cpu_icon],
         )
-        self.cpu_level = Label(name="metrics-level", label="000")
+        self.cpu_level = Label(name="metrics-level", label="0%")
         self.cpu_revealer = Revealer(
             name="metrics-cpu-revealer",
             transition_duration=250,
@@ -186,7 +187,7 @@ class MetricsSmall(Overlay):
             child=self.cpu_level,
             child_revealed=False,
         )
-        cpu_box = Box(
+        self.cpu_box = Box(
             name="metrics-cpu-box",
             orientation="h",
             spacing=2,
@@ -202,13 +203,14 @@ class MetricsSmall(Overlay):
             line_width=2,
             start_angle=150,
             end_angle=390,
+            style_classes="ram",
         )
         self.ram_overlay = Overlay(
             name="metrics-ram-overlay",
             child=self.ram_circle,
             overlays=[self.ram_icon],
         )
-        self.ram_level = Label(name="metrics-level", label="000")
+        self.ram_level = Label(name="metrics-level", label="0%")
         self.ram_revealer = Revealer(
             name="metrics-ram-revealer",
             transition_duration=250,
@@ -216,7 +218,7 @@ class MetricsSmall(Overlay):
             child=self.ram_level,
             child_revealed=False,
         )
-        ram_box = Box(
+        self.ram_box = Box(
             name="metrics-ram-box",
             orientation="h",
             spacing=2,
@@ -232,13 +234,14 @@ class MetricsSmall(Overlay):
             line_width=2,
             start_angle=150,
             end_angle=390,
+            style_classes="disk",
         )
         self.disk_overlay = Overlay(
             name="metrics-disk-overlay",
             child=self.disk_circle,
             overlays=[self.disk_icon],
         )
-        self.disk_level = Label(name="metrics-level", label="000")
+        self.disk_level = Label(name="metrics-level", label="0%")
         self.disk_revealer = Revealer(
             name="metrics-disk-revealer",
             transition_duration=250,
@@ -246,7 +249,7 @@ class MetricsSmall(Overlay):
             child=self.disk_level,
             child_revealed=False,
         )
-        disk_box = Box(
+        self.disk_box = Box(
             name="metrics-disk-box",
             orientation="h",
             spacing=2,
@@ -262,13 +265,14 @@ class MetricsSmall(Overlay):
             line_width=2,
             start_angle=150,
             end_angle=390,
+            style_classes="bat",
         )
         self.bat_overlay = Overlay(
             name="metrics-bat-overlay",
             child=self.bat_circle,
             overlays=[self.bat_icon],
         )
-        self.bat_level = Label(name="metrics-level", label="100")
+        self.bat_level = Label(name="metrics-level", label="100%")
         self.bat_revealer = Revealer(
             name="metrics-bat-revealer",
             transition_duration=250,
@@ -276,7 +280,7 @@ class MetricsSmall(Overlay):
             child=self.bat_level,
             child_revealed=False,
         )
-        bat_box = Box(
+        self.bat_box = Box(
             name="metrics-bat-box",
             orientation="h",
             spacing=2,
@@ -284,10 +288,10 @@ class MetricsSmall(Overlay):
         )
 
         # Agregamos cada widget métrico al contenedor principal
-        main_box.add(cpu_box)
-        main_box.add(ram_box)
-        # main_box.add(disk_box)
-        main_box.add(bat_box)
+        # main_box.add(self.disk_box)
+        main_box.add(self.cpu_box)
+        main_box.add(self.ram_box)
+        main_box.add(self.bat_box)
 
         # Se crea un único EventBox que envuelve todo el contenedor, para que
         # los eventos de hover se capturen de forma central y siempre queden por encima
@@ -318,7 +322,7 @@ class MetricsSmall(Overlay):
         self.hover_counter = 0
 
     def _format_percentage(self, value: int) -> str:
-        """Formatea el porcentaje en tres caracteres, usando 'MAX' para el 100%."""
+        """Formato natural del porcentaje sin forzar ancho fijo."""
         return f"{value}%"
 
     def on_mouse_enter(self, widget, event):
@@ -356,7 +360,7 @@ class MetricsSmall(Overlay):
         self.cpu_circle.set_value(cpu / 100.0)
         self.ram_circle.set_value(mem / 100.0)
         self.disk_circle.set_value(disk / 100.0)
-        # Actualizar etiquetas formateando los porcentajes a tres caracteres
+        # Actualizar etiquetas con el porcentaje formateado
         self.cpu_level.set_label(self._format_percentage(int(cpu)))
         self.ram_level.set_label(self._format_percentage(int(mem)))
         self.disk_level.set_label(self._format_percentage(int(disk)))
@@ -380,11 +384,9 @@ class MetricsSmall(Overlay):
     def update_battery(self, sender, battery_data):
         value, status = battery_data
         if value == 0:
-            self.bat_overlay.set_visible(False)
-            self.bat_revealer.set_visible(False)
+            self.bat_box.set_visible(False)
         else:
-            self.bat_overlay.set_visible(True)
-            self.bat_revealer.set_visible(True)
+            self.bat_box.set_visible(True)
             self.bat_circle.set_value(value)
         percentage = int(value * 100)
         self.bat_level.set_label(self._format_percentage(percentage))

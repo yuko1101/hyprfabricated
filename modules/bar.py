@@ -38,12 +38,6 @@ class Bar(Window):
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
 
-        self.ignored_workspaces = [-99, -98]
-        self.hide_ignored_workspaces()
-        self.workspaces.connection.connect("event::workspacev2", self.hide_ignored_workspaces)
-        self.workspaces.connection.connect("event::createworkspacev2", self.hide_ignored_workspaces)
-        self.workspaces.connection.connect("event::urgent", self.hide_ignored_workspaces)
-
         self.systray = SystemTray()
         self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
@@ -204,9 +198,3 @@ class Bar(Window):
             self.bar_inner.add_style_class("hidden")
         else:
             self.bar_inner.remove_style_class("hidden")
-    def hide_ignored_workspaces(self, *args):
-        for button in self.workspaces.get_child():
-            if button.id in self.ignored_workspaces:
-                self.workspaces.remove_button(button)
-
-
