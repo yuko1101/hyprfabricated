@@ -4,6 +4,7 @@ import os
 import struct
 import threading
 import subprocess
+import re
 
 from gi.repository import GLib, Gtk, Gdk
 from loguru import logger
@@ -140,6 +141,7 @@ class Spectrum:
 
 	def update(self, data):
 		"""Audio data processing"""
+		self.color_update()
 		self.audio_sample = data
 		if not self.is_silence(self.audio_sample[0]):
 			self.area.queue_draw()
@@ -194,8 +196,20 @@ class Spectrum:
 		#self.sizes.wcpi = tw % self.sizes.number  # width correction point index
 
 	def color_update(self):
-		"""Set drawing color according current settings"""
-		self.color = Gdk.RGBA(red=0.619608, green=0.792157, blue=0.988235, alpha=1.000000)
+		"""Set drawing color according current settings by reading primary color from CSS"""
+		color = "#a5c8ff"  # default value
+		try:
+			with open("/home/khz/.config/Ax-Shell/styles/colors.css", "r") as f:
+				content = f.read()
+				m = re.search(r"--primary:\s*(#[0-9a-fA-F]{6})", content)
+				if m:
+					color = m.group(1)
+		except Exception as e:
+			logger.error("Failed to read primary color: {}".format(e))
+		red = int(color[1:3], 16) / 255
+		green = int(color[3:5], 16) / 255
+		blue = int(color[5:7], 16) / 255
+		self.color = Gdk.RGBA(red=red, green=green, blue=blue, alpha=1.0)
 
 class SpectrumRender():
     def __init__(self, mode = None, **kwargs):
