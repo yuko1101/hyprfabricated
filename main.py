@@ -49,14 +49,15 @@ if __name__ == "__main__":
     bar = Bar()
     notch = Notch()
     bar.notch = notch
+    notch.bar = bar
     app = Application("ax-shell", bar, notch)
 
     def set_css():
         app.set_stylesheet_from_file(
             get_relative_path("main.css"),
             exposed_functions={
-                "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5}px;",
-                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2}px;",
+                "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
+                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32}px;",
             },
         )
 

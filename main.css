@@ -14,8 +14,7 @@
 @import url("./styles/player.css");
 @import url("./styles/bluetooth.css");
 @import url("./styles/power.css");
-@import url("./styles/battery.css");
-@import url("./styles/volume.css");
+@import url("./styles/metrics.css");
 
 * {
   all: unset;
@@ -85,6 +84,17 @@
 
 menu > menuitem > label,
 #date-time > label {
+  font-weight: bold;
+}
+
+#weather {
+  background-color: var(--shadow);
+  padding: 8px;
+  border-radius: 16px;
+  margin-top: 4px;
+}
+
+#weather-label {
   font-weight: bold;
 }
 

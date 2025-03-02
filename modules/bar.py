@@ -3,6 +3,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
+from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
@@ -10,8 +11,9 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.battery import Battery
+from modules.metrics import MetricsSmall
 from modules.controls import ControlSmall
+from modules.weather import Weather
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -26,7 +28,7 @@ class Bar(Window):
         )
 
         self.notch = kwargs.get("notch", None)
-        
+
         self.workspaces = Workspaces(
             name="workspaces",
             invert_scroll=True,
@@ -38,6 +40,7 @@ class Bar(Window):
         )
 
         self.systray = SystemTray()
+        self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
         self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
@@ -52,7 +55,7 @@ class Bar(Window):
         )
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
-        
+
         self.button_power = Button(
             name="button-bar",
             on_clicked=lambda *_: self.power_menu(),
@@ -88,8 +91,6 @@ class Bar(Window):
         self.button_color.connect("leave-notify-event", self.on_button_leave)
         self.button_color.connect("button-press-event", self.colorpicker)
 
-        self.battery = Battery()
-
         self.button_config = Button(
             name="button-bar",
             on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
@@ -99,8 +100,31 @@ class Bar(Window):
             )
         )
 
-
         self.control = ControlSmall()
+        self.metrics = MetricsSmall()
+
+        self.revealer = Revealer(
+            name="bar-revealer",
+            transition_type="slide-left",
+            child_revealed=True,
+            child=Box(
+                name="bar-revealer-box",
+                orientation="h",
+                spacing=4,
+                children=[
+                    self.metrics,
+                    self.control,
+                ],
+            ),
+        )
+
+        self.boxed_revealer = Box(
+            name="boxed-revealer",
+            children=[
+                self.revealer,
+            ],
+        )
+
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h",
@@ -114,6 +138,7 @@ class Bar(Window):
                     self.button_apps,
                     Box(name="workspaces-container", children=[self.workspaces]),
                     self.button_overview,
+                    self.weather
                 ]
             ),
             end_children=Box(
@@ -121,8 +146,7 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-                    self.control,
-                    self.battery,
+                    self.boxed_revealer,
                     self.button_color,
                     self.systray,
                     self.button_config,
