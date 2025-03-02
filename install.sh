@@ -30,6 +30,7 @@ PACKAGES=(
     vte3
     wlinhibit
     cantarell-fonts-0.100
+    grimblast-git
 )
 
 # Prevent running as root
@@ -89,6 +90,7 @@ python "$INSTALL_DIR/config/config.py"
 echo "Starting hyprfabricated..."
 killall ax-shell 2>/dev/null || true
 uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
+
 
 if [ "$wasYayInstalled" -eq 0 ]; then
     sudo pacman -Rns yay
