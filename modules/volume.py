@@ -121,7 +121,7 @@ class VolumeWidget(Box):
         )
         return
     
-    def update_speaker_label(self):
+    def update_speaker_label(self, *args):
         
         if self.audio.speaker.volume == 0:
             self.volume_label.add_style_class("zero")

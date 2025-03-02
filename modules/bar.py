@@ -134,7 +134,8 @@ class Bar(Window):
                 orientation="h",
                 spacing=4,
                 children=[
-                    self.control,
+                    #self.control,
+                    self.volume,
                     self.battery,
                 ],
             ),

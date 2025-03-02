@@ -280,7 +280,8 @@ class Notch(Window):
             self.stack.set_visible_child(self.dashboard)
 
         if widget == "dashboard" or widget == "overview":
-            self.bar.revealer.set_reveal_child(False)
+            #self.bar.revealer.set_reveal_child(False)
+            pass
         else:
             self.bar.revealer.set_reveal_child(True)
 
