@@ -16,7 +16,6 @@ class Weather(Box):
         self.label = Label(name="weather-label", markup=icons.loader)
         self.add(self.label)
         self.show_all()
-        # Update every 10 mins
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
 
