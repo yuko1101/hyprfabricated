@@ -19,8 +19,6 @@ class Toolbox(Box):
             spacing=4,
             v_align="center",
             h_align="center",
-            v_expand=True,
-            h_expand=True,
             visible=True,
             **kwargs,
         )
@@ -31,23 +29,40 @@ class Toolbox(Box):
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.ssregion),
             on_clicked=self.ssregion,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
+
         self.btn_ssfull = Button(
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.ssfull),
             on_clicked=self.ssfull,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
 
         self.btn_screenrecord = Button(
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.screenrecord),
             on_clicked=self.screenrecord,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
 
         self.btn_ocr = Button(
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.ocr),
             on_clicked=self.ocr,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
 
         self.btn_color = Button(
@@ -56,8 +71,13 @@ class Toolbox(Box):
             child=Label(
                 name="button-bar-label",
                 markup=icons.colorpicker
-            )
+            ),
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
+
         # Enable keyboard focus for the colorpicker button.
         self.btn_color.set_can_focus(True)
         # Connect both mouse and keyboard events.

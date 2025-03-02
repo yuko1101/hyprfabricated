@@ -33,13 +33,6 @@
   border-radius: 0 0 36px 36px;
 }
 
-#notch-content.notification {
-  padding: 16px;
-  min-height: 45px;
-  min-width: 360px;
-  border-radius: 0 0 36px 36px;
-}
-
 #notch-content.overview {
   padding: 16px;
   @apply overview_width();
