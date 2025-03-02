@@ -147,8 +147,8 @@ class VolumeSmall(Box):
         super().__init__(name="button-bar-vol", **kwargs)
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
-            name="button-volume", size=28, line_width=2,
-            start_angle=150, end_angle=390,
+            name="button-volume", size=28, line_width=3,
+            start_angle=90+30, end_angle=90-30+360,
         )
         self.vol_label = Label(name="vol-label", markup=icons.vol_high)
         self.vol_button = Button(
@@ -156,7 +156,7 @@ class VolumeSmall(Box):
             child=self.vol_label
         )
         self.event_box = EventBox(
-            events="scroll",
+            events=["scroll", "smooth-scroll"],
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.vol_button
@@ -188,6 +188,15 @@ class VolumeSmall(Box):
                 self.vol_label.remove_style_class("muted")
 
     def on_scroll(self, _, event):
+        if not self.audio.speaker:
+            return
+        
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if abs(event.delta_y) > 0:
+                self.audio.speaker.volume += event.delta_y
+            if abs(event.delta_x) > 0:
+                self.audio.speaker.volume -= event.delta_x
+
         match event.direction:
             case 0:
                 self.audio.speaker.volume += 1
@@ -198,21 +207,28 @@ class VolumeSmall(Box):
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
             return
+        self.progress_bar.value = self.audio.speaker.volume / 100
         if self.audio.speaker.muted:
             self.vol_button.get_child().set_markup(icons.vol_off)
+            self.progress_bar.remove_style_class("zero")
+            self.vol_label.remove_style_class("zero")
             self.progress_bar.add_style_class("muted")
             self.vol_label.add_style_class("muted")
             return
         else:
+            self.vol_label.remove_style_class("zero")
+            self.progress_bar.remove_style_class("zero")
             self.progress_bar.remove_style_class("muted")
             self.vol_label.remove_style_class("muted")
-        self.progress_bar.value = self.audio.speaker.volume / 100
+        
         if self.audio.speaker.volume > 74:
             self.vol_button.get_child().set_markup(icons.vol_high)
         elif self.audio.speaker.volume > 0:
             self.vol_button.get_child().set_markup(icons.vol_medium)
         else:
             self.vol_button.get_child().set_markup(icons.vol_mute)
+            self.vol_label.add_style_class("zero")
+            self.progress_bar.add_style_class("zero")
 
 class MicSmall(Box):
     def __init__(self, **kwargs):
@@ -220,7 +236,7 @@ class MicSmall(Box):
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
             name="button-mic", size=28, line_width=2,
-            start_angle=150, end_angle=390,
+            start_angle=90+30, end_angle=90-30+360,
         )
         self.mic_label = Label(name="mic-label", markup=icons.mic)
         self.mic_button = Button(
@@ -228,7 +244,7 @@ class MicSmall(Box):
             child=self.mic_label
         )
         self.event_box = EventBox(
-            events="scroll",
+            events=["scroll", "smooth-scroll"],
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.mic_button
@@ -262,6 +278,13 @@ class MicSmall(Box):
     def on_scroll(self, _, event):
         if not self.audio.microphone:
             return
+        
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if abs(event.delta_y) > 0:
+                self.audio.microphone.volume += event.delta_y
+            if abs(event.delta_x) > 0:
+                self.audio.microphone.volume -= event.delta_x
+
         match event.direction:
             case 0:
                 self.audio.microphone.volume += 1
@@ -272,19 +295,26 @@ class MicSmall(Box):
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
             return
+        self.progress_bar.value = self.audio.microphone.volume / 100
         if self.audio.microphone.muted:
             self.mic_button.get_child().set_markup(icons.mic_mute)
+            self.progress_bar.remove_style_class("zero")
+            self.mic_label.remove_style_class("zero")
             self.progress_bar.add_style_class("muted")
             self.mic_label.add_style_class("muted")
             return
         else:
             self.progress_bar.remove_style_class("muted")
             self.mic_label.remove_style_class("muted")
-        self.progress_bar.value = self.audio.microphone.volume / 100
+            self.progress_bar.remove_style_class("zero")
+            self.mic_label.remove_style_class("zero")
+        
         if self.audio.microphone.volume >= 1:
             self.mic_button.get_child().set_markup(icons.mic)
         else:
             self.mic_button.get_child().set_markup(icons.mic_mute)
+            self.mic_label.add_style_class("zero")
+            self.progress_bar.add_style_class("zero")
 
 class BrightnessSmall(Box):
     def __init__(self, **kwargs):
@@ -296,7 +326,7 @@ class BrightnessSmall(Box):
         self.brightness = Brightness.get_initial()
         self.progress_bar = CircularProgressBar(
             name="button-brightness", size=28, line_width=2,
-            start_angle=150, end_angle=390,
+            start_angle=90+30, end_angle=90-30+360,
         )
         self.brightness_label = Label(name="brightness-label", markup=icons.brightness_high)
         self.brightness_button = Button(child=self.brightness_label)
@@ -318,9 +348,9 @@ class BrightnessSmall(Box):
         
         if event.direction == Gdk.ScrollDirection.SMOOTH:
             if abs(event.delta_y) > 0:
-                self.brightness.screen_brightness += 1.5*event.delta_y
+                self.brightness.screen_brightness += 5*event.delta_y
             if abs(event.delta_x) > 0:
-                self.brightness.screen_brightness -= 1.5*event.delta_x
+                self.brightness.screen_brightness -= 5*event.delta_x
 
         match event.direction:
             case 0:
