@@ -11,6 +11,7 @@ PACKAGES=(
     brightnessctl
     fabric-cli-git
     gnome-bluetooth-3.0
+    gpu-screen-recorder
     grimblast
     hypridle
     hyprlock
@@ -26,6 +27,7 @@ PACKAGES=(
     python-toml
     python-watchdog
     swww
+    tesseract
     uwsm
     vte3
     wlinhibit

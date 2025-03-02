@@ -19,6 +19,8 @@ from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
 from modules.player import PlayerSmall
+from modules.tools import Toolbox
+
 
 class Notch(Window):
     def __init__(self, **kwargs):
@@ -63,6 +65,7 @@ class Notch(Window):
 
         self.player_small.mpris_manager.connect("player-appeared", lambda *_: self.compact_stack.set_visible_child(self.player_small))
         self.player_small.mpris_manager.connect("player-vanished", self.on_player_vanished)
+
         # Create a stack to hold the three views:
         self.compact_stack = Stack(
             name="notch-compact-stack",
@@ -94,6 +97,7 @@ class Notch(Window):
         self.compact.connect("enter-notify-event", self.on_button_enter)
         self.compact.connect("leave-notify-event", self.on_button_leave)
 
+        self.tools = Toolbox(notch=self)
         self.stack = Stack(
             name="notch-content",
             v_expand=True,
@@ -107,6 +111,7 @@ class Notch(Window):
                 self.overview,
                 self.power,
                 self.bluetooth,
+                self.tools,
             ]
         )
 
@@ -201,9 +206,9 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.tools]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth", "tools"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -219,7 +224,9 @@ class Notch(Window):
             "dashboard": self.dashboard,
             "overview": self.overview,
             "power": self.power,
-            "bluetooth": self.bluetooth
+            "bluetooth": self.bluetooth,
+            "tools": self.tools,
+
         }
 
         # Limpiar clases y estados previos
@@ -227,13 +234,13 @@ class Notch(Window):
             self.stack.remove_style_class(style)
         for w in widgets.values():
             w.remove_style_class("open")
-        
+
         # Configurar según el widget solicitado
         if widget in widgets:
             self.stack.add_style_class(widget)
             self.stack.set_visible_child(widgets[widget])
             widgets[widget].add_style_class("open")
-            
+
             # Acciones específicas para el launcher
             if widget == "launcher":
                 self.launcher.open_launcher()
