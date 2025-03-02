@@ -13,6 +13,7 @@ import modules.icons as icons
 import modules.data as data
 from modules.metrics import MetricsSmall
 from modules.controls import ControlSmall
+from modules.weather import Weather
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -27,7 +28,7 @@ class Bar(Window):
         )
 
         self.notch = kwargs.get("notch", None)
-        
+
         self.workspaces = Workspaces(
             name="workspaces",
             invert_scroll=True,
@@ -39,6 +40,7 @@ class Bar(Window):
         )
 
         self.systray = SystemTray()
+        self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
         self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
@@ -53,7 +55,7 @@ class Bar(Window):
         )
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
-        
+
         self.button_power = Button(
             name="button-bar",
             on_clicked=lambda *_: self.power_menu(),
@@ -96,11 +98,11 @@ class Bar(Window):
                 name="button-bar-label",
                 markup=icons.config
             )
-        )  
+        )
 
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
-        
+
         self.revealer = Revealer(
             name="bar-revealer",
             transition_type="slide-left",
@@ -136,6 +138,7 @@ class Bar(Window):
                     self.button_apps,
                     Box(name="workspaces-container", children=[self.workspaces]),
                     self.button_overview,
+                    self.weather
                 ]
             ),
             end_children=Box(
