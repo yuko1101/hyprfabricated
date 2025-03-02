@@ -232,7 +232,7 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth,self.tools]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.tools]:
             widget.remove_style_class("open")
         for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth","tools"]:
             self.stack.remove_style_class(style)
