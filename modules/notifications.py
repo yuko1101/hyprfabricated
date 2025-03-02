@@ -266,6 +266,11 @@ class NotificationHistory(ScrolledWindow):
 
     def add_notification(self, notification_box):
         """Agrega una notificación al historial"""
+        # Limitar a 50 notificaciones en el historial
+        if len(self.notifications_list.get_children()) >= 50:
+            oldest_notification = self.notifications_list.get_children()[0]
+            self.notifications_list.remove(oldest_notification)
+
         # Crear un método de destrucción personalizado
         def on_container_destroy(container):
             container.destroy()
