@@ -1,6 +1,7 @@
 import gi
 import requests
 import threading
+import urllib.parse
 from gi.repository import Gtk, GLib
 
 from fabric.widgets.label import Label
@@ -39,7 +40,9 @@ class Weather(Box):
     def _fetch_weather_thread(self):
         location = self.get_location()
         if location:
-            url = f"https://wttr.in/{location}?format=%c+%t"
+            # URL encode the location to make it URL friendly.
+            encoded_location = urllib.parse.quote(location)
+            url = f"https://wttr.in/{encoded_location}?format=%c+%t"
         else:
             url = "https://wttr.in/?format=%c+%t"
         try:

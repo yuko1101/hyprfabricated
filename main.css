@@ -86,6 +86,7 @@ menu > menuitem > label,
 #date-time > label {
   font-weight: bold;
 }
+
 #weather {
   background-color: var(--shadow);
   padding: 8px;
