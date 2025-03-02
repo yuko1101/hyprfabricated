@@ -91,8 +91,8 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Bluetooth Manager
 - [x] Power Manager
 - [x] Settings
-- [ ] Screenshot Tool
-- [ ] Screen Recorder
+- [x] Screenshot Tool
+- [x] Screen Recorder
 - [ ] Clipboard Manager
 - [x] Emoji Manager
 - [ ] Dock
