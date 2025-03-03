@@ -1,7 +1,16 @@
 <h1 align="center"><b>HYPRFABRICATED</b></h1>
 
 
+<div align="center">
+
+[![GitHub stars](https://img.shields.io/github/stars/tr1xem/hyprfabricated?style=for-the-badge&logo=github&color=FFB686&logoColor=D9E0EE&labelColor=292324)](https://github.com/tr1xem/hyprfabricated/stargazers)
+[![Hyprland](https://img.shields.io/badge/Made%20for-Hyprland-pink?style=for-the-badge&logo=linux&logoColor=D9E0EE&labelColor=292324&color=C6A0F6)](https://hyprland.org/)
+[![Maintained](https://img.shields.io/badge/Maintained-Yes-blue?style=for-the-badge&logo=linux&logoColor=D9E0EE&labelColor=292324&color=3362E1)]()
+[![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/vfSCyFZ6t2)](https://discord.gg/vfSCyFZ6t2)
+
+</div>
 <p align="center"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25" /> <sup>A ʜᴀᴄᴋᴀʙʟᴇ sʜᴇʟʟ ꜰᴏʀ Hʏᴘʀʟᴀɴᴅ, ᴘᴏᴡᴇʀᴇᴅ ʙʏ <a href="https://github.com/Fabric-Development/fabric/">Fᴀʙʀɪᴄ</a>. </sup><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25" /></p>
+
 
 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" /></sub> Screenshots</h2>
@@ -23,14 +32,14 @@
 > PRE-RELEASE STATE. USABLE BUT INCOMPLETE.
 
 > [!NOTE]
-> You need a functioning Hyprland installation.
-> You need to install plasma-browser-integration for mpris and cava to work as it is intended
+> - You need a functioning Hyprland installation. <br>
+> - You need to install plasma-browser-integration for mpris and cava to work as it is intended
 
 ### Arch Linux
 
 > [!TIP]
-> This command also works for updating an existing installation!!!
-
+> - This command also works for updating an existing installation!!! <br>
+> - If you see a transparent bar just change the wallpaper from notch > wallpaper as then it would gen color configs
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.sh | bash

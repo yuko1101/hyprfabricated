@@ -103,6 +103,7 @@ class Bar(Window):
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
 
+
         self.control = ControlSmall()
 
         self.revealer = Revealer(
@@ -185,9 +186,6 @@ class Bar(Window):
 
     def power_menu(self):
         self.notch.open_notch("power")
-    def tools_menu(self):
-        self.notch.open_notch("tools")
-
     def tools_menu(self):
         self.notch.open_notch("tools")
 
