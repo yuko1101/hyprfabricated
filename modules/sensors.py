@@ -169,7 +169,7 @@ class NetworkApplet(Button):
                 strength = self.network_client.wifi_device.strength
                 # Si la intensidad es mayor o igual a 50 usamos wifi_1, de lo contrario wifi_0
                 if strength >= 75:
-                    self.wifi_label.set_markup(icons.wifi)
+                    self.wifi_label.set_markup(icons.wifi_3)
                 elif strength >= 50:
                     self.wifi_label.set_markup(icons.wifi_2)
                 elif strength >= 25:
