@@ -38,6 +38,17 @@ class Bar(Window):
             spacing=10,
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
+        self.button_tools = Button(
+            name="button-bar",
+            on_clicked=lambda *_: self.tools_menu(),
+            child=Label(
+                name="button-bar-label",
+                markup=icons.toolbox
+            )
+        )
+        self.button_tools.connect("enter_notify_event", self.on_button_enter)
+        self.button_tools.connect("leave_notify_event", self.on_button_leave)
+
 
         self.systray = SystemTray()
         self.weather = Weather()
@@ -140,7 +151,6 @@ class Bar(Window):
                 children=[
                     self.boxed_revealer,
                     self.systray,
-                    # self.button_config,
                     self.button_tools,
                     self.date_time,
                     self.button_power,
@@ -176,10 +186,8 @@ class Bar(Window):
 
     def power_menu(self):
         self.notch.open_notch("power")
-
     def tools_menu(self):
         self.notch.open_notch("tools")
-
 
     def toggle_hidden(self):
         self.hidden = not self.hidden

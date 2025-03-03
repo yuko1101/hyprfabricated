@@ -5,10 +5,11 @@ from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler
 from fabric.widgets.image import Image
+from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async
 from gi.repository import GLib, Gdk
 import modules.icons as icons
+import modules.data as data
 import json
 import os
 import re
@@ -31,13 +32,13 @@ class AppLauncher(Box):
         self._all_apps = get_desktop_applications()
 
         # Calculator history initialization
-        self.calc_history_path = os.path.expanduser("~/.cache/ax-shell/calc.json")
+        self.calc_history_path = os.path.expanduser("~/.cache/hyprfabricated/calc.json")
         if os.path.exists(self.calc_history_path):
             with open(self.calc_history_path, "r") as f:
                 self.calc_history = json.load(f)
         else:
             self.calc_history = []
-        
+
         self.viewport = Box(name="viewport", spacing=4, orientation="v")
         self.search_entry = Entry(
             name="search-entry",
@@ -64,6 +65,11 @@ class AppLauncher(Box):
             spacing=10,
             orientation="h",
             children=[
+                Button(
+                    name="config-button",
+                    child=Label(name="config-label", markup=icons.config),
+                    on_clicked=lambda *_: (exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"), self.close_launcher()),
+                ),
                 self.search_entry,
                 Button(
                     name="close-button",
@@ -73,7 +79,7 @@ class AppLauncher(Box):
                 ),
             ],
         )
-        
+
         self.launcher_box = Box(
             name="launcher-box",
             spacing=10,
@@ -199,12 +205,12 @@ class AppLauncher(Box):
             alloc = button.get_allocation()
             if alloc.height == 0:
                 return False  # Retry if allocation isn't ready
-            
+
             y = alloc.y
             height = alloc.height
             page_size = adj.get_page_size()
             current_value = adj.get_value()
-            
+
             # Calculate visible boundaries
             visible_top = current_value
             visible_bottom = current_value + page_size

@@ -19,14 +19,8 @@ from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
 from modules.player import PlayerSmall
-import json
 from modules.tools import Toolbox
-
-def truncate_title(title):
-    parts = title.rsplit(' - ', 1)
-    if len(parts) == 1:
-        parts = title.rsplit(' — ', 1)
-    return parts[0] if len(parts) > 1 else title
+import json
 
 class Notch(Window):
     def __init__(self, **kwargs):
@@ -59,9 +53,9 @@ class Notch(Window):
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'Desktop' if not win_class or win_class == 'unknown' else truncate(truncate_title(win_title), 32)}}",
+                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 32)}}",
                 truncate=truncate,
-                truncate_title=truncate_title,
+
             ),
         )
         # Add the click connection for active_window.
@@ -115,6 +109,7 @@ class Notch(Window):
         self.compact.connect("enter-notify-event", self.on_button_enter)
         self.compact.connect("leave-notify-event", self.on_button_leave)
 
+        self.tools = Toolbox(notch=self)
         self.stack = Stack(
             name="notch-content",
             v_expand=True,
@@ -129,6 +124,7 @@ class Notch(Window):
                 self.power,
                 self.tools,
                 self.bluetooth,
+                self.tools,
             ]
         )
 
@@ -197,6 +193,9 @@ class Notch(Window):
 
         self.hidden = False
 
+        self._scrolling = False
+
+        self.add(self.notch_box)
         self.add(self.notch_complete)
         self.show_all()
 
@@ -234,7 +233,7 @@ class Notch(Window):
 
         for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.tools]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth","tools"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth", "tools"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -250,8 +249,9 @@ class Notch(Window):
             "dashboard": self.dashboard,
             "overview": self.overview,
             "power": self.power,
+            "bluetooth": self.bluetooth,
             "tools": self.tools,
-            "bluetooth": self.bluetooth
+
         }
 
         # Limpiar clases y estados previos
@@ -315,19 +315,13 @@ class Notch(Window):
 
         self.compact_stack.set_visible_child(children[new_index])
         self._scrolling = True
-        GLib.timeout_add(500, self._reset_scrolling)
+        GLib.timeout_add(250, self._reset_scrolling)
         return True
 
     def _reset_scrolling(self):
         self._scrolling = False
         return False
 
-
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
-            self.compact_stack.set_visible_child(self.window_title)
-
-
-
-
-
+            self.compact_stack.set_visible_child(self.active_window)

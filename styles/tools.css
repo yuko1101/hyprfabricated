@@ -9,6 +9,10 @@
   color: var(--foreground);
 }
 
+#toolbox-button.recording label {
+  color: var(--error-dim);
+}
+
 #toolbox-button:hover,
 #toolbox-button:focus {
   background-color: var(--surface-bright);
@@ -19,6 +23,11 @@
   color: var(--primary);
 }
 
+#toolbox-button.recording:hover label,
+#toolbox-button.recording:focus label {
+  color: var(--error-dim);
+}
+
 #toolbox-button:active {
   background-color: var(--primary);
 }
@@ -27,3 +36,10 @@
   color: var(--shadow);
 }
 
+#toolbox-button.recording:active {
+  background-color: var(--error-dim);
+}
+
+#toolbox-button.recording:active label {
+  color: var(--shadow);
+}
