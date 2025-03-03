@@ -18,30 +18,60 @@ from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
 import modules.icons as icons
 
-# Directorio y archivo de persistencia (histórico)
-PERSISTENT_DIR = "/tmp/ax-shell"
+# Persistence directory and file (history)
+PERSISTENT_DIR = "/tmp/ax-shell/notifications"
 PERSISTENT_HISTORY_FILE = os.path.join(PERSISTENT_DIR, "notification_history.json")
-
-# Directorio de caché para imágenes
-CACHE_DIR = os.path.expanduser("~/.cache/ax-shell/")
 
 def cache_notification_pixbuf(notification):
     """
-    Guarda un pixbuf escalado (48x48) en el directorio de caché y lo asigna al notification.
-    Se programa para ejecutarse en el idle loop para evitar bloquear el hilo principal.
+    Saves a scaled pixbuf (48x48) in the cache directory and assigns it to the notification.
     """
     if notification.image_pixbuf:
-        os.makedirs(CACHE_DIR, exist_ok=True)
-        cache_file = os.path.join(CACHE_DIR, f"notification_{notification.id}.png")
+        os.makedirs(PERSISTENT_DIR, exist_ok=True)
+        cache_file = os.path.join(PERSISTENT_DIR, f"notification_{notification.id}.png")
         try:
-            # Crear un pixbuf escalado y guardarlo
+            # Create a scaled pixbuf and save it
             scaled = notification.image_pixbuf.scale_simple(48, 48, GdkPixbuf.InterpType.BILINEAR)
             scaled.savev(cache_file, "png", [], [])
             notification.cached_image_path = cache_file
-            notification.cached_scaled_pixbuf = scaled
         except Exception as e:
-            logger.error(f"Error al cachear la imagen: {e}")
-    return False  # para GLib.idle_add
+            logger.error(f"Error caching the image: {e}")
+
+def load_scaled_pixbuf(notification, width, height):
+    """
+    Loads and scales a pixbuf for a notification, prioritizing cached images.
+    """
+    pixbuf = None
+    if hasattr(notification, "cached_image_path") and notification.cached_image_path and os.path.exists(notification.cached_image_path):
+        try:
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(notification.cached_image_path)
+            pixbuf = pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
+            return pixbuf
+        except Exception as e:
+            logger.error(f"Error loading cached image from {notification.cached_image_path}: {e}")
+    if notification.image_pixbuf:
+        pixbuf = notification.image_pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
+        return pixbuf
+    return get_app_icon_pixbuf(notification.app_icon, width, height)
+
+def get_app_icon_pixbuf(icon_path, width, height):
+    """
+    Loads and scales a pixbuf from an app icon path.
+    """
+    if not icon_path:
+        return None
+    if icon_path.startswith("file://"):
+        icon_path = icon_path[7:]
+    if not os.path.exists(icon_path):
+        logger.warning(f"Icon path does not exist: {icon_path}")
+        return None
+    try:
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon_path)
+        return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
+    except Exception as e:
+        logger.error(f"Failed to load or scale icon: {e}")
+        return None
+
 
 class ActionButton(Button):
     def __init__(self, action: NotificationAction, index: int, total: int, notification_box):
@@ -128,16 +158,8 @@ class NotificationBox(Box):
         )
 
     def create_content(self, notification):
-        # Se reutiliza el pixbuf escalado si ya fue cacheado; si no, se escala
-        if notification.image_pixbuf:
-            if hasattr(notification, "cached_scaled_pixbuf"):
-                pixbuf = notification.cached_scaled_pixbuf
-            else:
-                pixbuf = notification.image_pixbuf.scale_simple(
-                    48, 48, GdkPixbuf.InterpType.BILINEAR
-                )
-        else:
-            pixbuf = self.get_pixbuf(notification.app_icon, 48, 48)
+        pixbuf = load_scaled_pixbuf(notification, 48, 48)
+
         return Box(
             name="notification-content",
             spacing=8,
@@ -187,29 +209,15 @@ class NotificationBox(Box):
             ],
         )
 
-    def get_pixbuf(self, icon_path, width, height):
-        if icon_path.startswith("file://"):
-            icon_path = icon_path[7:]
-        if not os.path.exists(icon_path):
-            logger.warning(f"Icon path does not exist: {icon_path}")
-            return None
-        try:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon_path)
-            return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
-        except Exception as e:
-            logger.error(f"Failed to load or scale icon: {e}")
-            return None
 
     def create_action_buttons(self, notification):
-        return Box(
-            name="notification-action-buttons",
-            spacing=4,
-            h_expand=True,
-            children=[
-                ActionButton(action, i, len(notification.actions), self)
-                for i, action in enumerate(notification.actions)
-            ],
-        )
+        grid = Gtk.Grid()
+        grid.set_column_homogeneous(True)
+        grid.set_column_spacing(4)
+        for i, action in enumerate(notification.actions):
+            action_button = ActionButton(action, i, len(notification.actions), self)
+            grid.attach(action_button, i, 0, 1, 1) # col, row, colspan, rowspan
+        return grid
 
     def create_close_button(self):
         close_button = Button(
@@ -262,7 +270,7 @@ class NotificationBox(Box):
 
 class HistoricalNotification:
     """
-    Objeto mínimo para crear notificaciones históricas persistentes.
+    Minimal object to create persistent historical notifications.
     """
     def __init__(self, id, app_icon, summary, body, app_name, timestamp, cached_image_path=None):
         self.id = id
@@ -272,29 +280,105 @@ class HistoricalNotification:
         self.app_name = app_name
         self.timestamp = timestamp  # string ISO
         self.cached_image_path = cached_image_path
-        self.image_pixbuf = None  # Se cargará al solicitarse el pixbuf
-        self.actions = []  # Sin acciones en histórico
+        self.image_pixbuf = None  # Will be loaded when the pixbuf is requested
+        self.actions = []  # No actions in history
+        self.cached_scaled_pixbuf = None # Initialize cached_scaled_pixbuf here
 
-class NotificationHistory(ScrolledWindow):
+class NotificationHistory(Box):
     def __init__(self, **kwargs):
         super().__init__(
             name="notification-history",
             orientation="v",
-            min_content_size=(-1, -1),
-            max_content_size=(-1, -1),
+            **kwargs
         )
         self.notch = kwargs["notch"]
+        self.header_label = Label(
+            name="nhh",
+            label="Notifications",
+            h_align="start",
+            h_expand=True,
+        )
+        self.header_switch = Gtk.Switch(name="dnd-switch")
+        self.header_switch.set_vexpand(False)
+        self.header_switch.set_valign(Gtk.Align.CENTER)
+        self.header_switch.set_active(False) # Default to notifications enabled
+        self.header_clean = Button(
+            name="nhh-button",
+            child=Label(name="nhh-button-label", markup=icons.trash),
+            on_clicked=self.clear_history,
+        )
+        self.do_not_disturb_enabled = False # Initialize do_not_disturb state
+        self.header_switch.connect("notify::active", self.on_do_not_disturb_changed)
+        self.dnd_label = Label(name="dnd-label", markup=icons.notifications_off)
+
+        self.history_header = CenterBox(
+            name="notification-history-header",
+            spacing=8,
+            start_children=[self.header_switch, self.dnd_label],
+            center_children=[self.header_label],
+            end_children=[self.header_clean],
+        )
         self.notifications_list = Box(
             name="notifications-list",
             orientation="v",
             spacing=4,
         )
-        self.add(self.notifications_list)
-        self.persistent_notifications = []  # Lista de notificaciones guardadas (dict)
+        self.no_notifications_label = Label(
+            name="no-notifications-label",
+            markup=icons.notifications_clear,
+            v_align="fill",
+            h_align="fill",
+            v_expand=True,
+            h_expand=True,
+            justification="center",
+        )
+        self.no_notifications_box = Box(
+            name="no-notifications-box",
+            v_align="fill",
+            h_align="fill",
+            v_expand=True,
+            h_expand=True,
+            children=[self.no_notifications_label],
+        )
+        self.scrolled_window = ScrolledWindow(
+            name="notification-history-scrolled-window",
+            h_vexpand=True, # Make the scrolled window expand vertically
+            orientation="v",
+            h_expand=True,
+            v_expand=True,
+            min_content_size=(-1, -1),
+            max_content_size=(-1, -1),
+        )
+        self.scrolled_window.add_with_viewport(Box(orientation="v", children=[self.notifications_list, self.no_notifications_box])) # Added viewport and box to center label
+        self.persistent_notifications = []  # List of saved notifications (dict)
+        self.add(self.history_header) # Add header label
+        self.add(self.scrolled_window) # Add scrolled window
         self._load_persistent_history()
+        # update_no_notifications_label_visibility is called inside _load_persistent_history using GLib.idle_add
+
+    def on_do_not_disturb_changed(self, switch, pspec):
+        self.do_not_disturb_enabled = switch.get_active()
+        logger.info(f"Do Not Disturb mode {'enabled' if self.do_not_disturb_enabled else 'disabled'}")
+
+    def clear_history(self, *args):
+        """Clears the notification history (visual and persistent)."""
+        # Clear visual history
+        for child in self.notifications_list.get_children()[:]: # Iterate over a copy to avoid issues with removing children
+            self.notifications_list.remove(child)
+            child.destroy()
+        # Clear persistent history
+        self.persistent_notifications = []
+        if os.path.exists(PERSISTENT_HISTORY_FILE):
+            try:
+                os.remove(PERSISTENT_HISTORY_FILE)
+                logger.info("Notification history cleared.")
+            except Exception as e:
+                logger.error(f"Error deleting persistent history file: {e}")
+        self.update_separators()
+        self.update_no_notifications_label_visibility() # Update label visibility after clearing
 
     def _load_persistent_history(self):
-        """Carga el historial persistente desde el archivo JSON y lo restaura en la interfaz."""
+        """Loads the persistent history from the JSON file and restores it in the interface."""
         if not os.path.exists(PERSISTENT_DIR):
             os.makedirs(PERSISTENT_DIR, exist_ok=True)
         if os.path.exists(PERSISTENT_HISTORY_FILE):
@@ -304,39 +388,41 @@ class NotificationHistory(ScrolledWindow):
                 for note in self.persistent_notifications:
                     self._add_historical_notification(note)
             except Exception as e:
-                logger.error(f"Error al cargar el historial persistente: {e}")
+                logger.error(f"Error loading persistent history: {e}")
+        GLib.idle_add(self.update_no_notifications_label_visibility) # Call update in idle loop after history is loaded
 
     def _save_persistent_history(self):
-        """Guarda la lista de notificaciones en el archivo JSON."""
+        """Saves the list of notifications to the JSON file."""
         try:
             with open(PERSISTENT_HISTORY_FILE, "w") as f:
                 json.dump(self.persistent_notifications, f)
         except Exception as e:
-            logger.error(f"Error al guardar el historial persistente: {e}")
+            logger.error(f"Error saving persistent history: {e}")
 
     def delete_historical_notification(self, note_id, container):
         """
-        Elimina una notificación histórica (visual y persistente) y borra sus archivos relacionados.
+        Deletes a historical notification (visual and persistent) and deletes its related files.
         """
-        # Actualizar la lista persistente
+        # Update the persistent list
         self.persistent_notifications = [
             note for note in self.persistent_notifications if note.get("id") != note_id
         ]
         self._save_persistent_history()
-        # Borrar el archivo cacheado, si existe
+        # Delete the cached file, if it exists
         if hasattr(container, "notification"):
             notif = container.notification
             if hasattr(notif, "cached_image_path") and notif.cached_image_path and os.path.exists(notif.cached_image_path):
                 try:
                     os.remove(notif.cached_image_path)
                 except Exception as e:
-                    logger.error(f"Error al eliminar la imagen cacheada: {e}")
+                    logger.error(f"Error deleting the cached image: {e}")
         container.destroy()
         GLib.idle_add(self.update_separators)
+        self.update_no_notifications_label_visibility() # Update label visibility after deletion
 
     def _add_historical_notification(self, note):
-        """Crea y agrega un NotificationBox basado en un dict histórico."""
-        # Crear un objeto histórico y asignarlo al NotificationBox.
+        """Creates and adds a NotificationBox based on a historical dict."""
+        # Create a historical object and assign it to the NotificationBox.
         hist_notif = HistoricalNotification(
             id=note.get("id"),
             app_icon=note.get("app_icon"),
@@ -346,9 +432,10 @@ class NotificationHistory(ScrolledWindow):
             timestamp=note.get("timestamp"),
             cached_image_path=note.get("cached_image_path"),
         )
-        # Se crea un NotificationBox sin timeout ni botones de acción (para histórico)
-        hist_box = NotificationBox(hist_notif, timeout_ms=0)
-        # Removemos botones de acción ya que en histórico no son necesarios
+
+        # A NotificationBox is created without timeout or action buttons (for history)
+        hist_box = NotificationBox(hist_notif, timeout_ms=0) # Use historical notification object
+        # Action buttons are removed as they are not necessary in history
         for child in hist_box.get_children():
             if child.get_name() == "notification-action-buttons":
                 hist_box.remove(child)
@@ -358,7 +445,7 @@ class NotificationHistory(ScrolledWindow):
             h_align="fill",
             h_expand=True,
         )
-        # Convertir el timestamp al objeto datetime; si falla se usa datetime.now()
+        # Convert the timestamp to a datetime object; if it fails, datetime.now() is used
         try:
             arrival = datetime.fromisoformat(hist_notif.timestamp)
         except Exception:
@@ -391,7 +478,7 @@ class NotificationHistory(ScrolledWindow):
                     name="notification-image",
                     children=[
                         CustomImage(
-                            pixbuf=self.get_cached_pixbuf(hist_notif, 48, 48)
+                            pixbuf=load_scaled_pixbuf(hist_notif, 48, 48)
                         )
                     ]
                 ),
@@ -431,7 +518,7 @@ class NotificationHistory(ScrolledWindow):
                 Box(
                     orientation="v",
                     children=[
-                        # Al eliminar la notificación, se llama a delete_historical_notification
+                        # When deleting the notification, delete_historical_notification is called
                         Button(
                             name="notif-close-button",
                             child=Label(name="notif-close-label", markup=icons.cancel),
@@ -447,6 +534,7 @@ class NotificationHistory(ScrolledWindow):
         self.notifications_list.pack_start(container, False, False, 0)
         self.update_separators()
         self.show_all()
+        self.update_no_notifications_label_visibility() # Update label visibility after adding
 
     def update_last_separator(self):
         children = self.notifications_list.get_children()
@@ -455,17 +543,6 @@ class NotificationHistory(ScrolledWindow):
             if separator:
                 separator[0].set_visible(child != children[-1])
 
-    def get_cached_pixbuf(self, notification, width, height):
-        # Se intenta utilizar el pixbuf escalado ya cacheado
-        if hasattr(notification, "cached_scaled_pixbuf"):
-            return notification.cached_scaled_pixbuf
-        if hasattr(notification, "cached_image_path") and notification.cached_image_path and os.path.exists(notification.cached_image_path):
-            try:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file(notification.cached_image_path)
-                return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
-            except Exception as e:
-                logger.error(f"Error al cargar la imagen cacheada: {e}")
-        return self.get_pixbuf(notification.app_icon, width, height)
 
     def add_notification(self, notification_box):
         if len(self.notifications_list.get_children()) >= 50:
@@ -480,9 +557,10 @@ class NotificationHistory(ScrolledWindow):
                     try:
                         os.remove(notif.cached_image_path)
                     except Exception as e:
-                        logger.error(f"Error al eliminar la imagen cacheada: {e}")
+                        logger.error(f"Error deleting the cached image: {e}")
             container.destroy()
             GLib.idle_add(self.update_separators)
+            self.update_no_notifications_label_visibility() # Update label visibility after removing
         container = Box(
             name="notification-container",
             orientation="v",
@@ -515,7 +593,7 @@ class NotificationHistory(ScrolledWindow):
                     name="notification-image",
                     children=[
                         CustomImage(
-                            pixbuf=self.get_cached_pixbuf(notification_box.notification, 48, 48)
+                            pixbuf=load_scaled_pixbuf(notification_box.notification, 48, 48) # Use notification_box.notification here
                         )
                     ]
                 ),
@@ -587,6 +665,7 @@ class NotificationHistory(ScrolledWindow):
         self.update_separators()
         self.show_all()
         self._append_persistent_notification(notification_box, container.arrival_time)
+        self.update_no_notifications_label_visibility() # Update label visibility after adding
 
     def _append_persistent_notification(self, notification_box, arrival_time):
         note = {
@@ -602,18 +681,6 @@ class NotificationHistory(ScrolledWindow):
         self.persistent_notifications = self.persistent_notifications[-50:]
         self._save_persistent_history()
 
-    def get_pixbuf(self, icon_path, width, height):
-        if icon_path.startswith("file://"):
-            icon_path = icon_path[7:]
-        if not os.path.exists(icon_path):
-            # logger.warning(f"Icon path does not exist: {icon_path}")
-            return None
-        try:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon_path)
-            return pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
-        except Exception as e:
-            logger.error(f"Failed to load or scale icon: {e}")
-            return None
 
     def update_separators(self):
         children = self.notifications_list.get_children()
@@ -625,6 +692,13 @@ class NotificationHistory(ScrolledWindow):
             if i < len(children) - 1:
                 separator = Box(name="notification-separator")
                 child.add(separator)
+
+    def update_no_notifications_label_visibility(self):
+        """Updates the visibility of the 'No notifications!' label based on history."""
+        has_notifications = bool(self.notifications_list.get_children())
+        self.no_notifications_box.set_visible(not has_notifications)
+        self.notifications_list.set_visible(has_notifications)
+
 
 class NotificationContainer(Box):
     def __init__(self, **kwargs):
@@ -703,6 +777,16 @@ class NotificationContainer(Box):
         self.navigation.set_visible(len(self.notifications) > 1)
 
     def on_new_notification(self, fabric_notif, id):
+        if self.notch.notification_history.do_not_disturb_enabled:
+            logger.info("Do Not Disturb mode enabled: adding notification directly to history.")
+            notification = fabric_notif.get_notification_from_id(id)
+            if notification.image_pixbuf:
+                cache_notification_pixbuf(notification) # Cache synchronously before adding to history
+            new_box = NotificationBox(notification) # We still create the NotificationBox for history processing
+            # Do NOT set container or connect closed signal as it's for history only
+            self.notch.notification_history.add_notification(new_box) # Directly add to history
+            return # Exit early, do not proceed with displaying live notification
+
         notification = fabric_notif.get_notification_from_id(id)
         if notification.image_pixbuf:
             GLib.idle_add(cache_notification_pixbuf, notification)
@@ -772,7 +856,7 @@ class NotificationContainer(Box):
             self.current_index = new_index
             self.update_navigation_buttons()
         except Exception as e:
-            logger.error(f"Error al cerrar notificación: {e}")
+            logger.error(f"Error closing notification: {e}")
         logger.info(f"Notification {notification.id} closed with reason: {reason}")
 
     def _destroy_container(self):
@@ -786,7 +870,7 @@ class NotificationContainer(Box):
             if self.notification_box.get_parent():
                 self.notification_box.get_parent().remove(self.notification_box)
         except Exception as e:
-            logger.error(f"Error al limpiar el contenedor: {e}")
+            logger.error(f"Error cleaning up the container: {e}")
         finally:
             self._is_destroying = False
             return False
@@ -799,7 +883,7 @@ class NotificationContainer(Box):
                 if not notification._destroyed and notification.get_parent():
                     notification.stop_timeout()
             except Exception as e:
-                logger.error(f"Error al pausar timeout: {e}")
+                logger.error(f"Error pausing timeout: {e}")
 
     def resume_all_timeouts(self):
         if self._is_destroying:
@@ -809,10 +893,9 @@ class NotificationContainer(Box):
                 if not notification._destroyed and notification.get_parent():
                     notification.start_timeout()
             except Exception as e:
-                logger.error(f"Error al reanudar timeout: {e}")
+                logger.error(f"Error resuming timeout: {e}")
 
     def close_all_notifications(self, *args):
         notifications_to_close = self.notifications.copy()
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
-

@@ -78,6 +78,8 @@ bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
 notifications_off: str = "&#xece9;"
 
+notifications_clear: str = "&#xf814;";
+
 # Bluetooth
 bluetooth_connected: str = "&#xecea;"
 bluetooth_disconnected: str = "&#xf081;"
