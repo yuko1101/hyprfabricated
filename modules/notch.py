@@ -52,7 +52,7 @@ class Notch(Window):
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'Desktop' if not win_class or win_class == 'unknown' else truncate(win_class, 32)}}",
+                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 32)}}",
                 truncate=truncate,
             ),
         )
@@ -302,8 +302,4 @@ class Notch(Window):
     
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
-            self.compact_stack.set_visible_child(self.window_title)
-
-
-    
-
+            self.compact_stack.set_visible_child(self.active_window)
