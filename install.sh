@@ -26,6 +26,7 @@ PACKAGES=(
     python-setproctitle
     python-toml
     python-watchdog
+    swappy
     swww
     tesseract
     uwsm

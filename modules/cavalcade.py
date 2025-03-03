@@ -239,3 +239,4 @@ class SpectrumRender():
         box.set_size_request(150, 40)
         box.add_overlay(self.draw.area)
         return box
+

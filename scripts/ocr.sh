@@ -12,10 +12,8 @@ tesseract -l eng "$TMP_IMG" - | wl-copy && \
 
 
 if [ -f "${TMP_IMG}" ]; then
-    notify-send -a "Fabric" -i "${full_path}" "OCR Sucess" "Text Copied to Clipboard"
+    notify-send -a "Ax-Shell" -i "${full_path}" "OCR Sucess" "Text Copied to Clipboard"
 else
-    notify-send -a "Fabric" "OCR Aborted"
+    notify-send -a "Ax-Shell" "OCR Aborted"
 fi
 rm "$TMP_IMG"
-
-
