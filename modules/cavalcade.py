@@ -121,7 +121,7 @@ class Cava:
 class AttributeDict(dict):
     """Dictionary with keys as attributes. Does nothing but easy reading"""
     def __getattr__(self, attr):
-        return self[attr]
+        return self.get(attr,3)
 
     def __setattr__(self, attr, value):
         self[attr] = value
@@ -174,7 +174,7 @@ class Spectrum:
         for i, value in enumerate(self.audio_sample):
 
             # width = self.sizes.bar.width + int(i < self.sizes.wcpi)
-            width = self.sizes.area.width / self.sizes.number - self.sizes.padding 
+            width = self.sizes.area.width / self.sizes.number - self.sizes.padding
             radius = width / 2
             height = max(self.sizes.bar.height * min(value, 1), self.sizes.zero) / 2
             if height == self.sizes.zero / 2 + 1:
@@ -200,7 +200,7 @@ class Spectrum:
         self.sizes.padding = 5
         self.sizes.zero = 2
 
-        self.sizes.area.width = self.area.get_allocated_width() 
+        self.sizes.area.width = self.area.get_allocated_width()
         self.sizes.area.height = self.area.get_allocated_height() - 2
 
         tw = self.sizes.area.width - self.sizes.padding * (self.sizes.number - 1)
@@ -239,3 +239,4 @@ class SpectrumRender():
         box.set_size_request(150, 40)
         box.add_overlay(self.draw.area)
         return box
+
