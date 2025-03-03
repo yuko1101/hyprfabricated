@@ -7,6 +7,7 @@ set -o pipefail  # Prevent errors in a pipeline from being masked
 REPO_URL="https://github.com/tr1xem/hyprfabricated.git"
 INSTALL_DIR="$HOME/.config/hyprfabricated"
 PACKAGES=(
+    python-requests
     acpi
     brightnessctl
     fabric-cli-git
