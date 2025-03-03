@@ -191,7 +191,7 @@ class NotificationBox(Box):
         if icon_path.startswith("file://"):
             icon_path = icon_path[7:]
         if not os.path.exists(icon_path):
-            logger.warning(f"Icon path does not exist: {icon_path}")
+            # logger.warning(f"Icon path does not exist: {icon_path}")
             return None
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon_path)
