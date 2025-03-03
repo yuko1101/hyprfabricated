@@ -32,14 +32,14 @@
 > PRE-RELEASE STATE. USABLE BUT INCOMPLETE.
 
 > [!NOTE]
-> You need a functioning Hyprland installation.
-> You need to install plasma-browser-integration for mpris and cava to work as it is intended
+> - You need a functioning Hyprland installation. <br>
+> - You need to install plasma-browser-integration for mpris and cava to work as it is intended
 
 ### Arch Linux
 
 > [!TIP]
-> This command also works for updating an existing installation!!!
-> If you see a transparent bar just change the wallpaper from notch > wallpaper as then it would gen color configs
+> - This command also works for updating an existing installation!!! <br>
+> - If you see a transparent bar just change the wallpaper from notch > wallpaper as then it would gen color configs
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.sh | bash
