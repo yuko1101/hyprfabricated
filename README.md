@@ -67,11 +67,14 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
     - `vte3`
     - `cantarell-fonts-0.100`
     - `wlinhibit`
+    - `gpu-screen-recorder`
+    - `grimblast-git`
     - Python dependencies:
         - pillow
         - toml
         - setproctitle
         - watchdog
+        - requests
     - Fonts (automated on first run):
         - Zed Sans
         - Tabler Icons
