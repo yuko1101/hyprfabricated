@@ -160,11 +160,12 @@ class Bar(Window):
                 orientation="h",
                 children=[
                     
-                    self.button_color,
+                    
                     self.boxed_revealer,
-                    self.button_color,
+                    self.battery,
+                    #self.updates,
                     self.systray,
-                    #self.button_tools,
+                    self.button_tools,
                     self.button_power,
                 ],
             ),
