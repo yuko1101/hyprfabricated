@@ -7,9 +7,9 @@ from gi.repository import Gdk, GLib
 import modules.data as data
 import subprocess
 
-SCREENSHOT_SCRIPT = "/home/saumya/.local/bin/screenshot"
+SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
-SCREENRECORD_SCRIPT = "~/.local/bin/record.sh"
+SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 SCREENRECORD_APP = "gpu-screen-recorder"
 class Toolbox(Box):
     def __init__(self, **kwargs):
@@ -108,7 +108,7 @@ class Toolbox(Box):
 
     # Action methods
     def ssfull(self, *args):
-        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT}")
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p")
         self.close_menu()
 
     def screenrecord(self, *args):
@@ -121,7 +121,7 @@ class Toolbox(Box):
         self.close_menu()
 
     def ssregion(self, *args):
-        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} ")
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
         self.close_menu()
 
     def colorpicker(self, button, event):
