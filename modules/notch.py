@@ -19,6 +19,8 @@ from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
 from modules.player import PlayerSmall
+from modules.tools import Toolbox
+
 import json
 
 def truncate_title(title):
@@ -107,12 +109,19 @@ class Notch(Window):
             Gdk.EventMask.BUTTON_PRESS_MASK | 
             Gdk.EventMask.SMOOTH_SCROLL_MASK
         )
+        # Se agrega el mask de smooth scroll junto a scroll y button press.
+        self.compact.add_events(
+            Gdk.EventMask.SCROLL_MASK | 
+            Gdk.EventMask.BUTTON_PRESS_MASK | 
+            Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
         self.compact.connect("scroll-event", self._on_compact_scroll)
         self.compact.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
         # Add cursor change on hover.
         self.compact.connect("enter-notify-event", self.on_button_enter)
         self.compact.connect("leave-notify-event", self.on_button_leave)
 
+        self.tools = Toolbox(notch=self)
         self.stack = Stack(
             name="notch-content",
             v_expand=True,
@@ -126,6 +135,7 @@ class Notch(Window):
                 self.overview,
                 self.power,
                 self.bluetooth,
+                self.tools,
             ]
         )
 
@@ -191,6 +201,9 @@ class Notch(Window):
 
         self.hidden = False
 
+        self._scrolling = False
+
+        self.add(self.notch_box)
         # Variables para controlar la sensibilidad del smooth scroll.
         self._scroll_accumulator = 0.0
         self.scroll_threshold = 15.0  # Ajusta este valor para modificar la sensibilidad
@@ -232,9 +245,9 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.tools]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth", "tools"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -250,7 +263,9 @@ class Notch(Window):
             "dashboard": self.dashboard,
             "overview": self.overview,
             "power": self.power,
-            "bluetooth": self.bluetooth
+            "bluetooth": self.bluetooth,
+            "tools": self.tools,
+
         }
 
         # Limpiar clases y estados previos
@@ -258,13 +273,13 @@ class Notch(Window):
             self.stack.remove_style_class(style)
         for w in widgets.values():
             w.remove_style_class("open")
-        
+
         # Configurar según el widget solicitado
         if widget in widgets:
             self.stack.add_style_class(widget)
             self.stack.set_visible_child(widgets[widget])
             widgets[widget].add_style_class("open")
-            
+
             # Acciones específicas para el launcher
             if widget == "launcher":
                 self.launcher.open_launcher()

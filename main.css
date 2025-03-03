@@ -18,7 +18,7 @@
 @import url("./styles/volume.css");
 @import url("./styles/sensors.css");
 @import url("./styles/metrics.css");
-
+@import url("./styles/tools.css");
 * {
   all: unset;
   color: var(--foreground);

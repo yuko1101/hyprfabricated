@@ -19,6 +19,7 @@ from modules.battery import Battery
 
 from modules.updates import UpdatesWidget
 from modules.weather import Weather
+from modules.tools import Toolbox
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -51,6 +52,18 @@ class Bar(Window):
         self.workspaces.connection.connect("event::createworkspacev2", self.hide_ignored_workspaces)
         self.workspaces.connection.connect("event::urgent", self.hide_ignored_workspaces)
         
+        self.button_tools = Button(
+            name="button-bar",
+            on_clicked=lambda *_: self.tools_menu(),
+            child=Label(
+                name="button-bar-label",
+                markup=icons.toolbox
+            )
+        )
+        self.button_tools.connect("enter_notify_event", self.on_button_enter)
+        self.button_tools.connect("leave_notify_event", self.on_button_leave)
+
+
         self.systray = SystemTray()
         self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
@@ -96,27 +109,6 @@ class Bar(Window):
         self.button_overview.connect("enter_notify_event", self.on_button_enter)
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
-        self.button_color = Button(
-            name="button-bar",
-            tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB",
-            v_expand=False,
-            child=Label(
-                name="button-bar-label",
-                markup=icons.colorpicker
-            )
-        )
-        self.button_color.connect("enter-notify-event", self.on_button_enter)
-        self.button_color.connect("leave-notify-event", self.on_button_leave)
-        self.button_color.connect("button-press-event", self.colorpicker)
-
-        self.button_config = Button(
-            name="button-bar",
-            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.config
-            )
-        )
 
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
@@ -170,10 +162,9 @@ class Bar(Window):
                     
                     self.button_color,
                     self.boxed_revealer,
-                    self.battery,
-                    #self.updates,
+                    self.button_color,
                     self.systray,
-                    #self.button_config,
+                    #self.button_tools,
                     self.button_power,
                 ],
             ),
@@ -208,14 +199,9 @@ class Bar(Window):
 
     def power_menu(self):
         self.notch.open_notch("power")
+    def tools_menu(self):
+        self.notch.open_notch("tools")
 
-    def colorpicker(self, button, event):
-        if event.button == 1:
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hex.sh')}")
-        elif event.button == 2:
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hsv.sh')}")
-        elif event.button == 3:
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-rgb.sh')}")
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
