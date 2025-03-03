@@ -38,16 +38,6 @@ class Bar(Window):
             spacing=10,
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
-        self.button_tools = Button(
-            name="button-bar",
-            on_clicked=lambda *_: self.tools_menu(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.toolbox
-            )
-        )
-        self.button_tools.connect("enter_notify_event", self.on_button_enter)
-        self.button_tools.connect("leave_notify_event", self.on_button_leave)
 
 
         self.systray = SystemTray()
@@ -69,7 +59,8 @@ class Bar(Window):
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
 
         self.button_tools = Button(
-            name="tool-bar",
+            name="button-bar",
+            tooltip_text="Opens Toolbox",
             on_clicked=lambda *_: self.tools_menu(),
             child=Label(
                 name="button-bar-label",
