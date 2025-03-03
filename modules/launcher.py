@@ -6,6 +6,7 @@ from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async
+from fabric.widgets.image import Image
 from gi.repository import GLib, Gdk
 import modules.icons as icons
 import modules.data as data
