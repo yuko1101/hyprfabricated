@@ -324,4 +324,4 @@ class Notch(Window):
 
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
-            self.compact_stack.set_visible_child(self.active_window)
+            self.compact_stack.set_visible_child(self.window_title)

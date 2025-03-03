@@ -43,7 +43,7 @@ class PlayerBox(Box):
         image_file = f"{data.HOME_DIR}/.current.wall"
 
         if not os.path.exists(image_file):
-            image_file = f"{data.HOME_DIR} ~/.config/hyprfabricated/assets/wallpapers_example/example-1.jpg"
+            image_file = f"{data.HOME_DIR}/.config/hyprfabricated/assets/wallpapers_example/example-1.jpg"
         self.cover = CircleImage(
             name="player-cover",
             image_file=image_file,
