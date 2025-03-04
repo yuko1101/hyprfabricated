@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from gi.repository import GdkPixbuf, GLib, Gtk
 from loguru import logger
 from widgets.rounded_image import CustomImage
+from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 from fabric.notifications.service import (
     Notification,
     NotificationAction,
@@ -70,7 +71,7 @@ def get_app_icon_pixbuf(icon_path, width, height):
     Loads and scales a pixbuf from an app icon path.
     """
     if not icon_path:
-        return None
+        icon_path = get_relative_path("../assets/icons/notification.png")
     if icon_path.startswith("file://"):
         icon_path = icon_path[7:]
     if not os.path.exists(icon_path):

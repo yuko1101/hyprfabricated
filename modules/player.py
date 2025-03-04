@@ -10,7 +10,7 @@ from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.stack import Stack
-from fabric.utils.helpers import exec_shell_command_async
+from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 from widgets.circle_image import CircleImage
 import modules.icons as icons
 import modules.data as data
@@ -40,10 +40,10 @@ class PlayerBox(Box):
         super().__init__(orientation="v", h_align="fill", spacing=0, h_expand=False, v_expand=True)
         self.mpris_player = mpris_player
 
-        image_file = f"{data.HOME_DIR}/.current.wall"
-
-        if not os.path.exists(image_file):
-            image_file = f"{data.HOME_DIR}/.config/hyprfabricated/assets/wallpapers_example/example-1.jpg"
+        image_file = get_relative_path("../assets/icons/player.png")
+        print(image_file)
+        # if not os.path.exists(image_file):
+        #     image_file = f"{data.HOME_DIR}/.config/hyprfabricated/assets/wallpapers_example/example-1.jpg"
         self.cover = CircleImage(
             name="player-cover",
             image_file=image_file,
@@ -171,7 +171,7 @@ class PlayerBox(Box):
             else:
                 self._set_cover_image(mp.arturl)
         else:
-            fallback = os.path.expanduser("~/.current.wall")
+            fallback = get_relative_path("../assets/icons/player.png")
             self._set_cover_image(fallback)
             file_obj = Gio.File.new_for_path(fallback)
             monitor = file_obj.monitor_file(Gio.FileMonitorFlags.NONE, None)
@@ -194,7 +194,7 @@ class PlayerBox(Box):
         if image_path and os.path.isfile(image_path):
             self.cover.set_image_from_file(image_path)
         else:
-            fallback = os.path.expanduser("~/.current.wall")
+            fallback = get_relative_path("../assets/icons/player.png")
             self.cover.set_image_from_file(fallback)
             file_obj = Gio.File.new_for_path(fallback)
             monitor = file_obj.monitor_file(Gio.FileMonitorFlags.NONE, None)
@@ -216,7 +216,7 @@ class PlayerBox(Box):
             temp_file.close()
             local_arturl = temp_file.name
         except Exception:
-            local_arturl = os.path.expanduser("~/.current.wall")
+            local_arturl = get_relative_path("../assets/icons/player.png")
         GLib.idle_add(self._set_cover_image, local_arturl)
         return None
 
@@ -227,7 +227,7 @@ class PlayerBox(Box):
             self.play_pause.get_child().set_markup(icons.play)
 
     def on_wallpaper_changed(self, monitor, file, other_file, event):
-        self.cover.set_image_from_file(os.path.expanduser("~/.current.wall"))
+        self.cover.set_image_from_file(get_relative_path("../assets/icons/player.png"))
 
     # --- Control methods, defined only once each ---
     def _on_prev_clicked(self, button):
