@@ -175,7 +175,7 @@ class NotificationBox(Box):
             Image(
                 name="notification-icon",
                 image_file=notification.app_icon[7:],
-                size=24,
+                size=18,
             ) if "file://" in notification.app_icon else
             Image(
                 name="notification-icon",
@@ -188,7 +188,7 @@ class NotificationBox(Box):
             name="notification-title",
             start_children=[
                 Box(
-                    spacing=4,
+                    spacing=24,
                     children=[
                         app_icon,
                         Label(
@@ -204,7 +204,7 @@ class NotificationBox(Box):
 
     def create_content(self):
         notification = self.notification
-        pixbuf = load_scaled_pixbuf(self, 48, 48) # Pass self to load_scaled_pixbuf
+        pixbuf = load_scaled_pixbuf(self, 40, 40) # Pass self to load_scaled_pixbuf
         return Box(
             name="notification-content",
             spacing=8,
@@ -302,7 +302,11 @@ class NotificationBox(Box):
                 self.notification.close("expired")
                 self.stop_timeout()
             except Exception as e:
-                logger.error(f"Error in close_notification for notification {self.notification.id}: {e}")
+                if "'HistoricalNotification' object has no attribute 'close'" in str(e):
+                    pass
+                else:
+                    logger.error(f"Error in close_notification for notification {self.notification.id}: {e}")
+
         return False
 
     def destroy(self, from_history_delete=False):
@@ -447,7 +451,8 @@ class NotificationHistory(Box):
             try:
                 with open(PERSISTENT_HISTORY_FILE, "r") as f:
                     self.persistent_notifications = json.load(f)
-                for note in self.persistent_notifications:
+                # Iterate in reverse so that the newest (at index 0) ends up at the top of the UI.
+                for note in reversed(self.persistent_notifications):
                     self._add_historical_notification(note)
             except Exception as e:
                 logger.error(f"Error loading persistent history: {e}")
@@ -535,7 +540,7 @@ class NotificationHistory(Box):
                     name="notification-image",
                     children=[
                         CustomImage(
-                            pixbuf=load_scaled_pixbuf(hist_box, 48, 48) # Pass hist_box to load_scaled_pixbuf
+                            pixbuf=load_scaled_pixbuf(hist_box, 40, 40) # Pass hist_box to load_scaled_pixbuf
                         )
                     ]
                 ),
@@ -588,6 +593,7 @@ class NotificationHistory(Box):
         container.add(content_box)
         container.add(Box(name="notification-separator"))
         self.notifications_list.pack_start(container, False, False, 0)
+        self.notifications_list.reorder_child(container, 0)
         self.update_separators()
         self.show_all()
         self.update_no_notifications_label_visibility()
@@ -602,7 +608,7 @@ class NotificationHistory(Box):
 
     def add_notification(self, notification_box):
         if len(self.notifications_list.get_children()) >= 50:
-            oldest_notification_container = self.notifications_list.get_children()[0]
+            oldest_notification_container = self.notifications_list.get_children()[-1]
             self.notifications_list.remove(oldest_notification_container)
             if hasattr(oldest_notification_container, "notification_box") and hasattr(oldest_notification_container.notification_box, "cached_image_path") and oldest_notification_container.notification_box.cached_image_path and os.path.exists(oldest_notification_container.notification_box.cached_image_path):
                 try:
@@ -723,6 +729,7 @@ class NotificationHistory(Box):
         container.add(hist_box)
         container.add(Box(name="notification-separator"))
         self.notifications_list.pack_start(container, False, False, 0)
+        self.notifications_list.reorder_child(container, 0)
         self.update_separators()
         self.show_all()
         self._append_persistent_notification(notification_box, container.arrival_time)
@@ -738,8 +745,8 @@ class NotificationHistory(Box):
             "timestamp": arrival_time.isoformat(),
             "cached_image_path": notification_box.cached_image_path
         }
-        self.persistent_notifications.append(note)
-        self.persistent_notifications = self.persistent_notifications[-50:]
+        self.persistent_notifications.insert(0, note)
+        self.persistent_notifications = self.persistent_notifications[:50]
         self._save_persistent_history()
 
 

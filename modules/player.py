@@ -15,7 +15,7 @@ from widgets.circle_image import CircleImage
 import modules.icons as icons
 import modules.data as data
 from services.mpris import MprisPlayerManager, MprisPlayer
-
+from gi.repository import GdkPixbuf, Gio
 from modules.cavalcade import SpectrumRender
 
 def get_player_icon_markup_by_name(player_name):
@@ -41,7 +41,6 @@ class PlayerBox(Box):
         self.mpris_player = mpris_player
 
         image_file = get_relative_path("../assets/icons/player.png")
-        print(image_file)
         # if not os.path.exists(image_file):
         #     image_file = f"{data.HOME_DIR}/.config/hyprfabricated/assets/wallpapers_example/example-1.jpg"
         self.cover = CircleImage(
@@ -191,7 +190,14 @@ class PlayerBox(Box):
             self.forward.set_visible(True)
 
     def _set_cover_image(self, image_path):
-        if image_path and os.path.isfile(image_path):
+        def is_image(file_path):
+            try:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file(file_path)
+                return True
+            except GLib.Error:
+                return False
+
+        if image_path and os.path.isfile(image_path) and is_image(image_path):
             self.cover.set_image_from_file(image_path)
         else:
             fallback = get_relative_path("../assets/icons/player.png")

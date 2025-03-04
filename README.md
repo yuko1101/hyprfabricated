@@ -95,23 +95,22 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Terminal
 - [x] Pins
 - [x] Kanban Board
-- [x] Sys Info
-- [x] Calendar (Incomplete)
+- [x] Calendar
 - [x] Color Picker
 - [x] Dashboard
-- [ ] Network Manager
 - [x] Bluetooth Manager
 - [x] Power Manager
 - [x] Settings
 - [x] Screenshot
 - [x] Screen Recorder
 - [x] OCR
-- [ ] Clipboard Manager
-- [x] Emoji Manager
-- [ ] Dock
 - [x] Workspaces Overview
+- [ ] Network Manager
+- [ ] Clipboard Manager
+- [ ] Emoji Manager
+- [ ] Dock
 - [ ] Multimodal AI Assistant
-- [ i] Vertical Layout
+- [ ] Vertical Layout
 - [ ] Multi-monitor support
 
 # Credits

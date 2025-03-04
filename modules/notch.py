@@ -10,6 +10,7 @@ from fabric.hyprland.widgets import ActiveWindow
 from fabric.utils.helpers import FormattedString, truncate
 from gi.repository import GLib, Gdk, Gtk
 from modules.launcher import AppLauncher
+from modules.emoji import Emojipicker
 from modules.dashboard import Dashboard
 from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
@@ -44,6 +45,7 @@ class Notch(Window):
         # Luego inicializamos el resto de componentes que dependen de notification_history
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
+        self.emoji = Emojipicker(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
         self.tools = Toolbox(notch=self)
@@ -122,6 +124,7 @@ class Notch(Window):
                 self.dashboard,
                 self.overview,
                 self.power,
+                self.emoji,
                 self.tools,
                 self.bluetooth,
                 self.tools,
@@ -231,7 +234,7 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.tools]:
+        for widget in [self.launcher,self.emoji, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.tools]:
             widget.remove_style_class("open")
         for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth", "tools"]:
             self.stack.remove_style_class(style)
@@ -246,6 +249,7 @@ class Notch(Window):
 
         widgets = {
             "launcher": self.launcher,
+            "emoji": self.emoji,
             "dashboard": self.dashboard,
             "overview": self.overview,
             "power": self.power,
