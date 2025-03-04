@@ -9,6 +9,7 @@ INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
     acpi
     brightnessctl
+    cava
     fabric-cli-git
     gnome-bluetooth-3.0
     gpu-screen-recorder
