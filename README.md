@@ -48,6 +48,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - [Matugen](https://github.com/InioX/matugen)
     - `acpi`
     - `brightnessctl`
+    - `cava`
     - `gnome-bluetooth-3.0`
     - `gpu-screen-recorder`
     - `grimblast`
@@ -57,6 +58,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `hyprsunset`
     - `imagemagick`
     - `libnotify`
+    - `noto-fonts-emoji`
     - `playerctl`
     - `swappy`
     - `swww`
