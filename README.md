@@ -27,9 +27,6 @@
 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Package.png" alt="Package" width="25" height="25" /></sub> Installation</h2>
 
-> [!CAUTION]
-> PRE-RELEASE STATE. USABLE BUT INCOMPLETE.
-
 > [!NOTE]
 > You need a functioning Hyprland installation.
 
@@ -50,9 +47,9 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - [Gray](https://github.com/Fabric-Development/gray)
     - [Matugen](https://github.com/InioX/matugen)
     - `acpi`
-    - `auto-cpufreq`
-    - `playerctl`
+    - `brightnessctl`
     - `gnome-bluetooth-3.0`
+    - `gpu-screen-recorder`
     - `grimblast`
     - `hypridle`
     - `hyprlock`
@@ -60,9 +57,11 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `hyprsunset`
     - `imagemagick`
     - `libnotify`
+    - `playerctl`
+    - `swappy`
     - `swww`
+    - `tesseract`
     - `uwsm`
-    - `vte3`
     - `wlinhibit`
     - Python dependencies:
         - pillow
@@ -91,7 +90,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] Kanban Board
 - [x] Calendar (Incomplete)
 - [x] Color Picker
-- [ ] Dashboard
+- [x] Dashboard
 - [ ] Network Manager
 - [x] Bluetooth Manager
 - [x] Power Manager
@@ -103,7 +102,8 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [ ] Dock
 - [x] Workspaces Overview
 - [ ] Multimodal AI Assistant
-- [ ] Vertical Layout
+- [ i] Vertical Layout
+- [ ] Multi-monitor support
 
 ---
 
