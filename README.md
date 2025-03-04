@@ -88,21 +88,21 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] Terminal
 - [x] Pins
 - [x] Kanban Board
-- [x] Calendar (Incomplete)
+- [x] Calendar
 - [x] Color Picker
 - [x] Dashboard
-- [ ] Network Manager
 - [x] Bluetooth Manager
 - [x] Power Manager
 - [x] Settings
 - [x] Screenshot
 - [x] Screen Recorder
 - [x] OCR
+- [x] Workspaces Overview
+- [ ] Network Manager
 - [ ] Clipboard Manager
 - [ ] Dock
-- [x] Workspaces Overview
 - [ ] Multimodal AI Assistant
-- [ i] Vertical Layout
+- [ ] Vertical Layout
 - [ ] Multi-monitor support
 
 ---
