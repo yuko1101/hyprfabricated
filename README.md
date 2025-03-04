@@ -28,9 +28,6 @@
 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Package.png" alt="Package" width="25" height="25" /></sub> Installation</h2>
 
-> [!CAUTION]
-> PRE-RELEASE STATE. USABLE BUT INCOMPLETE.
-
 > [!NOTE]
 > - You need a functioning Hyprland installation. <br>
 > - You need to install plasma-browser-integration for mpris and cava to work as it is intended
@@ -52,9 +49,9 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
     - [Gray](https://github.com/Fabric-Development/gray)
     - [Matugen](https://github.com/InioX/matugen)
     - `acpi`
-    - `auto-cpufreq`
-    - `playerctl`
+    - `brightnessctl`
     - `gnome-bluetooth-3.0`
+    - `gpu-screen-recorder`
     - `grimblast`
     - `hypridle`
     - `hyprlock`
@@ -62,7 +59,10 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
     - `hyprsunset`
     - `imagemagick`
     - `libnotify`
+    - `playerctl`
+    - `swappy`
     - `swww`
+    - `tesseract`
     - `uwsm`
     - `vte3`
     - `cantarell-fonts-0.100`
@@ -98,7 +98,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Sys Info
 - [x] Calendar (Incomplete)
 - [x] Color Picker
-- [ ] Dashboard
+- [x] Dashboard
 - [ ] Network Manager
 - [x] Bluetooth Manager
 - [x] Power Manager
@@ -111,7 +111,8 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [ ] Dock
 - [x] Workspaces Overview
 - [ ] Multimodal AI Assistant
-- [ ] Vertical Layout
+- [ i] Vertical Layout
+- [ ] Multi-monitor support
 
 # Credits
 

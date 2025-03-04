@@ -31,7 +31,6 @@ PACKAGES=(
     swww
     tesseract
     uwsm
-    vte3
     wlinhibit
     cantarell-fonts-0.100
     grimblast-git

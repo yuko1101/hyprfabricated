@@ -10,18 +10,6 @@
     border: 3px solid var(--primary);
 }
 
-#metrics-circle.cpu {
-    border: 3px solid var(--primary);
-}
-
-#metrics-circle.ram {
-    border: 3px solid var(--primary);
-}
-
-#metrics-circle.disk {
-    border: 3px solid var(--tertiary);
-}
-
 #metrics-circle.bat {
     border: 3px solid var(--primary);
 }
@@ -42,4 +30,12 @@
     color: var(--primary);
     font-weight: bold;
     margin: 0 4px;
+}
+
+#metrics-level.cpu {
+    color: var(--primary);
+}
+
+#metrics-level.bat {
+    color: var(--green);
 }
