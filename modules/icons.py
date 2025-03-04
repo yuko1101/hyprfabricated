@@ -95,6 +95,8 @@ wifi_1: str = "&#xeba4;"
 wifi_2: str = "&#xeba5;"
 download: str = "&#xea96;"
 upload: str = "&#xeb47;"
+notifications_clear: str = "&#xf814;";
+
 # Bluetooth
 bluetooth_connected: str = "&#xecea;"
 bluetooth_disconnected: str = "&#xf081;"

@@ -29,6 +29,12 @@ fi
 # Output file name for the new recording
 OUTPUT_FILE="$SAVE_DIR/$(date +%Y-%m-%d-%H-%M-%S).mp4"
 
+<<<<<<< HEAD
 # Start recording
 notify-send -a "Hyprfabricated" "🔴 Recording started"
 gpu-screen-recorder -w screen -ac opus -cr full -a default_output -f 60 -fm vfr -encoder gpu -o "$OUTPUT_FILE"
+=======
+# Iniciar la grabación
+notify-send -a "Ax-Shell" "🔴 Recording started"
+gpu-screen-recorder -w portal -q ultra -a default_output -ac opus -cr full -f 60 -o "$OUTPUT_FILE"
+>>>>>>> e321332844c6f50ca71da559e1acede108d484c1
