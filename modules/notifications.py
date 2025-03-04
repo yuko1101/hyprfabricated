@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import uuid  # Import uuid module
 from datetime import datetime, timedelta
@@ -28,18 +29,29 @@ def cache_notification_pixbuf(notification_box): # Pass notification_box instead
     Saves a scaled pixbuf (48x48) in the cache directory and assigns it to the notification_box.
     """
     notification = notification_box.notification
-    if notification.image_pixbuf:
-        os.makedirs(PERSISTENT_DIR, exist_ok=True)
-        cache_file = os.path.join(PERSISTENT_DIR, f"notification_{notification_box.uuid}.png") # Use notification_box.uuid
-        try:
-            # Create a scaled pixbuf and save it
-            scaled = notification.image_pixbuf.scale_simple(48, 48, GdkPixbuf.InterpType.BILINEAR)
-            scaled.savev(cache_file, "png", [], [])
-            notification_box.cached_image_path = cache_file # Store in notification_box
-            logger.info(f"Cached image to: {cache_file}")
-        except Exception as e:
-            logger.error(f"Error caching the image: {e}")
+    time.sleep(0.5) # Add a delay to allow the image to be loaded
+    try:
+        if notification.image_pixbuf:
+            os.makedirs(PERSISTENT_DIR, exist_ok=True)
+            cache_file = os.path.join(PERSISTENT_DIR, f"notification_{notification_box.uuid}.png") # Use notification_box.uuid
+            try:
+                # Create a scaled pixbuf and save it
+                scaled = notification.image_pixbuf.scale_simple(48, 48, GdkPixbuf.InterpType.BILINEAR)
+                scaled.savev(cache_file, "png", [], [])
+                notification_box.cached_image_path = cache_file # Store in notification_box
+                logger.info(f"Cached image to: {cache_file}")
+            except Exception as e:
+                logger.error(f"Error caching the image: {e} trying fallback")
 
+    except Exception as e:
+        fallback_image = get_relative_path("../assets/icons/notification.png")
+        # notification.image_pixbuf = GdkPixbuf.Pixbuf.new_from_file(fallback_image)
+        logger.error(f"Error caching the image: {e} trying fallback")
+        # scaled = notification.image_pixbuf.scale_simple(48, 48, GdkPixbuf.InterpType.BILINEAR)
+        # scaled.savev(fallback_image, "png", [], [])
+        notification_box.cached_image_path = get_relative_path("../assets/icons/notification.png") # Store in notification_box
+        logger.info(f"Cached image to: {fallback_image}")
+        return None
 def load_scaled_pixbuf(notification_box, width, height): # Pass notification_box
     """
     Loads and scales a pixbuf for a notification_box, prioritizing cached images for history notifications only.
