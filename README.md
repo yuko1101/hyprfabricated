@@ -65,6 +65,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `wlinhibit`
     - Python dependencies:
         - pillow
+        - psutil
         - toml
         - setproctitle
         - watchdog
