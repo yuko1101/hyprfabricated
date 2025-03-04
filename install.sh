@@ -20,6 +20,7 @@ PACKAGES=(
     imagemagick
     libnotify
     matugen-bin
+    noto-fonts-emoji
     playerctl
     python-fabric-git
     python-pillow
