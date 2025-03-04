@@ -217,12 +217,6 @@ class Notch(Window):
         self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
-        self.set_keyboard_mode("exclusive")
-
-        if self.hidden:
-            self.notch_box.remove_style_class("hidden")
-            self.notch_box.add_style_class("hideshow")
-
         widgets = {
             "launcher": self.launcher,
             "dashboard": self.dashboard,
@@ -230,8 +224,18 @@ class Notch(Window):
             "power": self.power,
             "bluetooth": self.bluetooth,
             "tools": self.tools,
-
         }
+        target_widget = widgets.get(widget, self.dashboard)
+        # Si ya se muestra el widget solicitado, se cierra la notch.
+        if self.stack.get_visible_child() == target_widget:
+            self.close_notch()
+            return
+
+        self.set_keyboard_mode("exclusive")
+
+        if self.hidden:
+            self.notch_box.remove_style_class("hidden")
+            self.notch_box.add_style_class("hideshow")
 
         # Limpiar clases y estados previos
         for style in widgets.keys():
@@ -256,7 +260,6 @@ class Notch(Window):
 
             if widget == "dashboard" and self.dashboard.stack.get_visible_child() != self.dashboard.stack.get_children()[4]:
                 self.dashboard.stack.set_visible_child(self.dashboard.stack.get_children()[0])
-
         else:
             self.stack.set_visible_child(self.dashboard)
 
