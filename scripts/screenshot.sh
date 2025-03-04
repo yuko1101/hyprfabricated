@@ -23,7 +23,7 @@ EOF
 case $1 in
 p) grimblast copysave screen "$full_path" ;;
 s) grimblast copysave area "$full_path" ;;
-sf) grimblast --freeze copysave area "$full_path" ;;
+sf) grimblast  copysave area "$full_path" ;;
 m) grimblast copysave output "$full_path" ;;
 *)
     print_error
@@ -32,7 +32,7 @@ m) grimblast copysave output "$full_path" ;;
 esac
 
 if [ -f "$full_path" ]; then
-    ACTION=$(notify-send -a "Ax-Shell" -i "$full_path" "Screenshot saved" "in $full_path" \
+    ACTION=$(notify-send -a "hyprfabricated" -i "$full_path" "Screenshot saved" "in $full_path" \
         -A "view=View" -A "edit=Edit" -A "open=Open Folder")
 
     case "$ACTION" in
@@ -41,5 +41,5 @@ if [ -f "$full_path" ]; then
     open) xdg-open "$save_dir" ;;
     esac
 else
-    notify-send -a "Ax-Shell" "Screenshot Aborted"
+    notify-send -a "hyprfabricated" "Screenshot Aborted"
 fi
