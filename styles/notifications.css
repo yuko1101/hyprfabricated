@@ -164,6 +164,10 @@
     padding: 4px;
 }
 
+#nhh-button:hover {
+    background-color: var(--surface-bright);
+}
+
 #nhh-button-label {
     color: var(--error-dim);
     font-size: 20px;
