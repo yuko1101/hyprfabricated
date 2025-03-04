@@ -445,9 +445,9 @@ class Battery(Overlay):
     def update_battery(self, sender, battery_data):
         value, status = battery_data
         if value == 0:
-            self.bat_box.set_visible(False)
+            self.set_visible(False)
         else:
-            self.bat_box.set_visible(True)
+            self.set_visible(True)
             self.bat_circle.set_value(value)
         percentage = int(value * 100)
         self.bat_level.set_label(self._format_percentage(percentage))
