@@ -11,7 +11,7 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.metrics import MetricsSmall
+from modules.metrics import MetricsSmall, Battery
 from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.tools import Toolbox
@@ -93,6 +93,7 @@ class Bar(Window):
 
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
+        self.battery = Battery()
 
         self.revealer = Revealer(
             name="bar-revealer",
@@ -138,6 +139,7 @@ class Bar(Window):
                 orientation="h",
                 children=[
                     self.boxed_revealer,
+                    self.battery,
                     self.systray,
                     self.button_tools,
                     self.date_time,
