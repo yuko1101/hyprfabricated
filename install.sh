@@ -105,4 +105,5 @@ fi
 echo "Doing Fallback Image..."
 cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
 echo "If you see a transparent bar change the wallpaper from the notch"
+echo "Backup your hypridle and hyprlock config before accepting in config"
 echo "Installation complete."
