@@ -9,7 +9,6 @@ from fabric.notifications.service import (
     Notification,
     NotificationAction,
     Notifications,
-    NotificationCloseReason,
 )
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
@@ -603,13 +602,6 @@ class NotificationHistory(Box):
                 GLib.source_remove(container._timestamp_timer_id)
             if hasattr(container, "notification_box"): # Use container.notification_box
                 notif_box = container.notification_box
-                # Do NOT delete cached image here, it's needed for history. Deletion is handled when clearing history or deleting historical notification explicitly.
-                # if hasattr(notif_box, "cached_image_path") and notif_box.cached_image_path and os.path.exists(notif_box.cached_image_path):
-                #     try:
-                #         os.remove(notif_box.cached_image_path)
-                #         logger.info(f"Deleted cached image on container destroy: {notif_box.cached_image_path}")
-                #     except Exception as e:
-                #         logger.error(f"Error deleting the cached image on container destroy: {e}")
             container.destroy()
             GLib.idle_add(self.update_separators)
             self.update_no_notifications_label_visibility() # Update label visibility after removing
