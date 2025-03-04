@@ -64,6 +64,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `swww`
     - `tesseract`
     - `uwsm`
+    - `wl-clipboard`
     - `wlinhibit`
     - Python dependencies:
         - pillow

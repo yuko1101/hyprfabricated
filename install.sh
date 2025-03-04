@@ -34,6 +34,7 @@ PACKAGES=(
     swww
     tesseract
     uwsm
+    wl-clipboard
     wlinhibit
 )
 
