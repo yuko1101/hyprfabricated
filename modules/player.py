@@ -40,9 +40,13 @@ class PlayerBox(Box):
         super().__init__(orientation="v", h_align="fill", spacing=0, h_expand=False, v_expand=True)
         self.mpris_player = mpris_player
 
+        image_file = f"{data.HOME_DIR}/.current.wall"
+
+        if not os.path.exists(image_file):
+            image_file = f"{data.HOME_DIR}/.config/hyprfabricated/assets/wallpapers_example/example-1.jpg"
         self.cover = CircleImage(
             name="player-cover",
-            image_file=f"{data.HOME_DIR}/.current.wall",
+            image_file=image_file,
             size=162,
             h_align="center",
             v_align="center",

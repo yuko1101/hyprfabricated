@@ -9,7 +9,7 @@ import subprocess
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
-SCREENRECORD_SCRIPT = "~/.local/bin/record.sh"
+SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 SCREENRECORD_APP = "gpu-screen-recorder"
 class Toolbox(Box):
     def __init__(self, **kwargs):

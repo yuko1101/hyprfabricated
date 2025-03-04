@@ -7,6 +7,7 @@ set -o pipefail  # Prevent errors in a pipeline from being masked
 REPO_URL="https://github.com/tr1xem/hyprfabricated.git"
 INSTALL_DIR="$HOME/.config/hyprfabricated"
 PACKAGES=(
+    python-requests
     acpi
     brightnessctl
     fabric-cli-git
@@ -33,9 +34,9 @@ PACKAGES=(
     vte3
     wlinhibit
     cantarell-fonts-0.100
-    wl-screenrec
     grimblast-git
     tesseract
+    plasma-browser-integration
 )
 
 # Prevent running as root
@@ -93,7 +94,7 @@ fi
 
 python "$INSTALL_DIR/config/config.py"
 echo "Starting hyprfabricated..."
-killall ax-shell 2>/dev/null || true
+killall hyprfabricated 2>/dev/null || true
 uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 
 
@@ -101,8 +102,6 @@ if [ "$wasYayInstalled" -eq 0 ]; then
     sudo pacman -Rns yay
 fi
 
-sudo pacman -S rofimoji wtype --needed
-
 echo "Doing Fallback Image..."
-cp ./assets/wallpapers_example/example-1.jpg ~/.current.wall
+cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
 echo "Installation complete."
