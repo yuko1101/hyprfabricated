@@ -202,7 +202,7 @@ class Notch(Window):
     def close_notch(self):
         self.set_keyboard_mode("none")
 
-        self._show_overview_children(False)
+        GLib.idle_add(self._show_overview_children, False)
 
         self.bar.revealer.set_reveal_child(True)
 
@@ -252,7 +252,7 @@ class Notch(Window):
                 self.launcher.search_entry.grab_focus()
 
             if widget == "overview":
-                GLib.timeout_add(250, self._show_overview_children, True)
+                GLib.timeout_add(300, self._show_overview_children, True)
 
             if widget == "dashboard" and self.dashboard.stack.get_visible_child() != self.dashboard.stack.get_children()[4]:
                 self.dashboard.stack.set_visible_child(self.dashboard.stack.get_children()[0])
