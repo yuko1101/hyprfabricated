@@ -200,6 +200,8 @@ class Notch(Window):
     def close_notch(self):
         self.set_keyboard_mode("none")
 
+        self._show_overview_children(False)
+
         self.bar.revealer.set_reveal_child(True)
 
         if self.hidden:
@@ -247,8 +249,8 @@ class Notch(Window):
                 self.launcher.search_entry.set_text("")
                 self.launcher.search_entry.grab_focus()
 
-            if widget == "notification":
-                self.set_keyboard_mode("none")
+            if widget == "overview":
+                GLib.timeout_add(250, self._show_overview_children, True)
 
             if widget == "dashboard" and self.dashboard.stack.get_visible_child() != self.dashboard.stack.get_children()[4]:
                 self.dashboard.stack.set_visible_child(self.dashboard.stack.get_children()[0])
@@ -260,6 +262,16 @@ class Notch(Window):
             self.bar.revealer.set_reveal_child(False)
         else:
             self.bar.revealer.set_reveal_child(True)
+
+    def _show_overview_children(self, show_children):
+        for child in self.overview.get_children():
+            if show_children:
+                child.set_visible(show_children)
+                self.overview.add_style_class("show")
+            else:
+                child.set_visible(show_children)
+                self.overview.remove_style_class("show")
+        return False  # Esto evita que el timeout se repita
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
