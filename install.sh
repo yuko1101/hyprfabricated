@@ -7,36 +7,10 @@ set -o pipefail  # Prevent errors in a pipeline from being masked
 REPO_URL="https://github.com/tr1xem/hyprfabricated.git"
 INSTALL_DIR="$HOME/.config/hyprfabricated"
 PACKAGES=(
-    python-requests
-    acpi
-    brightnessctl
-    cava
-    fabric-cli-git
-    gnome-bluetooth-3.0
-    gpu-screen-recorder
-    grimblast
-    hypridle
-    hyprlock
-    hyprpicker
-    gammastep
-    imagemagick
-    libnotify
-    matugen-bin
-    playerctl
-    python-fabric-git
-    python-pillow
-    python-setproctitle
-    python-toml
-    python-watchdog
-    swappy
-    swww
-    tesseract
-    uwsm
-    wlinhibit
-    cantarell-fonts-0.100
-    grimblast-git
-    tesseract
-    plasma-browser-integration
+    python-requests acpi brightnessctl cava fabric-cli-git gnome-bluetooth-3.0 gpu-screen-recorder
+    grimblast hypridle hyprlock hyprpicker gammastep imagemagick libnotify matugen-bin playerctl
+    python-fabric-git python-pillow python-setproctitle python-toml python-watchdog swappy swww
+    tesseract uwsm wlinhibit cantarell-fonts-0.100 grimblast-git tesseract plasma-browser-integration
 )
 
 # Prevent running as root
@@ -46,9 +20,16 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 wasYayInstalled=1
+wasParuInstalled=1
 
-# Install yay-bin if not installed
-if ! command -v yay &>/dev/null; then
+aur_helper="yay"
+
+# Check if paru exists, otherwise use yay
+if command -v paru &>/dev/null; then
+    aur_helper="paru"
+elif command -v yay &>/dev/null; then
+    wasParuInstalled=0
+else
     wasYayInstalled=0
     echo "Installing yay-bin..."
     tmpdir=$(mktemp -d)
@@ -69,25 +50,24 @@ else
 fi
 
 echo "Installing gray-git..."
-yes | yay -Syy --needed --noconfirm gray-git || true
+yes | $aur_helper -Syy --needed --noconfirm gray-git || true
 
-# Install required packages using yay (only if missing)
+# Install required packages using the detected AUR helper (only if missing)
 echo "Installing required packages..."
-yay -Syy --needed --noconfirm "${PACKAGES[@]}" || true
+$aur_helper -Syy --needed --noconfirm "${PACKAGES[@]}" || true
 
 # Update outdated packages from the list
 echo "Updating outdated required packages..."
-# Get a list of outdated packages
-outdated=$(yay -Qu | awk '{print $1}')
+outdated=$($aur_helper -Qu | awk '{print $1}')
 to_update=()
 for pkg in "${PACKAGES[@]}"; do
-    if echo "$outdated" | grep -q "^$pkg\$"; then
+    if echo "$outdated" | grep -q "^$pkg$"; then
         to_update+=("$pkg")
     fi
 done
 
 if [ ${#to_update[@]} -gt 0 ]; then
-    yay -S --noconfirm "${to_update[@]}" || true
+    $aur_helper -S --noconfirm "${to_update[@]}" || true
 else
     echo "All required packages are up-to-date."
 fi
@@ -97,8 +77,7 @@ echo "Starting hyprfabricated..."
 killall hyprfabricated 2>/dev/null || true
 uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 
-
-if [ "$wasYayInstalled" -eq 0 ]; then
+if [ "$wasYayInstalled" -eq 0 ] && [ "$wasParuInstalled" -eq 0 ]; then
     sudo pacman -Rns yay
 fi
 
