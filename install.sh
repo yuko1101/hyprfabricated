@@ -10,6 +10,7 @@ PACKAGES=(
     python-requests
     acpi
     brightnessctl
+    cava
     fabric-cli-git
     gnome-bluetooth-3.0
     gpu-screen-recorder
@@ -103,4 +104,5 @@ fi
 
 echo "Doing Fallback Image..."
 cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
+echo "If you see a transparent bar change the wallpaper from the notch"
 echo "Installation complete."
