@@ -27,15 +27,10 @@
 }
 
 #metrics-level {
-    color: var(--primary);
     font-weight: bold;
     margin: 0 4px;
 }
 
-#metrics-level.cpu {
-    color: var(--primary);
-}
-
-#metrics-level.bat {
-    color: var(--green);
+#metrics-sep {
+    min-width: 4px;
 }
