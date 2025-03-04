@@ -21,6 +21,7 @@ PACKAGES=(
     libnotify
     matugen-bin
     playerctl
+    psutil
     python-fabric-git
     python-pillow
     python-setproctitle
