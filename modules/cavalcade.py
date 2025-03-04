@@ -198,7 +198,7 @@ class Spectrum:
         """Update drawing geometry"""
         self.sizes.number = 20
         self.sizes.padding = 5
-        self.sizes.zero = 2
+        self.sizes.zero = 0
 
         self.sizes.area.width = self.area.get_allocated_width()
         self.sizes.area.height = self.area.get_allocated_height() - 2
