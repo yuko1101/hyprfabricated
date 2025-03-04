@@ -19,7 +19,7 @@ def get_bars(file_path):
     config.read(file_path)
     return int(config['general']['bars'])
 
-CAVA_CONFIG = os.path.expanduser("~/.config/Ax-Shell/config/cavalcade/cava.ini")
+CAVA_CONFIG = os.path.expanduser("~/.config/hyprfabricated/config/cavalcade/cava.ini")
 
 bars = get_bars(CAVA_CONFIG)
 

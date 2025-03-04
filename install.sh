@@ -10,7 +10,8 @@ PACKAGES=(
     python-requests acpi brightnessctl cava fabric-cli-git gnome-bluetooth-3.0 gpu-screen-recorder
     grimblast hypridle hyprlock hyprpicker gammastep imagemagick libnotify matugen-bin playerctl
     python-fabric-git python-pillow python-setproctitle python-toml python-watchdog swappy swww
-    tesseract uwsm wlinhibit cantarell-fonts-0.100 grimblast-git tesseract plasma-browser-integration
+    tesseract uwsm wlinhibi grimblast-git tesseract plasma-browser-integration
+    cantarell-fonts
 )
 
 # Prevent running as root
