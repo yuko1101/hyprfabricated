@@ -66,8 +66,9 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - Python dependencies:
         - pillow
         - psutil
-        - toml
+        - requests
         - setproctitle
+        - toml
         - watchdog
     - Fonts (automated on first run):
         - Zed Sans

@@ -24,6 +24,7 @@ PACKAGES=(
     python-fabric-git
     python-pillow
     python-psutil
+    python-requests
     python-setproctitle
     python-toml
     python-watchdog
