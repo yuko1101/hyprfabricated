@@ -183,6 +183,8 @@ class Notch(Window):
         self.add(self.notch_complete)
         self.show_all()
 
+        self._show_overview_children(False)
+
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
