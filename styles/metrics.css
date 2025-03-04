@@ -10,18 +10,6 @@
     border: 3px solid var(--primary);
 }
 
-#metrics-circle.cpu {
-    border: 3px solid var(--primary);
-}
-
-#metrics-circle.ram {
-    border: 3px solid var(--secondary);
-}
-
-#metrics-circle.disk {
-    border: 3px solid var(--tertiary);
-}
-
 #metrics-circle.bat {
     border: 3px solid var(--green);
 }
