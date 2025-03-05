@@ -198,7 +198,7 @@ class Spectrum:
         """Update drawing geometry"""
         self.sizes.number = 20
         self.sizes.padding = 5
-        self.sizes.zero = 2
+        self.sizes.zero = 0
 
         self.sizes.area.width = self.area.get_allocated_width()
         self.sizes.area.height = self.area.get_allocated_height() - 2
@@ -235,8 +235,8 @@ class SpectrumRender():
 
     def get_spectrum_box(self):
         # Get the spectrum box
-        box = Overlay(h_align='center', v_align='center')
-        box.set_size_request(150, 40)
+        box = Overlay(name="cavalcade", h_align='center', v_align='center')
+        box.set_size_request(180, 40)
         box.add_overlay(self.draw.area)
         return box
 

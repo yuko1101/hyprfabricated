@@ -1,21 +1,18 @@
-#notification-action-buttons button.start-action {
+#action-button {
     border-radius: 20px;
-}
-
-#notification-action-buttons button {
     background-color: var(--surface);
     padding: 8px;
 }
 
-#notification-action-buttons button:hover {
+#action-button:hover {
     background-color: var(--surface-bright);
 }
 
-#notification-action-buttons button:active {
+#action-button:active {
     background-color: var(--primary);
 }
 
-#notification-action-buttons button:active #button-label {
+#action-button:active #button-label {
     color: var(--shadow);
 }
 
@@ -149,4 +146,39 @@
 
 #notification-timestamp {
     color: var(--surface-bright);
+}
+
+#notification-history-header {
+    border-radius: 12px;
+    border: 2px solid var(--surface);
+    padding: 4px;
+}
+
+#nhh {
+    font-weight: bold;
+}
+
+#nhh-button {
+    border-radius: 8px;
+    background-color: var(--surface);
+    padding: 4px;
+}
+
+#nhh-button:hover {
+    background-color: var(--surface-bright);
+}
+
+#nhh-button-label {
+    color: var(--error-dim);
+    font-size: 20px;
+}
+
+#dnd-label {
+    font-size: 20px;
+    margin-left: 4px;
+}
+
+#no-notifications-label {
+    font-size: 96px;
+    color: var(--surface);
 }

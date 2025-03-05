@@ -48,9 +48,6 @@ I use win_class for the icons, and win_title as the text
 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Package.png" alt="Package" width="25" height="25" /></sub> Installation</h2>
 
-> [!CAUTION]
-> PRE-RELEASE STATE. USABLE BUT INCOMPLETE.
-
 > [!NOTE]
 > You need a functioning Hyprland installation.
 
@@ -71,9 +68,9 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - [Gray](https://github.com/Fabric-Development/gray)
     - [Matugen](https://github.com/InioX/matugen)
     - `acpi`
-    - `auto-cpufreq`
-    - `playerctl`
+    - `brightnessctl`
     - `gnome-bluetooth-3.0`
+    - `gpu-screen-recorder`
     - `grimblast`
     - `hypridle`
     - `hyprlock`
@@ -81,9 +78,11 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `hyprsunset`
     - `imagemagick`
     - `libnotify`
+    - `playerctl`
+    - `swappy`
     - `swww`
+    - `tesseract`
     - `uwsm`
-    - `vte3`
     - `wlinhibit`
     - Python dependencies:
         - pillow
@@ -110,25 +109,22 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] Terminal
 - [x] Pins
 - [x] Kanban Board
-- [x] Calendar (Incomplete)
+- [x] Calendar
 - [x] Color Picker
-- [x] Volume
-- [x] Updates
-- [x] Download and Upload Speed Monitor
-- [x] Stylized Audio Spectrum
-- [ ] Dashboard
-- [ ] Network Manager
+- [x] Dashboard
 - [x] Bluetooth Manager
 - [x] Power Manager
 - [x] Settings
 - [x] Screenshot
 - [x] Screen Recorder
 - [x] OCR
+- [x] Workspaces Overview
+- [ ] Network Manager
 - [ ] Clipboard Manager
 - [ ] Dock
-- [x] Workspaces Overview
 - [ ] Multimodal AI Assistant
 - [ ] Vertical Layout
+- [ ] Multi-monitor support
 
 ---
 

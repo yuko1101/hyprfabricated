@@ -11,7 +11,7 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.metrics import MetricsSmall
+from modules.metrics import MetricsSmall, Battery
 from modules.controls import ControlSmall
 
 from modules.sensors import NetworkApplet
@@ -112,6 +112,7 @@ class Bar(Window):
 
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
+        self.battery = Battery()
 
         self.revealer = Revealer(
             name="bar-revealer",

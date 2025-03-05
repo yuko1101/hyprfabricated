@@ -30,7 +30,6 @@ PACKAGES=(
     swww
     tesseract
     uwsm
-    vte3
     wlinhibit
 )
 

@@ -89,6 +89,12 @@ night_off: str = "&#xf162;"
 notifications_off: str = "&#xece9;"
 
 # Network
+network_off: str = "&#xf1ca;"
+download: str = "&#xea96;"
+upload: str = "&#xeb47;"
+notifications_clear: str = "&#xf814;";
+
+# Network
 network_off: str = "&#xf414;"
 wifi_0: str = "&#xeba3;"
 wifi_1: str = "&#xeba4;"
