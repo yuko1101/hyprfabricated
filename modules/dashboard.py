@@ -8,10 +8,10 @@ from fabric.widgets.stack import Stack
 from fabric.widgets.image import Image
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
 gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import GLib, Gtk, Vte, Pango, GdkPixbuf
-import modules.icons  as icons
+from gi.repository import GLib, Gtk, Pango, GdkPixbuf
+import modules.icons as icons
+from modules.buttons import Buttons
 from modules.widgets import Widgets
 from modules.buttons import Buttons
 from modules.pins import Pins

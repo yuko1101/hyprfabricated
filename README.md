@@ -50,6 +50,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
     - [Matugen](https://github.com/InioX/matugen)
     - `acpi`
     - `brightnessctl`
+    - `cava`
     - `gnome-bluetooth-3.0`
     - `gpu-screen-recorder`
     - `grimblast`
@@ -59,20 +60,23 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
     - `hyprsunset`
     - `imagemagick`
     - `libnotify`
+    - `noto-fonts-emoji`
     - `playerctl`
     - `swappy`
     - `swww`
     - `tesseract`
     - `uwsm`
-    - `vte3`
     - `cantarell-fonts-0.100`
+    - `wl-clipboard`
     - `wlinhibit`
     - `gpu-screen-recorder`
     - `grimblast-git`
     - Python dependencies:
         - pillow
-        - toml
+        - psutil
+        - requests
         - setproctitle
+        - toml
         - watchdog
         - requests
     - Fonts (automated on first run):

@@ -7,11 +7,38 @@ set -o pipefail  # Prevent errors in a pipeline from being masked
 REPO_URL="https://github.com/tr1xem/hyprfabricated.git"
 INSTALL_DIR="$HOME/.config/hyprfabricated"
 PACKAGES=(
-    python-requests acpi brightnessctl cava fabric-cli-git gnome-bluetooth-3.0 gpu-screen-recorder
-    grimblast hypridle hyprlock hyprpicker gammastep imagemagick libnotify matugen-bin playerctl
-    python-fabric-git python-pillow python-setproctitle python-toml python-watchdog swappy swww
-    tesseract uwsm wlinhibi grimblast-git tesseract plasma-browser-integration
+    acpi
+    brightnessctl
+    cava
+    fabric-cli-git
+    gnome-bluetooth-3.0
+    gpu-screen-recorder
+    grimblast
+    hypridle
+    hyprlock
+    hyprpicker
+    hyprsunset
+    imagemagick
+    libnotify
+    matugen-bin
+    noto-fonts-emoji
+    playerctl
+    python-fabric-git
+    python-pillow
+    python-psutil
+    python-requests
+    python-setproctitle
+    python-toml
+    python-watchdog
+    swappy
+    swww
+    tesseract
+    uwsm
+    wl-clipboard
+    wlinhibit tesseract
+    plasma-browser-integration
     cantarell-fonts
+
 )
 
 # Prevent running as root

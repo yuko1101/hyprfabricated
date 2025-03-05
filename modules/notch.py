@@ -199,6 +199,8 @@ class Notch(Window):
         self.add(self.notch_complete)
         self.show_all()
 
+        self._show_overview_children(False)
+
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
@@ -225,6 +227,8 @@ class Notch(Window):
     def close_notch(self):
         self.set_keyboard_mode("none")
 
+        GLib.idle_add(self._show_overview_children, False)
+
         self.bar.revealer.set_reveal_child(True)
 
         if self.hidden:
@@ -238,12 +242,6 @@ class Notch(Window):
         self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
-        self.set_keyboard_mode("exclusive")
-
-        if self.hidden:
-            self.notch_box.remove_style_class("hidden")
-            self.notch_box.add_style_class("hideshow")
-
         widgets = {
             "launcher": self.launcher,
             "dashboard": self.dashboard,
@@ -251,8 +249,18 @@ class Notch(Window):
             "power": self.power,
             "bluetooth": self.bluetooth,
             "tools": self.tools,
-
         }
+        target_widget = widgets.get(widget, self.dashboard)
+        # Si ya se muestra el widget solicitado, se cierra la notch.
+        if self.stack.get_visible_child() == target_widget:
+            self.close_notch()
+            return
+
+        self.set_keyboard_mode("exclusive")
+
+        if self.hidden:
+            self.notch_box.remove_style_class("hidden")
+            self.notch_box.add_style_class("hideshow")
 
         # Limpiar clases y estados previos
         for style in widgets.keys():
@@ -272,8 +280,8 @@ class Notch(Window):
                 self.launcher.search_entry.set_text("")
                 self.launcher.search_entry.grab_focus()
 
-            if widget == "notification":
-                self.set_keyboard_mode("none")
+            if widget == "overview":
+                GLib.timeout_add(300, self._show_overview_children, True)
 
             if widget == "dashboard" and self.dashboard.stack.get_visible_child() != self.dashboard.stack.get_children()[4]:
                 self.dashboard.stack.set_visible_child(self.dashboard.stack.get_children()[0])
@@ -284,6 +292,16 @@ class Notch(Window):
             self.bar.revealer.set_reveal_child(False)
         else:
             self.bar.revealer.set_reveal_child(True)
+
+    def _show_overview_children(self, show_children):
+        for child in self.overview.get_children():
+            if show_children:
+                child.set_visible(show_children)
+                self.overview.add_style_class("show")
+            else:
+                child.set_visible(show_children)
+                self.overview.remove_style_class("show")
+        return False  # Esto evita que el timeout se repita
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
@@ -324,4 +342,4 @@ class Notch(Window):
 
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
-            self.compact_stack.set_visible_child(self.window_title)
+            self.compact_stack.set_visible_child(self.active_window)
