@@ -256,4 +256,6 @@ def get_class_icon(win_class):
         icon = brand_office
     elif win_class == "parsecd":
         icon = parsec
+    elif win_class == "Google-chrome":
+        icon = chromium
     return icon
