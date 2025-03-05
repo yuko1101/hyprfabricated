@@ -205,7 +205,8 @@ class Notch(Window):
 
         GLib.idle_add(self._show_overview_children, False)
 
-        self.bar.revealer.set_reveal_child(True)
+        self.bar.revealer_right.set_reveal_child(True)
+        self.bar.revealer_left.set_reveal_child(True)
         self.applet_stack.set_transition_duration(0) # Set transition to 0 when closing, though it won't be visible.
         self.applet_stack.set_visible_child(self.nhistory)
         self._is_notch_open = False # Set notch state to closed
@@ -255,7 +256,8 @@ class Notch(Window):
                 # Reset the transition duration back to 250 after a short delay.
                 GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
 
-                self.bar.revealer.set_reveal_child(False)
+                self.bar.revealer_right.set_reveal_child(False)
+                self.bar.revealer_left.set_reveal_child(False)
                 return
 
         # Handle the "dashboard" case
@@ -292,7 +294,8 @@ class Notch(Window):
                 # Reset the transition duration back to 250 after a short delay.
                 GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
 
-                self.bar.revealer.set_reveal_child(False)
+                self.bar.revealer_right.set_reveal_child(False)
+                self.bar.revealer_left.set_reveal_child(False)
                 return
 
         # Handle other widgets (launcher, overview, power, tools)
@@ -301,6 +304,7 @@ class Notch(Window):
             "overview": self.overview,
             "power": self.power,
             "tools": self.tools,
+            "dashboard": self.dashboard, # Add dashboard here to ensure its style class is removed
         }
         target_widget = widgets.get(widget, self.dashboard)
         # If already showing the requested widget, close the notch.
@@ -322,7 +326,8 @@ class Notch(Window):
 
         # Configure according to the requested widget.
         if widget in widgets:
-            self.stack.add_style_class(widget)
+            if widget != "dashboard": # Avoid adding dashboard class again if switching from bluetooth
+                self.stack.add_style_class(widget)
             self.stack.set_visible_child(widgets[widget])
             widgets[widget].add_style_class("open")
 
@@ -337,9 +342,11 @@ class Notch(Window):
             self.stack.set_visible_child(self.dashboard)
 
         if widget == "dashboard" or widget == "overview":
-            self.bar.revealer.set_reveal_child(False)
+            self.bar.revealer_right.set_reveal_child(False)
+            self.bar.revealer_left.set_reveal_child(False)
         else:
-            self.bar.revealer.set_reveal_child(True)
+            self.bar.revealer_right.set_reveal_child(True)
+            self.bar.revealer_left.set_reveal_child(True)
         self._is_notch_open = True # Set notch state to open
 
     def _show_overview_children(self, show_children):
