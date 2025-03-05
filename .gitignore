@@ -3,4 +3,3 @@ styles/colors.css
 config/config.json
 config/hypr/hyprfabricated.conf
 config/hypr/colors.conf
-./modules/tools.py
