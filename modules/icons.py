@@ -11,6 +11,7 @@ chat: str = "&#xf59f;"
 wallpapers: str = "&#xeb01;"
 windows: str = "&#xefe6;"
 
+video : str = "&#xeafa;"  # video
 # Bar
 colorpicker: str = "&#xebe6;"
 media: str = "&#xf00d;"
