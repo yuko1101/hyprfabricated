@@ -200,7 +200,7 @@ class NetworkButton(Box):
 
 
 class BluetoothButton(Box):
-    def __init__(self, notch):
+    def __init__(self, **kwargs):
         super().__init__(
             name="bluetooth-button",
             orientation="h",
@@ -209,7 +209,7 @@ class BluetoothButton(Box):
             h_expand=True,
             v_expand=True,
         )
-        self.notch = notch
+        self.widgets = kwargs["widgets"]
 
         self.bluetooth_icon = Label(
             name="bluetooth-icon",
@@ -252,7 +252,7 @@ class BluetoothButton(Box):
         )
         self.bluetooth_menu_button = Button(
             name="bluetooth-menu-button",
-            on_clicked=lambda *_: self.notch.open_notch("bluetooth"),
+            on_clicked=lambda *_: self.widgets.show_bt(),
             child=self.bluetooth_menu_label,
         )
         add_hover_cursor(self.bluetooth_menu_button)  # <-- Added hover
@@ -418,11 +418,11 @@ class Buttons(Gtk.Grid):
         self.set_column_spacing(4)
         self.set_vexpand(False)  # Prevent vertical expansion
 
-        self.notch = kwargs["notch"]
+        self.widgets = kwargs["widgets"]
 
         # Instantiate each button
         self.network_button = NetworkButton()
-        self.bluetooth_button = BluetoothButton(self.notch)
+        self.bluetooth_button = BluetoothButton(widgets=self.widgets)
         self.night_mode_button = NightModeButton()
         self.caffeine_button = CaffeineButton()
 

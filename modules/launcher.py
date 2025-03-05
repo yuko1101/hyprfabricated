@@ -4,6 +4,7 @@ from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
+from fabric.widgets.image import Image
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.image import Image
 from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async
@@ -165,11 +166,7 @@ class AppLauncher(Box):
                 orientation="h",
                 spacing=10,
                 children=[
-                    Image(
-                        pixbuf=app.get_icon_pixbuf(size=32),
-                        h_align="start",
-                        name="launcher-app-icon",
-                    ),
+                    Image(name="app-icon", pixbuf=app.get_icon_pixbuf(size=24), h_align="start"),
                     Label(
                         name="app-label",
                         label=app.display_name or "Unknown",
