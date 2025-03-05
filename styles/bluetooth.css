@@ -69,3 +69,31 @@
   /*background-color: var(--surface);*/
   /*margin: 0 16px;*/
 }
+
+#bluetooth-scan-label {
+  font-size: 20px;
+  color: var(--primary);
+}
+
+#bluetooth-scan.scanning {
+  animation: blink 0.5s ease infinite;
+}
+
+#bluetooth-scan-label.scanning {
+  animation: blink 0.5s ease infinite;
+}
+
+@keyframes blink {
+  0% {
+    background-color: var(--blue);
+    color: var(--shadow);
+  }
+  50% {
+    background-color: var(--shadow);
+    color: var(--blue);
+  }
+  100% {
+    background-color: var(--blue);
+    color: var(--shadow);
+  }
+}

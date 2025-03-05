@@ -71,9 +71,11 @@ class BluetoothConnections(Box):
         self.bt_menu_label = self.buttons.bluetooth_menu_label
 
         self.client = BluetoothClient(on_device_added=self.on_device_added)
+        self.scan_label = Label(name="bluetooth-scan-label", markup=icons.radar)
         self.scan_button = Button(
             name="bluetooth-scan",
-            label="Scan",
+            child=self.scan_label,
+            tooltip_text="Scan for Bluetooth devices",
             on_clicked=lambda *_: self.client.toggle_scan()
         )
         self.back_button = Button(
@@ -85,7 +87,7 @@ class BluetoothConnections(Box):
         self.client.connect("notify::enabled", lambda *_: self.status_label())
         self.client.connect(
             "notify::scanning",
-            lambda *_: self.scan_button.set_label("Stop" if self.client.scanning else "Scan")
+            lambda *_: self.update_scan_label()
         )
 
         self.paired_box = Box(spacing=2, orientation="vertical")
@@ -138,3 +140,13 @@ class BluetoothConnections(Box):
         if device.paired:
             return self.paired_box.add(slot)
         return self.available_box.add(slot)
+
+    def update_scan_label(self):
+        if self.client.scanning:
+            self.scan_label.add_style_class("scanning")
+            self.scan_button.add_style_class("scanning")
+            self.scan_button.set_tooltip_text("Stop scanning for Bluetooth devices")
+        else:
+            self.scan_label.remove_style_class("scanning")
+            self.scan_button.remove_style_class("scanning")
+            self.scan_button.set_tooltip_text("Scan for Bluetooth devices")

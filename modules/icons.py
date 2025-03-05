@@ -139,6 +139,7 @@ dot: str = "&#xf698;"
 palette: str = "&#xeb01;"
 cloud_off: str = "&#xed3e;"
 loader: str = "&#xeca3;"
+radar: str = "&#xf017;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 
