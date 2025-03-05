@@ -9,7 +9,7 @@ from gi.repository import Gtk, Gdk, GLib  # Added GLib import
 gi.require_version('Gtk', '3.0')
 import modules.icons as icons
 from services.network import NetworkClient
-
+import modules.notch
 
 def add_hover_cursor(widget):
     # Add enter/leave events to change the cursor
@@ -24,7 +24,7 @@ class NetworkButton(Box):
         self._animation_timeout_id = None
         self._animation_step = 0
         self._animation_direction = 1
-        
+
         self.network_icon = Label(
             name="network-icon",
             markup=None,
@@ -51,7 +51,7 @@ class NetworkButton(Box):
             h_align="start",
             v_align="center",
             spacing=10,
-            
+
             children=[self.network_icon, self.network_text],
         )
         self.network_status_button = Button(
@@ -83,13 +83,13 @@ class NetworkButton(Box):
             children=[self.network_status_button, self.network_menu_button],
         )
 
-        self.widgets = [self, self.network_icon, self.network_label, 
-                       self.network_ssid, self.network_status_button, 
+        self.widgets = [self, self.network_icon, self.network_label,
+                       self.network_ssid, self.network_status_button,
                        self.network_menu_button, self.network_menu_label]
 
         # Connect to wifi device signals when ready
         self.network_client.connect('device-ready', self._on_wifi_ready)
-        
+
         # Check initial state if wifi device is already available
         if self.network_client.wifi_device:
             self.update_state()
@@ -103,23 +103,23 @@ class NetworkButton(Box):
     def _animate_searching(self):
         """Animate wifi icon when searching for networks"""
         wifi_icons = [icons.wifi_0, icons.wifi_1, icons.wifi_2, icons.wifi_3, icons.wifi_2, icons.wifi_1]
-        
+
         # Si el widget no existe o el WiFi está desactivado, detener la animación
         wifi = self.network_client.wifi_device
         if not self.network_icon or not wifi or not wifi.enabled:
             self._stop_animation()
             return False
-            
+
         # Si estamos conectados, detener la animación
         if wifi.state == "activated" and wifi.ssid != "Disconnected":
             self._stop_animation()
             return False
-            
+
         GLib.idle_add(self.network_icon.set_markup, wifi_icons[self._animation_step])
-        
+
         # Reiniciar al principio cuando llegamos al final
         self._animation_step = (self._animation_step + 1) % len(wifi_icons)
-            
+
         return True  # Mantener la animación activa
 
     def _start_animation(self):
@@ -243,7 +243,7 @@ class BluetoothButton(Box):
             name="bluetooth-status-button",
             h_expand=True,
             child=self.bluetooth_status_container,
-            on_clicked=lambda *_: self.notch.bluetooth.client.toggle_power(),
+            on_clicked=lambda *_: self.widgets.bluetooth.client.toggle_power(),
         )
         add_hover_cursor(self.bluetooth_status_button)  # <-- Added hover
         self.bluetooth_menu_label = Label(
