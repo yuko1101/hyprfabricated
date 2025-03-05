@@ -146,7 +146,10 @@ class Bar(Window):
                 orientation="h",
                 spacing=4,
                 children=[
+                    self.date_time,
                     self.weather,
+                    self.network_applet,
+                    
                 ],
             ),
         )
