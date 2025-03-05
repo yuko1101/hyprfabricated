@@ -411,6 +411,7 @@ class NotificationHistory(Box):
         self.add(self.history_header)
         self.add(self.scrolled_window)
         self._load_persistent_history()
+        self._cleanup_orphan_cached_images() # Call cleanup after loading history
 
     def on_do_not_disturb_changed(self, switch, pspec):
         self.do_not_disturb_enabled = switch.get_active()
@@ -741,6 +742,40 @@ class NotificationHistory(Box):
         self.persistent_notifications.insert(0, note)
         self.persistent_notifications = self.persistent_notifications[:50]
         self._save_persistent_history()
+
+    def _cleanup_orphan_cached_images(self):
+        """
+        Cleans up cached images that do not have a corresponding notification in history.
+        """
+        logger.debug("Starting orphan cached image cleanup.")
+        if not os.path.exists(PERSISTENT_DIR):
+            logger.debug("Cache directory does not exist, skipping cleanup.")
+            return
+
+        cached_files = [f for f in os.listdir(PERSISTENT_DIR) if f.startswith("notification_") and f.endswith(".png")]
+        if not cached_files:
+            logger.debug("No cached image files found, skipping cleanup.")
+            return
+
+        history_uuids = {note.get("id") for note in self.persistent_notifications if note.get("id")}
+        deleted_count = 0
+        for cached_file in cached_files:
+            try:
+                uuid_from_filename = cached_file[len("notification_"):-len(".png")]
+                if uuid_from_filename not in history_uuids:
+                    cache_file_path = os.path.join(PERSISTENT_DIR, cached_file)
+                    os.remove(cache_file_path)
+                    logger.info(f"Deleted orphan cached image: {cache_file_path}")
+                    deleted_count += 1
+                else:
+                    logger.debug(f"Cached image {cached_file} found in history, keeping it.")
+            except Exception as e:
+                logger.error(f"Error processing cached file {cached_file} during cleanup: {e}")
+
+        if deleted_count > 0:
+            logger.info(f"Orphan cached image cleanup finished. Deleted {deleted_count} images.")
+        else:
+            logger.info("Orphan cached image cleanup finished. No orphan images found.")
 
 
     def update_separators(self):

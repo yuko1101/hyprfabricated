@@ -14,7 +14,6 @@ from modules.dashboard import Dashboard
 from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
 from modules.overview import Overview
-from modules.bluetooth import BluetoothConnections
 from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
@@ -46,7 +45,10 @@ class Notch(Window):
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
-        self.bluetooth = BluetoothConnections(notch=self)
+
+        self.applet_stack = self.dashboard.widgets.applet_stack
+        self.nhistory = self.applet_stack.get_children()[0]
+        self.btdevices = self.applet_stack.get_children()[1]
 
         self.active_window = ActiveWindow(
             name="hyprland-window",
@@ -87,8 +89,8 @@ class Notch(Window):
         self.compact.add(self.compact_stack)
         # Se agrega el mask de smooth scroll junto a scroll y button press.
         self.compact.add_events(
-            Gdk.EventMask.SCROLL_MASK | 
-            Gdk.EventMask.BUTTON_PRESS_MASK | 
+            Gdk.EventMask.SCROLL_MASK |
+            Gdk.EventMask.BUTTON_PRESS_MASK |
             Gdk.EventMask.SMOOTH_SCROLL_MASK
         )
         self.compact.connect("scroll-event", self._on_compact_scroll)
@@ -110,7 +112,6 @@ class Notch(Window):
                 self.dashboard,
                 self.overview,
                 self.power,
-                self.bluetooth,
                 self.tools,
             ]
         )
@@ -176,7 +177,7 @@ class Notch(Window):
         )
 
         self.hidden = False
-
+        self._is_notch_open = False  # Add a flag to track notch open state
         self._scrolling = False
 
         self.add(self.notch_box)
@@ -205,28 +206,104 @@ class Notch(Window):
         GLib.idle_add(self._show_overview_children, False)
 
         self.bar.revealer.set_reveal_child(True)
+        self.applet_stack.set_transition_duration(0) # Set transition to 0 when closing, though it won't be visible.
+        self.applet_stack.set_visible_child(self.nhistory)
+        self._is_notch_open = False # Set notch state to closed
 
         if self.hidden:
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.tools]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.tools]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth", "tools"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
+        # Handle special behavior for "bluetooth"
+        if widget == "bluetooth":
+            # If dashboard is already open
+            if self.stack.get_visible_child() == self.dashboard:
+                # If visible applet is already btdevices then toggle close the dashboard.
+                if self.applet_stack.get_visible_child() == self.btdevices:
+                    self.close_notch()
+                else:
+                    self.applet_stack.set_transition_duration(250) # Set transition to 250 when already open
+                    self.applet_stack.set_visible_child(self.btdevices)
+                return
+            else:
+                # Open dashboard with btdevices visible.
+                self.set_keyboard_mode("exclusive")
+
+                if self.hidden:
+                    self.notch_box.remove_style_class("hidden")
+                    self.notch_box.add_style_class("hideshow")
+
+                for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
+                    self.stack.remove_style_class(style)
+                for w in [self.launcher, self.dashboard, self.overview, self.power, self.tools]:
+                    w.remove_style_class("open")
+
+                self.stack.add_style_class("dashboard")
+                self.applet_stack.set_transition_duration(0) # Set transition to 0 when opening
+                self.stack.set_transition_duration(0) # Keep stack transition to 0 for opening
+                self.stack.set_visible_child(self.dashboard)
+                self.dashboard.add_style_class("open")
+                self.applet_stack.set_visible_child(self.btdevices)
+                self._is_notch_open = True # Set notch state to open
+                # Reset the transition duration back to 250 after a short delay.
+                GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
+
+                self.bar.revealer.set_reveal_child(False)
+                return
+
+        # Handle the "dashboard" case
+        if widget == "dashboard":
+            if self.stack.get_visible_child() == self.dashboard:
+                # If dashboard is already open, ensure nhistory is visible.
+                if self.applet_stack.get_visible_child() != self.nhistory:
+                    self.applet_stack.set_transition_duration(250) # Set transition to 250 when already open
+                    self.applet_stack.set_visible_child(self.nhistory)
+                    return
+                else:
+                    # Otherwise, toggle the notch closed.
+                    self.close_notch()
+                    return
+            else:
+                self.set_keyboard_mode("exclusive")
+
+                if self.hidden:
+                    self.notch_box.remove_style_class("hidden")
+                    self.notch_box.add_style_class("hideshow")
+
+                for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
+                    self.stack.remove_style_class(style)
+                for w in [self.launcher, self.dashboard, self.overview, self.power, self.tools]:
+                    w.remove_style_class("open")
+
+                self.stack.add_style_class("dashboard")
+                self.applet_stack.set_transition_duration(0) # Set transition to 0 when opening
+                self.stack.set_transition_duration(0) # Keep stack transition to 0 for opening
+                self.stack.set_visible_child(self.dashboard)
+                self.dashboard.add_style_class("open")
+                self.applet_stack.set_visible_child(self.nhistory)
+                self._is_notch_open = True # Set notch state to open
+                # Reset the transition duration back to 250 after a short delay.
+                GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
+
+                self.bar.revealer.set_reveal_child(False)
+                return
+
+        # Handle other widgets (launcher, overview, power, tools)
         widgets = {
             "launcher": self.launcher,
-            "dashboard": self.dashboard,
             "overview": self.overview,
             "power": self.power,
-            "bluetooth": self.bluetooth,
             "tools": self.tools,
         }
         target_widget = widgets.get(widget, self.dashboard)
-        # Si ya se muestra el widget solicitado, se cierra la notch.
+        # If already showing the requested widget, close the notch.
         if self.stack.get_visible_child() == target_widget:
             self.close_notch()
             return
@@ -237,19 +314,18 @@ class Notch(Window):
             self.notch_box.remove_style_class("hidden")
             self.notch_box.add_style_class("hideshow")
 
-        # Limpiar clases y estados previos
+        # Clear previous style classes and states
         for style in widgets.keys():
             self.stack.remove_style_class(style)
         for w in widgets.values():
             w.remove_style_class("open")
 
-        # Configurar según el widget solicitado
+        # Configure according to the requested widget.
         if widget in widgets:
             self.stack.add_style_class(widget)
             self.stack.set_visible_child(widgets[widget])
             widgets[widget].add_style_class("open")
 
-            # Acciones específicas para el launcher
             if widget == "launcher":
                 self.launcher.open_launcher()
                 self.launcher.search_entry.set_text("")
@@ -257,9 +333,6 @@ class Notch(Window):
 
             if widget == "overview":
                 GLib.timeout_add(300, self._show_overview_children, True)
-
-            if widget == "dashboard" and self.dashboard.stack.get_visible_child() != self.dashboard.stack.get_children()[4]:
-                self.dashboard.stack.set_visible_child(self.dashboard.stack.get_children()[0])
         else:
             self.stack.set_visible_child(self.dashboard)
 
@@ -267,6 +340,7 @@ class Notch(Window):
             self.bar.revealer.set_reveal_child(False)
         else:
             self.bar.revealer.set_reveal_child(True)
+        self._is_notch_open = True # Set notch state to open
 
     def _show_overview_children(self, show_children):
         for child in self.overview.get_children():
@@ -315,8 +389,7 @@ class Notch(Window):
     def _reset_scrolling(self):
         self._scrolling = False
         return False
-        
-    
+
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
             self.compact_stack.set_visible_child(self.active_window)
