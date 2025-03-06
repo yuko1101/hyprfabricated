@@ -4,6 +4,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
+from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import ActiveWindow
@@ -122,38 +123,50 @@ class Notch(Window):
         self.corner_left = Box(
             name="notch-corner-left",
             orientation="v",
+            h_align="start",
             children=[
                 MyCorner("top-right"),
                 Box(),
             ]
         )
 
+        self.corner_left.set_margin_start(56)
+
         self.corner_right = Box(
             name="notch-corner-right",
             orientation="v",
+            h_align="end",
             children=[
                 MyCorner("top-left"),
                 Box(),
             ]
         )
 
+        self.corner_right.set_margin_end(56)
+
         self.notch_box = CenterBox(
             name="notch-box",
             orientation="h",
             h_align="center",
             v_align="center",
-            start_children=Box(
-                children=[
-                    self.corner_left,
-                ],
-            ),
+            # start_children=self.corner_left,
             center_children=self.stack,
-            end_children=Box(
-                children=[
-                    self.corner_right,
-                ]
-            )
+            # end_children=self.corner_right,
         )
+
+        self.notch_overlay = Overlay(
+            name="notch-overlay",
+            h_expand=True,
+            h_align="fill",
+            child=self.notch_box,
+            overlays=[
+                self.corner_left,
+                self.corner_right,
+            ],
+        )
+
+        self.notch_overlay.set_overlay_pass_through(self.corner_left, True)
+        self.notch_overlay.set_overlay_pass_through(self.corner_right, True)
 
         self.notification_revealer = Revealer(
             name="notification-revealer",
@@ -174,7 +187,7 @@ class Notch(Window):
             name="notch-complete",
             orientation="v",
             children=[
-                self.notch_box,
+                self.notch_overlay,
                 self.boxed_notification_revealer,
             ]
         )
@@ -183,7 +196,6 @@ class Notch(Window):
         self._is_notch_open = False  # Add a flag to track notch open state
         self._scrolling = False
 
-        self.add(self.notch_box)
         self.add(self.notch_complete)
         self.show_all()
 
