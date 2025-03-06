@@ -7,9 +7,12 @@ from gi.repository import Gdk, GLib
 import modules.data as data
 import subprocess
 
-SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
+SCREENSHOT_SCRIPT = "/home/saumya/.local/bin/screenshot"
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
-SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
+SCREENRECORD_SCRIPT = "/home/saumya/.local/bin/record.sh"
+# SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
+# OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
+# SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 SCREENRECORD_APP = "gpu-screen-recorder"
 class Toolbox(Box):
     def __init__(self, **kwargs):
