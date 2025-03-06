@@ -61,7 +61,7 @@ else
     wasYayInstalled=0
     echo "Installing yay-bin..."
     tmpdir=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
+    git clone --depth=1 https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
     cd "$tmpdir/yay-bin"
     makepkg -si --noconfirm
     cd - > /dev/null
@@ -74,7 +74,7 @@ if [ -d "$INSTALL_DIR" ]; then
     git -C "$INSTALL_DIR" pull
 else
     echo "Cloning hyprfabricated..."
-    git clone "$REPO_URL" "$INSTALL_DIR"
+    git clone  --depth=1  "$REPO_URL" "$INSTALL_DIR"
 fi
 
 echo "Installing gray-git..."
