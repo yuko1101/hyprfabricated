@@ -88,6 +88,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 
 - [x] App Launcher
 - [x] Power Menu
+- [x] Emoji Picker
 - [x] Wallpaper Selector
 - [x] System Tray
 - [x] Notifications
