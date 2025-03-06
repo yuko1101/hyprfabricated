@@ -458,7 +458,6 @@ class NotificationHistory(Box):
             except Exception as e:
                 logger.error(f"Error deleting persistent history file: {e}")
         self.persistent_notifications = []
-        self.update_separators()
         self.update_no_notifications_label_visibility()
 
     def _load_persistent_history(self):
@@ -497,7 +496,6 @@ class NotificationHistory(Box):
         ]
         self._save_persistent_history()
         container.destroy()
-        GLib.idle_add(self.update_separators)
         self.update_no_notifications_label_visibility()
 
     def _add_historical_notification(self, note):
@@ -618,20 +616,10 @@ class NotificationHistory(Box):
             ],
         )
         container.add(content_box)
-        container.add(Box(name="notification-separator"))
         self.notifications_list.pack_start(container, False, False, 0)
         self.notifications_list.reorder_child(container, 0)
-        self.update_separators()
         self.show_all()
         self.update_no_notifications_label_visibility()
-
-    def update_last_separator(self):
-        children = self.notifications_list.get_children()
-        for child in children:
-            separator = [c for c in child.get_children() if c.get_name() == "notification-separator"]
-            if separator:
-                separator[0].set_visible(child != children[-1])
-
 
     def add_notification(self, notification_box):
         if len(self.notifications_list.get_children()) >= 50:
@@ -652,7 +640,6 @@ class NotificationHistory(Box):
             if hasattr(container, "notification_box"):
                 notif_box = container.notification_box
             container.destroy()
-            GLib.idle_add(self.update_separators)
             self.update_no_notifications_label_visibility()
 
         container = Box(
@@ -751,10 +738,8 @@ class NotificationHistory(Box):
             lambda *_: on_container_destroy(container)
         )
         container.add(hist_box)
-        container.add(Box(name="notification-separator"))
         self.notifications_list.pack_start(container, False, False, 0)
         self.notifications_list.reorder_child(container, 0)
-        self.update_separators()
         self.show_all()
         self._append_persistent_notification(notification_box, container.arrival_time)
         self.update_no_notifications_label_visibility()
@@ -806,18 +791,6 @@ class NotificationHistory(Box):
             logger.info(f"Orphan cached image cleanup finished. Deleted {deleted_count} images.")
         else:
             logger.info("Orphan cached image cleanup finished. No orphan images found.")
-
-
-    def update_separators(self):
-        children = self.notifications_list.get_children()
-        for child in children:
-            for widget in child.get_children():
-                if widget.get_name() == "notification-separator":
-                    child.remove(widget)
-        for i, child in enumerate(children):
-            if i < len(children) - 1:
-                separator = Box(name="notification-separator")
-                child.add(separator)
 
     def update_no_notifications_label_visibility(self):
         """Updates the visibility of the 'No notifications!' label based on history."""
