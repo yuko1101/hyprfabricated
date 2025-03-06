@@ -180,7 +180,7 @@ class NotificationBox(Box):
             Image(
                 name="notification-icon",
                 icon_name="dialog-information-symbolic" or notification.app_icon,
-                icon_size=24,
+                icon_size=18,
             )
         )
 
