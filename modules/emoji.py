@@ -20,7 +20,7 @@ class EmojiPicker(Box):
 
         self.notch = kwargs["notch"]
         self.selected_index = -1
-        self.emojis_per_page = 9 * 5
+        self.emojis_per_page = 9 * 3
         self.current_page_index = 0
         self.filtered_emojis = []
         self.total_pages = 0
@@ -221,7 +221,7 @@ class EmojiPicker(Box):
         if total_items_current_page == 0:
             return
 
-        rows = 5
+        rows = 3
         columns = 9
 
         if self.selected_index == -1:
