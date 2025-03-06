@@ -340,6 +340,11 @@ class Notch(Window):
                 self.launcher.search_entry.set_text("")
                 self.launcher.search_entry.grab_focus()
 
+            if widget == "emoji":
+                self.emoji.open_picker()
+                self.emoji.search_entry.set_text("")
+                self.emoji.search_entry.grab_focus()
+
             if widget == "overview":
                 GLib.timeout_add(300, self._show_overview_children, True)
         else:
