@@ -74,7 +74,7 @@ if [ -d "$INSTALL_DIR" ]; then
     git -C "$INSTALL_DIR" pull
 else
     echo "Cloning hyprfabricated..."
-    git clone "$REPO_URL" "$INSTALL_DIR"
+    git clone  --depth=1  "$REPO_URL" "$INSTALL_DIR"
 fi
 
 echo "Installing gray-git..."
