@@ -555,14 +555,14 @@ class NotificationHistory(Box):
             name="notification-summary",
             markup=hist_notif.summary,
             h_align="start",
-            max_chars_width=16,
+            # max_chars_width=16,
             ellipsization="end",
         )
         self.hist_notif_app_name_label = Label(
             name="notification-app-name",
             markup=f"{hist_notif.app_name}",
             h_align="start",
-            max_chars_width=16,
+            # max_chars_width=16,
             ellipsization="end",
         )
         self.hist_notif_body_label = Label(
