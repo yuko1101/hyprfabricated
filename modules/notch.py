@@ -14,6 +14,7 @@ from modules.dashboard import Dashboard
 from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
 from modules.overview import Overview
+from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
@@ -44,6 +45,7 @@ class Notch(Window):
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
+        self.emoji = EmojiPicker(notch=self)
         self.power = PowerMenu(notch=self)
 
         self.applet_stack = self.dashboard.widgets.applet_stack
@@ -111,6 +113,7 @@ class Notch(Window):
                 self.launcher,
                 self.dashboard,
                 self.overview,
+                self.emoji,
                 self.power,
                 self.tools,
             ]
@@ -215,9 +218,9 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.tools]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -241,9 +244,9 @@ class Notch(Window):
                     self.notch_box.remove_style_class("hidden")
                     self.notch_box.add_style_class("hideshow")
 
-                for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
+                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
                     self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.power, self.tools]:
+                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
@@ -279,9 +282,9 @@ class Notch(Window):
                     self.notch_box.remove_style_class("hidden")
                     self.notch_box.add_style_class("hideshow")
 
-                for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
+                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
                     self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.power, self.tools]:
+                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
@@ -302,6 +305,7 @@ class Notch(Window):
         widgets = {
             "launcher": self.launcher,
             "overview": self.overview,
+            "emoji": self.emoji,
             "power": self.power,
             "tools": self.tools,
             "dashboard": self.dashboard, # Add dashboard here to ensure its style class is removed

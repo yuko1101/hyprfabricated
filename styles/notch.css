@@ -19,7 +19,8 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-#notch-content.launcher {
+#notch-content.launcher,
+#notch-content.emoji {
   padding: 16px;
   min-height: 220px;
   min-width: 480px;
@@ -55,6 +56,7 @@
 #dashboard,
 #notification,
 #overview,
+#emoji,
 #power-menu,
 #toolbox {
   opacity: 1;
@@ -66,6 +68,7 @@
 #dashboard.open,
 #notification.open,
 #overview.open,
+#emoji.open,
 #power-menu.open,
 #toolbox.open,
 #bluetooth.open {

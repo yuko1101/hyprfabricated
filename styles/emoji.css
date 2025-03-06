@@ -1,0 +1,126 @@
+#emoji #search-entry {
+  /* Renamed for emoji picker and more specific */
+  font-weight: bold;
+  background-color: var(--surface);
+  color: var(--foreground);
+  border-radius: 16px;
+  padding: 10px;
+}
+
+#emoji #search-entry selection {
+  /* Renamed for emoji picker and more specific */
+  color: var(--background);
+  background-color: var(--primary);
+}
+
+#emoji #close-button {
+  /* Renamed for emoji picker and more specific */
+  background-color: var(--surface);
+  border-radius: 16px;
+  padding: 8px;
+}
+
+#emoji #close-button:hover, /* Renamed for emoji picker and more specific */
+#emoji #close-button:focus {
+  /* Renamed for emoji picker and more specific */
+  background-color: var(--surface-bright);
+}
+
+#emoji #close-button:active {
+  /* Renamed for emoji picker and more specific */
+  background-color: var(--red-dim);
+}
+
+#emoji #close-label {
+  /* Renamed for emoji picker and more specific */
+  color: var(--red-dim);
+  font-size: 24px;
+}
+
+#emoji #close-button:active #close-label {
+  /* Renamed for emoji picker and more specific */
+  color: var(--shadow);
+}
+
+#emoji #scrolled-window {
+  /* Renamed for emoji picker and more specific */
+  border-radius: 16px;
+}
+
+#emoji #scrolled-window scrollbar {
+  /* Renamed for emoji picker and more specific */
+  border-radius: 10px;
+  background-color: var(--surface);
+  padding: 4px;
+  margin-left: 6px;
+}
+
+#emoji #scrolled-window slider {
+  /* Renamed for emoji picker and more specific */
+  border-radius: 8px;
+  min-width: 16px;
+  min-height: 48px;
+  background-color: var(--primary);
+}
+
+#emoji #emoji-slot-button {
+  /* Renamed for emoji picker and more specific */
+  border-radius: 16px;
+  padding: 16px;
+  transition: padding 0.1s ease;
+  animation: loadEmojiSlot 0.5s ease; /* Renamed animation */
+}
+
+@keyframes loadEmojiSlot {
+  /* Renamed animation */
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+#emoji #emoji-slot-button:hover, /* Renamed for emoji picker and more specific */
+#emoji #emoji-slot-button:focus, /* Renamed for emoji picker and more specific */
+#emoji #emoji-slot-button:selected, /* Renamed for emoji picker and more specific */
+#emoji #emoji-slot-button.selected {
+  /* Renamed for emoji picker and more specific */
+  background-color: var(--surface-bright);
+  padding-left: 20px;
+}
+
+#emoji #emoji-slot-button:active {
+  /* Renamed for emoji picker and more specific */
+  background-color: var(--primary);
+}
+
+/* #emoji #app-icon {  Not relevant for emoji picker, using text emoji instead of icon
+  margin: -8px;
+  margin-right: 4px;
+} */
+
+#emoji #emoji-name-label {
+  /* Renamed for emoji picker and more specific, and purpose */
+  color: var(--foreground);
+  font-weight: bold;
+}
+
+#emoji #emoji-slot-button:hover #emoji-name-label, /* Renamed for emoji picker and more specific */
+#emoji #emoji-slot-button:focus #emoji-name-label, /* Renamed for emoji picker and more specific */
+#emoji #emoji-slot-button:selected #emoji-name-label, /* Renamed for emoji picker and more specific */
+#emoji #emoji-slot-button.selected #emoji-name-label {
+  /* Renamed for emoji picker and more specific */
+  color: var(--primary);
+}
+
+#emoji #emoji-slot-button:active #emoji-name-label {
+  /* Renamed for emoji picker and more specific */
+  color: var(--shadow);
+}
+
+#emoji #emoji-char-label {
+  font-size: 24px; /* Example size for emoji char, adjust as needed */
+  margin: -8px;
+  margin-right: 4px;
+}
