@@ -7,9 +7,12 @@ from gi.repository import Gdk, GLib
 import modules.data as data
 import subprocess
 
-SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
+SCREENSHOT_SCRIPT = "/home/saumya/.local/bin/screenshot"
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
-SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
+SCREENRECORD_SCRIPT = "/home/saumya/.local/bin/record.sh"
+# SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
+# OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
+# SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 SCREENRECORD_APP = "gpu-screen-recorder"
 class Toolbox(Box):
     def __init__(self, **kwargs):
@@ -99,12 +102,10 @@ class Toolbox(Box):
 
     def close_menu(self):
         self.notch.close_notch()
-
         # Start polling for process state every second.
         self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
 
-    def close_menu(self):
-        self.notch.close_notch()
+
 
     # Action methods
     def ssfull(self, *args):
@@ -163,6 +164,7 @@ class Toolbox(Box):
         This function is called periodically every second.
         """
         try:
+            print("yes")
             # Use pgrep with -f to check for the process name anywhere in the command line
             result = subprocess.run(f"pgrep -f {SCREENRECORD_APP}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             running = result.returncode == 0
