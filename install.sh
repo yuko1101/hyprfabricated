@@ -69,7 +69,7 @@ if [ -d "$INSTALL_DIR" ]; then
     git -C "$INSTALL_DIR" pull
 else
     echo "Cloning Ax-Shell..."
-    git clone "$REPO_URL" "$INSTALL_DIR"
+    # git clone "$REPO_URL" "$INSTALL_DIR"
 fi
 
 echo "Installing gray-git..."

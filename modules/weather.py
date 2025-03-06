@@ -39,6 +39,8 @@ class Weather(Box):
 
     def _fetch_weather_thread(self):
         location = self.get_location()
+        if location == "Madrid":
+            location = "Valencia"
         if location:
             # URL encode the location to make it URL friendly.
             encoded_location = urllib.parse.quote(location)

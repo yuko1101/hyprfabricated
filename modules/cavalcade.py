@@ -247,7 +247,7 @@ class SpectrumRender():
     def get_spectrum_box(self):
         # Get the spectrum box
         box = Overlay(name="cavalcade", h_align='center', v_align='center')
-        box.set_size_request(155, 40)
+        box.set_size_request(180, 40)
         box.add_overlay(self.draw.area)
         return box
 
