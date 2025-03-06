@@ -533,21 +533,7 @@ class NotificationHistory(Box):
         container.arrival_time = arrival
 
         def compute_time_label(arrival_time):
-            now = datetime.now()
-            if arrival_time.date() != now.date():
-                if arrival_time.date() == (now - timedelta(days=1)).date():
-                    return "Yesterday " + arrival_time.strftime("%H:%M")
-                else:
-                    return arrival_time.strftime("| %d/%m/%Y %H:%M")
-            delta = now - arrival_time
-            seconds = delta.total_seconds()
-            if seconds < 60:
-                return "Now"
-            elif seconds < 3600:
-                minutes = int(seconds // 60)
-                return f"{minutes} min" if minutes == 1 else f"{minutes} mins"
-            else:
-                return arrival_time.strftime("%H:%M")
+            return arrival_time.strftime("%H:%M") # Show only HH:MM
 
         self.hist_time_label = Label(
             name="notification-timestamp",
@@ -677,21 +663,7 @@ class NotificationHistory(Box):
         )
         container.arrival_time = datetime.now()
         def compute_time_label(arrival_time):
-            now = datetime.now()
-            if arrival_time.date() != now.date():
-                if arrival_time.date() == (now - timedelta(days=1)).date():
-                    return "Yesterday " + arrival_time.strftime("%H:%M")
-                else:
-                    return arrival_time.strftime("| %d/%m/%Y %H:%M")
-            delta = now - arrival_time
-            seconds = delta.total_seconds()
-            if seconds < 60:
-                return "Now"
-            elif seconds < 3600:
-                minutes = int(seconds // 60)
-                return f"{minutes} min" if minutes == 1 else f"{minutes} mins"
-            else:
-                return arrival_time.strftime("%H:%M")
+            return arrival_time.strftime("%H:%M") # Show only HH:MM
         self.current_time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
         self.current_notif_image_box = Box(
             name="notification-image",
@@ -765,10 +737,7 @@ class NotificationHistory(Box):
                 self.current_notif_close_button_box,
             ],
         )
-        def update_timestamp():
-            self.current_time_label.set_markup(compute_time_label(container.arrival_time))
-            return True
-        container._timestamp_timer_id = GLib.timeout_add_seconds(10, update_timestamp)
+        # Removed timestamp update timer
         container.notification_box = notification_box
         hist_box = Box(
             name="notification-box-hist",
