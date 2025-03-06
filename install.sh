@@ -61,7 +61,7 @@ else
     wasYayInstalled=0
     echo "Installing yay-bin..."
     tmpdir=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
+    git clone --depth=1 https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
     cd "$tmpdir/yay-bin"
     makepkg -si --noconfirm
     cd - > /dev/null
