@@ -132,13 +132,6 @@
   border: 2px solid var(--surface);
 }
 
-#notification-separator {
-  /*padding: 1px;*/
-  border-radius: 16px;
-  /*background-color: var(--surface);*/
-  /*margin: 0 16px;*/
-}
-
 #notification-timestamp {
   color: var(--surface-bright);
 }
@@ -179,3 +172,9 @@
   color: var(--surface);
 }
 
+#notif-sep {
+  padding: 2px;
+  border-radius: 16px;
+  background-color: var(--surface-bright);
+  margin: 0 8px;
+}
