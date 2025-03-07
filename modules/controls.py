@@ -193,19 +193,33 @@ class BrightnessSmall(Box):
         self.add_events(
             Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK
         )
+
         self.worker = BrightnessWorker(self.brightness)
+        # Variables para debouncing del scroll
+        self.pending_delta = 0
+        self.scroll_timeout_id = None
 
     def on_scroll(self, _, event):
         if self.brightness.max_screen == -1:
             return
-        # Agregamos un pequeño debounce: en lugar de encolar cada evento, podríamos mejorar aquí
+
+        # Acumulamos la variación: delta_y negativo = subir brillo, positivo = bajar brillo.
         if event.delta_y < 0:
-            new_val = self.brightness.screen_brightness + 1
+            self.pending_delta += 1
         elif event.delta_y > 0:
-            new_val = self.brightness.screen_brightness - 1
-        else:
-            return
+            self.pending_delta -= 1
+
+        # Si no hay un timeout en curso, lo configuramos para aplicar el cambio en 100ms.
+        if self.scroll_timeout_id is None:
+            self.scroll_timeout_id = GLib.timeout_add(100, self._apply_scroll_delta)
+
+    def _apply_scroll_delta(self):
+        # Calculamos el nuevo valor a partir del brillo actual y la variación acumulada.
+        new_val = self.brightness.screen_brightness + self.pending_delta
         self.worker.set_brightness(new_val)
+        self.pending_delta = 0
+        self.scroll_timeout_id = None
+        return False
 
     def on_brightness_changed(self, *_):
         if self.brightness.max_screen == -1:
