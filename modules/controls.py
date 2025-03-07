@@ -129,14 +129,18 @@ class BrightnessSlider(Scale):
             self.timeout_id = GLib.timeout_add(100, self._update_brightness)
 
     def _update_brightness(self):
-        # Apply the pending brightness value
+        # Apply the pending brightness value in idle time to avoid blocking UI thread
         if self.pending_value is not None:
-            self.brightness.screen_brightness = self.pending_value
+            GLib.idle_add(self._set_brightness_async, self.pending_value)
             self.pending_value = None
 
         # Return False to ensure the timeout doesn't repeat
         self.timeout_id = None
         return False
+
+    def _set_brightness_async(self, value):
+        self.brightness.screen_brightness = value
+        return False  # Don't repeat idle callback
 
     def on_brightness_changed(self, *args):
         if self.brightness.max_screen != -1:
@@ -157,7 +161,7 @@ class VolumeSmall(Box):
             child=self.vol_label
         )
         self.event_box = EventBox(
-            events=Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK,
+            events=["scroll", "smooth-scroll"],
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.vol_button
@@ -169,8 +173,12 @@ class VolumeSmall(Box):
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
         self.on_speaker_changed()
-        self.scroll_sensitivity = 0.5  # Adjust for volume scroll sensitivity
-
+        # self.scroll_threshold = -80.0  # Ajusta este valor para modificar la sensibilidad
+        self.add_events(
+            Gdk.EventMask.SCROLL_MASK |
+                Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
+        # self._scroll_accumulator = 10.0
     def on_new_speaker(self, *args):
         if self.audio.speaker:
             self.audio.speaker.connect("changed", self.on_speaker_changed)
@@ -194,13 +202,18 @@ class VolumeSmall(Box):
         if not self.audio.speaker:
             return
 
-        delta_y = event.get_scroll_deltas()[1] # Get vertical scroll delta
-        if delta_y != 0:
-            self.audio.speaker.volume += -delta_y * self.scroll_sensitivity # Invert delta and apply sensitivity
-            self.audio.speaker.volume = max(0, min(100, self.audio.speaker.volume)) # Clamp volume to 0-100 range
-            return True
-        return False
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if abs(event.delta_y) > 0:
+                self.audio.speaker.volume -= event.delta_y
+            if abs(event.delta_x) > 0:
+                self.audio.speaker.volume += event.delta_x
 
+        # match event.direction:
+        #     case 0:
+        #         self.audio.speaker.volume += 1
+        #     case 1:
+        #         self.audio.speaker.volume -= 1
+        # return
 
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
@@ -238,7 +251,7 @@ class MicSmall(Box):
             child=self.mic_label
         )
         self.event_box = EventBox(
-            events=Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK,
+            events=["scroll", "smooth-scroll"],
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.mic_button
@@ -248,10 +261,13 @@ class MicSmall(Box):
         if self.audio.microphone:
             self.audio.microphone.connect("changed", self.on_microphone_changed)
         self.event_box.connect("scroll-event", self.on_scroll)
+        self.add_events(
+            Gdk.EventMask.SCROLL_MASK |
+                Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
 
         self.add(self.event_box)
         self.on_microphone_changed()
-        self.scroll_sensitivity = 0.5 # Adjust for mic scroll sensitivity
 
     def on_new_microphone(self, *args):
         if self.audio.microphone:
@@ -275,12 +291,11 @@ class MicSmall(Box):
         if not self.audio.microphone:
             return
 
-        delta_y = event.get_scroll_deltas()[1] # Get vertical scroll delta
-        if delta_y != 0:
-            self.audio.microphone.volume += -delta_y * self.scroll_sensitivity # Invert delta and apply sensitivity
-            self.audio.microphone.volume = max(0, min(100, self.audio.microphone.volume)) # Clamp volume to 0-100 range
-            return True
-        return False
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if abs(event.delta_y) > 0:
+                self.audio.microphone.volume -= event.delta_y
+            if abs(event.delta_x) > 0:
+                self.audio.microphone.volume += event.delta_x
 
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
@@ -317,7 +332,7 @@ class BrightnessSmall(Box):
         self.brightness_label = Label(name="brightness-label", markup=icons.brightness_high)
         self.brightness_button = Button(child=self.brightness_label)
         self.event_box = EventBox(
-            events=Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK,
+            events=["scroll", "smooth-scroll"],
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.brightness_button
@@ -327,20 +342,19 @@ class BrightnessSmall(Box):
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
         self.on_brightness_changed()
-        self.scroll_sensitivity = 1 # Adjust for brightness scroll sensitivity
+        self.add_events(
+            Gdk.EventMask.SCROLL_MASK |
+                Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
 
     def on_scroll(self, _, event):
         if self.brightness.max_screen == -1:
             return
-
-        delta_y = event.get_scroll_deltas()[1] # Get vertical scroll delta
-        if delta_y != 0:
-            step = self.brightness.max_screen / 100.0 * self.scroll_sensitivity # Scale step based on max brightness and sensitivity
-            self.brightness.screen_brightness += int(-delta_y * step) # Invert delta and apply step
-            self.brightness.screen_brightness = max(0, min(self.brightness.max_screen, self.brightness.screen_brightness)) # Clamp brightness
-            return True
-        return False
-
+        val_y = event.delta_y
+        if val_y < 0: # Scrolling up (delta_y is negative)
+            self.brightness.screen_brightness += 1
+        elif val_y > 0: # Scrolling down (delta_y is positive)
+            self.brightness.screen_brightness -= 1
 
     def on_brightness_changed(self, *_):
         if self.brightness.max_screen == -1:
