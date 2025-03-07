@@ -12,9 +12,6 @@ from services.brightness import Brightness
 import modules.icons as icons
 import math
 from gi.repository import GLib
-import threading
-import queue
-import time  # Import time for potential delays in thread
 
 def supports_backlight():
     try:
@@ -111,23 +108,9 @@ class BrightnessSlider(Scale):
         self.on_brightness_changed()
         self.add_style_class("brightness")
 
-        # Variables for debouncing and threading
+        # Variables for debouncing
         self.timeout_id = None
         self.pending_value = None
-        self.brightness_queue = queue.Queue()
-        self.brightness_thread = threading.Thread(target=self._brightness_worker, daemon=True) # Daemon thread
-        self.brightness_thread.start()
-
-    def _brightness_worker(self):
-        while True:
-            value = self.brightness_queue.get() # Blocking get
-            if value is None: # Sentinel value to stop thread
-                break
-            try:
-                self.brightness.screen_brightness = value # This might be blocking
-            except Exception as e:
-                print(f"Error setting brightness: {e}")
-            self.brightness_queue.task_done() # Indicate task completion
 
     def on_value_changed(self, _):
         if self.brightness.max_screen != -1:
@@ -142,29 +125,26 @@ class BrightnessSlider(Scale):
             # Store the pending value
             self.pending_value = new_brightness
 
-            # Set a timeout to queue brightness update after 100ms
-            self.timeout_id = GLib.timeout_add(100, self._queue_brightness_update)
+            # Set a timeout to update brightness after 100ms
+            self.timeout_id = GLib.timeout_add(100, self._update_brightness)
 
-    def _queue_brightness_update(self):
-        # Queue the pending brightness value for worker thread
+    def _update_brightness(self):
+        # Apply the pending brightness value in idle time to avoid blocking UI thread
         if self.pending_value is not None:
-            self.brightness_queue.put(self.pending_value)
+            GLib.idle_add(self._set_brightness_async, self.pending_value)
             self.pending_value = None
 
         # Return False to ensure the timeout doesn't repeat
         self.timeout_id = None
         return False
 
+    def _set_brightness_async(self, value):
+        self.brightness.screen_brightness = value
+        return False  # Don't repeat idle callback
 
     def on_brightness_changed(self, *args):
         if self.brightness.max_screen != -1:
             self.value = self.brightness.screen_brightness / self.brightness.max_screen
-
-    def destroy(self):
-        # Stop the worker thread gracefully when the slider is destroyed
-        self.brightness_queue.put(None) # Send sentinel value to stop worker
-        self.brightness_thread.join() # Wait for thread to finish
-        super().destroy()
 
 
 class VolumeSmall(Box):
@@ -366,30 +346,15 @@ class BrightnessSmall(Box):
             Gdk.EventMask.SCROLL_MASK |
                 Gdk.EventMask.SMOOTH_SCROLL_MASK
         )
-        self.brightness_queue = queue.Queue() # Queue for brightness changes
-        self.brightness_thread = threading.Thread(target=self._brightness_worker, daemon=True) # Daemon thread
-        self.brightness_thread.start()
-
-    def _brightness_worker(self):
-        while True:
-            value = self.brightness_queue.get() # Blocking get
-            if value is None: # Sentinel value to stop thread
-                break
-            try:
-                self.brightness.screen_brightness = value # This might be blocking
-            except Exception as e:
-                print(f"Error setting brightness: {e}")
-            self.brightness_queue.task_done() # Indicate task completion
-
 
     def on_scroll(self, _, event):
         if self.brightness.max_screen == -1:
             return
         val_y = event.delta_y
         if val_y < 0: # Scrolling up (delta_y is negative)
-            self.brightness_queue.put(self.brightness.screen_brightness + 1)
+            self.brightness.screen_brightness += 1
         elif val_y > 0: # Scrolling down (delta_y is positive)
-            self.brightness_queue.put(self.brightness.screen_brightness - 1)
+            self.brightness.screen_brightness -= 1
 
     def on_brightness_changed(self, *_):
         if self.brightness.max_screen == -1:
@@ -404,14 +369,6 @@ class BrightnessSmall(Box):
             self.brightness_label.set_markup(icons.brightness_low)
 
         self.set_tooltip_text(f"{round(brightness_percentage)}%")
-
-    def destroy(self):
-        # Stop the worker thread gracefully when the widget is destroyed
-        self.brightness_queue.put(None) # Send sentinel value to stop worker
-        self.brightness_thread.join() # Wait for thread to finish
-        super().destroy()
-
-
 # ControlSliders now only includes the brightness slider if supported.
 class ControlSliders(Box):
     def __init__(self, **kwargs):
