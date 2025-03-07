@@ -96,41 +96,46 @@ class BrightnessSlider(Scale):
             increments=(0.01, 0.1),
             **kwargs,
         )
-        # Obtenemos el cliente de brillo por defecto
+        if not Brightness().get_default():
+            return
+
+        # Se usa get_default() para obtener el cliente de brillo, igual que en el otro ejemplo
         self.client = Brightness().get_default()
         if self.client.screen_brightness == -1:
             self.destroy()
             return
 
-        # Configuramos el rango y valor inicial usando los valores reales del brillo
+        # Configuramos el rango y valor inicial según los valores reales
         self.set_range(0, self.client.max_screen)
         self.set_value(self.client.screen_brightness)
 
-        # Conectamos el movimiento del slider a la actualización inmediata del brillo
+        # Actualiza el brillo inmediatamente cuando se mueve el slider
         self.connect("change-value", self.on_scale_move)
-        # Conectamos la señal "screen" para que si el brillo cambia externamente se actualice el slider
-        self.client.connect("screen", self.on_brightness_change)
+        # Actualiza el slider si el brillo cambia externamente
+        self.client.connect("screen", self.on_brightness_changed)
         self.add_style_class("brightness")
 
     def on_scale_move(self, widget, scroll, moved_pos):
-        # Actualiza inmediatamente el brillo sin debounce
         self.client.screen_brightness = moved_pos
-        return False  # Permite que el evento siga su curso si es necesario
+        return False
 
-    def on_brightness_change(self, client, _):
-        # Actualiza el slider y muestra el porcentaje en el tooltip
+    def on_brightness_changed(self, client, _):
         self.set_value(client.screen_brightness)
         percentage = int((client.screen_brightness / client.max_screen) * 100)
         self.set_tooltip_text(f"{percentage}%")
 
-# Versión mejorada del widget pequeño de brillo usando GLib
+    def destroy(self):
+        super().destroy()
+
+
+# Widget pequeño de brillo que responde al scroll sin debounce
 class BrightnessSmall(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar-brightness", **kwargs)
-        if not BACKLIGHT_SUPPORTED:
+        if not Brightness().get_default():
             return
 
-        self.brightness = Brightness.get_initial()
+        self.brightness = Brightness().get_default()
         self.progress_bar = CircularProgressBar(
             name="button-brightness", size=28, line_width=2,
             start_angle=150, end_angle=390,
@@ -144,58 +149,41 @@ class BrightnessSmall(Box):
                 overlays=self.brightness_button
             ),
         )
+        # Se actualiza la interfaz cuando el brillo cambia
         self.brightness.connect("screen", self.on_brightness_changed)
+        # Se conecta el scroll para cambiar el brillo inmediatamente
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
         self.on_brightness_changed()
-        self.add_events(
-            Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK
-        )
-
-        # Variables para debouncing del scroll
-        self.pending_delta = 0
-        self.scroll_timeout_id = None
+        self.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
 
     def on_scroll(self, _, event):
         if self.brightness.max_screen == -1:
             return
-
-        # Acumulamos la variación: delta_y negativo = subir brillo, positivo = bajar brillo.
+        # Definimos un tamaño de paso (por ejemplo, 1 unidad)
+        step_size = 1
         if event.delta_y < 0:
-            self.pending_delta += 1
+            # Scroll hacia arriba: aumenta brillo
+            new_val = min(self.brightness.screen_brightness + step_size, self.brightness.max_screen)
+            self.brightness.screen_brightness = new_val
         elif event.delta_y > 0:
-            self.pending_delta -= 1
-
-        # Si no hay un timeout en curso, lo configuramos para aplicar el cambio en 100ms.
-        if self.scroll_timeout_id is None:
-            self.scroll_timeout_id = GLib.idle_add(self._apply_scroll_delta)
-
-    def _apply_scroll_delta(self):
-        new_val = self.brightness.screen_brightness + self.pending_delta
-        GLib.idle_add(self._update_brightness, new_val)
-        self.pending_delta = 0
-        self.scroll_timeout_id = None
-        return False
-
-    def _update_brightness(self, value):
-        try:
-            self.brightness.screen_brightness = value
-        except Exception as e:
-            print(f"Error setting brightness: {e}")
-        return False
+            # Scroll hacia abajo: disminuye brillo
+            new_val = max(self.brightness.screen_brightness - step_size, 0)
+            self.brightness.screen_brightness = new_val
 
     def on_brightness_changed(self, *_):
         if self.brightness.max_screen == -1:
             return
-        self.progress_bar.value = self.brightness.screen_brightness / self.brightness.max_screen
-        brightness_percentage = (self.brightness.screen_brightness / self.brightness.max_screen) * 100
+        normalized = self.brightness.screen_brightness / self.brightness.max_screen
+        self.progress_bar.value = normalized
+        brightness_percentage = int(normalized * 100)
         if brightness_percentage >= 75:
             self.brightness_label.set_markup(icons.brightness_high)
         elif brightness_percentage >= 24:
             self.brightness_label.set_markup(icons.brightness_medium)
         else:
             self.brightness_label.set_markup(icons.brightness_low)
-        self.set_tooltip_text(f"{round(brightness_percentage)}%")
+        self.set_tooltip_text(f"{brightness_percentage}%")
 
     def destroy(self):
         super().destroy()
