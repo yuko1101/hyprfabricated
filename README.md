@@ -72,6 +72,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
     - `gpu-screen-recorder`
     - `grimblast-git`
     - Python dependencies:
+        - ijson
         - pillow
         - psutil
         - requests
@@ -92,7 +93,9 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="25" height="25" /></sub> Roadmap</h2>
 
 - [x] App Launcher
+- [x] Calculator
 - [x] Power Menu
+- [x] Emoji Picker
 - [x] Wallpaper Selector
 - [x] System Tray
 - [x] Notifications

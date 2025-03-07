@@ -235,7 +235,7 @@ class NotificationBox(Box):
             max_chars_width=34,
             ellipsization="end",
         ) if notification.body else Box()
-        # self.notification_body_label.set_single_line_mode(True)
+        self.notification_body_label.set_single_line_mode(True) if notification.body else None
         self.notification_text_box = Box(
             name="notification-text",
             orientation="v",
@@ -465,7 +465,6 @@ class NotificationHistory(Box):
             except Exception as e:
                 logger.error(f"Error deleting persistent history file: {e}")
         self.persistent_notifications = []
-        self.update_separators()
         self.update_no_notifications_label_visibility()
 
     def _load_persistent_history(self):
@@ -504,7 +503,6 @@ class NotificationHistory(Box):
         ]
         self._save_persistent_history()
         container.destroy()
-        GLib.idle_add(self.update_separators)
         self.update_no_notifications_label_visibility()
 
     def _add_historical_notification(self, note):
@@ -540,21 +538,7 @@ class NotificationHistory(Box):
         container.arrival_time = arrival
 
         def compute_time_label(arrival_time):
-            now = datetime.now()
-            if arrival_time.date() != now.date():
-                if arrival_time.date() == (now - timedelta(days=1)).date():
-                    return "Yesterday " + arrival_time.strftime("%H:%M")
-                else:
-                    return arrival_time.strftime("| %d/%m/%Y %H:%M")
-            delta = now - arrival_time
-            seconds = delta.total_seconds()
-            if seconds < 60:
-                return "Now"
-            elif seconds < 3600:
-                minutes = int(seconds // 60)
-                return f"{minutes} min" if minutes == 1 else f"{minutes} mins"
-            else:
-                return arrival_time.strftime("%H:%M")
+            return arrival_time.strftime("%H:%M") # Show only HH:MM
 
         self.hist_time_label = Label(
             name="notification-timestamp",
@@ -576,14 +560,14 @@ class NotificationHistory(Box):
             name="notification-summary",
             markup=hist_notif.summary,
             h_align="start",
-            max_chars_width=16,
+            # max_chars_width=16,
             ellipsization="end",
         )
         self.hist_notif_app_name_label = Label(
             name="notification-app-name",
             markup=f"{hist_notif.app_name}",
             h_align="start",
-            max_chars_width=16,
+            # max_chars_width=16,
             ellipsization="end",
         )
         self.hist_notif_body_label = Label(
@@ -594,7 +578,7 @@ class NotificationHistory(Box):
             ellipsization="end",
             line_wrap="word-char",
         ) if hist_notif.body else Box()
-        # self.hist_notif_body_label.set_single_line_mode(True)
+        self.hist_notif_body_label.set_single_line_mode(True) if hist_notif.body else None
         self.hist_notif_summary_box = Box(
             name="notification-summary-box",
             orientation="h",
@@ -639,20 +623,10 @@ class NotificationHistory(Box):
             ],
         )
         container.add(content_box)
-        container.add(Box(name="notification-separator"))
         self.notifications_list.pack_start(container, False, False, 0)
         self.notifications_list.reorder_child(container, 0)
-        self.update_separators()
         self.show_all()
         self.update_no_notifications_label_visibility()
-
-    def update_last_separator(self):
-        children = self.notifications_list.get_children()
-        for child in children:
-            separator = [c for c in child.get_children() if c.get_name() == "notification-separator"]
-            if separator:
-                separator[0].set_visible(child != children[-1])
-
 
     def add_notification(self, notification_box):
         if len(self.notifications_list.get_children()) >= 50:
@@ -673,7 +647,6 @@ class NotificationHistory(Box):
             if hasattr(container, "notification_box"):
                 notif_box = container.notification_box
             container.destroy()
-            GLib.idle_add(self.update_separators)
             self.update_no_notifications_label_visibility()
 
         container = Box(
@@ -684,21 +657,7 @@ class NotificationHistory(Box):
         )
         container.arrival_time = datetime.now()
         def compute_time_label(arrival_time):
-            now = datetime.now()
-            if arrival_time.date() != now.date():
-                if arrival_time.date() == (now - timedelta(days=1)).date():
-                    return "Yesterday " + arrival_time.strftime("%H:%M")
-                else:
-                    return arrival_time.strftime("| %d/%m/%Y %H:%M")
-            delta = now - arrival_time
-            seconds = delta.total_seconds()
-            if seconds < 60:
-                return "Now"
-            elif seconds < 3600:
-                minutes = int(seconds // 60)
-                return f"{minutes} min" if minutes == 1 else f"{minutes} mins"
-            else:
-                return arrival_time.strftime("%H:%M")
+            return arrival_time.strftime("%H:%M") # Show only HH:MM
         self.current_time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
         self.current_notif_image_box = Box(
             name="notification-image",
@@ -729,7 +688,7 @@ class NotificationHistory(Box):
             ellipsization="end",
             line_wrap="word-char",
         ) if notification_box.notification.body else Box()
-        # self.current_notif_body_label.set_single_line_mode(True)
+        self.current_notif_body_label.set_single_line_mode(True) if notification_box.notification.body else None
         self.current_notif_summary_box = Box(
             name="notification-summary-box",
             orientation="h",
@@ -772,10 +731,7 @@ class NotificationHistory(Box):
                 self.current_notif_close_button_box,
             ],
         )
-        def update_timestamp():
-            self.current_time_label.set_markup(compute_time_label(container.arrival_time))
-            return True
-        container._timestamp_timer_id = GLib.timeout_add_seconds(10, update_timestamp)
+        # Removed timestamp update timer
         container.notification_box = notification_box
         hist_box = Box(
             name="notification-box-hist",
@@ -789,10 +745,8 @@ class NotificationHistory(Box):
             lambda *_: on_container_destroy(container)
         )
         container.add(hist_box)
-        container.add(Box(name="notification-separator"))
         self.notifications_list.pack_start(container, False, False, 0)
         self.notifications_list.reorder_child(container, 0)
-        self.update_separators()
         self.show_all()
         self._append_persistent_notification(notification_box, container.arrival_time)
         self.update_no_notifications_label_visibility()
@@ -844,18 +798,6 @@ class NotificationHistory(Box):
             logger.info(f"Orphan cached image cleanup finished. Deleted {deleted_count} images.")
         else:
             logger.info("Orphan cached image cleanup finished. No orphan images found.")
-
-
-    def update_separators(self):
-        children = self.notifications_list.get_children()
-        for child in children:
-            for widget in child.get_children():
-                if widget.get_name() == "notification-separator":
-                    child.remove(widget)
-        for i, child in enumerate(children):
-            if i < len(children) - 1:
-                separator = Box(name="notification-separator")
-                child.add(separator)
 
     def update_no_notifications_label_visibility(self):
         """Updates the visibility of the 'No notifications!' label based on history."""

@@ -4,6 +4,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
+from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import ActiveWindow
@@ -14,6 +15,7 @@ from modules.dashboard import Dashboard
 from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
 from modules.overview import Overview
+from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
@@ -44,6 +46,7 @@ class Notch(Window):
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
+        self.emoji = EmojiPicker(notch=self)
         self.power = PowerMenu(notch=self)
 
         self.applet_stack = self.dashboard.widgets.applet_stack
@@ -122,6 +125,7 @@ class Notch(Window):
                 self.launcher,
                 self.dashboard,
                 self.overview,
+                self.emoji,
                 self.power,
                 self.tools,
             ]
@@ -130,42 +134,51 @@ class Notch(Window):
         self.corner_left = Box(
             name="notch-corner-left",
             orientation="v",
+            h_align="start",
             children=[
                 MyCorner("top-right"),
                 Box(),
             ]
         )
 
+        self.corner_left.set_margin_start(56)
+
         self.corner_right = Box(
             name="notch-corner-right",
             orientation="v",
+            h_align="end",
             children=[
                 MyCorner("top-left"),
                 Box(),
             ]
         )
 
+        self.corner_right.set_margin_end(56)
+
         self.notch_box = CenterBox(
             name="notch-box",
             orientation="h",
             h_align="center",
             v_align="center",
-            start_children=Box(
-                children=[
-                    self.corner_left,
-                ],
-            ),
+            # start_children=self.corner_left,
             center_children=self.stack,
-            end_children=Box(
-                children=[
-                    self.corner_right,
-                ]
-            )
+            # end_children=self.corner_right,
         )
-        self._scroll_accumulator = 0.0
-        self.hidden = False
-        self.scroll_threshold = 15.0  # Ajusta este valor para modificar la sensibilidad
-        self._scrolling = False
+
+        self.notch_overlay = Overlay(
+            name="notch-overlay",
+            h_expand=True,
+            h_align="fill",
+            child=self.notch_box,
+            overlays=[
+                self.corner_left,
+                self.corner_right,
+            ],
+        )
+
+        self.notch_overlay.set_overlay_pass_through(self.corner_left, True)
+        self.notch_overlay.set_overlay_pass_through(self.corner_right, True)
+
         self.notification_revealer = Revealer(
             name="notification-revealer",
             transition_type="slide-down",
@@ -185,7 +198,7 @@ class Notch(Window):
             name="notch-complete",
             orientation="v",
             children=[
-                self.notch_box,
+                self.notch_overlay,
                 self.boxed_notification_revealer,
             ]
         )
@@ -194,7 +207,6 @@ class Notch(Window):
         self._is_notch_open = False  # Add a flag to track notch open state
         self._scrolling = False
 
-        self.add(self.notch_box)
         self.add(self.notch_complete)
         self.show_all()
 
@@ -238,9 +250,9 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.tools]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -264,9 +276,9 @@ class Notch(Window):
                     self.notch_box.remove_style_class("hidden")
                     self.notch_box.add_style_class("hideshow")
 
-                for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
+                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
                     self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.power, self.tools]:
+                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
@@ -302,9 +314,9 @@ class Notch(Window):
                     self.notch_box.remove_style_class("hidden")
                     self.notch_box.add_style_class("hideshow")
 
-                for style in ["launcher", "dashboard", "notification", "overview", "power", "tools"]:
+                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
                     self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.power, self.tools]:
+                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
@@ -325,6 +337,7 @@ class Notch(Window):
         widgets = {
             "launcher": self.launcher,
             "overview": self.overview,
+            "emoji": self.emoji,
             "power": self.power,
             "tools": self.tools,
             "dashboard": self.dashboard, # Add dashboard here to ensure its style class is removed
@@ -358,6 +371,11 @@ class Notch(Window):
                 self.launcher.open_launcher()
                 self.launcher.search_entry.set_text("")
                 self.launcher.search_entry.grab_focus()
+
+            if widget == "emoji":
+                self.emoji.open_picker()
+                self.emoji.search_entry.set_text("")
+                self.emoji.search_entry.grab_focus()
 
             if widget == "overview":
                 GLib.timeout_add(300, self._show_overview_children, True)
