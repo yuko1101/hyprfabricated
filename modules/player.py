@@ -616,7 +616,7 @@ class PlayerSmall(CenterBox):
 
     def on_player_vanished(self, manager, player_name):
         players = self.mpris_manager.players
-        if players and self.mpris_player and self.mpris_player.player_name == player_name and not self.mpris_manager.player_name.startswith("chromium", "firefox"):
+        if players and self.mpris_player:
             if players: # Check if players is not empty after vanishing
                 self.current_index = self.current_index % len(players)
                 new_player = MprisPlayer(players[self.current_index])

@@ -188,12 +188,17 @@ class VolumeSmall(Box):
                 self.progress_bar.remove_style_class("muted")
                 self.vol_label.remove_style_class("muted")
 
+
     def on_scroll(self, _, event):
-        val_y = event.delta_y
-        if val_y > 0:
-            self.audio.speaker.volume -= 1
-        else:
-            self.audio.speaker.volume += 1
+        if not self.audio.speaker:
+            return
+
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if abs(event.delta_y) > 0:
+                self.audio.speaker.volume += event.delta_y
+            if abs(event.delta_x) > 0:
+                self.audio.speaker.volume -= event.delta_x
+
         # match event.direction:
         #     case 0:
         #         self.audio.speaker.volume += 1
@@ -269,22 +274,23 @@ class MicSmall(Box):
                 self.mic_label.remove_style_class("muted")
 
     def on_scroll(self, _, event):
+
         val_y = event.delta_y
         if val_y > 0:
             self.audio.microphone.volume -= 1
         else:
             self.audio.microphone.volume += 1
-        # match event.direction:
-
-        # if not self.audio.microphone:
-        #     return
-        # match event.direction:
-        #     case 0:
-        #         self.audio.microphone.volume += 1
-        #     case 1:
-        #         self.audio.microphone.volume -= 1
         return
-
+        # match event.direction:
+    #
+    #     # if not self.audio.microphone:
+    #     #     return
+    #     # match event.direction:
+    #     #     case 0:
+    #     #         self.audio.microphone.volume += 1
+    #     #     case 1:
+    #     #         self.audio.microphone.volume -= 1
+    #
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
             return
@@ -334,9 +340,9 @@ class BrightnessSmall(Box):
     def on_scroll(self, _, event):
         val_y = event.delta_y
         if val_y > 0:
-            self.brightness.screen_brightness -= 10
+            self.brightness.screen_brightness -= 1
         else:
-            self.brightness.screen_brightness += 10
+            self.brightness.screen_brightness += 1
         # if self.brightness.max_screen == -1:
         #     return
         # match event.direction:
