@@ -188,12 +188,13 @@ class VolumeSmall(Box):
                 self.vol_label.remove_style_class("muted")
 
     def on_scroll(self, _, event):
-        match event.direction:
-            case 0:
-                self.audio.speaker.volume += 1
-            case 1:
-                self.audio.speaker.volume -= 1
-        return
+        if not self.audio.speaker:
+            return
+        delta = event.get_scroll_deltas()[1] # Get vertical scroll delta
+        if delta != 0:
+            step = 1 # Adjust sensitivity here, smaller value means finer control
+            self.audio.speaker.volume += delta * step
+        return True
 
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
@@ -265,12 +266,11 @@ class MicSmall(Box):
     def on_scroll(self, _, event):
         if not self.audio.microphone:
             return
-        match event.direction:
-            case 0:
-                self.audio.microphone.volume += 1
-            case 1:
-                self.audio.microphone.volume -= 1
-        return
+        delta = event.get_scroll_deltas()[1] # Get vertical scroll delta
+        if delta != 0:
+            step = 1 # Adjust sensitivity here, smaller value means finer control
+            self.audio.microphone.volume += delta * step
+        return True
 
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
@@ -321,12 +321,11 @@ class BrightnessSmall(Box):
     def on_scroll(self, _, event):
         if self.brightness.max_screen == -1:
             return
-        match event.direction:
-            case 0:
-                self.brightness.screen_brightness += 10  # Increment brightness
-            case 1:
-                self.brightness.screen_brightness -= 10  # Decrement brightness
-        return
+        delta = event.get_scroll_deltas()[1] # Get vertical scroll delta
+        if delta != 0:
+            step = self.brightness.max_screen / 100.0 # Scale step based on max brightness, adjust sensitivity by changing divisor
+            self.brightness.screen_brightness += int(delta * step)
+        return True
 
     def on_brightness_changed(self, *_):
         if self.brightness.max_screen == -1:
@@ -341,6 +340,7 @@ class BrightnessSmall(Box):
             self.brightness_label.set_markup(icons.brightness_low)
 
         self.set_tooltip_text(f"{round(brightness_percentage)}%")
+
 # ControlSliders now only includes the brightness slider if supported.
 class ControlSliders(Box):
     def __init__(self, **kwargs):
@@ -378,4 +378,3 @@ class ControlSmall(Box):
             **kwargs,
         )
         self.show_all()
-
