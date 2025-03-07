@@ -1,4 +1,5 @@
 import subprocess
+from gi.repository import GLib, Gdk, Gtk
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.scale import Scale
@@ -9,7 +10,7 @@ from fabric.widgets.eventbox import EventBox
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from services.brightness import Brightness
 import modules.icons as icons
-
+import math
 from gi.repository import GLib
 
 def supports_backlight():
@@ -169,6 +170,10 @@ class VolumeSmall(Box):
         self.add(self.event_box)
         self.on_speaker_changed()
         # self.scroll_threshold = -80.0  # Ajusta este valor para modificar la sensibilidad
+        self.add_events(
+            Gdk.EventMask.SCROLL_MASK |
+                Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
         # self._scroll_accumulator = 10.0
     def on_new_speaker(self, *args):
         if self.audio.speaker:
@@ -195,9 +200,9 @@ class VolumeSmall(Box):
 
         if event.direction == Gdk.ScrollDirection.SMOOTH:
             if abs(event.delta_y) > 0:
-                self.audio.speaker.volume += event.delta_y
+                self.audio.speaker.volume -= event.delta_y
             if abs(event.delta_x) > 0:
-                self.audio.speaker.volume -= event.delta_x
+                self.audio.speaker.volume += event.delta_x
 
         # match event.direction:
         #     case 0:
@@ -252,6 +257,11 @@ class MicSmall(Box):
         if self.audio.microphone:
             self.audio.microphone.connect("changed", self.on_microphone_changed)
         self.event_box.connect("scroll-event", self.on_scroll)
+        self.add_events(
+            Gdk.EventMask.SCROLL_MASK |
+                Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
+
         self.add(self.event_box)
         self.on_microphone_changed()
 
@@ -274,23 +284,15 @@ class MicSmall(Box):
                 self.mic_label.remove_style_class("muted")
 
     def on_scroll(self, _, event):
+        if not self.audio.microphone:
+            return
 
-        val_y = event.delta_y
-        if val_y > 0:
-            self.audio.microphone.volume -= 1
-        else:
-            self.audio.microphone.volume += 1
-        return
-        # match event.direction:
-    #
-    #     # if not self.audio.microphone:
-    #     #     return
-    #     # match event.direction:
-    #     #     case 0:
-    #     #         self.audio.microphone.volume += 1
-    #     #     case 1:
-    #     #         self.audio.microphone.volume -= 1
-    #
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if abs(event.delta_y) > 0:
+                self.audio.microphone.volume -= event.delta_y
+            if abs(event.delta_x) > 0:
+                self.audio.microphone.volume += event.delta_x
+
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
             return
@@ -336,21 +338,19 @@ class BrightnessSmall(Box):
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
         self.on_brightness_changed()
+        self.add_events(
+            Gdk.EventMask.SCROLL_MASK |
+                Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
 
     def on_scroll(self, _, event):
+        if self.brightness.max_screen == -1:
+            return
         val_y = event.delta_y
         if val_y > 0:
             self.brightness.screen_brightness -= 1
         else:
             self.brightness.screen_brightness += 1
-        # if self.brightness.max_screen == -1:
-        #     return
-        # match event.direction:
-        #     case 0:
-        #         self.brightness.screen_brightness += 10  # Increment brightness
-        #     case 1:
-        #         self.brightness.screen_brightness -= 10  # Decrement brightness
-        return
 
     def on_brightness_changed(self, *_):
         if self.brightness.max_screen == -1:
@@ -402,4 +402,6 @@ class ControlSmall(Box):
             **kwargs,
         )
         self.show_all()
+
+
 
