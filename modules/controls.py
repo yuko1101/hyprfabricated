@@ -96,47 +96,32 @@ class BrightnessSlider(Scale):
             increments=(0.01, 0.1),
             **kwargs,
         )
-        if not BACKLIGHT_SUPPORTED:
+        # Obtenemos el cliente de brillo por defecto
+        self.client = Brightness().get_default()
+        if self.client.screen_brightness == -1:
+            self.destroy()
             return
 
-        self.brightness = Brightness.get_initial()
-        self.brightness.connect("screen", self.on_brightness_changed)
-        self.connect("value-changed", self.on_value_changed)
-        self.on_brightness_changed()
+        # Configuramos el rango y valor inicial usando los valores reales del brillo
+        self.set_range(0, self.client.max_screen)
+        self.set_value(self.client.screen_brightness)
+
+        # Conectamos el movimiento del slider a la actualización inmediata del brillo
+        self.connect("change-value", self.on_scale_move)
+        # Conectamos la señal "screen" para que si el brillo cambia externamente se actualice el slider
+        self.client.connect("screen", self.on_brightness_change)
         self.add_style_class("brightness")
 
-        # Variables para debouncing
-        self.timeout_id = None
-        self.pending_value = None
+    def on_scale_move(self, widget, scroll, moved_pos):
+        # Actualiza inmediatamente el brillo sin debounce
+        self.client.screen_brightness = moved_pos
+        return False  # Permite que el evento siga su curso si es necesario
 
-    def on_value_changed(self, _):
-        if self.brightness.max_screen != -1:
-            new_brightness = int(self.value * self.brightness.max_screen)
-            # Cancelar timeout anterior si existe
-            if self.timeout_id:
-                try:
-                    GLib.source_remove(self.timeout_id)
-                except Exception:
-                    pass
-            self.pending_value = new_brightness
-            self.timeout_id = GLib.timeout_add(100, self._queue_brightness_update)
-
-    def _queue_brightness_update(self):
-        if self.pending_value is not None:
-            try:
-                self.brightness.screen_brightness = self.pending_value
-            except Exception as e:
-                print(f"Error setting brightness: {e}")
-            self.pending_value = None
-        self.timeout_id = None
-        return False
-
-    def on_brightness_changed(self, *args):
-        if self.brightness.max_screen != -1:
-            self.value = self.brightness.screen_brightness / self.brightness.max_screen
-
-    def destroy(self):
-        super().destroy()
+    def on_brightness_change(self, client, _):
+        # Actualiza el slider y muestra el porcentaje en el tooltip
+        self.set_value(client.screen_brightness)
+        percentage = int((client.screen_brightness / client.max_screen) * 100)
+        self.set_tooltip_text(f"{percentage}%")
 
 # Versión mejorada del widget pequeño de brillo usando GLib
 class BrightnessSmall(Box):
