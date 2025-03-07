@@ -1,8 +1,5 @@
 import subprocess
-import threading
-import queue
-import time
-from gi.repository import GLib, Gdk, Gtk
+from gi.repository import GLib, Gdk
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.scale import Scale
@@ -13,7 +10,6 @@ from fabric.widgets.eventbox import EventBox
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from services.brightness import Brightness
 import modules.icons as icons
-import math
 
 def supports_backlight():
     try:
@@ -24,38 +20,7 @@ def supports_backlight():
 
 BACKLIGHT_SUPPORTED = supports_backlight()
 
-# Clase auxiliar para manejar cambios de brillo en un hilo
-class BrightnessWorker:
-    def __init__(self, brightness):
-        self.brightness = brightness
-        self.queue = queue.Queue()
-        self.thread = threading.Thread(target=self._worker, daemon=True)
-        self.thread.start()
-
-    def _worker(self):
-        while True:
-            value = self.queue.get()  # Bloquea hasta obtener un valor
-            if value is None:  # Valor centinela para detener el hilo
-                break
-            # En lugar de actualizar directamente, usamos idle_add para que se ejecute en el hilo principal
-            GLib.idle_add(self._update_brightness, value)
-            self.queue.task_done()
-
-    def _update_brightness(self, value):
-        try:
-            self.brightness.screen_brightness = value
-        except Exception as e:
-            print(f"Error setting brightness: {e}")
-        return False  # Para que idle_add no se repita
-
-    def set_brightness(self, value):
-        self.queue.put(value)
-
-    def stop(self):
-        self.queue.put(None)
-        self.thread.join()
-
-# Resto de widgets (VolumeSlider, MicSlider, etc.) se mantienen igual...
+# Los demás widgets (VolumeSlider, MicSlider, etc.) se mantienen igual...
 class VolumeSlider(Scale):
     def __init__(self, **kwargs):
         super().__init__(
@@ -120,7 +85,7 @@ class MicSlider(Scale):
             return
         self.value = self.audio.microphone.volume / 100
 
-# Versión mejorada del slider de brillo usando BrightnessWorker y debounce
+# Versión mejorada del slider de brillo usando GLib en lugar de threading
 class BrightnessSlider(Scale):
     def __init__(self, **kwargs):
         super().__init__(
@@ -142,7 +107,6 @@ class BrightnessSlider(Scale):
 
         self.timeout_id = None
         self.pending_value = None
-        self.worker = BrightnessWorker(self.brightness)
 
     def on_value_changed(self, _):
         if self.brightness.max_screen != -1:
@@ -157,9 +121,16 @@ class BrightnessSlider(Scale):
 
     def _queue_brightness_update(self):
         if self.pending_value is not None:
-            self.worker.set_brightness(self.pending_value)
+            GLib.idle_add(self._update_brightness, self.pending_value)
             self.pending_value = None
         self.timeout_id = None
+        return False
+
+    def _update_brightness(self, value):
+        try:
+            self.brightness.screen_brightness = value
+        except Exception as e:
+            print(f"Error setting brightness: {e}")
         return False
 
     def on_brightness_changed(self, *args):
@@ -167,10 +138,9 @@ class BrightnessSlider(Scale):
             self.value = self.brightness.screen_brightness / self.brightness.max_screen
 
     def destroy(self):
-        self.worker.stop()
         super().destroy()
 
-# Versión mejorada del widget pequeño de brillo
+# Versión mejorada del widget pequeño de brillo usando GLib
 class BrightnessSmall(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar-brightness", **kwargs)
@@ -199,7 +169,6 @@ class BrightnessSmall(Box):
             Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK
         )
 
-        self.worker = BrightnessWorker(self.brightness)
         # Variables para debouncing del scroll
         self.pending_delta = 0
         self.scroll_timeout_id = None
@@ -219,11 +188,17 @@ class BrightnessSmall(Box):
             self.scroll_timeout_id = GLib.idle_add(self._apply_scroll_delta)
 
     def _apply_scroll_delta(self):
-        # Calculamos el nuevo valor a partir del brillo actual y la variación acumulada.
         new_val = self.brightness.screen_brightness + self.pending_delta
-        self.worker.set_brightness(new_val)
+        GLib.idle_add(self._update_brightness, new_val)
         self.pending_delta = 0
         self.scroll_timeout_id = None
+        return False
+
+    def _update_brightness(self, value):
+        try:
+            self.brightness.screen_brightness = value
+        except Exception as e:
+            print(f"Error setting brightness: {e}")
         return False
 
     def on_brightness_changed(self, *_):
@@ -240,7 +215,6 @@ class BrightnessSmall(Box):
         self.set_tooltip_text(f"{round(brightness_percentage)}%")
 
     def destroy(self):
-        self.worker.stop()
         super().destroy()
 
 # Los demás widgets se mantienen igual...
