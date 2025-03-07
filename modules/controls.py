@@ -105,33 +105,18 @@ class BrightnessSlider(Scale):
         self.on_brightness_changed()
         self.add_style_class("brightness")
 
-        self.timeout_id = None
-        self.pending_value = None
-
     def on_value_changed(self, _):
         if self.brightness.max_screen != -1:
             new_brightness = int(self.value * self.brightness.max_screen)
-            if self.timeout_id:
-                try:
-                    GLib.source_remove(self.timeout_id)
-                except Exception:
-                    pass
-            self.pending_value = new_brightness
-            self.timeout_id = GLib.timeout_add(100, self._queue_brightness_update)
-
-    def _queue_brightness_update(self):
-        if self.pending_value is not None:
-            GLib.idle_add(self._update_brightness, self.pending_value)
-            self.pending_value = None
-        self.timeout_id = None
-        return False
+            # Se encola la actualización para que se ejecute en el hilo principal sin retardo
+            GLib.idle_add(self._update_brightness, new_brightness)
 
     def _update_brightness(self, value):
         try:
             self.brightness.screen_brightness = value
         except Exception as e:
             print(f"Error setting brightness: {e}")
-        return False
+        return False  # Para que idle_add no vuelva a llamar este callback
 
     def on_brightness_changed(self, *args):
         if self.brightness.max_screen != -1:
