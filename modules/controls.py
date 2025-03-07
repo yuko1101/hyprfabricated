@@ -34,14 +34,19 @@ class BrightnessWorker:
 
     def _worker(self):
         while True:
-            value = self.queue.get()
+            value = self.queue.get()  # Bloquea hasta obtener un valor
             if value is None:  # Valor centinela para detener el hilo
                 break
-            try:
-                self.brightness.screen_brightness = value  # Llamada que puede bloquear
-            except Exception as e:
-                print(f"Error setting brightness: {e}")
+            # En lugar de actualizar directamente, usamos idle_add para que se ejecute en el hilo principal
+            GLib.idle_add(self._update_brightness, value)
             self.queue.task_done()
+
+    def _update_brightness(self, value):
+        try:
+            self.brightness.screen_brightness = value
+        except Exception as e:
+            print(f"Error setting brightness: {e}")
+        return False  # Para que idle_add no se repita
 
     def set_brightness(self, value):
         self.queue.put(value)
