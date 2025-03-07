@@ -96,32 +96,29 @@ class BrightnessSlider(Scale):
             increments=(0.01, 0.1),
             **kwargs,
         )
-        if not Brightness().get_default():
-            return
-
-        # Se usa get_default() para obtener el cliente de brillo, igual que en el otro ejemplo
-        self.client = Brightness().get_default()
+        self.client = Brightness.get_initial()
         if self.client.screen_brightness == -1:
             self.destroy()
             return
 
-        # Configuramos el rango y valor inicial según los valores reales
+        # Configuramos el rango y valor inicial usando los valores reales del brillo
         self.set_range(0, self.client.max_screen)
         self.set_value(self.client.screen_brightness)
 
-        # Actualiza el brillo inmediatamente cuando se mueve el slider
+        # Conectamos el evento "change-value" para actualizar el brillo inmediatamente
         self.connect("change-value", self.on_scale_move)
-        # Actualiza el slider si el brillo cambia externamente
+        # Conectamos la señal "screen" para actualizar el slider si el brillo cambia externamente
         self.client.connect("screen", self.on_brightness_changed)
         self.add_style_class("brightness")
 
     def on_scale_move(self, widget, scroll, moved_pos):
         self.client.screen_brightness = moved_pos
-        return False
+        return False  # Permite que el evento continúe
 
     def on_brightness_changed(self, client, _):
-        self.set_value(client.screen_brightness)
-        percentage = int((client.screen_brightness / client.max_screen) * 100)
+        # Actualiza el slider con el valor actual y muestra el porcentaje en el tooltip
+        self.set_value(self.client.screen_brightness)
+        percentage = int((self.client.screen_brightness / self.client.max_screen) * 100)
         self.set_tooltip_text(f"{percentage}%")
 
     def destroy(self):
@@ -132,10 +129,11 @@ class BrightnessSlider(Scale):
 class BrightnessSmall(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar-brightness", **kwargs)
-        if not Brightness().get_default():
+        self.brightness = Brightness.get_initial()
+        if self.brightness.screen_brightness == -1:
+            self.destroy()
             return
 
-        self.brightness = Brightness().get_default()
         self.progress_bar = CircularProgressBar(
             name="button-brightness", size=28, line_width=2,
             start_angle=150, end_angle=390,
@@ -149,9 +147,9 @@ class BrightnessSmall(Box):
                 overlays=self.brightness_button
             ),
         )
-        # Se actualiza la interfaz cuando el brillo cambia
+        # Conectamos la señal "screen" para actualizar la interfaz cuando el brillo cambie
         self.brightness.connect("screen", self.on_brightness_changed)
-        # Se conecta el scroll para cambiar el brillo inmediatamente
+        # Conectamos el evento scroll para ajustar el brillo de inmediato
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
         self.on_brightness_changed()
@@ -160,14 +158,12 @@ class BrightnessSmall(Box):
     def on_scroll(self, _, event):
         if self.brightness.max_screen == -1:
             return
-        # Definimos un tamaño de paso (por ejemplo, 1 unidad)
-        step_size = 1
+
+        step_size = 1  # Ajusta este valor según necesites
         if event.delta_y < 0:
-            # Scroll hacia arriba: aumenta brillo
             new_val = min(self.brightness.screen_brightness + step_size, self.brightness.max_screen)
             self.brightness.screen_brightness = new_val
         elif event.delta_y > 0:
-            # Scroll hacia abajo: disminuye brillo
             new_val = max(self.brightness.screen_brightness - step_size, 0)
             self.brightness.screen_brightness = new_val
 
