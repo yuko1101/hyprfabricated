@@ -216,7 +216,7 @@ class BrightnessSmall(Box):
 
         # Si no hay un timeout en curso, lo configuramos para aplicar el cambio en 100ms.
         if self.scroll_timeout_id is None:
-            self.scroll_timeout_id = GLib.timeout_add(100, self._apply_scroll_delta)
+            self.scroll_timeout_id = GLib.idle_add(self._apply_scroll_delta)
 
     def _apply_scroll_delta(self):
         # Calculamos el nuevo valor a partir del brillo actual y la variación acumulada.
@@ -231,9 +231,9 @@ class BrightnessSmall(Box):
             return
         self.progress_bar.value = self.brightness.screen_brightness / self.brightness.max_screen
         brightness_percentage = (self.brightness.screen_brightness / self.brightness.max_screen) * 100
-        if brightness_percentage > 74:
+        if brightness_percentage >= 75:
             self.brightness_label.set_markup(icons.brightness_high)
-        elif brightness_percentage > 24:
+        elif brightness_percentage >= 24:
             self.brightness_label.set_markup(icons.brightness_medium)
         else:
             self.brightness_label.set_markup(icons.brightness_low)
