@@ -1,4 +1,5 @@
 import subprocess
+from gi.repository import GLib, Gdk, Gtk
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.scale import Scale
@@ -9,7 +10,7 @@ from fabric.widgets.eventbox import EventBox
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from services.brightness import Brightness
 import modules.icons as icons
-
+import math
 from gi.repository import GLib
 
 def supports_backlight():
@@ -144,7 +145,7 @@ class BrightnessSlider(Scale):
 
 class VolumeSmall(Box):
     def __init__(self, **kwargs):
-        super().__init__(name="button-bar-vol", **kwargs)
+        super().__init__(name="button-bar-vol",    **kwargs)
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
             name="button-volume", size=28, line_width=2,
@@ -156,7 +157,7 @@ class VolumeSmall(Box):
             child=self.vol_label
         )
         self.event_box = EventBox(
-            events="scroll",
+            events=Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK,
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.vol_button
@@ -168,6 +169,7 @@ class VolumeSmall(Box):
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
         self.on_speaker_changed()
+        self.scroll_sensitivity = 0.5  # Adjust for volume scroll sensitivity
 
     def on_new_speaker(self, *args):
         if self.audio.speaker:
@@ -187,14 +189,18 @@ class VolumeSmall(Box):
                 self.progress_bar.remove_style_class("muted")
                 self.vol_label.remove_style_class("muted")
 
+
     def on_scroll(self, _, event):
         if not self.audio.speaker:
             return
-        delta = event.get_scroll_deltas()[1] # Get vertical scroll delta
-        if delta != 0:
-            step = 1 # Adjust sensitivity here, smaller value means finer control
-            self.audio.speaker.volume += delta * step
-        return True
+
+        delta_y = event.get_scroll_deltas()[1] # Get vertical scroll delta
+        if delta_y != 0:
+            self.audio.speaker.volume += -delta_y * self.scroll_sensitivity # Invert delta and apply sensitivity
+            self.audio.speaker.volume = max(0, min(100, self.audio.speaker.volume)) # Clamp volume to 0-100 range
+            return True
+        return False
+
 
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
@@ -232,7 +238,7 @@ class MicSmall(Box):
             child=self.mic_label
         )
         self.event_box = EventBox(
-            events="scroll",
+            events=Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK,
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.mic_button
@@ -242,8 +248,10 @@ class MicSmall(Box):
         if self.audio.microphone:
             self.audio.microphone.connect("changed", self.on_microphone_changed)
         self.event_box.connect("scroll-event", self.on_scroll)
+
         self.add(self.event_box)
         self.on_microphone_changed()
+        self.scroll_sensitivity = 0.5 # Adjust for mic scroll sensitivity
 
     def on_new_microphone(self, *args):
         if self.audio.microphone:
@@ -266,11 +274,13 @@ class MicSmall(Box):
     def on_scroll(self, _, event):
         if not self.audio.microphone:
             return
-        delta = event.get_scroll_deltas()[1] # Get vertical scroll delta
-        if delta != 0:
-            step = 1 # Adjust sensitivity here, smaller value means finer control
-            self.audio.microphone.volume += delta * step
-        return True
+
+        delta_y = event.get_scroll_deltas()[1] # Get vertical scroll delta
+        if delta_y != 0:
+            self.audio.microphone.volume += -delta_y * self.scroll_sensitivity # Invert delta and apply sensitivity
+            self.audio.microphone.volume = max(0, min(100, self.audio.microphone.volume)) # Clamp volume to 0-100 range
+            return True
+        return False
 
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
@@ -307,7 +317,7 @@ class BrightnessSmall(Box):
         self.brightness_label = Label(name="brightness-label", markup=icons.brightness_high)
         self.brightness_button = Button(child=self.brightness_label)
         self.event_box = EventBox(
-            events="scroll",
+            events=Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK,
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.brightness_button
@@ -317,15 +327,20 @@ class BrightnessSmall(Box):
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
         self.on_brightness_changed()
+        self.scroll_sensitivity = 1 # Adjust for brightness scroll sensitivity
 
     def on_scroll(self, _, event):
         if self.brightness.max_screen == -1:
             return
-        delta = event.get_scroll_deltas()[1] # Get vertical scroll delta
-        if delta != 0:
-            step = self.brightness.max_screen / 100.0 # Scale step based on max brightness, adjust sensitivity by changing divisor
-            self.brightness.screen_brightness += int(delta * step)
-        return True
+
+        delta_y = event.get_scroll_deltas()[1] # Get vertical scroll delta
+        if delta_y != 0:
+            step = self.brightness.max_screen / 100.0 * self.scroll_sensitivity # Scale step based on max brightness and sensitivity
+            self.brightness.screen_brightness += int(-delta_y * step) # Invert delta and apply step
+            self.brightness.screen_brightness = max(0, min(self.brightness.max_screen, self.brightness.screen_brightness)) # Clamp brightness
+            return True
+        return False
+
 
     def on_brightness_changed(self, *_):
         if self.brightness.max_screen == -1:
@@ -340,7 +355,6 @@ class BrightnessSmall(Box):
             self.brightness_label.set_markup(icons.brightness_low)
 
         self.set_tooltip_text(f"{round(brightness_percentage)}%")
-
 # ControlSliders now only includes the brightness slider if supported.
 class ControlSliders(Box):
     def __init__(self, **kwargs):
