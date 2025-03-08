@@ -8,6 +8,7 @@ from fabric.widgets.button import Button
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.circularprogressbar import CircularProgressBar
+from services import brightness
 from services.brightness import Brightness
 import modules.icons as icons
 
@@ -428,8 +429,9 @@ class ControlSliders(Box):
 
 class ControlSmall(Box):
     def __init__(self, **kwargs):
+        brightness = Brightness.get_initial()
         children = []
-        if BACKLIGHT_SUPPORTED:
+        if brightness.screen_brightness != -1:
             children.append(BrightnessSmall())
         children.extend([VolumeSmall(), MicSmall()])
         super().__init__(
