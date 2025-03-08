@@ -412,8 +412,9 @@ class MicSmall(Box):
 # Los contenedores incluyen el widget de brillo solo si es soportado.
 class ControlSliders(Box):
     def __init__(self, **kwargs):
+        brightness = Brightness.get_initial()
         children = []
-        if BACKLIGHT_SUPPORTED:
+        if brightness.screen_brightness != -1:
             children.append(BrightnessSlider())
         children.extend([VolumeSlider(), MicSlider()])
         super().__init__(
