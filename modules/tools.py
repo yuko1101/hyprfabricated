@@ -7,13 +7,10 @@ from gi.repository import Gdk, GLib
 import modules.data as data
 import subprocess
 
-SCREENSHOT_SCRIPT = "/home/saumya/.local/bin/screenshot"
+SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
-SCREENRECORD_SCRIPT = "/home/saumya/.local/bin/record.sh"
-# SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
-# OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
-# SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
-SCREENRECORD_APP = "gpu-screen-recorder"
+SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
+
 class Toolbox(Box):
     def __init__(self, **kwargs):
         super().__init__(
@@ -86,12 +83,24 @@ class Toolbox(Box):
         # Connect both mouse and keyboard events.
         self.btn_color.connect("button-press-event", self.colorpicker)
         self.btn_color.connect("key_press_event", self.colorpicker_key)
+
+        self.btn_emoji = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.emoji),
+            on_clicked=self.emoji,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+
         self.buttons = [
             self.btn_ssregion,
             self.btn_ssfull,
             self.btn_screenrecord,
             self.btn_ocr,
             self.btn_color,
+            self.btn_emoji,
         ]
 
         for button in self.buttons:
@@ -99,11 +108,11 @@ class Toolbox(Box):
 
         self.show_all()
 
+        # Start polling for process state every second.
+        self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
 
     def close_menu(self):
         self.notch.close_notch()
-        # Start polling for process state every second.
-        self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
 
     # Action methods
     def ssfull(self, *args):
@@ -124,32 +133,29 @@ class Toolbox(Box):
         self.close_menu()
 
     def colorpicker(self, button, event):
-        # Mouse event handler
         if event.type == Gdk.EventType.BUTTON_PRESS:
-            if event.button == 1:
-                # Left click: HEX
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hex.sh')}")
-            elif event.button == 2:
-                # Middle click: HSV
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hsv.sh')}")
-            elif event.button == 3:
-                # Right click: RGB
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-rgb.sh')}")
-            self.close_menu()
+            cmd = {
+                1: "-hex",   # Left click
+                2: "-hsv",   # Middle click
+                3: "-rgb"    # Right click
+            }.get(event.button)
+
+            if cmd:
+                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker.sh')} {cmd}")
+                self.close_menu()
 
     def colorpicker_key(self, widget, event):
-        # Keyboard event handler for colorpicker button.
-        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-            state = event.get_state()
-            # Check for Shift modifier; use RGB script.
-            if state & Gdk.ModifierType.SHIFT_MASK:
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-rgb.sh')}")
-            # Check for Control modifier; use HSV script.
-            elif state & Gdk.ModifierType.CONTROL_MASK:
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hsv.sh')}")
-            else:
-                # No modifier: HEX script.
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hex.sh')}")
+        if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
+            modifiers = event.get_state()
+            cmd = "-hex"  # Default
+
+            match modifiers & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK):
+                case Gdk.ModifierType.SHIFT_MASK:
+                    cmd = "-rgb"
+                case Gdk.ModifierType.CONTROL_MASK:
+                    cmd = "-hsv"
+
+            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker.sh')} {cmd}")
             self.close_menu()
             return True
         return False
@@ -162,9 +168,8 @@ class Toolbox(Box):
         This function is called periodically every second.
         """
         try:
-            print("yes")
             # Use pgrep with -f to check for the process name anywhere in the command line
-            result = subprocess.run(f"pgrep -f {SCREENRECORD_APP}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            result = subprocess.run("pgrep -f gpu-screen-recorder", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             running = result.returncode == 0
         except Exception:
             running = False
@@ -178,3 +183,6 @@ class Toolbox(Box):
 
         # Return True to keep this callback active.
         return True
+
+    def emoji(self, *args):
+        self.notch.open_notch("emoji")

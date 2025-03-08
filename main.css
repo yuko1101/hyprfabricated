@@ -1,6 +1,8 @@
 @import url("./styles/colors.css");
 @import url("./styles/shadows.css");
+@import url("./styles/bar.css");
 @import url("./styles/notch.css");
+@import url("./styles/workspaces.css");
 @import url("./styles/dashboard.css");
 @import url("./styles/buttons.css");
 @import url("./styles/pins.css");
@@ -17,6 +19,7 @@
 @import url("./styles/power.css");
 @import url("./styles/metrics.css");
 @import url("./styles/tools.css");
+
 * {
   all: unset;
   color: var(--foreground);

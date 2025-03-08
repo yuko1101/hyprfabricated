@@ -78,7 +78,7 @@ class EmojiPicker(Box):
 
     def _load_emoji_data(self):
         emoji_data = {}
-        emoji_file_path = os.path.expanduser("~/.config/hyprfabricated/assets/emoji.json")
+        emoji_file_path = os.path.expanduser("~/.config/Ax-Shell/assets/emoji.json")
         if not os.path.exists(emoji_file_path):
             print(f"Emoji JSON file not found at: {emoji_file_path}")
             return {}
