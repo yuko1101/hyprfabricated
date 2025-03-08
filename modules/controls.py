@@ -125,7 +125,7 @@ class BrightnessSlider(Scale):
         super().destroy()
 
 
-# Widget pequeño de brillo que responde al scroll usando la señal de cambio de valor
+# Widget pequeño de brillo que responde al scroll usando GLib.timeout_add para debouncing sin bloquear la UI
 class BrightnessSmall(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar-brightness", **kwargs)
@@ -151,21 +151,23 @@ class BrightnessSmall(Box):
         self.add(self.event_box)
         self.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
 
-        # Flag para evitar recursividad
+        # Flag para evitar recursividad al actualizar desde la señal "screen"
         self._updating_from_brightness = False
+        # Variables para gestionar la actualización asíncrona usando GLib
+        self._pending_value = None
+        self._update_source_id = None
 
         # Conecta la señal de cambio de valor del progress bar
         self.progress_bar.connect("notify::value", self.on_progress_value_changed)
-        # Conecta la señal "screen" del cliente Brightness para actualizaciones externas
+        # Conecta la señal "screen" para actualizaciones externas
         self.brightness.connect("screen", self.on_brightness_changed)
         self.on_brightness_changed()
 
-    def on_scroll(self, _, event):
+    def on_scroll(self, widget, event):
         if self.brightness.max_screen == -1:
             return
 
-        step_size = 1  # Valor de paso absoluto para el brillo
-        # Calcula el valor normalizado actual (entre 0 y 1)
+        step_size = 1  # Valor absoluto del cambio
         current_norm = self.progress_bar.value
         if event.delta_y < 0:
             new_norm = min(current_norm + (step_size / self.brightness.max_screen), 1)
@@ -173,23 +175,36 @@ class BrightnessSmall(Box):
             new_norm = max(current_norm - (step_size / self.brightness.max_screen), 0)
         else:
             return
-        # Al cambiar el valor se disparará la señal "notify::value"
+        # Al cambiar el valor se dispara "notify::value"
         self.progress_bar.value = new_norm
 
     def on_progress_value_changed(self, widget, pspec):
-        # Evita la recursividad si el cambio viene de on_brightness_changed
+        # Si la actualización viene de la señal "screen", no hacemos nada
         if self._updating_from_brightness:
             return
-        # Calcula el nuevo brillo en base al valor del progress bar
-        new_brightness = int(widget.value * self.brightness.max_screen)
-        if new_brightness != self.brightness.screen_brightness:
-            self.brightness.screen_brightness = new_brightness
+        new_norm = widget.value
+        new_brightness = int(new_norm * self.brightness.max_screen)
+        self._pending_value = new_brightness
+        # Si no hay un timeout programado, lo programamos para agrupar cambios
+        if self._update_source_id is None:
+            self._update_source_id = GLib.timeout_add(50, self._update_brightness_callback)
+
+    def _update_brightness_callback(self):
+        if self._pending_value is not None and self._pending_value != self.brightness.screen_brightness:
+            self.brightness.screen_brightness = self._pending_value
+            self._pending_value = None
+            # Se retorna True para seguir ejecutando el callback en caso de nuevos cambios
+            return True
+        else:
+            # No hay cambios pendientes; removemos el timeout
+            self._update_source_id = None
+            return False
 
     def on_brightness_changed(self, *args):
         if self.brightness.max_screen == -1:
             return
         normalized = self.brightness.screen_brightness / self.brightness.max_screen
-        # Impide que el update del progress bar dispare on_progress_value_changed recursivamente
+        # Evitamos que este cambio dispare on_progress_value_changed
         self._updating_from_brightness = True
         self.progress_bar.value = normalized
         self._updating_from_brightness = False
@@ -204,6 +219,8 @@ class BrightnessSmall(Box):
         self.set_tooltip_text(f"{brightness_percentage}%")
 
     def destroy(self):
+        if self._update_source_id is not None:
+            GLib.source_remove(self._update_source_id)
         super().destroy()
 
 # Los demás widgets se mantienen igual...
