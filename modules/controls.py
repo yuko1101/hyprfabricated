@@ -214,7 +214,7 @@ class BrightnessSmall(Box):
         if self.brightness.max_screen == -1:
             return
 
-        step_size = 1  # Valor absoluto del cambio
+        step_size = 5  # Valor absoluto del cambio
         current_norm = self.progress_bar.value
         if event.delta_y < 0:
             new_norm = min(current_norm + (step_size / self.brightness.max_screen), 1)
