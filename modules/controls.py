@@ -93,7 +93,7 @@ class BrightnessSlider(Scale):
             orientation="h",
             h_expand=True,
             has_origin=True,
-            increments=(0.01, 0.1),
+            increments=(1, 1),
             **kwargs,
         )
         self.client = Brightness.get_initial()
