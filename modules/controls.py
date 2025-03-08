@@ -85,7 +85,7 @@ class MicSlider(Scale):
             return
         self.value = self.audio.microphone.volume / 100
 
-# Versión mejorada del slider de brillo usando GLib en lugar de threading
+# Versión mejorada del slider de brillo usando GLib para debouncing sin bloquear la UI
 class BrightnessSlider(Scale):
     def __init__(self, **kwargs):
         super().__init__(
@@ -104,24 +104,71 @@ class BrightnessSlider(Scale):
         # Configuramos el rango y valor inicial usando los valores reales del brillo
         self.set_range(0, self.client.max_screen)
         self.set_value(self.client.screen_brightness)
-
-        # Conectamos el evento "change-value" para actualizar el brillo inmediatamente
-        self.connect("change-value", self.on_scale_move)
-        # Conectamos la señal "screen" para actualizar el slider si el brillo cambia externamente
-        self.client.connect("screen", self.on_brightness_changed)
         self.add_style_class("brightness")
 
+        # Variables para gestionar las actualizaciones sin bloquear la UI
+        self._pending_value = None
+        self._update_source_id = None
+        self._updating_from_brightness = False
+
+        # Conecta la señal de cambio del slider (por arrastre o scroll)
+        self.connect("change-value", self.on_scale_move)
+        # Conecta el scroll para ajustar el valor
+        self.connect("scroll-event", self.on_scroll)
+        # Conecta la señal "screen" para actualizaciones externas
+        self.client.connect("screen", self.on_brightness_changed)
+
     def on_scale_move(self, widget, scroll, moved_pos):
-        self.client.screen_brightness = moved_pos
+        if self._updating_from_brightness:
+            return False
+        self._pending_value = moved_pos
+        if self._update_source_id is None:
+            self._update_source_id = GLib.timeout_add(50, self._update_brightness_callback)
         return False  # Permite que el evento continúe
 
+    def _update_brightness_callback(self):
+        if self._pending_value is not None:
+            value_to_set = self._pending_value
+            self._pending_value = None
+            if value_to_set != self.client.screen_brightness:
+                self.client.screen_brightness = value_to_set
+            return True  # Seguimos agrupando cambios
+        else:
+            self._update_source_id = None
+            return False  # No hay cambios pendientes, se elimina el timeout
+
+    def on_scroll(self, widget, event):
+        current_value = self.get_value()
+        step_size = 1  # Valor absoluto de paso
+        # Para scroll suave se utiliza event.delta_y, para scroll normal se utiliza event.direction
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if event.delta_y < 0:
+                new_value = min(current_value + step_size, self.client.max_screen)
+            elif event.delta_y > 0:
+                new_value = max(current_value - step_size, 0)
+            else:
+                return False
+        else:
+            if event.direction == Gdk.ScrollDirection.UP:
+                new_value = min(current_value + step_size, self.client.max_screen)
+            elif event.direction == Gdk.ScrollDirection.DOWN:
+                new_value = max(current_value - step_size, 0)
+            else:
+                return False
+        self.set_value(new_value)  # Esto disparará "change-value" y, por ende, on_scale_move
+        return True
+
     def on_brightness_changed(self, client, _):
-        # Actualiza el slider con el valor actual y muestra el porcentaje en el tooltip
+        # Actualiza el slider si el brillo cambia externamente sin disparar recursividad
+        self._updating_from_brightness = True
         self.set_value(self.client.screen_brightness)
+        self._updating_from_brightness = False
         percentage = int((self.client.screen_brightness / self.client.max_screen) * 100)
         self.set_tooltip_text(f"{percentage}%")
 
     def destroy(self):
+        if self._update_source_id is not None:
+            GLib.source_remove(self._update_source_id)
         super().destroy()
 
 
