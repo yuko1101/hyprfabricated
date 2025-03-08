@@ -123,7 +123,7 @@ class BrightnessSlider(Scale):
             return False
         self._pending_value = moved_pos
         if self._update_source_id is None:
-            self._update_source_id = GLib.timeout_add(50, self._update_brightness_callback)
+            self._update_source_id = GLib.idle_add(self._update_brightness_callback)
         return False  # Permite que el evento continúe
 
     def _update_brightness_callback(self):
