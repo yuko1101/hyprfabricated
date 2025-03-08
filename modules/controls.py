@@ -125,7 +125,7 @@ class BrightnessSlider(Scale):
         super().destroy()
 
 
-# Widget pequeño de brillo que responde al scroll sin debounce
+# Widget pequeño de brillo que responde al scroll usando la señal de cambio de valor
 class BrightnessSmall(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar-brightness", **kwargs)
@@ -147,31 +147,53 @@ class BrightnessSmall(Box):
                 overlays=self.brightness_button
             ),
         )
-        # Conectamos la señal "screen" para actualizar la interfaz cuando el brillo cambie
-        self.brightness.connect("screen", self.on_brightness_changed)
-        # Conectamos el evento scroll para ajustar el brillo de inmediato
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
-        self.on_brightness_changed()
         self.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
+
+        # Flag para evitar recursividad
+        self._updating_from_brightness = False
+
+        # Conecta la señal de cambio de valor del progress bar
+        self.progress_bar.connect("notify::value", self.on_progress_value_changed)
+        # Conecta la señal "screen" del cliente Brightness para actualizaciones externas
+        self.brightness.connect("screen", self.on_brightness_changed)
+        self.on_brightness_changed()
 
     def on_scroll(self, _, event):
         if self.brightness.max_screen == -1:
             return
 
-        step_size = 1  # Ajusta este valor según necesites
+        step_size = 1  # Valor de paso absoluto para el brillo
+        # Calcula el valor normalizado actual (entre 0 y 1)
+        current_norm = self.progress_bar.value
         if event.delta_y < 0:
-            new_val = min(self.brightness.screen_brightness + step_size, self.brightness.max_screen)
-            self.brightness.screen_brightness = new_val
+            new_norm = min(current_norm + (step_size / self.brightness.max_screen), 1)
         elif event.delta_y > 0:
-            new_val = max(self.brightness.screen_brightness - step_size, 0)
-            self.brightness.screen_brightness = new_val
+            new_norm = max(current_norm - (step_size / self.brightness.max_screen), 0)
+        else:
+            return
+        # Al cambiar el valor se disparará la señal "notify::value"
+        self.progress_bar.value = new_norm
 
-    def on_brightness_changed(self, *_):
+    def on_progress_value_changed(self, widget, pspec):
+        # Evita la recursividad si el cambio viene de on_brightness_changed
+        if self._updating_from_brightness:
+            return
+        # Calcula el nuevo brillo en base al valor del progress bar
+        new_brightness = int(widget.value * self.brightness.max_screen)
+        if new_brightness != self.brightness.screen_brightness:
+            self.brightness.screen_brightness = new_brightness
+
+    def on_brightness_changed(self, *args):
         if self.brightness.max_screen == -1:
             return
         normalized = self.brightness.screen_brightness / self.brightness.max_screen
+        # Impide que el update del progress bar dispare on_progress_value_changed recursivamente
+        self._updating_from_brightness = True
         self.progress_bar.value = normalized
+        self._updating_from_brightness = False
+
         brightness_percentage = int(normalized * 100)
         if brightness_percentage >= 75:
             self.brightness_label.set_markup(icons.brightness_high)
