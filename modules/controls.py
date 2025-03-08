@@ -1,4 +1,3 @@
-import subprocess
 from gi.repository import GLib, Gdk
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
@@ -8,20 +7,9 @@ from fabric.widgets.button import Button
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.circularprogressbar import CircularProgressBar
-from services import brightness
 from services.brightness import Brightness
 import modules.icons as icons
 
-def supports_backlight():
-    try:
-        output = subprocess.check_output(["brightnessctl", "-l"]).decode("utf-8").lower()
-        return "backlight" in output
-    except Exception:
-        return False
-
-BACKLIGHT_SUPPORTED = supports_backlight()
-
-# Los demás widgets (VolumeSlider, MicSlider, etc.) se mantienen igual...
 class VolumeSlider(Scale):
     def __init__(self, **kwargs):
         super().__init__(
@@ -86,7 +74,6 @@ class MicSlider(Scale):
             return
         self.value = self.audio.microphone.volume / 100
 
-# Versión mejorada del slider de brillo usando GLib para debouncing sin bloquear la UI
 class BrightnessSlider(Scale):
     def __init__(self, **kwargs):
         super().__init__(
@@ -102,21 +89,16 @@ class BrightnessSlider(Scale):
             self.destroy()
             return
 
-        # Configuramos el rango y valor inicial usando los valores reales del brillo
         self.set_range(0, self.client.max_screen)
         self.set_value(self.client.screen_brightness)
         self.add_style_class("brightness")
 
-        # Variables para gestionar las actualizaciones sin bloquear la UI
         self._pending_value = None
         self._update_source_id = None
         self._updating_from_brightness = False
 
-        # Conecta la señal de cambio del slider (por arrastre o scroll)
         self.connect("change-value", self.on_scale_move)
-        # Conecta el scroll para ajustar el valor
         self.connect("scroll-event", self.on_scroll)
-        # Conecta la señal "screen" para actualizaciones externas
         self.client.connect("screen", self.on_brightness_changed)
 
     def on_scale_move(self, widget, scroll, moved_pos):
@@ -125,7 +107,7 @@ class BrightnessSlider(Scale):
         self._pending_value = moved_pos
         if self._update_source_id is None:
             self._update_source_id = GLib.idle_add(self._update_brightness_callback)
-        return False  # Permite que el evento continúe
+        return False
 
     def _update_brightness_callback(self):
         if self._pending_value is not None:
@@ -133,15 +115,14 @@ class BrightnessSlider(Scale):
             self._pending_value = None
             if value_to_set != self.client.screen_brightness:
                 self.client.screen_brightness = value_to_set
-            return True  # Seguimos agrupando cambios
+            return True
         else:
             self._update_source_id = None
-            return False  # No hay cambios pendientes, se elimina el timeout
+            return False
 
     def on_scroll(self, widget, event):
         current_value = self.get_value()
-        step_size = 1  # Valor absoluto de paso
-        # Para scroll suave se utiliza event.delta_y, para scroll normal se utiliza event.direction
+        step_size = 1
         if event.direction == Gdk.ScrollDirection.SMOOTH:
             if event.delta_y < 0:
                 new_value = min(current_value + step_size, self.client.max_screen)
@@ -156,11 +137,10 @@ class BrightnessSlider(Scale):
                 new_value = max(current_value - step_size, 0)
             else:
                 return False
-        self.set_value(new_value)  # Esto disparará "change-value" y, por ende, on_scale_move
+        self.set_value(new_value)
         return True
 
     def on_brightness_changed(self, client, _):
-        # Actualiza el slider si el brillo cambia externamente sin disparar recursividad
         self._updating_from_brightness = True
         self.set_value(self.client.screen_brightness)
         self._updating_from_brightness = False
@@ -173,7 +153,6 @@ class BrightnessSlider(Scale):
         super().destroy()
 
 
-# Widget pequeño de brillo que responde al scroll usando GLib.timeout_add para debouncing sin bloquear la UI
 class BrightnessSmall(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar-brightness", **kwargs)
@@ -199,15 +178,11 @@ class BrightnessSmall(Box):
         self.add(self.event_box)
         self.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
 
-        # Flag para evitar recursividad al actualizar desde la señal "screen"
         self._updating_from_brightness = False
-        # Variables para gestionar la actualización asíncrona usando GLib
         self._pending_value = None
         self._update_source_id = None
 
-        # Conecta la señal de cambio de valor del progress bar
         self.progress_bar.connect("notify::value", self.on_progress_value_changed)
-        # Conecta la señal "screen" para actualizaciones externas
         self.brightness.connect("screen", self.on_brightness_changed)
         self.on_brightness_changed()
 
@@ -215,7 +190,7 @@ class BrightnessSmall(Box):
         if self.brightness.max_screen == -1:
             return
 
-        step_size = 5  # Valor absoluto del cambio
+        step_size = 5
         current_norm = self.progress_bar.value
         if event.delta_y < 0:
             new_norm = min(current_norm + (step_size / self.brightness.max_screen), 1)
@@ -223,17 +198,14 @@ class BrightnessSmall(Box):
             new_norm = max(current_norm - (step_size / self.brightness.max_screen), 0)
         else:
             return
-        # Al cambiar el valor se dispara "notify::value"
         self.progress_bar.value = new_norm
 
     def on_progress_value_changed(self, widget, pspec):
-        # Si la actualización viene de la señal "screen", no hacemos nada
         if self._updating_from_brightness:
             return
         new_norm = widget.value
         new_brightness = int(new_norm * self.brightness.max_screen)
         self._pending_value = new_brightness
-        # Si no hay un timeout programado, lo programamos para agrupar cambios
         if self._update_source_id is None:
             self._update_source_id = GLib.timeout_add(50, self._update_brightness_callback)
 
@@ -241,10 +213,8 @@ class BrightnessSmall(Box):
         if self._pending_value is not None and self._pending_value != self.brightness.screen_brightness:
             self.brightness.screen_brightness = self._pending_value
             self._pending_value = None
-            # Se retorna True para seguir ejecutando el callback en caso de nuevos cambios
             return True
         else:
-            # No hay cambios pendientes; removemos el timeout
             self._update_source_id = None
             return False
 
@@ -252,7 +222,6 @@ class BrightnessSmall(Box):
         if self.brightness.max_screen == -1:
             return
         normalized = self.brightness.screen_brightness / self.brightness.max_screen
-        # Evitamos que este cambio dispare on_progress_value_changed
         self._updating_from_brightness = True
         self.progress_bar.value = normalized
         self._updating_from_brightness = False
@@ -271,7 +240,6 @@ class BrightnessSmall(Box):
             GLib.source_remove(self._update_source_id)
         super().destroy()
 
-# Los demás widgets se mantienen igual...
 class VolumeSmall(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar-vol", **kwargs)
@@ -410,7 +378,6 @@ class MicSmall(Box):
         else:
             self.mic_button.get_child().set_markup(icons.mic_mute)
 
-# Los contenedores incluyen el widget de brillo solo si es soportado.
 class ControlSliders(Box):
     def __init__(self, **kwargs):
         brightness = Brightness.get_initial()
