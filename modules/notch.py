@@ -64,7 +64,7 @@ class Notch(Window):
             h_expand=True,
             h_align="fill",
             formatter=FormattedString(
-                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 32)}}",
+                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 64)}}",
                 truncate=truncate,
             ),
         )
