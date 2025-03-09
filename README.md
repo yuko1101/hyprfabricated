@@ -7,7 +7,9 @@
 ## AxKhz-Shell vs Ax-Shell
 Here is a quick comparison with Ax-Shell. I am in direct contact with the original developer, and the plan is to progressively adjust and integrate these new widgets into the main repository.
 
-### Cavalcade
+### Cavalcade | Merged to Ax-Shell
+- [x] Merged
+
 <p align="center">
   <img src="assets/screenshots/cavalcade.png">
 </p>
