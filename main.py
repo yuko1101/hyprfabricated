@@ -8,8 +8,8 @@ from modules.corners import Corners
 from modules.deskwidgets import Deskwidgets
 from config.config import open_config, ensure_fonts
 from datetime import datetime
-
 import gi
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk
 
@@ -29,11 +29,12 @@ if __name__ == "__main__":
     current_date = datetime.now()
     target_date = datetime(2025, 2, 25)
 
-    #Check if fonts_updated file exist, so we dont repeat this part every time.
+    # Check if fonts_updated file exist, so we dont repeat this part every time.
     if current_date > target_date and not os.path.exists(fonts_updated_file):
         tabler_icons_path = os.path.expanduser("~/.fonts/tabler-icons")
         if os.path.exists(tabler_icons_path):
             import shutil
+
             try:
                 shutil.rmtree(tabler_icons_path)
                 print(f"Removed directory: {tabler_icons_path}")
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     bar.notch = notch
     notch.bar = bar
     widgets = Deskwidgets()
-    app = Application("hyprfabricated", bar, notch,widgets)
+    app = Application("hyprfabricated", bar, notch, widgets)
 
     def set_css():
         app.set_stylesheet_from_file(

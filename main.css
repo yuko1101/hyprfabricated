@@ -19,7 +19,7 @@
 @import url("./styles/power.css");
 @import url("./styles/metrics.css");
 @import url("./styles/tools.css");
-
+@import url("./styles/widgets.css");
 * {
   all: unset;
   color: var(--foreground);
@@ -220,25 +220,5 @@ tooltip > * {
 #notch,
 #bar {
   border-radius: 0px;
-}
-
-
-
-#clock>label {
-    font-size: 86px;
-    transition: color 0.5s ease;
-    color: alpha(var(--primary), 0.7);
-    font-family: "Jost*", sans-serif;
-    font-weight: 900;
-    margin-bottom: -25px;
-}
-
-#date>label {
-    font-size: 24px;
-    transition: color 0.5s ease;
-    color: alpha(var(--primary), 0.7);
-    font-family: "Jost*", sans-serif;
-    font-weight: 700;
-    margin-bottom: -25px;
 }
 

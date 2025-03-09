@@ -1,0 +1,102 @@
+/*
+You can type here any CSS rule recognized by GTK+.
+You can temporarily disable this custom CSS by clicking on the “Pause” button above.
+
+Changes are applied instantly and globally, for the whole application.
+*/
+
+/*
+You can type here any CSS rule recognized by GTK+.
+You can temporarily disable this custom CSS by clicking on the “Pause” button above.
+
+Changes are applied instantly and globally, for the whole application.
+*/
+#headertxt1,
+#headertxt2,
+#headertxt3,
+#temptxt,
+#temptxtbt {
+  font-family: "Jost*", sans-serif;
+  color: alpha(var(--secondary), 0.7);
+}
+#clock > label {
+  font-size: 100px;
+  transition: color 0.5s ease;
+  color: alpha(var(--primary), 0.7);
+  font-family: "Jost*", sans-serif;
+  font-weight: 900;
+  margin-bottom: -25px;
+}
+#date > label {
+  font-size: 24px;
+  transition: color 0.5s ease;
+  color: alpha(var(--primary), 0.7);
+  font-family: "Jost*", sans-serif;
+  font-weight: 500;
+  margin-bottom: -25px;
+}
+
+#quote {
+  font-size: 20px;
+  color: alpha(var(--primary), 0.7);
+  font-family: "Jost*", sans-serif;
+  font-weight: 400;
+}
+
+#weather-widget {
+  padding: 4px;
+}
+
+#headertxt1 {
+  font-size: 20px;
+}
+#temptxtbt,
+#headertxt3 {
+  font-size: 20px;
+  font-weight: 300;
+}
+
+#header1 {
+  margin-top: 20px;
+  margin-right: 50px;
+  margin-left: 30px;
+}
+
+#header2 {
+  margin-right: 20px;
+}
+
+#header3 {
+  margin: 20px;
+}
+
+#window-inner {
+  margin: 10px;
+  background-color: alpha(var(--primary), 0.4);
+}
+#headertxt1 {
+  font-size: 40px;
+  font-weight: 700;
+}
+#headertxt2 {
+  margin-left: 0px;
+  font-size: 24px;
+}
+#temptxt {
+  margin-top: 10px;
+  font-size: 75px;
+  font-weight: 700;
+}
+
+#temptxtbt {
+  margin-top: -20;
+}
+
+#headertxt {
+  font-size: 90px;
+}
+
+#headertxt2,
+#headertxt3 {
+  margin-top: -8px;
+}
