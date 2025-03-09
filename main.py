@@ -3,7 +3,7 @@ import os
 import json
 from fabric import Application
 from fabric.utils import get_relative_path
-from config.config import open_config, ensure_fonts
+from config.config import open_config
 from datetime import datetime
 import gi
 import warnings
@@ -29,58 +29,41 @@ def load_config():
 
 if __name__ == "__main__":
     setproctitle.setproctitle("hyprfabricated")
-    current_date = datetime.now()
-    target_date = datetime(2025, 2, 25)
-
-    if current_date > target_date and not os.path.exists(fonts_updated_file):
-        tabler_icons_path = os.path.expanduser("~/.fonts/tabler-icons")
-        if os.path.exists(tabler_icons_path):
-            import shutil
-
-            try:
-                shutil.rmtree(tabler_icons_path)
-                print(f"Removed directory: {tabler_icons_path}")
-            except Exception as e:
-                print(f"Error removing {tabler_icons_path}: {e}")
-        ensure_fonts()
-        os.makedirs(cache_dir, exist_ok=True)
-        with open(fonts_updated_file, "w") as f:
-            f.write("Fonts updated after February 25, 2025")
 
     if not os.path.isfile(hyprconf):
         open_config()
 
     config = load_config()
 
-    lin = []
+    assets = []
     if config["Basic"]["corners"]:
         from modules.corners import Corners
         corners = Corners()
-        lin.append(corners)
+        assets.append(corners)
     if config["Basic"]["bar"]:
         from modules.bar import Bar
         bar = Bar()
-        lin.append(bar)
+        assets.append(bar)
     if config["Basic"]["notch"]:
         from modules.notch import Notch
         notch = Notch()
         bar.notch = notch
         notch.bar = bar
-        lin.append(notch)
+        assets.append(notch)
     if config["Basic"]["widgets"]:
         if config["widgetstyle"] == "full":
             from modules.deskwidgets import Deskwidgetsfull
             widgets = Deskwidgetsfull()
-            lin.append(widgets)
+            assets.append(widgets)
             pass
         elif config["widgetstyle"] == "basic":
             from modules.deskwidgets import Deskwidgetsbasic
             widgets = Deskwidgetsbasic()
-            lin.append(widgets)
+            assets.append(widgets)
             pass
 
 
-    app = Application("hyprfabricated", *lin)
+    app = Application("hyprfabricated", *assets)
 
     def set_css():
         app.set_stylesheet_from_file(
