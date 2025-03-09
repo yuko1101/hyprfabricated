@@ -39,7 +39,6 @@ PACKAGES=(
     wlinhibit tesseract
     plasma-browser-integration
     cantarell-fonts
-
 )
 
 # Prevent running as root
@@ -48,24 +47,16 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-wasYayInstalled=1
-wasParuInstalled=1
-
 aur_helper="yay"
 
 # Check if paru exists, otherwise use yay
 if command -v paru &>/dev/null; then
     aur_helper="paru"
-elif command -v yay &>/dev/null; then
-    wasParuInstalled=0
-else
-    wasYayInstalled=0
+elif ! command -v yay &>/dev/null; then
     echo "Installing yay-bin..."
     tmpdir=$(mktemp -d)
     git clone --depth=1 https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
-    cd "$tmpdir/yay-bin"
-    makepkg -si --noconfirm
-    cd - > /dev/null
+    (cd "$tmpdir/yay-bin" && makepkg -si --noconfirm)
     rm -rf "$tmpdir"
 fi
 
@@ -75,7 +66,7 @@ if [ -d "$INSTALL_DIR" ]; then
     git -C "$INSTALL_DIR" pull
 else
     echo "Cloning hyprfabricated..."
-    git clone  --depth=1  "$REPO_URL" "$INSTALL_DIR"
+    git clone --depth=1 "$REPO_URL" "$INSTALL_DIR"
 fi
 
 echo "Installing gray-git..."
@@ -106,12 +97,41 @@ echo "Starting hyprfabricated..."
 killall hyprfabricated 2>/dev/null || true
 uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 
-if [ "$wasYayInstalled" -eq 0 ] && [ "$wasParuInstalled" -eq 0 ]; then
-    sudo pacman -Rns yay
-fi
-
 echo "Doing Fallback Image..."
 cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
+
+echo "Installing required fonts..."
+
+FONT_URL="https://github.com/zed-industries/zed-fonts/releases/download/1.2.0/zed-sans-1.2.0.zip"
+FONT_DIR="$HOME/.fonts/zed-sans"
+TEMP_ZIP="/tmp/zed-sans-1.2.0.zip"
+
+# Check if fonts are already installed
+if [ ! -d "$FONT_DIR" ]; then
+    echo "Downloading fonts from $FONT_URL..."
+    curl -L -o "$TEMP_ZIP" "$FONT_URL"
+
+    echo "Extracting fonts to $FONT_DIR..."
+    mkdir -p "$FONT_DIR"
+    unzip -o "$TEMP_ZIP" -d "$FONT_DIR"
+
+    echo "Cleaning up..."
+    rm "$TEMP_ZIP"
+else
+    echo "Fonts are already installed. Skipping download and extraction."
+fi
+
+# Copy local fonts if not already present
+if [ ! -d "$HOME/.fonts/tabler-icons" ]; then
+    echo "Copying local fonts to $HOME/.fonts/tabler-icons..."
+    mkdir -p "$HOME/.fonts/tabler-icons"
+    cp -r "$INSTALL_DIR/assets/fonts/"* "$HOME/.fonts/tabler-icons"
+else
+    echo "Local fonts are already installed. Skipping copy."
+fi
+
 echo "If you see a transparent bar change the wallpaper from the notch"
 echo "Backup your hypridle and hyprlock config before accepting in config"
+
 echo "Installation complete."
+
