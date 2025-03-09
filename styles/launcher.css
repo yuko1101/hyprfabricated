@@ -119,3 +119,9 @@
 #app-slot-button:active #app-label {
   color: var(--shadow);
 }
+
+#calc-label {
+  color: var(--foreground);
+  font-weight: bold;
+  font-family: 'Fira Code', monospace;
+}

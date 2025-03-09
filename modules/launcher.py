@@ -16,6 +16,7 @@ import os
 import re
 import math
 import subprocess
+import numpy as np
 
 class AppLauncher(Box):
     def __init__(self, **kwargs):
@@ -229,6 +230,8 @@ class AppLauncher(Box):
             if self.selected_index == -1:
                 self.evaluate_calculator_expression(text)
             return
+        elif text.startswith("!"):
+            return
         match text:
             case ":w":
                 self.notch.open_notch("wallpapers")
@@ -272,6 +275,13 @@ class AppLauncher(Box):
                 self.close_launcher()
                 return True
             return False
+        
+        elif text.startswith("!"):
+            if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+                exec_shell_command_async(text[1:])
+                self.close_launcher()
+                return True
+            
         else:
             # Normal app mode behavior
             if event.keyval == Gdk.KEY_Down:
@@ -314,11 +324,11 @@ class AppLauncher(Box):
         for old, new in [("[", "("), ("]", ")"), ("{", "("), ("}", ")")]:
             expr = expr.replace(old, new)
         try:
-            result = eval(expr, {"__builtins__": None, "math": math})
+            result = eval(expr, {"__builtins__": None, "math": math, "np": np})
         except Exception as e:
             result = f"Error: {e}"
         # Prepend to history (newest first)
-        self.calc_history.insert(0, f"{text} => {result}")
+        self.calc_history.insert(0, f"{expr} => {result}")
         self.save_calc_history()
         self.update_calculator_viewport()
 
