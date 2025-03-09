@@ -279,19 +279,18 @@ class qoute(Label):
     def __init__(self, **kwargs):
         super().__init__(
             name="quote",
-            label="Fetching quote...",
+            label="",
             h_align="center",
             v_align="center",
             h_expand=True,
             v_expand=True,
-            visible=True,
-            all_visible=True,
+            visible=False,
         )
         fetch_quote_threaded(self.update_label)
 
     def update_label(self, quote):
         self.set_label(quote)
-
+        self.set_visible(True)
 
 class Deskwidgets(Window):
     def __init__(self, **kwargs):
