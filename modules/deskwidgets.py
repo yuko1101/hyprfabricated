@@ -203,9 +203,15 @@ class Sysinfo(Box):
             self.bat_circular.value = 42
         else:
             self.bat_circular.value = bat_sen.percent
-        self.progress_container.children[0].set_tooltip_text(f"{int(psutil.cpu_percent(interval=0) or 0)}%")
-        self.progress_container.children[1].set_tooltip_text(f"{int(psutil.virtual_memory().percent or 0)}%")
-        self.progress_container.children[2].set_tooltip_text(f"{int((bat_sen := psutil.sensors_battery()) and bat_sen.percent or 0)}%")
+        self.progress_container.children[0].set_tooltip_text(
+            f"{int(psutil.cpu_percent(interval=0) or 0)}%"
+        )
+        self.progress_container.children[1].set_tooltip_text(
+            f"{int(psutil.virtual_memory().percent or 0)}%"
+        )
+        self.progress_container.children[2].set_tooltip_text(
+            f"{int((bat_sen := psutil.sensors_battery()) and bat_sen.percent or 0)}%"
+        )
 
         return True
 
@@ -379,4 +385,3 @@ class Deskwidgetsbasic(Window):
             ),
             all_visible=True,
         )
-

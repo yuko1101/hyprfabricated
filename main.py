@@ -7,6 +7,7 @@ from config.config import open_config
 from datetime import datetime
 import gi
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
@@ -23,9 +24,12 @@ fonts_updated_file = os.path.expanduser("~/.cache/hyprfabricated/fonts_updated")
 cache_dir = os.path.expanduser("~/.cache/hyprfabricated/")
 
 hyprconf = os.path.expanduser("~/.config/hyprfabricated/config.json")
+
+
 def load_config():
-    with open(hyprconf, 'r') as f:
+    with open(hyprconf, "r") as f:
         return json.load(f)
+
 
 if __name__ == "__main__":
     setproctitle.setproctitle("hyprfabricated")
@@ -38,14 +42,17 @@ if __name__ == "__main__":
     assets = []
     if config["Basic"]["corners"]:
         from modules.corners import Corners
+
         corners = Corners()
         assets.append(corners)
     if config["Basic"]["bar"]:
         from modules.bar import Bar
+
         bar = Bar()
         assets.append(bar)
     if config["Basic"]["notch"]:
         from modules.notch import Notch
+
         notch = Notch()
         bar.notch = notch
         notch.bar = bar
@@ -53,15 +60,16 @@ if __name__ == "__main__":
     if config["Basic"]["widgets"]:
         if config["widgetstyle"] == "full":
             from modules.deskwidgets import Deskwidgetsfull
+
             widgets = Deskwidgetsfull()
             assets.append(widgets)
             pass
         elif config["widgetstyle"] == "basic":
             from modules.deskwidgets import Deskwidgetsbasic
+
             widgets = Deskwidgetsbasic()
             assets.append(widgets)
             pass
-
 
     app = Application("hyprfabricated", *assets)
 
@@ -78,4 +86,3 @@ if __name__ == "__main__":
 
     app.set_css()
     app.run()
-
