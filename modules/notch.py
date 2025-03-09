@@ -4,11 +4,12 @@ from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
+from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import ActiveWindow
 from fabric.utils.helpers import FormattedString, truncate
-from gi.repository import GLib, Gdk, Gtk
+from gi.repository import GLib, Gdk, Gtk, Pango
 from modules.launcher import AppLauncher
 from modules.dashboard import Dashboard
 from modules.notifications import NotificationContainer
@@ -59,9 +60,16 @@ class Notch(Window):
         self.nhistory = self.applet_stack.get_children()[0]
         self.btdevices = self.applet_stack.get_children()[1]
 
+        self.window_label = Label(
+            name="notch-window-label",
+            h_expand=True,
+            h_align="fill",
+        )
+
         self.active_window = ActiveWindow(
             name="hyprland-window",
             h_expand=True,
+            h_align="fill",
             formatter=FormattedString(
                 f"{{'Escritorio' if not win_class or win_class == 'unknown' else truncate(truncate_title(win_title), 25)}}",
                 truncate=truncate,
@@ -70,6 +78,12 @@ class Notch(Window):
         )
         # Add the click connection for active_window.
         self.active_window.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
+
+        self.active_window.get_children()[0].set_hexpand(True)
+        self.active_window.get_children()[0].set_halign(Gtk.Align.FILL)
+        self.active_window.get_children()[0].set_ellipsize(Pango.EllipsizeMode.END)
+
+        self.active_window.connect("notify::label", lambda *_: self.restore_label_properties())
 
         # Create additional compact views:
         self.player_small = PlayerSmall()
@@ -146,38 +160,50 @@ class Notch(Window):
         self.corner_left = Box(
             name="notch-corner-left",
             orientation="v",
+            h_align="start",
             children=[
                 MyCorner("top-right"),
                 Box(),
             ]
         )
 
+        self.corner_left.set_margin_start(56)
+
         self.corner_right = Box(
             name="notch-corner-right",
             orientation="v",
+            h_align="end",
             children=[
                 MyCorner("top-left"),
                 Box(),
             ]
         )
 
+        self.corner_right.set_margin_end(56)
+
         self.notch_box = CenterBox(
             name="notch-box",
             orientation="h",
             h_align="center",
             v_align="center",
-            start_children=Box(
-                children=[
-                    self.corner_left,
-                ],
-            ),
+            # start_children=self.corner_left,
             center_children=self.stack,
-            end_children=Box(
-                children=[
-                    self.corner_right,
-                ]
-            )
+            # end_children=self.corner_right,
         )
+
+        self.notch_overlay = Overlay(
+            name="notch-overlay",
+            h_expand=True,
+            h_align="fill",
+            child=self.notch_box,
+            overlays=[
+                self.corner_left,
+                self.corner_right,
+            ],
+        )
+
+        self.notch_overlay.set_overlay_pass_through(self.corner_left, True)
+        self.notch_overlay.set_overlay_pass_through(self.corner_right, True)
 
         self.notification_revealer = Revealer(
             name="notification-revealer",
@@ -198,7 +224,7 @@ class Notch(Window):
             name="notch-complete",
             orientation="v",
             children=[
-                self.notch_box,
+                self.notch_overlay,
                 self.boxed_notification_revealer,
             ]
         )
@@ -207,7 +233,6 @@ class Notch(Window):
         self._is_notch_open = False  # Add a flag to track notch open state
         self._scrolling = False
 
-        self.add(self.notch_box)
         self.add(self.notch_complete)
         self.show_all()
 
@@ -440,4 +465,12 @@ class Notch(Window):
 
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
-            self.compact_stack.set_visible_child(self.window_title)
+            self.compact_stack.set_visible_child(self.active_window)
+
+    def restore_label_properties(self):
+        label = self.active_window.get_children()[0]
+        if isinstance(label, Gtk.Label):
+            label.set_ellipsize(Pango.EllipsizeMode.END)
+            label.set_hexpand(True)
+            label.set_halign(Gtk.Align.FILL)
+            label.queue_resize()

@@ -243,7 +243,7 @@ class BluetoothButton(Box):
             name="bluetooth-status-button",
             h_expand=True,
             child=self.bluetooth_status_container,
-            on_clicked=lambda *_: self.notch.bluetooth.client.toggle_power(),
+            on_clicked=lambda *_: self.widgets.bluetooth.client.toggle_power(),
         )
         add_hover_cursor(self.bluetooth_status_button)  # <-- Added hover
         self.bluetooth_menu_label = Label(

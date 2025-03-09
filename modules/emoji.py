@@ -2,6 +2,7 @@ from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
+from fabric.widgets.stack import Stack
 from fabric.utils import remove_handler
 from gi.repository import Gdk
 import modules.icons as icons
@@ -28,7 +29,13 @@ class EmojiPicker(Box):
         self._arranger_handler: int = 0
         self._all_emojis = self._load_emoji_data()
 
-        self.viewport = Box(name="viewport", spacing=4, orientation="v")
+        self.stack = Stack(
+            name="viewport",
+            spacing=4,
+            orientation="v",
+            transition_type="slide-up-down",
+            transition_duration=200,
+        )
         self.search_entry = Entry(
             name="search-entry",
             placeholder="Search Emojis...",
@@ -60,7 +67,7 @@ class EmojiPicker(Box):
             orientation="v",
             children=[
                 self.header_box,
-                self.viewport,
+                self.stack,
             ],
         )
 
@@ -82,7 +89,7 @@ class EmojiPicker(Box):
         return emoji_data
 
     def close_picker(self):
-        self.viewport.children = []
+        self.stack.children = []
         self.selected_index = -1
         self.notch.close_notch()
 
@@ -94,7 +101,7 @@ class EmojiPicker(Box):
 
     def arrange_viewport(self, query: str = ""):
         remove_handler(self._arranger_handler) if self._arranger_handler else None
-        self.viewport.children = []
+        self.stack.children = []
         self.selected_index = -1
         self.current_page_index = 0
 
@@ -116,7 +123,7 @@ class EmojiPicker(Box):
 
     def load_page(self, page_index):
         self.update_selection(-1)
-        self.viewport.children = []
+        page_box = Box(name=f"page-box-{page_index}", orientation="v", spacing=4)
         start_index = page_index * self.emojis_per_page
         end_index = min((page_index + 1) * self.emojis_per_page, len(self.filtered_emojis))
         page_emojis = self.filtered_emojis[start_index:end_index]
@@ -130,8 +137,12 @@ class EmojiPicker(Box):
                 grid_box.add(row_box)
             if row_box is not None:
                 row_box.add(self.bake_emoji_slot(emoji_char, emoji_info))
-        self.viewport.add(grid_box)
-        self.viewport.show_all()
+        page_box.add(grid_box)
+        self.stack.add_named(page_box, f"page-{page_index}")
+        self.stack.set_visible_child_name(f"page-{page_index}")
+        page_box.show_all()
+
+
         buttons = self.get_all_emoji_buttons()
         if buttons and self.selected_index != -1:
             page_relative_index = self.selected_index % self.emojis_per_page
@@ -191,9 +202,10 @@ class EmojiPicker(Box):
 
     def get_all_emoji_buttons(self):
         buttons = []
-        if self.viewport.get_children():
-            if self.viewport.get_children()[0].get_children():
-                for row_box in self.viewport.get_children()[0].get_children():
+        current_page = self.stack.get_visible_child()
+        if current_page and current_page.get_children():
+            if current_page.get_children()[0].get_children():
+                for row_box in current_page.get_children()[0].get_children():
                     buttons.extend(row_box.get_children())
         return buttons
 
@@ -257,9 +269,12 @@ class EmojiPicker(Box):
 
             if new_row >= rows:
                 if self.current_page_index < self.total_pages - 1:
+                    current_col = col # Keep track of current column
                     self.current_page_index += 1
                     self.load_page(self.current_page_index)
-                    new_index = 0
+                    new_index = current_col # Try to keep the same column
+                    if new_index >= total_items_current_page: # if column is out of bound, select last
+                        new_index = total_items_current_page - 1
                     self.selected_index = -1
                     self.update_selection(new_index)
                     return
@@ -267,10 +282,11 @@ class EmojiPicker(Box):
                     new_index = total_items_current_page - 1
             elif new_row < 0:
                 if self.current_page_index > 0:
+                    current_col = col # Keep track of current column
                     self.current_page_index -= 1
                     self.load_page(self.current_page_index)
-                    new_index = self.emojis_per_page - columns
-                    if new_index >= total_items_current_page:
+                    new_index = (rows - 1) * columns + current_col # Select last row, same column
+                    if new_index >= total_items_current_page: # if column is out of bound, select last
                         new_index = total_items_current_page -1
                     self.selected_index = -1
                     self.update_selection(new_index)
@@ -280,8 +296,7 @@ class EmojiPicker(Box):
             else:
                 new_index = new_row * columns + new_col
                 if new_index >= total_items_current_page:
-                    new_index = total_items_current_page -1
-
+                    new_index = total_items_current_page - 1
 
         if new_index < 0:
             new_index = 0
