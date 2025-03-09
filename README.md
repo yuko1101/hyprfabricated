@@ -44,47 +44,47 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 
 ### Manual Installation
 1. Install dependencies:
-    - [Fabric](https://github.com/Fabric-Development/fabric)
-    - [fabric-cli](https://github.com/Fabric-Development/fabric-cli)
-    - [Gray](https://github.com/Fabric-Development/gray)
-    - [Matugen](https://github.com/InioX/matugen)
-    - `acpi`
-    - `brightnessctl`
-    - `cava`
-    - `gnome-bluetooth-3.0`
-    - `gpu-screen-recorder`
-    - `grimblast`
-    - `hypridle`
-    - `hyprlock`
-    - `hyprpicker`
-    - `hyprsunset`
-    - `imagemagick`
-    - `libnotify`
-    - `noto-fonts-emoji`
-    - `playerctl`
-    - `swappy`
-    - `swww`
-    - `tesseract`
-    - `uwsm`
-    - `cantarell-fonts-0.100`
-    - `wl-clipboard`
-    - `wlinhibit`
-    - `gpu-screen-recorder`
-    - `grimblast-git`
-    - Python dependencies:
-        - ijson
-        - pillow
-        - psutil
-        - requests
-        - setproctitle
-        - toml
-        - watchdog
-        - requests
-    - Fonts (automated on first run):
-        - Zed Sans
-        - Tabler Icons
+  - Aur/Pacman:
+    - [`Fabric`](https://github.com/Fabric-Development/fabric)
+    - [`fabric-cli`](https://github.com/Fabric-Development/fabric-cli)
+    - [`Gray`](https://github.com/Fabric-Development/gray)
+    - [`Matugen`](https://github.com/InioX/matugen)
+    - [`acpi`](https://github.com/acpica/acpica)
+    - [`brightnessctl`](https://github.com/Hummer12007/brightnessctl)
+    - [`cava`](https://github.com/karlstav/cava)
+    - [`gnome-bluetooth-3.0`](https://github.com/GNOME/gnome-bluetooth)
+    - [`gpu-screen-recorder`](https://git.dec05eba.com/gpu-screen-recorder/)
+    - [`grimblast`](https://github.com/hyprwm/contrib/tree/main/grimblast)
+    - [`hypridle`](https://github.com/hyprwm/hypridle)
+    - [`hyprlock`](https://github.com/hyprwm/hyprlock)
+    - [`hyprpicker`](https://github.com/hyprwm/hyprpicker)
+    - [`hyprsunset`](https://github.com/hyprwm/hyprsunset)
+    - [`imagemagick`](https://github.com/ImageMagick/ImageMagick)
+    - [`libnotify`](https://github.com/GNOME/libnotify)
+    - [`noto-fonts-emoji`](https://github.com/androlabs/emoji-archlinux)
+    - [`playerctl`](https://github.com/altdesktop/playerctl)
+    - [`swappy`](https://github.com/jtheoof/swappy)
+    - [`swww`](https://github.com/LGFae/swww)
+    - [`tesseract`](https://github.com/tesseract-ocr/tesseract)
+    - [`uwsm`](https://github.com/Vladimir-csp/uwsm)
+    - [`cantarell-fonts-0.100`](https://fonts.google.com/specimen/Cantarell)
+    - [`wl-clipboard`](https://github.com/bugaevc/wl-clipboard)
+    - [`wlinhibit`](https://github.com/0x5a4/wlinhibit)
+    - [`grimblast-git`](https://github.com/hyprwm/contrib/blob/main/grimblast/grimblast)
+- Python dependencies:
+    - [ijson](https://pypi.org/project/ijson/)
+    - [pillow](https://pypi.org/project/pillow/)
+    - [psutil](https://pypi.org/project/psutil/)
+    - [requests](https://pypi.org/project/requests/)
+    - [setproctitle](https://pypi.org/project/setproctitle/)
+    - [toml](https://pypi.org/project/toml/)
+    - [watchdog](https://pypi.org/project/watchdog/)
+          
+- Fonts (automated on first run):
+    - [Zed Sans](https://github.com/zed-industries/zed-fonts)
+    - [Tabler Icons](https://tabler.io/icons)
 
-2. Download and run Ax-Shell:
+3. Download and run Ax-Shell:
     ```bash
     git clone https://github.com/tr1xem/hyprfabricated.git ~/.config/hyprfabricated
     uwsm -- app python ~/.config/hyprfabricated/main.py > /dev/null 2>&1 & disown
