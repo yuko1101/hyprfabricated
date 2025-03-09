@@ -30,3 +30,11 @@
   font-family: "Cantarell Bold";
   border-radius: 16px;
 }
+
+#icon-label {
+  color: var(--foreground);
+  font-size: 20px;
+  padding: 4px;
+  border-radius: 11px;
+  transition: all 0.1s ease;
+}

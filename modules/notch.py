@@ -84,19 +84,21 @@ class Notch(Window):
         self.active_window.get_children()[0].set_ellipsize(Pango.EllipsizeMode.END)
 
         self.active_window.connect("notify::label", lambda *_: self.restore_label_properties())
-
+        # Remove any padding or margins between elements
+        self.active_window.set_margin_start(0)
         # Create additional compact views:
         self.player_small = PlayerSmall()
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
-        self.window_title_icon = Label(name="icon-label", markup=icons.desktop)
-        self.window_title = Box(
-            h_align="center",
-            v_align="center",
-            children=[
-                self.window_title_icon,
-                self.active_window,
+
+        self.window_title_icon = Label(name="icon-label", markup=icons.desktop, margin_end=0)
+        self.window_title = CenterBox(
+            name = "window-title",
+            center_children=[
+            self.window_title_icon,
+            self.active_window,
             ]
         )
+
 
         self.player_small.mpris_manager.connect("player-appeared", lambda *_: self.compact_stack.set_visible_child(self.player_small))
         self.player_small.mpris_manager.connect("player-vanished", self.on_player_vanished)
@@ -465,7 +467,7 @@ class Notch(Window):
 
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
-            self.compact_stack.set_visible_child(self.active_window)
+            self.compact_stack.set_visible_child(self.window_title)
 
     def restore_label_properties(self):
         label = self.active_window.get_children()[0]
