@@ -99,8 +99,9 @@ class Toolbox(Box):
             self.btn_ssfull,
             self.btn_screenrecord,
             self.btn_ocr,
-            self.btn_color,
             self.btn_emoji,
+            self.btn_color,
+            
         ]
 
         for button in self.buttons:
