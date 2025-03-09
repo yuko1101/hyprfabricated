@@ -292,7 +292,7 @@ class qoute(Label):
         self.set_label(quote)
         self.set_visible(True)
 
-class Deskwidgets(Window):
+class Deskwidgetsfull(Window):
     def __init__(self, **kwargs):
         super().__init__(name="desktop", **kwargs)
         desktop_widget = Window(
@@ -325,4 +325,22 @@ class Deskwidgets(Window):
             ),
             all_visible=False,
         )
+
+class Deskwidgetsbasic(Window):
+    def __init__(self, **kwargs):
+        super().__init__(name="desktop", **kwargs)
+        desktop_widget = Window(
+        layer="bottom",
+        anchor="bottom left",  # FYI: there's no anchor named "center" (anchor of "" is == to "center")
+        exclusivity="none",
+        child=Box(
+            orientation="v",
+            children=[
+                DateTime(formatters=["%A. %d %B"], interval=10000, name="date"),
+                DateTime(formatters=["%I:%M"], name="clock"),
+            ],
+        ),
+        all_visible=True,
+    )
+
 

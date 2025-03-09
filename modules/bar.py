@@ -1,3 +1,4 @@
+import json
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
@@ -15,6 +16,7 @@ from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.metrics import MetricsSmall
 from modules.tools import Toolbox
+
 class Bar(Window):
     def __init__(self, **kwargs):
         super().__init__(
@@ -28,6 +30,9 @@ class Bar(Window):
         )
 
         self.notch = kwargs.get("notch", None)
+        config_path = get_relative_path("../config.json")
+        with open(config_path) as config_file:
+            config = json.load(config_file)
 
         self.workspaces = Workspaces(
             name="workspaces",
@@ -38,14 +43,6 @@ class Bar(Window):
             spacing=10,
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
-
-
-        self.systray = SystemTray()
-        self.weather = Weather()
-        # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
-
-        self.weather = Weather()
-        self.date_time = DateTime(name="date-time", formatters=["%I:%M %P"], h_align="center", v_align="center")
 
         self.button_apps = Button(
             name="button-bar",
@@ -58,66 +55,26 @@ class Bar(Window):
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
 
-        self.button_tools = Button(
-            name="button-bar",
-            tooltip_text="Opens Toolbox",
-            on_clicked=lambda *_: self.tools_menu(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.toolbox
+        self.button_apps,
+        start_children = [
+        ]
+
+        if config["Bar"]["Barleft"]["weather"]:
+            self.weather = Weather()
+            start_children.append(self.weather)
+
+        if config["Bar"]["Barleft"]["overview"]:
+            self.button_overview = Button(
+                name="button-bar",
+                on_clicked=lambda *_: self.overview(),
+                child=Label(
+                    name="button-bar-label",
+                    markup=icons.windows
+                )
             )
-        )
-        self.button_tools.connect("enter_notify_event", self.on_button_enter)
-        self.button_tools.connect("leave_notify_event", self.on_button_leave)
-
-        self.metrics = MetricsSmall()
-        self.button_power = Button(
-            name="button-bar",
-            on_clicked=lambda *_: self.power_menu(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.shutdown
-            )
-        )
-        self.button_power.connect("enter_notify_event", self.on_button_enter)
-        self.button_power.connect("leave_notify_event", self.on_button_leave)
-
-        self.button_overview = Button(
-            name="button-bar",
-            on_clicked=lambda *_: self.overview(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.windows
-            )
-        )
-        self.button_overview.connect("enter_notify_event", self.on_button_enter)
-        self.button_overview.connect("leave_notify_event", self.on_button_leave)
-
-
-
-        self.control = ControlSmall()
-
-        self.revealer_right = Revealer(
-            name="bar-revealer",
-            transition_type="slide-left",
-            child_revealed=True,
-            child=Box(
-                name="bar-revealer-box",
-                orientation="h",
-                spacing=4,
-                children=[
-                    # self.metrics,
-                    self.control,
-               ],
-            ),
-        )
-
-        self.boxed_revealer_right = Box(
-            name="boxed-revealer",
-            children=[
-                self.revealer_right,
-            ],
-        )
+            self.button_overview.connect("enter_notify_event", self.on_button_enter)
+            self.button_overview.connect("leave_notify_event", self.on_button_leave)
+            start_children.append(self.button_overview)
 
         self.revealer_left = Revealer(
             name="bar-revealer",
@@ -127,10 +84,7 @@ class Bar(Window):
                 name="bar-revealer-box",
                 orientation="h",
                 spacing=4,
-                children=[
-                    # self.weather,
-                    self.button_overview,
-                ],
+                children=start_children,
             ),
         )
 
@@ -141,6 +95,72 @@ class Bar(Window):
             ],
         )
 
+        end_children = []
+
+        if config["Bar"]["Barright"]["metrics"]:
+            self.metrics = MetricsSmall()
+            end_children.append(self.metrics)
+
+        if config["Bar"]["Barright"]["controls"]:
+            self.control = ControlSmall()
+            end_children.append(self.control)
+
+        self.revealer_right = Revealer(
+            name="bar-revealer",
+            transition_type="slide-left",
+            child_revealed=True,
+            child=Box(
+                name="bar-revealer-box",
+                orientation="h",
+                spacing=4,
+                children=end_children,
+            ),
+        )
+
+        self.boxed_revealer_right = Box(
+            name="boxed-revealer",
+            children=[
+                self.revealer_right,
+            ],
+        )
+
+        end_children = [self.boxed_revealer_right]
+
+        if config["Bar"]["systray"]:
+            self.systray = SystemTray()
+            end_children.append(self.systray)
+
+        if config["Bar"]["buttontools"]:
+            self.button_tools = Button(
+                name="button-bar",
+                tooltip_text="Opens Toolbox",
+                on_clicked=lambda *_: self.tools_menu(),
+                child=Label(
+                    name="button-bar-label",
+                    markup=icons.toolbox
+                )
+            )
+            self.button_tools.connect("enter_notify_event", self.on_button_enter)
+            self.button_tools.connect("leave_notify_event", self.on_button_leave)
+            end_children.append(self.button_tools)
+
+        if config["Bar"]["datetime"]:
+            self.date_time = DateTime(name="date-time", formatters=["%I:%M %P"], h_align="center", v_align="center")
+            end_children.append(self.date_time)
+
+        if config["Bar"]["buttonpower"]:
+            self.button_power = Button(
+                name="button-bar",
+                on_clicked=lambda *_: self.power_menu(),
+                child=Label(
+                    name="button-bar-label",
+                    markup=icons.shutdown
+                )
+            )
+            self.button_power.connect("enter_notify_event", self.on_button_enter)
+            self.button_power.connect("leave_notify_event", self.on_button_leave)
+            end_children.append(self.button_power)
+
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h",
@@ -150,26 +170,13 @@ class Bar(Window):
                 name="start-container",
                 spacing=4,
                 orientation="h",
-                children=[
-                    self.button_apps,
-                    Box(name="workspaces-container", children=[self.workspaces]),
-                    # self.weather,
-                    self.button_overview,
-                    self.boxed_revealer_left,
-                ]
+                children=[self.button_apps,Box(name="workspaces-container", children=[self.workspaces])]+ start_children + [self.boxed_revealer_left],
             ),
             end_children=Box(
                 name="end-container",
                 spacing=4,
                 orientation="h",
-                children=[
-                    self.boxed_revealer_right,
-                    # self.battery,
-                    self.systray,
-                    self.button_tools,
-                    self.date_time,
-                    self.button_power,
-                ],
+                children=end_children,
             ),
         )
 
@@ -190,7 +197,6 @@ class Bar(Window):
             window.set_cursor(None)
 
     def on_button_clicked(self, *args):
-        # Ejecuta notify-send cuando se hace clic en el botón
         exec_shell_command_async("notify-send 'Botón presionado' '¡Funciona!'")
 
     def search_apps(self):
@@ -201,6 +207,7 @@ class Bar(Window):
 
     def power_menu(self):
         self.notch.open_notch("power")
+
     def tools_menu(self):
         self.notch.open_notch("tools")
 
@@ -210,3 +217,4 @@ class Bar(Window):
             self.bar_inner.add_style_class("hidden")
         else:
             self.bar_inner.remove_style_class("hidden")
+

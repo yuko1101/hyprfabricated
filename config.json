@@ -1,0 +1,23 @@
+{
+  "Basic": {
+    "corners": true,
+    "bar": true,
+    "notch": true,
+    "widgets": true
+  },
+  "widgetstyle": "full",
+  "Bar": {
+    "systray": true,
+    "buttontools": true,
+    "datetime": true,
+    "buttonpower": true,
+    "Barright": {
+      "metrics": false,
+      "controls": true
+    },
+    "Barleft": {
+      "weather": false,
+      "overview": true
+    }
+  }
+}
