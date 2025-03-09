@@ -7,7 +7,7 @@
 ## AxKhz-Shell vs Ax-Shell
 Here is a quick comparison with Ax-Shell. I am in direct contact with the original developer, and the plan is to progressively adjust and integrate these new widgets into the main repository.
 
-### Cavalcade | Merged to Ax-Shell
+### Cavalcade | Merged to Ax-Shell ✅
 - [x] Merged
 
 <p align="center">
@@ -15,6 +15,7 @@ Here is a quick comparison with Ax-Shell. I am in direct contact with the origin
 </p>
 
 ### Network speed
+- [ ] Merged
 <p align="center">
   <img src="assets/screenshots/default-wifi.png">
   <img src="assets/screenshots/hover.png">
