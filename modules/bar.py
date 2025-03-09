@@ -62,8 +62,7 @@ class Bar(Window):
         if config["Bar"]["workspaces"]:
             left_children.append(Box(name="workspaces-container", children=[self.workspaces]))
 
-        start_children = [
-        ]
+        start_children = []
 
         if config["Bar"]["Barleft"]["weather"]:
             self.weather = Weather()

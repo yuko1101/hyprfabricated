@@ -26,12 +26,9 @@ def load_config():
 
 if __name__ == "__main__":
     setproctitle.setproctitle("hyprfabricated")
-
-    # Check if the current date is after February 25, 2025
     current_date = datetime.now()
     target_date = datetime(2025, 2, 25)
 
-    # Check if fonts_updated file exist, so we dont repeat this part every time.
     if current_date > target_date and not os.path.exists(fonts_updated_file):
         tabler_icons_path = os.path.expanduser("~/.fonts/tabler-icons")
         if os.path.exists(tabler_icons_path):
@@ -43,7 +40,6 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"Error removing {tabler_icons_path}: {e}")
         ensure_fonts()
-        # Create the fonts_updated file to indicate that the process has been done.
         os.makedirs(cache_dir, exist_ok=True)
         with open(fonts_updated_file, "w") as f:
             f.write("Fonts updated after February 25, 2025")

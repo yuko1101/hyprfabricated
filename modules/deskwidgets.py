@@ -14,9 +14,20 @@ import urllib.parse
 import threading
 import threading
 import time
-
 import datetime
+import json
+
 def get_location():
+    config_path = get_relative_path('../config.json')
+    try:
+        with open(config_path, 'r') as file:
+            config = json.load(file)
+            location = config.get('city', '')
+            if location:
+                return location
+    except Exception as e:
+        print(f"Error reading location from config: {e}")
+
     try:
         response = requests.get("https://ipinfo.io/json")
         response.encoding = 'utf-8'  # Ensure the response is decoded using UTF-8
@@ -30,6 +41,7 @@ def get_location():
         print(f"Error getting location: {e}")
     return ""
 
+
 def get_location_threaded(callback):
     def run():
         location = get_location()
@@ -39,26 +51,31 @@ def get_location_threaded(callback):
 
 def get_weather(callback):
     def fetch_weather(location):
-        if location:
-            encoded_location = urllib.parse.quote(location)
-            url = f"https://wttr.in/{encoded_location}?format=%c+%t+%C+%f"
-        else:
+        if not location:
             callback(None)
             return
 
+        encoded_location = urllib.parse.quote(location)
+        url = f"https://wttr.in/{encoded_location}?format=j1"
+        urlemoji = f"https://wttr.in/{encoded_location}?format=%c"
+
         try:
-            response = requests.get(url)
+            response = requests.get(urlemoji)
+            responseinfo = requests.get(url).json()
+
             if response.status_code == 200:
-                weather_data = response.text.strip().split()
-                if len(weather_data) == 4:
-                    emoji, temp, condition, feels_like = weather_data
-                    temp = temp.replace('+', '').replace('C', '')
-                    feels_like = feels_like.replace('+', '').replace('C', '')
-                    update_time = datetime.datetime.now().strftime("%I:%M:%S")
-                    callback([emoji, temp, condition, feels_like, location, update_time])
-                else:
-                    print("Unexpected weather data format.")
-                    callback(None)
+                temp = f"{responseinfo['current_condition'][0]['temp_C']}°"
+                feels_like = f"{responseinfo['current_condition'][0]['FeelsLikeC']}°"
+                condition = responseinfo['current_condition'][0]['weatherDesc'][0]['value']
+                location = responseinfo['nearest_area'][0]['areaName'][0]['value']
+                emoji = response.text.strip()
+
+                temp = temp.replace('+', '').replace('C', '')
+                feels_like = feels_like.replace('+', '').replace('C', '')
+
+                update_time = datetime.datetime.now().strftime("%I:%M:%S %p")
+
+                callback([emoji, temp, condition, feels_like, location, update_time])
             else:
                 print("Error getting weather from wttr.in.")
                 callback(None)
@@ -66,6 +83,7 @@ def get_weather(callback):
             print(f"Error getting weather: {e}")
             callback(None)
 
+    # Ensure get_location_threaded is defined elsewhere or replace it with a direct call
     get_location_threaded(fetch_weather)
 
 def update_weather(widget):
@@ -217,6 +235,7 @@ class weather(Box):
         self.temp = Box(
             name="header2",
             orientation="h",
+            h_align="center",
             children=[
                 Box(
                     orientation="v",
