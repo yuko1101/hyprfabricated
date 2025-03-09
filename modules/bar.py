@@ -55,7 +55,13 @@ class Bar(Window):
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
 
-        self.button_apps,
+        left_children = []
+
+        if config["Bar"]["buttonapps"]:
+            left_children.append(self.button_apps)
+        if config["Bar"]["workspaces"]:
+            left_children.append(Box(name="workspaces-container", children=[self.workspaces]))
+
         start_children = [
         ]
 
@@ -170,7 +176,7 @@ class Bar(Window):
                 name="start-container",
                 spacing=4,
                 orientation="h",
-                children=[self.button_apps,Box(name="workspaces-container", children=[self.workspaces])]+ start_children + [self.boxed_revealer_left],
+                children=left_children + start_children + [self.boxed_revealer_left],
             ),
             end_children=Box(
                 name="end-container",

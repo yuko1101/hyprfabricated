@@ -8,6 +8,8 @@
   "widgetstyle": "full",
   "Bar": {
     "systray": true,
+    "workspaces": true,
+    "buttonapps": true,
     "buttontools": true,
     "datetime": true,
     "buttonpower": true,
