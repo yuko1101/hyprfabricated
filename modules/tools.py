@@ -27,6 +27,7 @@ class Toolbox(Box):
 
         self.btn_ssregion = Button(
             name="toolbox-button",
+            tooltip_text="Screenshot region",
             child=Label(name="button-label", markup=icons.ssregion),
             on_clicked=self.ssregion,
             h_expand=False,
@@ -37,6 +38,7 @@ class Toolbox(Box):
 
         self.btn_ssfull = Button(
             name="toolbox-button",
+            tooltip_text="Screenshot full screen",
             child=Label(name="button-label", markup=icons.ssfull),
             on_clicked=self.ssfull,
             h_expand=False,
@@ -47,6 +49,7 @@ class Toolbox(Box):
 
         self.btn_screenrecord = Button(
             name="toolbox-button",
+            tooltip_text="Screen record",
             child=Label(name="button-label", markup=icons.screenrecord),
             on_clicked=self.screenrecord,
             h_expand=False,
