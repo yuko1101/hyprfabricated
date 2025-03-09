@@ -54,7 +54,7 @@ def get_weather(callback):
                     emoji, temp, condition, feels_like = weather_data
                     temp = temp.replace('+', '').replace('C', '')
                     feels_like = feels_like.replace('+', '').replace('C', '')
-                    update_time = datetime.datetime.now().strftime("%H:%M:%S")
+                    update_time = datetime.datetime.now().strftime("%I:%M:%S")
                     callback([emoji, temp, condition, feels_like, location, update_time])
                 else:
                     print("Unexpected weather data format.")
@@ -248,7 +248,7 @@ class weather(Box):
                 children=[self.header, self.temp, self.header_right],
             ),
         )
-        self.show_all()
+        # self.show_all()
         self.set_visible(False)
         update_weather(self)
 
@@ -312,7 +312,7 @@ class Deskwidgets(Window):
                     weather(),
                 ],
             ),
-            all_visible=True,
+            all_visible=False,
         )
         sys_widget = Window(
             layer="bottom",
@@ -324,6 +324,6 @@ class Deskwidgets(Window):
                     Sysinfo(),
                 ],
             ),
-            all_visible=True,
+            all_visible=False,
         )
 

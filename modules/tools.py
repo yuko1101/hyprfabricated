@@ -38,7 +38,7 @@ class Toolbox(Box):
 
         self.btn_ssfull = Button(
             name="toolbox-button",
-            tooltip_text="Screenshot full screen",
+            tooltip_text="Screenshot fullscreen",
             child=Label(name="button-label", markup=icons.ssfull),
             on_clicked=self.ssfull,
             h_expand=False,
@@ -60,6 +60,7 @@ class Toolbox(Box):
 
         self.btn_ocr = Button(
             name="toolbox-button",
+            tooltip_text="OCR",
             child=Label(name="button-label", markup=icons.ocr),
             on_clicked=self.ocr,
             h_expand=False,
@@ -89,6 +90,7 @@ class Toolbox(Box):
 
         self.btn_emoji = Button(
             name="toolbox-button",
+            tooltip_text="Emoji Picker",
             child=Label(name="button-label", markup=icons.emoji),
             on_clicked=self.emoji,
             h_expand=False,
