@@ -147,18 +147,18 @@ def ensure_matugen_config():
         os.system(f"matugen image {image_path}")
 
 
-def ensure_fonts():
-    """
-    Ensure that required fonts are installed.
-    """
-    fonts_to_copy = [
-        ('~/.fonts/zed-sans/', '~/.config/hyprfabricated/assets/fonts/zed-sans/'),
-        ('~/.fonts/tabler-icons/', '~/.config/hyprfabricated/assets/fonts/tabler-icons/')
-    ]
-    for dest_font, src_font in fonts_to_copy:
-        dest_path = os.path.expanduser(dest_font)
-        if not os.path.exists(dest_path):
-            shutil.copytree(os.path.expanduser(src_font), dest_path)
+# def ensure_fonts():
+#     """
+#     Ensure that required fonts are installed.
+#     """
+#     fonts_to_copy = [
+#         ('~/.fonts/zed-sans/', '~/.config/hyprfabricated/assets/fonts/zed-sans/'),
+#         ('~/.fonts/tabler-icons/', '~/.config/hyprfabricated/assets/fonts/tabler-icons/')
+#     ]
+#     for dest_font, src_font in fonts_to_copy:
+#         dest_path = os.path.expanduser(dest_font)
+#         if not os.path.exists(dest_path):
+#             shutil.copytree(os.path.expanduser(src_font), dest_path)
 
 
 def load_bind_vars():
