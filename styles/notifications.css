@@ -1,5 +1,5 @@
 #action-button {
-  border-radius: 20px;
+  border-radius: 16px;
   background-color: var(--surface);
   padding: 8px;
 }
@@ -57,7 +57,7 @@
 #notif-close-button {
   background-color: var(--surface);
   border-radius: 16px;
-  padding: 4px;
+  padding: 8px;
 }
 
 #notif-close-button:hover,
@@ -71,7 +71,7 @@
 
 #notif-close-label {
   color: var(--red-dim);
-  font-size: 20px;
+  font-size: 16px;
 }
 
 #notif-close-button:active #notif-close-label {
@@ -117,6 +117,7 @@
   background: var(--primary);
   border-radius: 16px;
   min-width: 16px;
+  min-height: 48px;
   margin: 4px;
 }
 
