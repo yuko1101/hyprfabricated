@@ -11,13 +11,14 @@ You can temporarily disable this custom CSS by clicking on the “Pause” butto
 
 Changes are applied instantly and globally, for the whole application.
 */
+/*@import ("./colors.css");*/
 #headertxt1,
 #headertxt2,
 #headertxt3,
 #temptxt,
 #temptxtbt {
   font-family: "Jost*", sans-serif;
-  color: alpha(var(--secondary), 0.7);
+  color: alpha(var(--foreground), 0.6);
 }
 #clock > label {
   font-size: 100px;
@@ -72,7 +73,7 @@ Changes are applied instantly and globally, for the whole application.
 
 #window-inner {
   margin: 10px;
-  background-color: alpha(var(--primary), 0.4);
+  background-color: alpha(var(--primary), 0.5);
 }
 #headertxt1 {
   font-size: 40px;
@@ -99,4 +100,68 @@ Changes are applied instantly and globally, for the whole application.
 #headertxt2,
 #headertxt3 {
   margin-top: -8px;
+}
+/*#header {*/
+/*  border: solid 1px var(--border-color);*/
+/*  border-radius: 8px;*/
+/*  box-shadow: 0px 18px 23px -6px rgba(0, 0, 0, 0.75);*/
+/*  background: linear-gradient(*/
+/*    90deg,*/
+/*    alpha(var(--color11), 0.2),*/
+/*    alpha(var(--background), 0.2),*/
+/*    var(--module-bg)*/
+/*  );*/
+/*}*/
+/**/
+/*#profile-pic {*/
+/*  background-color: alpha(var(--color11), 0.2);*/
+/*  background-position: center;*/
+/*  background-repeat: no-repeat;*/
+/*  background-size: cover;*/
+/*  border-radius: 6px;*/
+/*  padding: 32px;*/
+/*  margin: 4px;*/
+/*}*/
+
+#progress-bar {
+  color: alpha(var(--primary), 0.5);
+  border: 8px alpha(var(--primary), 0.7);
+}
+#progress-bar-container-main {
+  background-color: transparent;
+  border-radius: 100px;
+  border-radius: 12px;
+  padding: 10px;
+}
+#progress-bar-sep {
+  padding: 4px;
+  margin: 16px 0px;
+  border-radius: 100px;
+}
+
+#progress-bar-container {
+  background-color: transparent;
+  border-radius: 100px;
+  padding: 8px;
+}
+#progress-icon-ram,
+#progress-icon-bat,
+#progress-icon-cpu {
+  color: alpha(var(--primary), 0.5);
+  font-family: "Jost*";
+}
+#progress-icon-ram {
+  margin-right: 4px;
+  text-shadow: 0 0 10px #fff;
+  font-size: 15px;
+}
+#progress-icon-bat {
+  margin-right: 0px;
+  text-shadow: 0 0 10px #fff;
+  font-size: 15px;
+}
+#progress-icon-cpu {
+  margin-right: -1px;
+  text-shadow: 0 0 10px #fff;
+  font-size: 20px;
 }

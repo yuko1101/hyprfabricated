@@ -19,7 +19,6 @@
 @import url("./styles/power.css");
 @import url("./styles/metrics.css");
 @import url("./styles/tools.css");
-@import url("./styles/widgets.css");
 * {
   all: unset;
   color: var(--foreground);
@@ -222,3 +221,4 @@ tooltip > * {
   border-radius: 0px;
 }
 
+@import url("./styles/widgets.css");

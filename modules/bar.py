@@ -106,7 +106,7 @@ class Bar(Window):
                 orientation="h",
                 spacing=4,
                 children=[
-                    self.metrics,
+                    # self.metrics,
                     self.control,
                ],
             ),
@@ -128,7 +128,7 @@ class Bar(Window):
                 orientation="h",
                 spacing=4,
                 children=[
-                    self.weather,
+                    # self.weather,
                     self.button_overview,
                 ],
             ),
@@ -153,7 +153,7 @@ class Bar(Window):
                 children=[
                     self.button_apps,
                     Box(name="workspaces-container", children=[self.workspaces]),
-                    self.weather,
+                    # self.weather,
                     self.button_overview,
                     self.boxed_revealer_left,
                 ]

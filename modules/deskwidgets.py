@@ -1,11 +1,4 @@
-from fabric import Application
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.datetime import DateTime
-from fabric.widgets.wayland import WaylandWindow as Window
-from fabric.utils import get_relative_path
 import os
-from loguru import logger
 import psutil
 import time
 from fabric import Application
@@ -21,6 +14,7 @@ import urllib.parse
 import threading
 import threading
 import time
+
 import datetime
 def get_location():
     try:
@@ -87,6 +81,111 @@ def update_widget(widget, weather_info):
         widget.weatherinfo = weather_info
         widget.update_labels()
 
+class Sysinfo(Box):
+    @staticmethod
+    def bake_progress_bar(name: str = "progress-bar", size: int = 45, **kwargs):
+        return CircularProgressBar(
+            name=name, min_value=0, max_value=100, size=size, **kwargs
+        )
+
+    @staticmethod
+    def bake_progress_icon(**kwargs):
+        return Label(**kwargs).build().add_style_class("progress-icon").unwrap()
+
+    def __init__(self, **kwargs):
+        super().__init__(
+            layer="bottom",
+            title="sysinfo",
+            name="sysinfo",
+            visible=False,
+            all_visible=False,
+            **kwargs,
+        )
+
+
+        self.cpu_progress = self.bake_progress_bar()
+        self.ram_progress = self.bake_progress_bar()
+        self.bat_circular = self.bake_progress_bar().build().set_value(42).unwrap()
+
+        self.progress_container = Box(
+            name="progress-bar-container",
+            spacing=12,
+            children=[
+                Box(
+                    children=[
+                        Overlay(
+                            child=self.cpu_progress,
+                            tooltip_text="",
+                            overlays=[
+                                self.bake_progress_icon(
+                                    label="",
+                                    name="progress-icon-cpu",
+                                    # style="margin-right: 8px; text-shadow: 0 0 10px #fff, 0 0 10px #fff, 0 0 10px #fff;",
+                                )
+                            ],
+                        ),
+                    ],
+                ),
+                Box(
+                    children=[
+                        Overlay(
+                            child=self.ram_progress,
+                            tooltip_text="",
+                            overlays=[
+                                self.bake_progress_icon(
+                                    name="progress-icon-ram",
+                                    label="󰘚",
+                                    # style="margin-right: 4px; text-shadow: 0 0 10px #fff;",
+                                )
+                            ],
+                        )
+                    ]
+                ),
+                Box(
+                    children=[
+                        Overlay(
+                            child=self.bat_circular,
+                            tooltip_text="",
+                            overlays=[
+                                self.bake_progress_icon(
+                                    label="󱊣",
+                                    name="progress-icon-bat",
+                                    # style="margin-right: 0px; text-shadow: 0 0 10px #fff, 0 0 18px #fff;",
+                                )
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        )
+
+        self.update_status()
+        invoke_repeater(1000, self.update_status)
+
+        self.add(
+            Box(
+                name="progress-bar-container-main",
+                orientation="v",
+                spacing=24,
+                children=[ self.progress_container],
+            ),
+        )
+        self.show_all()
+
+    def update_status(self):
+        self.cpu_progress.value = psutil.cpu_percent()
+        self.ram_progress.value = psutil.virtual_memory().percent
+        if not (bat_sen := psutil.sensors_battery()):
+            self.bat_circular.value = 42
+        else:
+            self.bat_circular.value = bat_sen.percent
+        self.progress_container.children[0].set_tooltip_text(f"{int(psutil.cpu_percent(interval=0))}%")
+        self.progress_container.children[1].set_tooltip_text(f"{int(psutil.virtual_memory().percent)}%")
+        self.progress_container.children[2].set_tooltip_text(f"{int(psutil.sensors_battery().percent)}%")
+
+        return True
+
+
 class weather(Box):
     def __init__(self, **kwargs):
         super().__init__(
@@ -108,7 +207,7 @@ class weather(Box):
                 Box(
                     orientation="v",
                     children=[
-                        Label(label="On Moon", h_align="start", name="headertxt1"),
+                        Label(label="", h_align="start", name="headertxt1"),
                         Label(label="", h_align="start", name="headertxt3"),
                         Label(label="", h_align="start", name="headertxt2"),
                     ],
@@ -123,7 +222,7 @@ class weather(Box):
                     orientation="v",
                     children=[
                         Label(label="", name="temptxt"),
-                        Label(label="Feels like ", name="temptxtbt")
+                        Label(label="", name="temptxtbt")
                     ],
                 ),
             ],
@@ -163,22 +262,24 @@ class weather(Box):
             self.temp.children[0].children[1].set_label(f"Feels like {self.weatherinfo[3]}")
             self.header_right.children[0].children[0].set_label(f"{self.weatherinfo[0]}")
 
-def fetch_quote():
+def fetch_quote(callback):
     try:
         response = requests.get('https://zenquotes.io/api/random')
         response.raise_for_status()
         data = response.json()
-        return data[0]['q']  # Return the quote text
+        callback(data[0]['q'])  # Return the quote text
     except requests.exceptions.RequestException as e:
         print(f'Error fetching quote: {e}')
-        return "What's in your head,in your head?"
+        callback("What's in your head,in your head?")
 
+def fetch_quote_threaded(callback):
+    threading.Thread(target=lambda: fetch_quote(callback), daemon=True).start()
 
 class qoute(Label):
     def __init__(self, **kwargs):
         super().__init__(
             name="quote",
-            label=f"{fetch_quote()}",
+            label="Fetching quote...",
             h_align="center",
             v_align="center",
             h_expand=True,
@@ -186,6 +287,11 @@ class qoute(Label):
             visible=True,
             all_visible=True,
         )
+        fetch_quote_threaded(self.update_label)
+
+    def update_label(self, quote):
+        self.set_label(quote)
+
 
 class Deskwidgets(Window):
     def __init__(self, **kwargs):
@@ -204,6 +310,18 @@ class Deskwidgets(Window):
                     DateTime(formatters=["%I:%M"], name="clock"),
                     qoute(),
                     weather(),
+                ],
+            ),
+            all_visible=True,
+        )
+        sys_widget = Window(
+            layer="bottom",
+            anchor="bottom center",
+            exclusivity="none",
+            child=Box(
+                orientation="v",
+                children=[
+                    Sysinfo(),
                 ],
             ),
             all_visible=True,
