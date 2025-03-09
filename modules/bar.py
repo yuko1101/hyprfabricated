@@ -102,13 +102,17 @@ class Bar(Window):
 
         end_children = []
 
+        if config["Bar"]["systray"]:
+            self.systray = SystemTray()
+            end_children.append(self.systray)
+
         if config["Bar"]["Barright"]["metrics"]:
             self.metrics = MetricsSmall()
             end_children.append(self.metrics)
-
         if config["Bar"]["Barright"]["controls"]:
             self.control = ControlSmall()
             end_children.append(self.control)
+
 
         self.revealer_right = Revealer(
             name="bar-revealer",
@@ -130,10 +134,6 @@ class Bar(Window):
         )
 
         end_children = [self.boxed_revealer_right]
-
-        if config["Bar"]["systray"]:
-            self.systray = SystemTray()
-            end_children.append(self.systray)
 
         if config["Bar"]["buttontools"]:
             self.button_tools = Button(

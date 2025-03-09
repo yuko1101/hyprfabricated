@@ -6,7 +6,7 @@ from gi.repository import Gray, Gtk, Gdk, GdkPixbuf, GLib
 
 class SystemTray(Gtk.Box):
     def __init__(self, pixel_size: int = 20, **kwargs) -> None:
-        super().__init__(name="systray", orientation=Gtk.Orientation.HORIZONTAL, spacing=8, **kwargs)
+        super().__init__(name="systray", orientation=Gtk.Orientation.HORIZONTAL, spacing=8,**kwargs)
         self.pixel_size = pixel_size
         self.watcher = Gray.Watcher()
         self.watcher.connect("item-added", self.on_item_added)
@@ -14,8 +14,11 @@ class SystemTray(Gtk.Box):
         self._update_visibility()  # Ensure visibility is updated after initialization.
 
     def _update_visibility(self):
-        # Update visibility based on the number of child widgets.
+        self.set_sensitive(len(self.get_children()) > 0)
+        self.set_opacity(1.0 if len(self.get_children()) > 0 else 0.0)
         self.set_visible(len(self.get_children()) > 0)
+
+
 
     def on_item_added(self, _, identifier: str):
         item = self.watcher.get_item_for_identifier(identifier)
