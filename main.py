@@ -6,6 +6,8 @@ from fabric.utils import get_relative_path
 from config.config import open_config, ensure_fonts
 from datetime import datetime
 import gi
+import warnings
+
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk
@@ -14,6 +16,7 @@ screen = Gdk.Screen.get_default()
 CURRENT_WIDTH = screen.get_width()
 CURRENT_HEIGHT = screen.get_height()
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 config_path = os.path.expanduser("~/.config/hyprfabricated/config/config.json")
 
 fonts_updated_file = os.path.expanduser("~/.cache/hyprfabricated/fonts_updated")
@@ -77,7 +80,7 @@ if __name__ == "__main__":
             pass
 
 
-    app = Application("hyprfabricated", lin)
+    app = Application("hyprfabricated", *lin)
 
     def set_css():
         app.set_stylesheet_from_file(

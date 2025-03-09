@@ -17,12 +17,13 @@ import time
 import datetime
 import json
 
+
 def get_location():
-    config_path = get_relative_path('../config.json')
+    config_path = get_relative_path("../config.json")
     try:
-        with open(config_path, 'r') as file:
+        with open(config_path, "r") as file:
             config = json.load(file)
-            location = config.get('city', '')
+            location = config.get("city", "")
             if location:
                 return location
     except Exception as e:
@@ -30,11 +31,11 @@ def get_location():
 
     try:
         response = requests.get("https://ipinfo.io/json")
-        response.encoding = 'utf-8'  # Ensure the response is decoded using UTF-8
+        response.encoding = "utf-8"  # Ensure the response is decoded using UTF-8
 
         if response.status_code == 200:
             data = response.json()
-            return data.get('city', '').replace(' ', '')
+            return data.get("city", "").replace(" ", "")
         else:
             print("Error getting location from ipinfo.")
     except Exception as e:
@@ -48,6 +49,7 @@ def get_location_threaded(callback):
         callback(location)
 
     threading.Thread(target=run, daemon=True).start()
+
 
 def get_weather(callback):
     def fetch_weather(location):
@@ -66,12 +68,14 @@ def get_weather(callback):
             if response.status_code == 200:
                 temp = f"{responseinfo['current_condition'][0]['temp_C']}°"
                 feels_like = f"{responseinfo['current_condition'][0]['FeelsLikeC']}°"
-                condition = responseinfo['current_condition'][0]['weatherDesc'][0]['value']
-                location = responseinfo['nearest_area'][0]['areaName'][0]['value']
+                condition = responseinfo["current_condition"][0]["weatherDesc"][0][
+                    "value"
+                ]
+                location = responseinfo["nearest_area"][0]["areaName"][0]["value"]
                 emoji = response.text.strip()
 
-                temp = temp.replace('+', '').replace('C', '')
-                feels_like = feels_like.replace('+', '').replace('C', '')
+                temp = temp.replace("+", "").replace("C", "")
+                feels_like = feels_like.replace("+", "").replace("C", "")
 
                 update_time = datetime.datetime.now().strftime("%I:%M:%S %p")
 
@@ -86,6 +90,7 @@ def get_weather(callback):
     # Ensure get_location_threaded is defined elsewhere or replace it with a direct call
     get_location_threaded(fetch_weather)
 
+
 def update_weather(widget):
     def fetch_and_update():
         while True:
@@ -94,10 +99,12 @@ def update_weather(widget):
 
     threading.Thread(target=fetch_and_update, daemon=True).start()
 
+
 def update_widget(widget, weather_info):
     if weather_info:
         widget.weatherinfo = weather_info
         widget.update_labels()
+
 
 class Sysinfo(Box):
     @staticmethod
@@ -119,7 +126,6 @@ class Sysinfo(Box):
             all_visible=False,
             **kwargs,
         )
-
 
         self.cpu_progress = self.bake_progress_bar()
         self.ram_progress = self.bake_progress_bar()
@@ -185,7 +191,7 @@ class Sysinfo(Box):
                 name="progress-bar-container-main",
                 orientation="v",
                 spacing=24,
-                children=[ self.progress_container],
+                children=[self.progress_container],
             ),
         )
         self.show_all()
@@ -197,9 +203,15 @@ class Sysinfo(Box):
             self.bat_circular.value = 42
         else:
             self.bat_circular.value = bat_sen.percent
-        self.progress_container.children[0].set_tooltip_text(f"{int(psutil.cpu_percent(interval=0))}%")
-        self.progress_container.children[1].set_tooltip_text(f"{int(psutil.virtual_memory().percent)}%")
-        self.progress_container.children[2].set_tooltip_text(f"{int(psutil.sensors_battery().percent)}%")
+        self.progress_container.children[0].set_tooltip_text(
+            f"{int(psutil.cpu_percent(interval=0))}%"
+        )
+        self.progress_container.children[1].set_tooltip_text(
+            f"{int(psutil.virtual_memory().percent)}%"
+        )
+        self.progress_container.children[2].set_tooltip_text(
+            f"{int(psutil.sensors_battery().percent)}%"
+        )
 
         return True
 
@@ -241,7 +253,7 @@ class weather(Box):
                     orientation="v",
                     children=[
                         Label(label="", name="temptxt"),
-                        Label(label="", name="temptxtbt")
+                        Label(label="", name="temptxtbt"),
                     ],
                 ),
             ],
@@ -275,24 +287,33 @@ class weather(Box):
         if self.weatherinfo:
             self.set_visible(True)
             self.header.children[0].children[0].set_label(f"{self.weatherinfo[4]}")
-            self.header.children[0].children[1].set_label(f"Updated {self.weatherinfo[5]}")
+            self.header.children[0].children[1].set_label(
+                f"Updated {self.weatherinfo[5]}"
+            )
             self.header.children[0].children[2].set_label(f"{self.weatherinfo[2]}")
             self.temp.children[0].children[0].set_label(f"{self.weatherinfo[1]}")
-            self.temp.children[0].children[1].set_label(f"Feels like {self.weatherinfo[3]}")
-            self.header_right.children[0].children[0].set_label(f"{self.weatherinfo[0]}")
+            self.temp.children[0].children[1].set_label(
+                f"Feels like {self.weatherinfo[3]}"
+            )
+            self.header_right.children[0].children[0].set_label(
+                f"{self.weatherinfo[0]}"
+            )
+
 
 def fetch_quote(callback):
     try:
-        response = requests.get('https://zenquotes.io/api/random')
+        response = requests.get("https://zenquotes.io/api/random")
         response.raise_for_status()
         data = response.json()
-        callback(data[0]['q'])  # Return the quote text
+        callback(data[0]["q"])  # Return the quote text
     except requests.exceptions.RequestException as e:
-        print(f'Error fetching quote: {e}')
+        print(f"Error fetching quote: {e}")
         callback("What's in your head,in your head?")
+
 
 def fetch_quote_threaded(callback):
     threading.Thread(target=lambda: fetch_quote(callback), daemon=True).start()
+
 
 class qoute(Label):
     def __init__(self, **kwargs):
@@ -311,10 +332,11 @@ class qoute(Label):
         self.set_label(quote)
         self.set_visible(True)
 
+
 class Deskwidgetsfull(Window):
     def __init__(self, **kwargs):
-        super().__init__(name="desktop", **kwargs)
-        desktop_widget = Window(
+        super().__init__(
+            name="desktop",
             layer="bottom",
             anchor="center",
             exclusivity="none",
@@ -331,6 +353,7 @@ class Deskwidgetsfull(Window):
                 ],
             ),
             all_visible=False,
+            **kwargs,
         )
         sys_widget = Window(
             layer="bottom",
@@ -345,21 +368,21 @@ class Deskwidgetsfull(Window):
             all_visible=False,
         )
 
+
 class Deskwidgetsbasic(Window):
     def __init__(self, **kwargs):
         super().__init__(name="desktop", **kwargs)
         desktop_widget = Window(
-        layer="bottom",
-        anchor="bottom left",  # FYI: there's no anchor named "center" (anchor of "" is == to "center")
-        exclusivity="none",
-        child=Box(
-            orientation="v",
-            children=[
-                DateTime(formatters=["%A. %d %B"], interval=10000, name="date"),
-                DateTime(formatters=["%I:%M"], name="clock"),
-            ],
-        ),
-        all_visible=True,
-    )
-
+            layer="bottom",
+            anchor="bottom left",  # FYI: there's no anchor named "center" (anchor of "" is == to "center")
+            exclusivity="none",
+            child=Box(
+                orientation="v",
+                children=[
+                    DateTime(formatters=["%A. %d %B"], interval=10000, name="date"),
+                    DateTime(formatters=["%I:%M"], name="clock"),
+                ],
+            ),
+            all_visible=True,
+        )
 
