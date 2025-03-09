@@ -175,7 +175,7 @@ class Bar(Window):
                 name="start-container",
                 spacing=4,
                 orientation="h",
-                children=left_children + start_children + [self.boxed_revealer_left],
+                children=left_children + [self.boxed_revealer_left],
             ),
             end_children=Box(
                 name="end-container",

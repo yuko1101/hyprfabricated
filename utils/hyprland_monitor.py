@@ -39,6 +39,7 @@ class HyprlandWithMonitors(Hyprland):
         monitors = json.loads(self.send_command("j/monitors").reply)
         return {monitor["id"]: monitor["name"] for monitor in monitors}
 
+
     def get_gdk_monitor_id_from_name(self, plug_name: str) -> int | None:
         for i in range(self.display.get_n_monitors()):
             if self.display.get_default_screen().get_monitor_plug_name(i) == plug_name:

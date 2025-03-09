@@ -7,10 +7,11 @@ from gi.repository import Gray, Gtk, Gdk, GdkPixbuf, GLib
 class SystemTray(Gtk.Box):
     def __init__(self, pixel_size: int = 20, **kwargs) -> None:
         super().__init__(name="systray", orientation=Gtk.Orientation.HORIZONTAL, spacing=8, **kwargs)
-        self.set_visible(False)  # Initially hidden when empty.
         self.pixel_size = pixel_size
         self.watcher = Gray.Watcher()
         self.watcher.connect("item-added", self.on_item_added)
+        self.set_visible(False)  # Initially hidden when empty.
+        self._update_visibility()  # Ensure visibility is updated after initialization.
 
     def _update_visibility(self):
         # Update visibility based on the number of child widgets.
@@ -36,7 +37,6 @@ class SystemTray(Gtk.Box):
 
         try:
             if pixmap is not None:
-                # pixbuf = pixmap.as_pixbuf(self.pixel_size, GdkPixbuf.InterpType.BILINEAR)
                 pixbuf = pixmap.as_pixbuf(self.pixel_size, GdkPixbuf.InterpType.HYPER)
             else:
                 icon_name = item.get_icon_name()
@@ -94,3 +94,4 @@ class SystemTray(Gtk.Box):
                 )
             else:
                 item.context_menu(event.x, event.y)
+
