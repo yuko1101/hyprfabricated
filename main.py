@@ -17,13 +17,9 @@ from gi.repository import Gdk
 screen = Gdk.Screen.get_default()
 CURRENT_WIDTH = screen.get_width()
 CURRENT_HEIGHT = screen.get_height()
-
-config_path = os.path.expanduser("~/.config/hyprfabricated/config/config.json")
-
 fonts_updated_file = os.path.expanduser("~/.cache/hyprfabricated/fonts_updated")
 cache_dir = os.path.expanduser("~/.cache/hyprfabricated/")
-
-hyprconf = os.path.expanduser("~/.config/hyprfabricated/config.json")
+hyprconf = get_relative_path("config.json")
 
 
 def load_config():
