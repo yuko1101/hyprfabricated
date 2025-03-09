@@ -111,7 +111,7 @@ class NetworkApplet(Button):
         self.download_label = Label(name="download-label", markup="Download: 0 B/s")
         self.network_client = NetworkClient()
         self.upload_label = Label(name="upload-label", markup="Upload: 0 B/s")
-        self.wifi_label = Label(name="icon-label", markup="WiFi: Unknown")
+        self.wifi_label = Label(name="network-icon-label", markup="WiFi: Unknown")
 
         self.is_mouse_over = False
 
@@ -163,11 +163,10 @@ class NetworkApplet(Button):
         if not self.downloading and not self.uploading:
             self.remove_urgent()
 
-        # Verificar el wifi utilizando el NetworkClient con la propiedad strength
         if self.network_client and self.network_client.wifi_device:
             if self.network_client.wifi_device.ssid != "Disconnected":
                 strength = self.network_client.wifi_device.strength
-                # Si la intensidad es mayor o igual a 50 usamos wifi_1, de lo contrario wifi_0
+                
                 if strength >= 75:
                     self.wifi_label.set_markup(icons.wifi_3)
                 elif strength >= 50:

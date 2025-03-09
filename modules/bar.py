@@ -11,10 +11,10 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-from modules.metrics import MetricsSmall, Battery
+from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
 
-from modules.sensors import NetworkApplet
+
 from modules.battery import Battery
 
 from modules.updates import UpdatesWidget
