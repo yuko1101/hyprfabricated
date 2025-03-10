@@ -1,6 +1,6 @@
 import json
 import threading
-from gi.repository import GLib
+from gi.repository import GLib, Gtk, Gdk
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
 from fabric.widgets.box import Box
@@ -50,6 +50,13 @@ class Dock(Window):
         self.view.connect("leave-notify-event", self._on_hover_leave)
         self.main_box = Box(orientation="v", children=[self.wrapper, self.hover])
         self.add(self.main_box)
+
+        # Enable drag-and-drop on the container for pinned apps reordering.
+        # Pinned app buttons will have drag signals; other buttons won't.
+        self.view.drag_source_set(Gdk.ModifierType.BUTTON1_MASK, [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)], Gdk.DragAction.MOVE)
+        self.view.drag_dest_set(Gtk.DestDefaults.ALL, [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)], Gdk.DragAction.MOVE)
+        self.view.connect("drag-data-get", self.on_drag_data_get)
+        self.view.connect("drag-data-received", self.on_drag_data_received)
 
         if self.conn.ready:
             self.update_dock()
@@ -129,7 +136,7 @@ class Dock(Window):
             )
             for group in running.values()
             for c in group
-            if c["initialClass"].lower() not in self.pinned
+            if c["initialClass"].lower() not in [p.lower() for p in self.pinned]
         ]
         children = pinned_buttons
         if pinned_buttons and open_buttons:
@@ -144,7 +151,9 @@ class Dock(Window):
         return False
 
     def create_button(self, app, instances):
-        """Create a button for an app with an icon and an optional indicator."""
+        """Create a button for an app with an icon and an optional indicator.
+           Only pinned apps will have drag-and-drop enabled.
+        """
         icon_img = self.icon.get_icon_pixbuf(
             app.lower(), 36
         ) or self.icon.get_icon_pixbuf("image-missing", 36)
@@ -164,6 +173,13 @@ class Dock(Window):
         
         if instances:
             button.add_style_class("instance")
+
+        # Only enable drag-and-drop if the app is pinned.
+        if app.lower() in [p.lower() for p in self.pinned]:
+            button.drag_source_set(Gdk.ModifierType.BUTTON1_MASK, [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)], Gdk.DragAction.MOVE)
+            button.drag_dest_set(Gtk.DestDefaults.ALL, [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)], Gdk.DragAction.MOVE)
+            button.connect("drag-data-get", self.on_drag_data_get)
+            button.connect("drag-data-received", self.on_drag_data_received)
         
         return button
 
@@ -217,3 +233,50 @@ class Dock(Window):
         else:
             self.wrapper.remove_style_class("occluded")
         return True
+
+    def _find_drag_target(self, widget):
+        """Walk up the widget hierarchy until the widget is a direct child of self.view."""
+        children = self.view.get_children()
+        while widget is not None and widget not in children:
+            widget = widget.get_parent() if hasattr(widget, "get_parent") else None
+        return widget
+
+    def on_drag_data_get(self, widget, drag_context, data, info, time):
+        """Handle the event when drag data is requested."""
+        # Find the widget that is directly in self.view
+        target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
+        if target is not None:
+            index = self.view.get_children().index(target)
+            data.set_text(str(index), -1)
+    
+    def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
+        """Handle the event when drag data is received."""
+        # Find the widget that is directly in self.view
+        target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
+        if target is None:
+            return
+        try:
+            source_index = int(data.get_text())
+        except (TypeError, ValueError):
+            return
+
+        children = self.view.get_children()
+        try:
+            target_index = children.index(target)
+        except ValueError:
+            return
+
+        if source_index != target_index:
+            child = children.pop(source_index)
+            children.insert(target_index, child)
+            self.view.children = children
+            self.update_pinned_apps()
+
+    def update_pinned_apps(self):
+        """Update the pinned apps in the configuration based on the current order."""
+        self.config["pinned_apps"] = [
+            child.get_tooltip_text() for child in self.view.get_children() if child.get_tooltip_text() in self.pinned
+        ]
+        config_path = get_relative_path("../config/dock.json")
+        with open(config_path, "w") as file:
+            json.dump(self.config, file, indent=4)
