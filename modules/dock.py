@@ -360,7 +360,7 @@ class Dock(Window):
         x, y = self.get_pointer()
         window = self.get_window()
         if window:
-            _, win_x, win_y, width, height = window.get_geometry()
+            win_x, win_y, width, height = window.get_geometry()
             if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
                 # Drag ended outside the dock
                 app_to_remove = widget.get_tooltip_text()
