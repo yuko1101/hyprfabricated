@@ -1,5 +1,6 @@
 {
   "city": "",
+  "temp": "F",
   "Basic": {
     "corners": true,
     "bar": true,

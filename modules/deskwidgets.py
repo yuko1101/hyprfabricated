@@ -51,6 +51,7 @@ def get_location_threaded(callback):
     threading.Thread(target=run, daemon=True).start()
 
 
+
 def get_weather(callback):
     def fetch_weather(location):
         if not location:
@@ -66,11 +67,19 @@ def get_weather(callback):
             responseinfo = requests.get(url).json()
 
             if response.status_code == 200:
-                temp = f"{responseinfo['current_condition'][0]['temp_C']}°"
-                feels_like = f"{responseinfo['current_condition'][0]['FeelsLikeC']}°"
-                condition = responseinfo["current_condition"][0]["weatherDesc"][0][
-                    "value"
-                ]
+                config_path = get_relative_path("../config.json")
+                with open(config_path, "r") as file:
+                    config = json.load(file)
+
+                temp_unit = config.get('temp', 'C')
+                if temp_unit == 'F':
+                    temp = f"{responseinfo['current_condition'][0]['temp_F']}°"
+                    feels_like = f"{responseinfo['current_condition'][0]['FeelsLikeF']}°"
+                else:
+                    temp = f"{responseinfo['current_condition'][0]['temp_C']}°"
+                    feels_like = f"{responseinfo['current_condition'][0]['FeelsLikeC']}°"
+
+                condition = responseinfo["current_condition"][0]["weatherDesc"][0]["value"]
                 location = responseinfo["nearest_area"][0]["areaName"][0]["value"]
                 emoji = response.text.strip()
 
@@ -87,7 +96,6 @@ def get_weather(callback):
             print(f"Error getting weather: {e}")
             callback(None)
 
-    # Ensure get_location_threaded is defined elsewhere or replace it with a direct call
     get_location_threaded(fetch_weather)
 
 
