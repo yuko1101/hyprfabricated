@@ -304,11 +304,16 @@ class AppLauncher(Box):
         app_command = selected_app.executable
 
         config_path = get_relative_path("../config/dock.json")
-        with open(config_path, "r+") as file:
-            data = json.load(file)
-            if app_command not in data.get("pinned_apps", []):
-                data.setdefault("pinned_apps", []).append(app_command)
-                file.seek(0)  # Rewind to the beginning of the file
+        try:
+            with open(config_path, "r+") as file:
+                data = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {}  # Initialize as an empty dictionary if file not found or corrupted
+            with open(config_path, "w") as file: #create the file
+                pass
+        if app_command not in data.get("pinned_apps", []):
+            data.setdefault("pinned_apps", []).append(app_command)
+            with open(config_path, "w") as file:
                 json.dump(data, file, indent=4)
 
     def move_selection(self, delta: int):
