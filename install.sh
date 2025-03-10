@@ -40,7 +40,6 @@ PACKAGES=(
     plasma-browser-integration
     cantarell-fonts
     ttf-jost
-    python-toml
 )
 
 # Prevent running as root
