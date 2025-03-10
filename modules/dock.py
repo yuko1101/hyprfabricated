@@ -246,7 +246,7 @@ class Dock(Window):
                 children=items,
             ),
             on_clicked=lambda *a: self.handle_app(app, instances),
-            tooltip_text=instances[0]["title"] if instances else app,
+            tooltip_text=app if app.lower() in [p.lower() for p in self.pinned] else (instances[0]["title"] if instances else app),
             name="dock-app-button",
         )
         
@@ -412,8 +412,12 @@ class Dock(Window):
             json.dump(self.config, file, indent=4)
 
     def update_pinned_apps(self):
-        """Update pinned apps configuration"""
-        self.config["pinned_apps"] = [
-            child.get_tooltip_text() for child in self.view.get_children() if child.get_tooltip_text() in self.pinned
-        ]
+        """Update pinned apps configuration by collecting all items before the separator"""
+        pinned_children = []
+        for child in self.view.get_children():
+            if child.get_name() == "dock-separator":
+                break  # Stop at separator
+            pinned_children.append(child.get_tooltip_text())
+        
+        self.config["pinned_apps"] = pinned_children
         self.update_pinned_apps_file()
