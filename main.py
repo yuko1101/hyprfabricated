@@ -4,17 +4,12 @@ from fabric import Application
 from fabric.utils import get_relative_path
 from modules.bar import Bar
 from modules.notch import Notch
+from modules.dock import Dock
 from modules.corners import Corners
 from config.config import open_config, ensure_fonts
+import modules.data as data
 from datetime import datetime
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk
-
-screen = Gdk.Screen.get_default()
-CURRENT_WIDTH = screen.get_width()
-CURRENT_HEIGHT = screen.get_height()
 
 config_path = os.path.expanduser("~/.config/Ax-Shell/config/config.json")
 fonts_updated_file = os.path.expanduser("~/.cache/ax-shell/fonts_updated")
@@ -48,16 +43,17 @@ if __name__ == "__main__":
     corners = Corners()
     bar = Bar()
     notch = Notch()
+    dock = Dock() 
     bar.notch = notch
     notch.bar = bar
-    app = Application("ax-shell", bar, notch)
+    app = Application("ax-shell", bar, notch, dock)
 
     def set_css():
         app.set_stylesheet_from_file(
             get_relative_path("main.css"),
             exposed_functions={
-                "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
-                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32}px;",
+                "overview_width": lambda: f"min-width: {data.CURRENT_WIDTH * 0.1 * 5 + 92}px;",
+                "overview_height": lambda: f"min-height: {data.CURRENT_HEIGHT * 0.1 * 2 + 32}px;",
             },
         )
 

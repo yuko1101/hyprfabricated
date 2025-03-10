@@ -28,7 +28,7 @@ class Notch(Window):
         super().__init__(
             name="notch",
             layer="top",
-            anchor="top",
+            anchor="top center",
             margin="-40px 40px 10px 10px",
             keyboard_mode="none",
             exclusivity="normal",

@@ -89,6 +89,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] App Launcher
 - [x] Calculator
 - [x] Power Menu
+- [x] Dock
 - [x] Emoji Picker
 - [x] Wallpaper Selector
 - [x] System Tray
@@ -108,7 +109,6 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] Workspaces Overview
 - [ ] Network Manager
 - [ ] Clipboard Manager
-- [ ] Dock
 - [ ] Multimodal AI Assistant
 - [ ] Vertical Layout
 - [ ] Multi-monitor support
