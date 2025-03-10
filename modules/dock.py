@@ -419,5 +419,10 @@ class Dock(Window):
                 break  # Stop at separator
             pinned_children.append(child.get_tooltip_text())
         
+        # Directly update both config and local pinned list
         self.config["pinned_apps"] = pinned_children
-        self.update_pinned_apps_file()
+        self.pinned = pinned_children  # Update local state immediately
+        
+        # Force UI update and write to file
+        self.update_dock()  # Refresh dock immediately
+        self.update_pinned_apps_file()  # Persist to disk
