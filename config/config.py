@@ -481,7 +481,7 @@ def open_config():
     """
     Entry point for opening the configuration GUI.
     """
-    ensure_fonts()
+    # ensure_fonts()
     load_bind_vars()
 
     # Check and copy hyprlock config if needed
