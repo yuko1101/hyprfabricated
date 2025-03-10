@@ -243,12 +243,12 @@ class Dock(Window):
             on_clicked=lambda *a: self.handle_app(app, instances),
             tooltip_text=instances[0]["title"] if instances else app,
             name="dock-app-button",
-            user_data={"instances": instances},  # Store instances for later use
         )
         
         if instances:
             button.add_style_class("instance")
 
+        button.set_data("instances", instances)  # Correctly store instances
         # Enable DnD for ALL apps
         button.drag_source_set(
             Gdk.ModifierType.BUTTON1_MASK,
@@ -364,7 +364,7 @@ class Dock(Window):
             if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
                 # Drag ended outside the dock
                 app_to_remove = widget.get_tooltip_text()
-                instances = widget.user_data.get("instances")
+                instances = widget.get_data("instances")  # Correctly retrieve instances
                 if app_to_remove in self.config["pinned_apps"]:
                     # Remove pinned app
                     self.config["pinned_apps"].remove(app_to_remove)
