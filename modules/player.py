@@ -396,7 +396,7 @@ class Player(Box):
 class PlayerSmall(CenterBox):
     def __init__(self):
         super().__init__(name="player-small", orientation="h", h_align="fill", v_align="center")
-        self._show_artist = False  # toggle flag
+        self._show_artist = True # toggle flag
         self._display_options = ["cavalcade", "title", "artist"]
         self._display_index = 0
         self._current_display = "cavalcade"
@@ -608,7 +608,7 @@ class PlayerSmall(CenterBox):
 
     def on_player_appeared(self, manager, player):
         # when a new player appears, use it if no player is active.
-        if not self.mpris_player and not self.mpris_manager.player_name.startswith("chromium", "firefox"):
+        if not self.mpris_player:
             mp = mprisplayer(player)
             self.mpris_player = mp
             self._apply_mpris_properties()
