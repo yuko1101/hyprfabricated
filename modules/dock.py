@@ -39,6 +39,7 @@ class Dock(Window):
         self.is_hidden = False
         self.hide_id = None
         self._arranger_handler = None
+        self._drag_in_progress = False  # Drag lock flag
         self.is_hovered = False
 
         # Set up UI containers
@@ -175,7 +176,7 @@ class Dock(Window):
             self.toggle_dock(show=True)
 
     def update_dock(self, *args):
-        """Refresh dock contents"""
+        """Refresh dock contents and clear drag lock."""
         self.update_app_map() # Update app map before creating buttons
         arranger_handler = getattr(self, "_arranger_handler", None)
         if arranger_handler:
@@ -202,6 +203,7 @@ class Dock(Window):
         children += open_buttons
         self.view.children = children
         idle_add(self._update_size)
+        self._drag_in_progress = False  # Clear the drag lock
 
     def _update_size(self):
         """Update window size based on content"""
@@ -357,6 +359,10 @@ class Dock(Window):
 
     def on_drag_end(self, widget, drag_context):
         """Handles drag end, for unpinning and closing apps."""
+        # Drag lock: If a drag is already in progress, ignore this call
+        if self._drag_in_progress:
+            return
+        self._drag_in_progress = True
         window = self.get_window()
         if window:
             # Get window geometry *before* any modifications
@@ -378,7 +384,7 @@ class Dock(Window):
                     address = instances[0].get("address")
                     if address:
                         exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
-        GLib.idle_add(self.update_dock) #update the dock
+        GLib.idle_add(self.update_dock)  # Update the dock in idle_add
 
     def check_config_change(self):
         """Check if the config file has been modified."""
@@ -388,8 +394,8 @@ class Dock(Window):
             self.pinned = self.config.get("pinned_apps", [])
             self.update_app_map() #update app_map when config changes
             self.update_dock()
-        return True # Continue the timeout
-    
+        return True  # Continue the timeout
+
     def update_pinned_apps_file(self):
         """Writes the updated pinned apps list to dock.json"""
         config_path = get_relative_path("../config/dock.json")
