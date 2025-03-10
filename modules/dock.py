@@ -371,28 +371,33 @@ class Dock(Window):
         if self._drag_in_progress:
             return
         self._drag_in_progress = True
-        if self.get_mapped(): # Check if the window is mapped
-            # Get window geometry *before* any modifications
-            x, y = self.get_pointer()
-            window = self.get_window()
-            win_x, win_y, width, height = window.get_geometry()
-            if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
-                # Drag ended outside the dock
-                app_to_remove = widget.get_tooltip_text()
-                instances = widget.instances  # Access the attribute directly
-                if app_to_remove in self.config["pinned_apps"]:
-                    # Remove pinned app
-                    self.config["pinned_apps"].remove(app_to_remove)
-                    self.update_pinned_apps_file() #write to the file
-                elif instances:
-                    # Close running app (if not pinned)
-                    # Assuming the first instance is the relevant one. A more robust
-                    # solution might involve finding the *exact* instance, but for
-                    # simplicity, we close the first.
-                    address = instances[0].get("address")
-                    if address:
-                        exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
-        GLib.idle_add(self.update_dock)  # Update the dock in idle_add
+
+        def process_drag_end():
+            """Inner function to handle drag end, safe to call with idle_add."""
+            if self.get_mapped():  # Check if the window is mapped
+                # Get window geometry *before* any modifications
+                x, y = self.get_pointer()
+                window = self.get_window()
+                if window: # Check if we got a window
+                    win_x, win_y, width, height = window.get_geometry()
+                    if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
+                        # Drag ended outside the dock
+                        app_to_remove = widget.get_tooltip_text()
+                        instances = widget.instances  # Access the attribute directly
+                        if app_to_remove in self.config["pinned_apps"]: #Remove pinned
+                            self.config["pinned_apps"].remove(app_to_remove)
+                            self.update_pinned_apps_file() #write to the file
+                        elif instances:
+                            # Close running app (if not pinned)
+                            # Assuming the first instance is the relevant one. A more robust
+                            # solution might involve finding the *exact* instance, but for
+                            # simplicity, we close the first.
+                            address = instances[0].get("address")
+                            if address:
+                                exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
+            self.update_dock()  # Always update the dock after drag end
+
+        GLib.idle_add(process_drag_end)  # Deferred execution with idle_add
 
     def check_config_change(self):
         """Check if the config file has been modified."""
