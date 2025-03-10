@@ -9,6 +9,7 @@ from fabric.widgets.eventbox import EventBox
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import get_hyprland_connection
 from fabric.utils import exec_shell_command, exec_shell_command_async, idle_add, remove_handler, get_relative_path
+from fabric.utils.helpers import get_desktop_applications
 
 import config.data as data
 
@@ -34,6 +35,7 @@ class Dock(Window):
         self.icon = IconResolver()
         self.pinned = self.config.get("pinned_apps", [])
         self.config_path = get_relative_path("../config/dock.json")
+        self.app_map = {}  # Initialize the app map
         self.is_hidden = False
         self.hide_id = None
         self._arranger_handler = None
@@ -173,6 +175,7 @@ class Dock(Window):
 
     def update_dock(self, *args):
         """Refresh dock contents"""
+        self.update_app_map() # Update app map before creating buttons
         arranger_handler = getattr(self, "_arranger_handler", None)
         if arranger_handler:
             remove_handler(arranger_handler)
@@ -205,11 +208,23 @@ class Dock(Window):
         self.set_size_request(width, -1)
         return False
 
+    def update_app_map(self):
+        """Updates the mapping of commands to DesktopApp objects."""
+        all_apps = get_desktop_applications()
+        self.app_map = {app.executable: app for app in all_apps}
+
     def create_button(self, app, instances):
         """Create dock application button"""
-        icon_img = self.icon.get_icon_pixbuf(
-            app.lower(), 36
-        ) or self.icon.get_icon_pixbuf("image-missing", 36)
+        desktop_app = self.app_map.get(app)
+        if desktop_app:
+            icon_img = desktop_app.get_icon_pixbuf(size=36)
+        else:
+            # Fallback icon if no DesktopApp is found
+            icon_img = self.icon.get_icon_pixbuf(
+                "application-x-executable-symbolic", 36
+            )
+            if not icon_img:
+                icon_img = self.icon.get_icon_pixbuf("image-missing", 36)
         items = [Image(pixbuf=icon_img)]
         
         button = Button(
@@ -338,6 +353,7 @@ class Dock(Window):
         if new_config.get("pinned_apps", []) != self.config.get("pinned_apps",[]):
             self.config = new_config
             self.pinned = self.config.get("pinned_apps", [])
+            self.update_app_map() #update app_map when config changes
             self.update_dock()
         return True # Continue the timeout
 
