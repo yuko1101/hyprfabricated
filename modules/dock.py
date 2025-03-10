@@ -14,10 +14,13 @@ from fabric.utils.helpers import get_desktop_applications
 import config.data as data
 
 def read_config():
-    """Read and return the full configuration from the JSON file."""
+    """Read and return the full configuration from the JSON file, handling missing file."""
     config_path = get_relative_path("../config/dock.json")
-    with open(config_path, "r") as file:
-        data = json.load(file)
+    try:
+        with open(config_path, "r") as file:
+            data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = {"pinned_apps": []}  # Default to empty pinned apps
     return data
 
 class Dock(Window):
@@ -121,7 +124,7 @@ class Dock(Window):
         self.delay_hide()
         # Immediate occlusion check on true leave
         occlusion_region = (0, data.CURRENT_HEIGHT - 70, data.CURRENT_WIDTH, 70)
-        if check_occlusion(occlusion_region):
+        if check_occlusion(occlusion_region) or not self.view.get_children():
             self.wrapper.add_style_class("occluded")
         return True
 
@@ -161,7 +164,7 @@ class Dock(Window):
         self.toggle_dock(show=False)
         self.hide_id = None
         return False
-
+    
     def check_hide(self, *args):
         """Determine if dock should auto-hide"""
         clients = self.get_clients()
@@ -202,6 +205,11 @@ class Dock(Window):
             children += [Box(orientation="v", v_expand=True, name="dock-separator")]
         children += open_buttons
         self.view.children = children
+        if not self.view.get_children():
+            self.wrapper.add_style_class("occluded")
+            self.hide_dock()
+        else:
+            self.wrapper.remove_style_class("occluded")
         idle_add(self._update_size)
         self._drag_in_progress = False  # Clear the drag lock
 
@@ -315,7 +323,7 @@ class Dock(Window):
         if self.is_hovered:
             return True  # Skip if hovered
         occlusion_region = (0, data.CURRENT_HEIGHT - 80, data.CURRENT_WIDTH, 80)
-        if check_occlusion(occlusion_region):
+        if check_occlusion(occlusion_region) or not self.view.get_children():
             self.wrapper.add_style_class("occluded")
         else:
             self.wrapper.remove_style_class("occluded")
