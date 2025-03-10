@@ -49,13 +49,10 @@ fi
 
 aur_helper="yay"
 
-YAY_EXIST = 0
-
 # Check if paru exists, otherwise use yay
 if command -v paru &>/dev/null; then
     aur_helper="paru"
 elif ! command -v yay &>/dev/null; then
-    YAY_EXIST = 1
     echo "Installing yay-bin..."
     tmpdir=$(mktemp -d)
     git clone --depth=1 https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
@@ -133,12 +130,7 @@ else
     echo "Local fonts are already installed. Skipping copy."
 fi
 
-if [ $YAY_EXIST -eq 1 ]; then
-    sudo pacman -Rns --noconfirm yay-bin
-fi
-
 echo "If you see a transparent bar change the wallpaper from the notch"
 echo "Backup your hypridle and hyprlock config before accepting in config"
 
 echo "Installation complete."
-
