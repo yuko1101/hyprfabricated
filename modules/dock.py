@@ -1,5 +1,4 @@
 import json
-import threading
 from gi.repository import GLib, Gtk, Gdk
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
@@ -11,13 +10,12 @@ from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import get_hyprland_connection
 from fabric.utils import exec_shell_command, idle_add, remove_handler, get_relative_path
 
-import modules.data as data
+import config.data as data
 
 def read_config():
     """Read and return the full configuration from the JSON file."""
     config_path = get_relative_path("../config/dock.json")
     with open(config_path, "r") as file:
-        # Load JSON data into a Python dictionary
         data = json.load(file)
     return data
 
@@ -38,29 +36,45 @@ class Dock(Window):
         self.is_hidden = False
         self.hide_id = None
         self._arranger_handler = None
+        self.is_hovered = False
 
         # Set up UI containers
         self.view = Box(name="viewport", orientation="h", spacing=8)
         self.wrapper = Box(name="dock", orientation="v", children=[self.view])
-        self.hover = EventBox()
-        self.hover.set_size_request(-1, 1)
-        self.hover.connect("enter-notify-event", self._on_hover_enter)
-        self.hover.connect("leave-notify-event", self._on_hover_leave)
-        self.view.connect("enter-notify-event", self._on_hover_enter)
-        self.view.connect("leave-notify-event", self._on_hover_leave)
-        self.main_box = Box(orientation="v", children=[self.wrapper, self.hover])
+        
+        # Main dock container with hover handling
+        self.dock_eventbox = EventBox()
+        self.dock_eventbox.add(self.wrapper)
+        self.dock_eventbox.connect("enter-notify-event", self._on_dock_enter)
+        self.dock_eventbox.connect("leave-notify-event", self._on_dock_leave)
+        
+        # Bottom hover activation area
+        self.hover_activator = EventBox()
+        self.hover_activator.set_size_request(-1, 1)
+        self.hover_activator.connect("enter-notify-event", self._on_hover_enter)
+        self.hover_activator.connect("leave-notify-event", self._on_hover_leave)
+        
+        self.main_box = Box(orientation="v", children=[self.dock_eventbox, self.hover_activator])
         self.add(self.main_box)
 
-        # Enable drag-and-drop on the container for pinned apps reordering.
-        # Pinned app buttons will have drag signals; other buttons won't.
-        self.view.drag_source_set(Gdk.ModifierType.BUTTON1_MASK, [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)], Gdk.DragAction.MOVE)
-        self.view.drag_dest_set(Gtk.DestDefaults.ALL, [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)], Gdk.DragAction.MOVE)
+        # Drag-and-drop setup
+        self.view.drag_source_set(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
+            Gdk.DragAction.MOVE
+        )
+        self.view.drag_dest_set(
+            Gtk.DestDefaults.ALL,
+            [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
+            Gdk.DragAction.MOVE
+        )
         self.view.connect("drag-data-get", self.on_drag_data_get)
         self.view.connect("drag-data-received", self.on_drag_data_received)
 
+        # Initialization
         if self.conn.ready:
             self.update_dock()
-            GLib.timeout_add(500, self.check_hide)  # Delay to ensure Hyprland loads clients
+            GLib.timeout_add(500, self.check_hide)
         else:
             self.conn.connect("event::ready", self.update_dock)
             self.conn.connect("event::ready", self.check_hide)
@@ -72,13 +86,49 @@ class Dock(Window):
         GLib.timeout_add(250, self.check_occlusion_state)
 
     def _on_hover_enter(self, *args):
+        """Handle hover over bottom activation area"""
         self.toggle_dock(show=True)
 
     def _on_hover_leave(self, *args):
+        """Handle leave from bottom activation area"""
         self.delay_hide()
 
+    def _on_dock_enter(self, widget, event):
+        """Handle hover over dock content"""
+        self.is_hovered = True
+        self.wrapper.remove_style_class("occluded")
+        # Cancel any pending hide operations
+        if self.hide_id:
+            GLib.source_remove(self.hide_id)
+            self.hide_id = None
+        self.toggle_dock(show=True)
+        return True  # Important: Stop event propagation
+
+    def _on_dock_leave(self, widget, event):
+        """Handle leave from dock content"""
+        # Only trigger if mouse actually left the entire dock area
+        if event.detail == Gdk.NotifyType.INFERIOR:
+            return False  # Ignore child-to-child mouse movements
+        
+        self.is_hovered = False
+        self.delay_hide()
+        # Immediate occlusion check on true leave
+        occlusion_region = (0, data.CURRENT_HEIGHT - 70, data.CURRENT_WIDTH, 70)
+        if check_occlusion(occlusion_region):
+            self.wrapper.add_style_class("occluded")
+        return True
+
+    # Add this new method to handle child widget hover
+    def _on_child_enter(self, widget, event):
+        """Maintain hover state when entering child widgets"""
+        self.is_hovered = True
+        if self.hide_id:
+            GLib.source_remove(self.hide_id)
+            self.hide_id = None
+        return False  # Continue event propagation
+
     def toggle_dock(self, show):
-        """Show or hide the dock immediately."""
+        """Show or hide the dock immediately"""
         if show:
             if self.is_hidden:
                 self.is_hidden = False
@@ -94,18 +144,19 @@ class Dock(Window):
                 self.wrapper.remove_style_class("show-dock")
 
     def delay_hide(self):
-        """Schedule hiding the dock after a short delay."""
+        """Schedule hiding after short delay"""
         if self.hide_id:
             GLib.source_remove(self.hide_id)
         self.hide_id = GLib.timeout_add(1000, self.hide_dock)
 
     def hide_dock(self):
+        """Finalize hiding procedure"""
         self.toggle_dock(show=False)
         self.hide_id = None
         return False
 
     def check_hide(self, *args):
-        """Show the dock immediately in an empty workspace; otherwise, hide if needed."""
+        """Determine if dock should auto-hide"""
         clients = self.get_clients()
         current_ws = self.get_workspace()
         ws_clients = [w for w in clients if w["workspace"]["id"] == current_ws]
@@ -118,7 +169,7 @@ class Dock(Window):
             self.toggle_dock(show=True)
 
     def update_dock(self, *args):
-        """Refresh the dock icons based on running and pinned apps."""
+        """Refresh dock contents"""
         arranger_handler = getattr(self, "_arranger_handler", None)
         if arranger_handler:
             remove_handler(arranger_handler)
@@ -146,14 +197,13 @@ class Dock(Window):
         idle_add(self._update_size)
 
     def _update_size(self):
+        """Update window size based on content"""
         width, _ = self.view.get_preferred_width()
         self.set_size_request(width, -1)
         return False
 
     def create_button(self, app, instances):
-        """Create a button for an app with an icon and an optional indicator.
-           Only pinned apps will have drag-and-drop enabled.
-        """
+        """Create dock application button"""
         icon_img = self.icon.get_icon_pixbuf(
             app.lower(), 36
         ) or self.icon.get_icon_pixbuf("image-missing", 36)
@@ -174,18 +224,28 @@ class Dock(Window):
         if instances:
             button.add_style_class("instance")
 
-        # Only enable drag-and-drop if the app is pinned.
+        # Enable DnD for pinned apps
         if app.lower() in [p.lower() for p in self.pinned]:
-            button.drag_source_set(Gdk.ModifierType.BUTTON1_MASK, [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)], Gdk.DragAction.MOVE)
-            button.drag_dest_set(Gtk.DestDefaults.ALL, [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)], Gdk.DragAction.MOVE)
+            button.drag_source_set(
+                Gdk.ModifierType.BUTTON1_MASK,
+                [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
+                Gdk.DragAction.MOVE
+            )
+            button.drag_dest_set(
+                Gtk.DestDefaults.ALL,
+                [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
+                Gdk.DragAction.MOVE
+            )
             button.connect("drag-data-get", self.on_drag_data_get)
             button.connect("drag-data-received", self.on_drag_data_received)
         
+        button.connect("enter-notify-event", self._on_child_enter)
         return button
 
     def handle_app(self, app, instances):
+        """Handle application button clicks"""
         if not instances:
-            threading.Thread(
+            GLib.idle_add(
                 target=exec_shell_command, args=(f"nohup {app}",), daemon=True
             ).start()
         else:
@@ -200,12 +260,14 @@ class Dock(Window):
             )
 
     def get_clients(self):
+        """Get current client list"""
         try:
             return json.loads(self.conn.send_command("j/clients").reply.decode())
         except json.JSONDecodeError:
             return []
 
     def get_focused(self):
+        """Get focused window address"""
         try:
             return json.loads(
                 self.conn.send_command("j/activewindow").reply.decode()
@@ -214,6 +276,7 @@ class Dock(Window):
             return ""
 
     def get_workspace(self):
+        """Get current workspace ID"""
         try:
             return json.loads(
                 self.conn.send_command("j/activeworkspace").reply.decode()
@@ -222,11 +285,9 @@ class Dock(Window):
             return 0
 
     def check_occlusion_state(self):
-        """
-        Check if the bottom 80px of a 1080p monitor is occluded.
-        If occluded, add the "occluded" style class; otherwise, remove it.
-        """
-        # Define occlusion region: bottom 80px on a 1920x1080 monitor
+        """Periodic occlusion check"""
+        if self.is_hovered:
+            return True  # Skip if hovered
         occlusion_region = (0, data.CURRENT_HEIGHT - 80, data.CURRENT_WIDTH, 80)
         if check_occlusion(occlusion_region):
             self.wrapper.add_style_class("occluded")
@@ -235,23 +296,21 @@ class Dock(Window):
         return True
 
     def _find_drag_target(self, widget):
-        """Walk up the widget hierarchy until the widget is a direct child of self.view."""
+        """Find valid drag target in viewport"""
         children = self.view.get_children()
         while widget is not None and widget not in children:
             widget = widget.get_parent() if hasattr(widget, "get_parent") else None
         return widget
 
     def on_drag_data_get(self, widget, drag_context, data, info, time):
-        """Handle the event when drag data is requested."""
-        # Find the widget that is directly in self.view
+        """Handle drag start"""
         target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
         if target is not None:
             index = self.view.get_children().index(target)
             data.set_text(str(index), -1)
     
     def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
-        """Handle the event when drag data is received."""
-        # Find the widget that is directly in self.view
+        """Handle drop event"""
         target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
         if target is None:
             return
@@ -273,7 +332,7 @@ class Dock(Window):
             self.update_pinned_apps()
 
     def update_pinned_apps(self):
-        """Update the pinned apps in the configuration based on the current order."""
+        """Update pinned apps configuration"""
         self.config["pinned_apps"] = [
             child.get_tooltip_text() for child in self.view.get_children() if child.get_tooltip_text() in self.pinned
         ]

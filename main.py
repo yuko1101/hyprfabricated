@@ -1,22 +1,19 @@
 import setproctitle
 import os
 from fabric import Application
-from fabric.utils import get_relative_path
+from fabric.utils import get_relative_path, exec_shell_command_async
 from modules.bar import Bar
 from modules.notch import Notch
 from modules.dock import Dock
 from modules.corners import Corners
 from config.config import open_config, ensure_fonts
-import modules.data as data
+import config.data as data
 from datetime import datetime
 
-
-config_path = os.path.expanduser("~/.config/Ax-Shell/config/config.json")
-fonts_updated_file = os.path.expanduser("~/.cache/ax-shell/fonts_updated")
-cache_dir = os.path.expanduser("~/.cache/ax-shell/")
+fonts_updated_file = f"{data.CACHE_DIR}/fonts_updated"
 
 if __name__ == "__main__":
-    setproctitle.setproctitle("ax-shell")
+    setproctitle.setproctitle(data.APP_NAME)
 
     # Check if the current date is after February 25, 2025
     current_date = datetime.now()
@@ -34,19 +31,19 @@ if __name__ == "__main__":
                 print(f"Error removing {tabler_icons_path}: {e}")
         ensure_fonts()
         # Create the fonts_updated file to indicate that the process has been done.
-        os.makedirs(cache_dir, exist_ok=True)
+        os.makedirs(data.CACHE_DIR, exist_ok=True)
         with open(fonts_updated_file, "w") as f:
             f.write("Fonts updated after February 25, 2025")
 
-    if not os.path.isfile(config_path):
-        open_config()
+    if not os.path.isfile(data.CONFIG_FILE):
+        exec_shell_command_async(f"python {get_relative_path('../config/config.py')}")
     corners = Corners()
     bar = Bar()
     notch = Notch()
     dock = Dock() 
     bar.notch = notch
     notch.bar = bar
-    app = Application("ax-shell", bar, notch, dock)
+    app = Application(f"{data.APP_NAME}", bar, notch, dock)
 
     def set_css():
         app.set_stylesheet_from_file(

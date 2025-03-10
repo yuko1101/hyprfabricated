@@ -8,14 +8,17 @@ from gi.repository import Gtk
 from PIL import Image
 import toml
 
+from fabric.utils.helpers import get_relative_path
+import config.data as data
+
 # Constants
-SOURCE_STRING = """
-# Ax-Shell
-source = ~/.config/Ax-Shell/config/hypr/ax-shell.conf
+SOURCE_STRING = f"""
+# {data.APP_NAME}
+source = {get_relative_path(f"./hypr/{data.APP_NAME}.conf")}
 """
 
-CONFIG_DIR = os.path.expanduser("~/.config/Ax-Shell")
-WALLPAPERS_DIR_DEFAULT = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example")
+CONFIG_DIR = os.path.expanduser(f"~/.config/{data.APP_NAME}")
+WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
 
 # Default key binding values
 bind_vars = {
