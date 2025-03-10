@@ -357,9 +357,10 @@ class Dock(Window):
 
     def on_drag_end(self, widget, drag_context):
         """Handles drag end, for unpinning and closing apps."""
-        x, y = self.get_pointer()
         window = self.get_window()
         if window:
+            # Get window geometry *before* any modifications
+            x, y = self.get_pointer()
             win_x, win_y, width, height = window.get_geometry()
             if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
                 # Drag ended outside the dock
