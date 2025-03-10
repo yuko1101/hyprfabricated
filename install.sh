@@ -36,6 +36,7 @@ PACKAGES=(
   swappy
   swww
   tesseract
+  unzip
   uwsm
   wl-clipboard
   wlinhibit
