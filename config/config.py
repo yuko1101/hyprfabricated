@@ -13,8 +13,8 @@ import data
 
 # Constants
 SOURCE_STRING = f"""
-# {data.APP_NAME}
-source = {get_relative_path(f"./hypr/{data.APP_NAME}.conf")}
+# {data.APP_NAME_CAP}
+source = ~/.config/{data.APP_NAME_CAP}/config/hypr/{data.APP_NAME}.conf
 """
 
 CONFIG_DIR = os.path.expanduser(f"~/.config/{data.APP_NAME}")
@@ -217,6 +217,10 @@ general {{
     gaps_out = 4
     border_size = 2
     layout = dwindle
+}}
+
+cursor {{
+  no_warps=true
 }}
 
 decoration {{
