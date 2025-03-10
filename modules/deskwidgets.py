@@ -110,7 +110,7 @@ class Sysinfo(Box):
     @staticmethod
     def bake_progress_bar(name: str = "progress-bar", size: int = 45, **kwargs):
         return CircularProgressBar(
-            name=name, min_value=0, max_value=100, size=size, **kwargs
+            name=name, start_angle=180,end_angle=540, min_value=0, max_value=100, size=size, **kwargs
         )
 
     @staticmethod
