@@ -205,11 +205,6 @@ class Dock(Window):
             children += [Box(orientation="v", v_expand=True, name="dock-separator")]
         children += open_buttons
         self.view.children = children
-        if not self.view.get_children():
-            self.wrapper.add_style_class("occluded")
-            self.hide_dock()
-        else:
-            self.wrapper.remove_style_class("occluded")
         idle_add(self._update_size)
         self._drag_in_progress = False  # Clear the drag lock
 
