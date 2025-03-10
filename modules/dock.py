@@ -73,6 +73,7 @@ class Dock(Window):
         )
         self.view.connect("drag-data-get", self.on_drag_data_get)
         self.view.connect("drag-data-received", self.on_drag_data_received)
+        self.view.connect("drag-end", self.on_drag_end)
 
         # Initialization
         if self.conn.ready:
@@ -242,18 +243,20 @@ class Dock(Window):
             on_clicked=lambda *a: self.handle_app(app, instances),
             tooltip_text=instances[0]["title"] if instances else app,
             name="dock-app-button",
+            user_data={"instances": instances},  # Store instances for later use
         )
         
         if instances:
             button.add_style_class("instance")
 
-        # Enable DnD for pinned apps
-        if app.lower() in [p.lower() for p in self.pinned]:
-            button.drag_source_set(
-                Gdk.ModifierType.BUTTON1_MASK,
-                [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-                Gdk.DragAction.MOVE
-            )
+        # Enable DnD for ALL apps
+        button.drag_source_set(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
+            Gdk.DragAction.MOVE
+        )
+        button.connect("drag-end", self.on_drag_end) # Connect drag-end to ALL buttons
+        if app.lower() in [p.lower() for p in self.pinned]: #only pinned apps can be reordered
             button.drag_dest_set(
                 Gtk.DestDefaults.ALL,
                 [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
@@ -352,6 +355,29 @@ class Dock(Window):
             self.view.children = children # redundant, but good practice.
             self.update_pinned_apps()
 
+    def on_drag_end(self, widget, drag_context):
+        """Handles drag end, for unpinning and closing apps."""
+        x, y = self.get_pointer()
+        window = self.get_window()
+        if window:
+            _, win_x, win_y, width, height = window.get_geometry()
+            if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
+                # Drag ended outside the dock
+                app_to_remove = widget.get_tooltip_text()
+                instances = widget.user_data.get("instances")
+                if app_to_remove in self.config["pinned_apps"]:
+                    # Remove pinned app
+                    self.config["pinned_apps"].remove(app_to_remove)
+                    self.update_pinned_apps_file()
+                elif instances:
+                    # Close running app (if not pinned)
+                    # Assuming the first instance is the relevant one.  A more robust
+                    # solution might involve finding the *exact* instance being dragged,
+                    # but for simplicity, we'll close the first one.
+                    address = instances[0].get("address")
+                    if address:
+                        exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
+
     def check_config_change(self):
         """Check if the config file has been modified."""
         new_config = read_config()
@@ -361,12 +387,16 @@ class Dock(Window):
             self.update_app_map() #update app_map when config changes
             self.update_dock()
         return True # Continue the timeout
+    
+    def update_pinned_apps_file(self):
+        """Writes the updated pinned apps list to dock.json"""
+        config_path = get_relative_path("../config/dock.json")
+        with open(config_path, "w") as file:
+            json.dump(self.config, file, indent=4)
 
     def update_pinned_apps(self):
         """Update pinned apps configuration"""
         self.config["pinned_apps"] = [
             child.get_tooltip_text() for child in self.view.get_children() if child.get_tooltip_text() in self.pinned
         ]
-        config_path = get_relative_path("../config/dock.json")
-        with open(config_path, "w") as file:
-            json.dump(self.config, file, indent=4)
+        self.update_pinned_apps_file()
