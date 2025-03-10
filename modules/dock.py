@@ -371,10 +371,10 @@ class Dock(Window):
         if self._drag_in_progress:
             return
         self._drag_in_progress = True
-        window = self.get_window()
-        if window:
+        if self.get_mapped(): # Check if the window is mapped
             # Get window geometry *before* any modifications
             x, y = self.get_pointer()
+            window = self.get_window()
             win_x, win_y, width, height = window.get_geometry()
             if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
                 # Drag ended outside the dock
