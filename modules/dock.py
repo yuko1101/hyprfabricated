@@ -368,15 +368,16 @@ class Dock(Window):
                 if app_to_remove in self.config["pinned_apps"]:
                     # Remove pinned app
                     self.config["pinned_apps"].remove(app_to_remove)
-                    self.update_pinned_apps_file()
+                    self.update_pinned_apps_file() #write to the file
                 elif instances:
                     # Close running app (if not pinned)
-                    # Assuming the first instance is the relevant one.  A more robust
-                    # solution might involve finding the *exact* instance being dragged,
-                    # but for simplicity, we'll close the first one.
+                    # Assuming the first instance is the relevant one. A more robust
+                    # solution might involve finding the *exact* instance, but for
+                    # simplicity, we close the first.
                     address = instances[0].get("address")
                     if address:
                         exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
+        GLib.idle_add(self.update_dock) #update the dock
 
     def check_config_change(self):
         """Check if the config file has been modified."""
