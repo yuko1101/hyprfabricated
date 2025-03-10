@@ -332,7 +332,7 @@ def fetch_quote(callback):
     try:
         with open(config_path, "r") as file:
             config = json.load(file)
-            quotes_type = config.get("quotes", "zen")
+            quotes_type = config.get("quotetype", "zen")
             if quotes_type == "stoic":
                 quote = fetch_stoic_quote()
             else:
