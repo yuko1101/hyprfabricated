@@ -11,7 +11,6 @@ from fabric.utils.helpers import get_relative_path
 from gi.repository import GLib, Gdk
 import modules.icons as icons
 import config.data as data
-from config.config import open_config
 import json
 import os
 import re
