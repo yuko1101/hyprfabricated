@@ -307,21 +307,44 @@ class weather(Box):
                 f"{self.weatherinfo[0]}"
             )
 
-
 def fetch_quote(callback):
-    try:
-        response = requests.get("https://zenquotes.io/api/random")
-        response.raise_for_status()
-        data = response.json()
-        callback(data[0]["q"])  # Return the quote text
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching quote: {e}")
-        callback("What's in your head,in your head?")
+    def fetch_stoic_quote():
+        try:
+            response = requests.get("https://stoic-quotes.com/api/quote")
+            response.raise_for_status()
+            data = response.json()
+            return f"{data['text']} - {data['author']}"
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching stoic quote: {e}")
+            return "I learn from the mistakes of people who take my advice - Trix"
 
+    def fetch_zen_quote():
+        try:
+            response = requests.get("https://zenquotes.io/api/random")
+            response.raise_for_status()
+            data = response.json()
+            return f"{data[0]['q']} - {data[0]['a']}"
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching zen quote: {e}")
+            return "I learn from the mistakes of people who take my advice - Trix"
+
+    config_path = get_relative_path("../config.json")
+    try:
+        with open(config_path, "r") as file:
+            config = json.load(file)
+            quotes_type = config.get("quotes", "zen")
+            if quotes_type == "stoic":
+                quote = fetch_stoic_quote()
+            else:
+                quote = fetch_zen_quote()
+    except Exception as e:
+        print(f"Error reading quotes type from config: {e}")
+        quote = fetch_zen_quote()
+
+    callback(quote)
 
 def fetch_quote_threaded(callback):
     threading.Thread(target=lambda: fetch_quote(callback), daemon=True).start()
-
 
 class qoute(Label):
     def __init__(self, **kwargs):
@@ -339,7 +362,6 @@ class qoute(Label):
     def update_label(self, quote):
         self.set_label(quote)
         self.set_visible(True)
-
 
 class Deskwidgetsfull(Window):
     def __init__(self, **kwargs):

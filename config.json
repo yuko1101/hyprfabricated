@@ -1,6 +1,7 @@
 {
   "city": "",
   "temp": "C",
+  "quotetype": "stoic",
   "Basic": {
     "corners": true,
     "bar": true,
