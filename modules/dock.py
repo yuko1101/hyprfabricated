@@ -216,13 +216,18 @@ class Dock(Window):
     def create_button(self, app, instances):
         """Create dock application button"""
         desktop_app = self.app_map.get(app)
+        icon_img = None
         if desktop_app:
             icon_img = desktop_app.get_icon_pixbuf(size=36)
-        else:
+        if not icon_img:
+            # Fallback to IconResolver with the app command
+            icon_img = self.icon.get_icon_pixbuf(app, 36)
+        if not icon_img:
             # Fallback icon if no DesktopApp is found
             icon_img = self.icon.get_icon_pixbuf(
                 "application-x-executable-symbolic", 36
             )
+            #final fallback
             if not icon_img:
                 icon_img = self.icon.get_icon_pixbuf("image-missing", 36)
         items = [Image(pixbuf=icon_img)]
