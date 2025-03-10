@@ -8,7 +8,7 @@ from fabric.widgets.image import Image
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import get_hyprland_connection
-from fabric.utils import exec_shell_command, idle_add, remove_handler, get_relative_path
+from fabric.utils import exec_shell_command, exec_shell_command_async, idle_add, remove_handler, get_relative_path
 
 import config.data as data
 
@@ -245,9 +245,7 @@ class Dock(Window):
     def handle_app(self, app, instances):
         """Handle application button clicks"""
         if not instances:
-            GLib.idle_add(
-                target=exec_shell_command, args=(f"nohup {app}",), daemon=True
-            ).start()
+            exec_shell_command_async(f"nohup {app}")
         else:
             focused = self.get_focused()
             idx = next(
