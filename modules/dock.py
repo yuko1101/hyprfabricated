@@ -1,5 +1,5 @@
 import json
-from gi.repository import GLib, Gtk, Gdk
+from gi.repository import GLib, Gtk, Gdk, Gio
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
 from fabric.widgets.box import Box
@@ -33,6 +33,7 @@ class Dock(Window):
         self.conn = get_hyprland_connection()
         self.icon = IconResolver()
         self.pinned = self.config.get("pinned_apps", [])
+        self.config_path = get_relative_path("../config/dock.json")
         self.is_hidden = False
         self.hide_id = None
         self._arranger_handler = None
@@ -84,6 +85,8 @@ class Dock(Window):
         self.conn.connect("event::workspace", self.check_hide)
         
         GLib.timeout_add(250, self.check_occlusion_state)
+        # Monitor dock.json for changes
+        GLib.timeout_add_seconds(1, self.check_config_change)
 
     def _on_hover_enter(self, *args):
         """Handle hover over bottom activation area"""
@@ -326,8 +329,17 @@ class Dock(Window):
         if source_index != target_index:
             child = children.pop(source_index)
             children.insert(target_index, child)
-            self.view.children = children
+            self.view.children = children # redundant, but good practice.
             self.update_pinned_apps()
+
+    def check_config_change(self):
+        """Check if the config file has been modified."""
+        new_config = read_config()
+        if new_config.get("pinned_apps", []) != self.config.get("pinned_apps",[]):
+            self.config = new_config
+            self.pinned = self.config.get("pinned_apps", [])
+            self.update_dock()
+        return True # Continue the timeout
 
     def update_pinned_apps(self):
         """Update pinned apps configuration"""
