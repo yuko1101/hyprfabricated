@@ -7,7 +7,7 @@ from fabric.widgets.entry import Entry
 from fabric.widgets.image import Image
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.image import Image
-from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async
+from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async, get_relative_path
 from gi.repository import GLib, Gdk
 import modules.icons as icons
 import modules.data as data
@@ -60,7 +60,7 @@ class AppLauncher(Box):
             max_content_size=(450, 105),
             child=self.viewport,
         )
-
+        self.configpath = get_relative_path("../config/config.py")
         self.header_box = Box(
             name="header_box",
             spacing=10,
@@ -69,7 +69,7 @@ class AppLauncher(Box):
                 Button(
                     name="config-button",
                     child=Label(name="config-label", markup=icons.config),
-                    on_clicked=lambda *_: (exec_shell_command_async(f"python {data.HOME_DIR}/.config/hyprfabricated/config/config.py"), self.close_launcher()),
+                    on_clicked=lambda *_: (exec_shell_command_async(f"python {self.configpath}"), self.close_launcher()),
                 ),
                 self.search_entry,
                 Button(
