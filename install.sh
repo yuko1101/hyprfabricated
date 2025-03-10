@@ -39,6 +39,7 @@ PACKAGES=(
     wlinhibit tesseract
     plasma-browser-integration
     cantarell-fonts
+    ttf-jost
 )
 
 # Prevent running as root
