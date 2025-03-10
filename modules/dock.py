@@ -376,7 +376,8 @@ class Dock(Window):
             """Inner function to handle drag end, safe to call with idle_add."""
             if self.get_mapped():  # Check if the window is mapped
                 # Get window geometry *before* any modifications
-                x, y = self.get_pointer()
+                display = Gdk.Display.get_default()
+                _, x, y, _ = display.get_pointer() # Get pointer relative to the screen
                 window = self.get_window()
                 if window: # Check if we got a window
                     win_x, win_y, width, height = window.get_geometry()
