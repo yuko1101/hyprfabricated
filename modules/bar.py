@@ -171,7 +171,7 @@ class Bar(Window):
 
         self.hidden = False
 
-        self.show_all()
+        # self.show_all()
         self.systray._update_visibility()
 
     def on_button_enter(self, widget, event):
