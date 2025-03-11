@@ -12,6 +12,7 @@ PACKAGES=(
   cava
   fabric-cli-git
   gnome-bluetooth-3.0
+  gobject-introspection
   gpu-screen-recorder
   grimblast
   hypridle
