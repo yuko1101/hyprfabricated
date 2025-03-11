@@ -4,7 +4,7 @@
 
 #workspaces-container {
   background-color: var(--shadow);
-  margin-top: 4px;
+  /*margin-top: 4px;*/
 }
 
 #workspaces > button {

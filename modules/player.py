@@ -13,7 +13,7 @@ from fabric.widgets.stack import Stack
 from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 from widgets.circle_image import CircleImage
 import modules.icons as icons
-import modules.data as data
+import config.data as data
 from services.mpris import MprisPlayerManager, MprisPlayer
 from gi.repository import GdkPixbuf, Gio
 from modules.cavalcade import SpectrumRender

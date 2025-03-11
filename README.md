@@ -79,7 +79,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
     - [setproctitle](https://pypi.org/project/setproctitle/)
     - [toml](https://pypi.org/project/toml/)
     - [watchdog](https://pypi.org/project/watchdog/)
-          
+
 - Fonts (automated on first run):
     - [Zed Sans](https://github.com/zed-industries/zed-fonts)
     - [Tabler Icons](https://tabler.io/icons)
@@ -95,6 +95,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] App Launcher
 - [x] Calculator
 - [x] Power Menu
+- [x] Dock
 - [x] Emoji Picker
 - [x] Wallpaper Selector
 - [x] System Tray
@@ -114,8 +115,6 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Workspaces Overview
 - [ ] Network Manager
 - [ ] Clipboard Manager
-- [ ] Emoji Manager
-- [ ] Dock
 - [ ] Multimodal AI Assistant
 - [ ] Vertical Layout
 - [ ] Multi-monitor support

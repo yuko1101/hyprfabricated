@@ -6,7 +6,8 @@
     "corners": true,
     "bar": true,
     "notch": true,
-    "widgets": true
+    "widgets": true,
+    "dock":false
   },
   "widgetstyle": "full",
   "Bar": {

@@ -7,7 +7,7 @@ import setproctitle
 from fabric import Application
 from fabric.utils import get_relative_path
 from gi.repository import Gdk
-
+import modules.data as data
 from config.config import open_config
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -52,6 +52,11 @@ if __name__ == "__main__":
         bar.notch = notch
         notch.bar = bar
         assets.append(notch)
+    if config["Basic"]["dock"]:
+        from modules.dock import Dock
+
+        dock = Dock()
+        assets.append(dock)
     if config["Basic"]["widgets"]:
         if config["widgetstyle"] == "full":
             from modules.deskwidgets import Deskwidgetsfull
@@ -66,14 +71,15 @@ if __name__ == "__main__":
             assets.append(widgets)
             pass
 
-    app = Application("hyprfabricated", *assets)
+
+    app = Application(f"{data.APP_NAME}", *assets)
 
     def set_css():
         app.set_stylesheet_from_file(
             get_relative_path("main.css"),
             exposed_functions={
-                "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
-                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32}px;",
+                "overview_width": lambda: f"min-width: {data.CURRENT_WIDTH * 0.1 * 5 + 92}px;",
+                "overview_height": lambda: f"min-height: {data.CURRENT_HEIGHT * 0.1 * 2 + 32 + 56}px;",
             },
         )
 
@@ -81,3 +87,4 @@ if __name__ == "__main__":
 
     app.set_css()
     app.run()
+

@@ -18,7 +18,7 @@ from modules.overview import Overview
 from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
 import modules.icons as icons
-import modules.data as data
+import config.data as data
 from modules.player import PlayerSmall
 from modules.tools import Toolbox
 import json
@@ -28,8 +28,8 @@ class Notch(Window):
         super().__init__(
             name="notch",
             layer="top",
-            anchor="top",
-            margin="-40px 40px 10px 10px",
+            anchor="top center",
+            margin="-40px 0px 0px 0px",
             keyboard_mode="none",
             exclusivity="normal",
             visible=True,
@@ -81,7 +81,7 @@ class Notch(Window):
         # Create additional compact views:
         self.player_small = PlayerSmall()
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
-        self.window_title_icon = Label(name="icon-label", markup=icons.desktop)
+        self.window_title_icon = Label(name="icon-label",v_align="center", markup=icons.desktop)
         self.window_title = Box(
             h_align="center",
             v_align="center",

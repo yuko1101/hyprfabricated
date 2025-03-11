@@ -7,15 +7,14 @@ from fabric.widgets.button import Button
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton
-from fabric.utils.helpers import get_relative_path, exec_shell_command_async
+from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
-import modules.data as data
 from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.metrics import MetricsSmall
-from modules.tools import Toolbox
+
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -23,7 +22,7 @@ class Bar(Window):
             name="bar",
             layer="top",
             anchor="left top right",
-            margin="-8px -4px -8px -4px",
+            margin="-4px -4px -8px -4px",
             exclusivity="auto",
             visible=True,
             all_visible=True,
@@ -47,10 +46,7 @@ class Bar(Window):
         self.button_apps = Button(
             name="button-bar",
             on_clicked=lambda *_: self.search_apps(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.apps
-            )
+            child=Label(name="button-bar-label", markup=icons.apps),
         )
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
@@ -60,7 +56,9 @@ class Bar(Window):
         if config["Bar"]["buttonapps"]:
             left_children.append(self.button_apps)
         if config["Bar"]["workspaces"]:
-            left_children.append(Box(name="workspaces-container", children=[self.workspaces]))
+            left_children.append(
+                Box(name="workspaces-container", children=[self.workspaces])
+            )
 
         start_children = []
 
@@ -72,10 +70,7 @@ class Bar(Window):
             self.button_overview = Button(
                 name="button-bar",
                 on_clicked=lambda *_: self.overview(),
-                child=Label(
-                    name="button-bar-label",
-                    markup=icons.windows
-                )
+                child=Label(name="button-bar-label", markup=icons.windows),
             )
             self.button_overview.connect("enter_notify_event", self.on_button_enter)
             self.button_overview.connect("leave_notify_event", self.on_button_leave)
@@ -113,7 +108,6 @@ class Bar(Window):
             self.control = ControlSmall()
             end_children.append(self.control)
 
-
         self.revealer_right = Revealer(
             name="bar-revealer",
             transition_type="slide-left",
@@ -140,27 +134,26 @@ class Bar(Window):
                 name="button-bar",
                 tooltip_text="Opens Toolbox",
                 on_clicked=lambda *_: self.tools_menu(),
-                child=Label(
-                    name="button-bar-label",
-                    markup=icons.toolbox
-                )
+                child=Label(name="button-bar-label", markup=icons.toolbox),
             )
             self.button_tools.connect("enter_notify_event", self.on_button_enter)
             self.button_tools.connect("leave_notify_event", self.on_button_leave)
             end_children.append(self.button_tools)
 
         if config["Bar"]["datetime"]:
-            self.date_time = DateTime(name="date-time", formatters=["%I:%M %P"], h_align="center", v_align="center")
+            self.date_time = DateTime(
+                name="date-time",
+                formatters=["%I:%M %P"],
+                h_align="center",
+                v_align="center",
+            )
             end_children.append(self.date_time)
 
         if config["Bar"]["buttonpower"]:
             self.button_power = Button(
                 name="button-bar",
                 on_clicked=lambda *_: self.power_menu(),
-                child=Label(
-                    name="button-bar-label",
-                    markup=icons.shutdown
-                )
+                child=Label(name="button-bar-label", markup=icons.shutdown),
             )
             self.button_power.connect("enter_notify_event", self.on_button_enter)
             self.button_power.connect("leave_notify_event", self.on_button_leave)
@@ -222,4 +215,3 @@ class Bar(Window):
             self.bar_inner.add_style_class("hidden")
         else:
             self.bar_inner.remove_style_class("hidden")
-

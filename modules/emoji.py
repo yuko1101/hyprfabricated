@@ -5,6 +5,7 @@ from fabric.widgets.entry import Entry
 from fabric.utils import get_relative_path
 from fabric.widgets.stack import Stack
 from fabric.utils import remove_handler
+from fabric.utils.helpers import get_relative_path
 from gi.repository import Gdk
 import modules.icons as icons
 import os

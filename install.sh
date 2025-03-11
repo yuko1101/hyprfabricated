@@ -70,6 +70,10 @@ else
     git clone --depth=1 "$REPO_URL" "$INSTALL_DIR"
 fi
 
+# Install required packages using the detected AUR helper (only if missing)
+echo "Installing required packages..."
+$aur_helper -Syy --needed --noconfirm "${PACKAGES[@]}" || true
+
 echo "Installing gray-git..."
 yes | "$aur_helper" -Syy --needed --noconfirm gray-git || true
 
@@ -89,18 +93,6 @@ done
 
 if [ ${#to_update[@]} -gt 0 ]; then
     "$aur_helper" -S --noconfirm "${to_update[@]}" || true
-else
-    echo "All required packages are up-to-date."
-fi
-
-python "$INSTALL_DIR/config/config.py"
-echo "Starting hyprfabricated..."
-killall hyprfabricated 2>/dev/null || true
-uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
-
-echo "Doing Fallback Image..."
-cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
-
 echo "Installing required fonts..."
 
 FONT_URL="https://github.com/zed-industries/zed-fonts/releases/download/1.2.0/zed-sans-1.2.0.zip"
@@ -130,6 +122,14 @@ if [ ! -d "$HOME/.fonts/tabler-icons" ]; then
 else
     echo "Local fonts are already installed. Skipping copy."
 fi
+
+python "$INSTALL_DIR/config/config.py"
+echo "Starting hyprfabricated..."
+killall hyprfabricated 2>/dev/null || true
+uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
+
+echo "Doing Fallback Image..."
+cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
 
 echo "If you see a transparent bar change the wallpaper from the notch"
 echo "Backup your hypridle and hyprlock config before accepting in config"
