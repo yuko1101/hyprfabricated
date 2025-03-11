@@ -29,7 +29,7 @@ class Notch(Window):
             name="notch",
             layer="top",
             anchor="top center",
-            margin="-40px 40px 10px 10px",
+            margin="-40px 0px 0px 0px",
             keyboard_mode="none",
             exclusivity="normal",
             visible=True,

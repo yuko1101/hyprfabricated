@@ -2,7 +2,7 @@
   background-color: var(--shadow);
   padding: 4px;
   border-radius: 16px;
-  margin-top: 4px;
+  /*margin-top: 4px;*/
 }
 
 #metrics-circle {

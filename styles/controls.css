@@ -41,7 +41,7 @@
 
 #control-small {
   padding: 4px;
-  margin-top: 4px;
+  /*margin-top: 4px;*/
   border-radius: 16px;
   background-color: var(--shadow);
 }
@@ -69,4 +69,3 @@
 #mic-label.muted {
   color: var(--outline);
 }
-
