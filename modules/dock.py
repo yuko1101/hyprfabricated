@@ -64,7 +64,7 @@ class Dock(Window):
         self.main_box = Box(orientation="v", children=[self.dock_eventbox, self.hover_activator])
         self.add(self.main_box)
 
-        # Drag-and-drop setup
+        # Drag-and-drop setup for the viewport
         self.view.drag_source_set(
             Gdk.ModifierType.BUTTON1_MASK,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
@@ -77,6 +77,7 @@ class Dock(Window):
         )
         self.view.connect("drag-data-get", self.on_drag_data_get)
         self.view.connect("drag-data-received", self.on_drag_data_received)
+        self.view.connect("drag-begin", self.on_drag_begin)
         self.view.connect("drag-end", self.on_drag_end)
 
         # Initialization
@@ -94,6 +95,10 @@ class Dock(Window):
         GLib.timeout_add(250, self.check_occlusion_state)
         # Monitor dock.json for changes
         GLib.timeout_add_seconds(1, self.check_config_change)
+
+    def on_drag_begin(self, widget, drag_context):
+        """Handle drag begin event by setting the drag lock flag."""
+        self._drag_in_progress = True
 
     def _on_hover_enter(self, *args):
         """Handle hover over bottom activation area"""
@@ -124,7 +129,8 @@ class Dock(Window):
         self.delay_hide()
         # Immediate occlusion check on true leave
         occlusion_region = (0, data.CURRENT_HEIGHT - 70, data.CURRENT_WIDTH, 70)
-        if check_occlusion(occlusion_region) or not self.view.get_children():
+        # Only add occlusion style if not dragging an icon.
+        if not self._drag_in_progress and (check_occlusion(occlusion_region) or not self.view.get_children()):
             self.wrapper.add_style_class("occluded")
         return True
 
@@ -180,7 +186,7 @@ class Dock(Window):
 
     def update_dock(self, *args):
         """Refresh dock contents and clear drag lock."""
-        self.update_app_map() # Update app map before creating buttons
+        self.update_app_map()  # Update app map before creating buttons
         arranger_handler = getattr(self, "_arranger_handler", None)
         if arranger_handler:
             remove_handler(arranger_handler)
@@ -233,7 +239,7 @@ class Dock(Window):
             icon_img = self.icon.get_icon_pixbuf(
                 "application-x-executable-symbolic", 36
             )
-            #final fallback
+            # Final fallback
             if not icon_img:
                 icon_img = self.icon.get_icon_pixbuf("image-missing", 36)
         items = [Image(pixbuf=icon_img)]
@@ -260,8 +266,9 @@ class Dock(Window):
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
             Gdk.DragAction.MOVE
         )
-        button.connect("drag-end", self.on_drag_end) # Connect drag-end to ALL buttons
-        if app.lower() in [p.lower() for p in self.pinned]: #only pinned apps can be reordered
+        button.connect("drag-begin", self.on_drag_begin)
+        button.connect("drag-end", self.on_drag_end)  # Connect drag-end to ALL buttons
+        if app.lower() in [p.lower() for p in self.pinned]:  # Only pinned apps can be reordered
             button.drag_dest_set(
                 Gtk.DestDefaults.ALL,
                 [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
@@ -315,8 +322,10 @@ class Dock(Window):
 
     def check_occlusion_state(self):
         """Periodic occlusion check"""
-        if self.is_hovered:
-            return True  # Skip if hovered
+        # Skip occlusion check if hovered or dragging an icon
+        if self.is_hovered or self._drag_in_progress:
+            self.wrapper.remove_style_class("occluded")
+            return True
         occlusion_region = (0, data.CURRENT_HEIGHT - 80, data.CURRENT_WIDTH, 80)
         if check_occlusion(occlusion_region) or not self.view.get_children():
             self.wrapper.add_style_class("occluded")
@@ -357,37 +366,34 @@ class Dock(Window):
         if source_index != target_index:
             child = children.pop(source_index)
             children.insert(target_index, child)
-            self.view.children = children # redundant, but good practice.
+            self.view.children = children  # Redundant, but good practice.
             self.update_pinned_apps()
 
     def on_drag_end(self, widget, drag_context):
         """Handles drag end, for unpinning and closing apps."""
-        # Drag lock: If a drag is already in progress, ignore this call
-        if self._drag_in_progress:
+        # If a drag is already in progress, ignore duplicate calls.
+        if not self._drag_in_progress:
             return
-        self._drag_in_progress = True
 
         def process_drag_end():
             """Inner function to handle drag end, safe to call with idle_add."""
             if self.get_mapped():  # Check if the window is mapped
                 # Get window geometry *before* any modifications
                 display = Gdk.Display.get_default()
-                _, x, y, _ = display.get_pointer() # Get pointer relative to the screen
+                _, x, y, _ = display.get_pointer()  # Get pointer relative to the screen
                 window = self.get_window()
-                if window: # Check if we got a window
+                if window:  # Check if we got a window
                     win_x, win_y, width, height = window.get_geometry()
                     if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
                         # Drag ended outside the dock
                         app_to_remove = widget.get_tooltip_text()
                         instances = widget.instances  # Access the attribute directly
-                        if app_to_remove in self.config["pinned_apps"]: #Remove pinned
+                        if app_to_remove in self.config["pinned_apps"]:  # Remove pinned
                             self.config["pinned_apps"].remove(app_to_remove)
-                            self.update_pinned_apps_file() #write to the file
+                            self.update_pinned_apps_file()  # Write to the file
                         elif instances:
                             # Close running app (if not pinned)
-                            # Assuming the first instance is the relevant one. A more robust
-                            # solution might involve finding the *exact* instance, but for
-                            # simplicity, we close the first.
+                            # Assuming the first instance is the relevant one.
                             address = instances[0].get("address")
                             if address:
                                 exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
@@ -398,10 +404,10 @@ class Dock(Window):
     def check_config_change(self):
         """Check if the config file has been modified."""
         new_config = read_config()
-        if new_config.get("pinned_apps", []) != self.config.get("pinned_apps",[]):
+        if new_config.get("pinned_apps", []) != self.config.get("pinned_apps", []):
             self.config = new_config
             self.pinned = self.config.get("pinned_apps", [])
-            self.update_app_map() #update app_map when config changes
+            self.update_app_map()  # Update app_map when config changes
             self.update_dock()
         return True  # Continue the timeout
 
