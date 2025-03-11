@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import subprocess
 import gi
 
 gi.require_version('Gtk', '3.0')
@@ -441,6 +442,8 @@ class HyprConfGUI(Gtk.Window):
         if SOURCE_STRING not in content:
             with open(hyprland_config_path, "a") as f:
                 f.write(SOURCE_STRING)
+
+        subprocess.run(["hyprctl", "reload"])
 
         start_config()
         self.destroy()
