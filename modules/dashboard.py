@@ -11,8 +11,10 @@ from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
 from modules.kanban import Kanban
 
-gi.require_version('Gtk', '3.0')
-gi.require_version('GdkPixbuf', '2.0')
+gi.require_version("Gtk", "3.0")
+gi.require_version("GdkPixbuf", "2.0")
+
+
 class Dashboard(Box):
     def __init__(self, **kwargs):
         super().__init__(
@@ -92,21 +94,21 @@ class Dashboard(Box):
             v_expand=True,
             spacing=8,
             children=[
-            Box(
-                h_align="center",
-                v_align="fill",
-                h_expand=True,
-                v_expand=True,
-                children=[self.coming_soon_start_label],
-            ),
-            self.soon,
-            Box(
-                h_align="center",
-                v_align="fill",
-                h_expand=True,
-                v_expand=True,
-                children=[self.coming_soon_end_label],
-            ),
+                Box(
+                    h_align="center",
+                    v_align="fill",
+                    h_expand=True,
+                    v_expand=True,
+                    children=[self.coming_soon_start_label],
+                ),
+                self.soon,
+                Box(
+                    h_align="center",
+                    v_align="fill",
+                    h_expand=True,
+                    v_expand=True,
+                    children=[self.coming_soon_end_label],
+                ),
             ],
         )
 
@@ -166,7 +168,7 @@ class Dashboard(Box):
                 ("Almost done...", "SyntaxError: unexpected EOF"),
                 ("AI will take our jobs...", "Meanwhile: writing regex."),
                 ("Arch is unstable!", "3 years, no reinstall."),
-                ("printf(\"Hello world\");", "Where is my semicolon?"),
+                ('printf("Hello world");', "Where is my semicolon?"),
                 ("I'll sleep early today...", "3AM: still debugging."),
                 ("Oh, a tiny bug...", "Refactoring the whole codebase."),
                 ("rm -rf node_modules", "Project reborn."),
@@ -176,4 +178,3 @@ class Dashboard(Box):
             new_start_text, new_end_text = random.choice(text_pairs)
             self.coming_soon_start_label.set_text(new_start_text)
             self.coming_soon_end_label.set_text(new_end_text)
-

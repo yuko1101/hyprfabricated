@@ -7,9 +7,8 @@
     "bar": true,
     "notch": true,
     "widgets": true,
-    "dock":false
+    "dock": false
   },
-  "widgetstyle": "full",
   "Bar": {
     "systray": true,
     "workspaces": true,
@@ -25,5 +24,13 @@
       "weather": false,
       "overview": true
     }
+  },
+    "widgetstyle": "full",
+  "desktopwidgets": {
+    "date": true,
+    "clock": true,
+    "quote": true,
+    "weather": true,
+    "sysinfo": true
   }
 }

@@ -1,7 +1,5 @@
-import os
 import psutil
 import time
-from fabric import Application
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
@@ -12,8 +10,6 @@ from fabric.utils import invoke_repeater, get_relative_path
 import requests
 import urllib.parse
 import threading
-import threading
-import time
 import datetime
 import json
 
@@ -51,7 +47,6 @@ def get_location_threaded(callback):
     threading.Thread(target=run, daemon=True).start()
 
 
-
 def get_weather(callback):
     def fetch_weather(location):
         if not location:
@@ -71,15 +66,21 @@ def get_weather(callback):
                 with open(config_path, "r") as file:
                     config = json.load(file)
 
-                temp_unit = config.get('temp', 'C')
-                if temp_unit == 'F':
+                temp_unit = config.get("temp", "C")
+                if temp_unit == "F":
                     temp = f"{responseinfo['current_condition'][0]['temp_F']}°"
-                    feels_like = f"{responseinfo['current_condition'][0]['FeelsLikeF']}°"
+                    feels_like = (
+                        f"{responseinfo['current_condition'][0]['FeelsLikeF']}°"
+                    )
                 else:
                     temp = f"{responseinfo['current_condition'][0]['temp_C']}°"
-                    feels_like = f"{responseinfo['current_condition'][0]['FeelsLikeC']}°"
+                    feels_like = (
+                        f"{responseinfo['current_condition'][0]['FeelsLikeC']}°"
+                    )
 
-                condition = responseinfo["current_condition"][0]["weatherDesc"][0]["value"]
+                condition = responseinfo["current_condition"][0]["weatherDesc"][0][
+                    "value"
+                ]
                 location = responseinfo["nearest_area"][0]["areaName"][0]["value"]
                 emoji = response.text.strip()
 
@@ -118,7 +119,13 @@ class Sysinfo(Box):
     @staticmethod
     def bake_progress_bar(name: str = "progress-bar", size: int = 45, **kwargs):
         return CircularProgressBar(
-            name=name, start_angle=180,end_angle=540, min_value=0, max_value=100, size=size, **kwargs
+            name=name,
+            start_angle=180,
+            end_angle=540,
+            min_value=0,
+            max_value=100,
+            size=size,
+            **kwargs,
         )
 
     @staticmethod
@@ -307,6 +314,7 @@ class weather(Box):
                 f"{self.weatherinfo[0]}"
             )
 
+
 def fetch_quote(callback):
     def fetch_stoic_quote():
         try:
@@ -343,8 +351,10 @@ def fetch_quote(callback):
 
     callback(quote)
 
+
 def fetch_quote_threaded(callback):
     threading.Thread(target=lambda: fetch_quote(callback), daemon=True).start()
+
 
 class qoute(Label):
     def __init__(self, **kwargs):
@@ -363,8 +373,44 @@ class qoute(Label):
         self.set_label(quote)
         self.set_visible(True)
 
+
+def load_config():
+    config_path = get_relative_path("../config.json")
+    try:
+        with open(config_path, "r") as file:
+            return json.load(file)
+    except Exception as e:
+        print(f"Error reading config: {e}")
+        return {}
+
+
+# Function to create widgets based on config
+def create_widgets(config, widget_type):
+    widgets = []
+    if widget_type == "full":
+        if config.get("desktopwidgets", {}).get("date", False):
+            widgets.append(
+                DateTime(formatters=["%A, %d %B"], interval=10000, name="date")
+            )
+        if config.get("desktopwidgets", {}).get("clock", False):
+            widgets.append(DateTime(formatters=["%I:%M"], name="clock"))
+        if config.get("desktopwidgets", {}).get("quote", False):
+            widgets.append(qoute())
+        if config.get("desktopwidgets", {}).get("weather", False):
+            widgets.append(weather())
+    elif widget_type == "basic":
+        if config.get("desktopwidgets", {}).get("date", False):
+            widgets.append(
+                DateTime(formatters=["%A. %d %B"], interval=10000, name="date")
+            )
+        if config.get("desktopwidgets", {}).get("clock", False):
+            widgets.append(DateTime(formatters=["%I:%M"], name="clock"))
+    return widgets
+
+
 class Deskwidgetsfull(Window):
     def __init__(self, **kwargs):
+        config = load_config()
         super().__init__(
             name="desktop",
             layer="bottom",
@@ -375,43 +421,54 @@ class Deskwidgetsfull(Window):
                 v_expand=True,
                 v_align="center",
                 h_align="center",
-                children=[
-                    DateTime(formatters=["%A, %d %B"], interval=10000, name="date"),
-                    DateTime(formatters=["%I:%M"], name="clock"),
-                    qoute(),
-                    weather(),
-                ],
+                children=create_widgets(config, "full"),
             ),
             all_visible=False,
             **kwargs,
         )
-        sys_widget = Window(
-            layer="bottom",
-            anchor="bottom center",
-            exclusivity="none",
-            child=Box(
-                orientation="v",
-                children=[
-                    Sysinfo(),
-                ],
-            ),
-            all_visible=False,
-        )
+        if config.get("desktopwidgets", {}).get("sysinfo", False):
+            sys_widget = Window(
+                layer="bottom",
+                anchor="bottom center",
+                exclusivity="none",
+                child=Box(
+                    orientation="v",
+                    children=[
+                        Sysinfo(),
+                    ],
+                ),
+                all_visible=False,
+            )
+        else:
+            sys_widget = None
 
 
 class Deskwidgetsbasic(Window):
     def __init__(self, **kwargs):
+        config = load_config()
         super().__init__(name="desktop", **kwargs)
         desktop_widget = Window(
             layer="bottom",
-            anchor="bottom left",  # FYI: there's no anchor named "center" (anchor of "" is == to "center")
+            anchor="bottom left",
             exclusivity="none",
             child=Box(
                 orientation="v",
-                children=[
-                    DateTime(formatters=["%A. %d %B"], interval=10000, name="date"),
-                    DateTime(formatters=["%I:%M"], name="clock"),
-                ],
+                children=create_widgets(config, "basic"),
             ),
             all_visible=True,
         )
+        if config.get("desktopwidgets", {}).get("sysinfo", False):
+            sys_widget = Window(
+                layer="bottom",
+                anchor="bottom center",
+                exclusivity="none",
+                child=Box(
+                    orientation="v",
+                    children=[
+                        Sysinfo(),
+                    ],
+                ),
+                all_visible=False,
+            )
+        else:
+            sys_widget = None
