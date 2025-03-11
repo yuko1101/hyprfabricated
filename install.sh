@@ -61,8 +61,8 @@ else
   git clone "$REPO_URL" "$INSTALL_DIR"
 fi
 
-yes | "$aur_helper" -Syy --devel --needed --noconfirm gray-git
 "$aur_helper" -Syy --devel --needed --noconfirm "${PACKAGES[@]}"
+yes | "$aur_helper" -Syy --devel --needed --noconfirm gray-git
 
 FONT_URL="https://github.com/zed-industries/zed-fonts/releases/download/1.2.0/zed-sans-1.2.0.zip"
 FONT_DIR="$HOME/.fonts/zed-sans"
