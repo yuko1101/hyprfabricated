@@ -13,7 +13,6 @@ from gi.repository import GLib, Gtk, Pango, GdkPixbuf
 import modules.icons as icons
 from modules.buttons import Buttons
 from modules.widgets import Widgets
-from modules.buttons import Buttons
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
 from modules.kanban import Kanban
@@ -85,7 +84,7 @@ class Dashboard(Box):
         self.soon = Image(
             name="coming-soon",
             pixbuf=GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                f"{data.HOME_DIR}/.config/hyprfabricated/assets/soon.png", 366, 300, True
+                f"{data.HOME_DIR}/.config/Ax-Shell/assets/soon.png", 366, 300, True
             ),
         )
 
@@ -182,3 +181,4 @@ class Dashboard(Box):
             new_start_text, new_end_text = random.choice(text_pairs)
             self.coming_soon_start_label.set_text(new_start_text)
             self.coming_soon_end_label.set_text(new_end_text)
+

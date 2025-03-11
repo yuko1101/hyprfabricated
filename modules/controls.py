@@ -409,3 +409,4 @@ class ControlSmall(Box):
             **kwargs,
         )
         self.show_all()
+

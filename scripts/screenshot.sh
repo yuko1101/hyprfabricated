@@ -2,7 +2,7 @@
 
 sleep 0.25
 
-if [ -z "$XDG_PICTURES_DIR" ]; then
+if [ "$XDG_PICTURES_DIR" = "" ]; then
     XDG_PICTURES_DIR="$HOME/Pictures"
 fi
 

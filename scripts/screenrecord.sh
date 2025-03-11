@@ -18,7 +18,7 @@ if pgrep -f "gpu-screen-recorder" >/dev/null; then
     ACTION=$(notify-send -a "Hyprfabricated" "⬜ Recording Saved" \
         -A "view=View" -A "open=Open folder")
 
-    if [ "$ACTION" = "view" ] && [ -n "$LAST_VIDEO" ]; then
+    if [ "$ACTION" = "view" ] && [ "$LAST_VIDEO" != "" ]; then
         xdg-open "$LAST_VIDEO"
     elif [ "$ACTION" = "open" ]; then
         xdg-open "$SAVE_DIR"

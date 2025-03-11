@@ -1,18 +1,17 @@
-import setproctitle
-import os
 import json
-from fabric import Application
-from fabric.utils import get_relative_path
-from config.config import open_config
-from datetime import datetime
-import gi
+import os
 import warnings
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-
-gi.require_version("Gtk", "3.0")
+import gi
+import setproctitle
+from fabric import Application
+from fabric.utils import get_relative_path
 from gi.repository import Gdk
+
+from config.config import open_config
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+gi.require_version("Gtk", "3.0")
 
 screen = Gdk.Screen.get_default()
 CURRENT_WIDTH = screen.get_width()
