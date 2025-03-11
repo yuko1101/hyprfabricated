@@ -50,6 +50,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `brightnessctl`
     - `cava`
     - `gnome-bluetooth-3.0`
+    - `gobject-introspection`
     - `gpu-screen-recorder`
     - `grimblast`
     - `hypridle`
