@@ -443,8 +443,6 @@ class HyprConfGUI(Gtk.Window):
             with open(hyprland_config_path, "a") as f:
                 f.write(SOURCE_STRING)
 
-        subprocess.run(["hyprctl", "reload"])
-
         start_config()
         self.destroy()
 

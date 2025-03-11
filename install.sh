@@ -75,9 +75,6 @@ $aur_helper -Syy --needed --noconfirm "${PACKAGES[@]}" || true
 echo "Installing gray-git..."
 yes | $aur_helper -Syy --needed --noconfirm gray-git || true
 
-cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
-cp "$INSTALL_DIR/assets/colors.css" ~/.config/Ax-Shell/styles/colors.css
-
 echo "Installing required fonts..."
 
 FONT_URL="https://github.com/zed-industries/zed-fonts/releases/download/1.2.0/zed-sans-1.2.0.zip"
