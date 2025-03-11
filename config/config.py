@@ -147,21 +147,6 @@ def ensure_matugen_config():
         image_path = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
         os.system(f"matugen image {image_path}")
 
-
-def ensure_fonts():
-    """
-    Ensure that required fonts are installed.
-    """
-    fonts_to_copy = [
-        ('~/.fonts/zed-sans/', f'~/.config/{data.APP_NAME_CAP}/assets/fonts/zed-sans/'),
-        ('~/.fonts/tabler-icons/', f'~/.config/{data.APP_NAME_CAP}/assets/fonts/tabler-icons/')
-    ]
-    for dest_font, src_font in fonts_to_copy:
-        dest_path = os.path.expanduser(dest_font)
-        if not os.path.exists(dest_path):
-            shutil.copytree(os.path.expanduser(src_font), dest_path)
-
-
 def load_bind_vars():
     """
     Load saved key binding variables from JSON, if available.
@@ -486,7 +471,6 @@ def open_config():
     """
     Entry point for opening the configuration GUI.
     """
-    ensure_fonts()
     load_bind_vars()
 
     # Check and copy hyprlock config if needed
