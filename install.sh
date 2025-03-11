@@ -75,11 +75,6 @@ $aur_helper -Syy --needed --noconfirm "${PACKAGES[@]}" || true
 echo "Installing gray-git..."
 yes | $aur_helper -Syy --needed --noconfirm gray-git || true
 
-python "$INSTALL_DIR/config/config.py"
-echo "Starting Ax-Shell..."
-killall ax-shell 2>/dev/null || true
-uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
-
 cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
 cp "$INSTALL_DIR/assets/colors.css" ~/.config/Ax-Shell/styles/colors.css
 
@@ -112,5 +107,10 @@ if [ ! -d "$HOME/.fonts/tabler-icons" ]; then
 else
     echo "Local fonts are already installed. Skipping copy."
 fi
+
+python "$INSTALL_DIR/config/config.py"
+echo "Starting Ax-Shell..."
+killall ax-shell 2>/dev/null || true
+uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 
 echo "Installation complete."
