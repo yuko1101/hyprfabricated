@@ -137,12 +137,14 @@ class Dock(Window):
     # New method to find the DesktopApp using the given identifier.
     def find_app(self, app_identifier):
         """Return the DesktopApp object by matching the executable or display name."""
-        # Try matching by executable key first
-        if app_identifier in self.app_map:
-            return self.app_map[app_identifier]
+        normalized_id = app_identifier.lower()
+        # Try matching by executable key, checking case-insensitively.
+        for key, desktop_app in self.app_map.items():
+            if key.lower() == normalized_id:
+                return desktop_app
         # Otherwise, try a case-insensitive comparison with display_name
         for desktop_app in self.app_map.values():
-            if desktop_app.display_name and desktop_app.display_name.lower() == app_identifier.lower():
+            if desktop_app.display_name and desktop_app.display_name.lower() == normalized_id:
                 return desktop_app
         return None
 
@@ -285,17 +287,20 @@ class Dock(Window):
         for c in clients:
             key = c["initialClass"].lower()
             running.setdefault(key, []).append(c)
+        
+        # Create buttons for pinned apps. Note that if an app is pinned but not running,
+        # an empty instance list is passed.
         pinned_buttons = [
-            self.create_button(app, running.get(app.lower(), [])) for app in self.pinned
+            self.create_button(app, running.get(app.lower(), []))
+            for app in self.pinned
         ]
-        open_buttons = [
-            self.create_button(
-                c["initialClass"], running.get(c["initialClass"].lower(), [])
-            )
-            for group in running.values()
-            for c in group
-            if c["initialClass"].lower() not in [p.lower() for p in self.pinned]
-        ]
+        
+        # For open (unpinned) apps, group by unique application key rather than per instance.
+        open_buttons = []
+        for app, instances in running.items():
+            if app not in [p.lower() for p in self.pinned]:
+                open_buttons.append(self.create_button(app, instances))
+        
         children = pinned_buttons
         if pinned_buttons and open_buttons:
             children += [Box(orientation="v", v_expand=True, name="dock-separator")]
