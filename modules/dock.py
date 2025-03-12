@@ -1,5 +1,5 @@
 import json
-from gi.repository import GLib, Gtk, Gdk
+from gi.repository import GLib, Gtk, Gdk, Gio
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
 from fabric.widgets.box import Box
@@ -8,17 +8,10 @@ from fabric.widgets.image import Image
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import get_hyprland_connection
-from fabric.utils import (
-    exec_shell_command,
-    exec_shell_command_async,
-    idle_add,
-    remove_handler,
-    get_relative_path,
-)
+from fabric.utils import exec_shell_command, exec_shell_command_async, idle_add, remove_handler, get_relative_path
 from fabric.utils.helpers import get_desktop_applications
 
 import config.data as data
-
 
 def read_config():
     """Read and return the full configuration from the JSON file, handling missing file."""
@@ -29,7 +22,6 @@ def read_config():
     except (FileNotFoundError, json.JSONDecodeError):
         data = {"pinned_apps": []}  # Default to empty pinned apps
     return data
-
 
 class Dock(Window):
     def __init__(self, **kwargs):
@@ -69,21 +61,19 @@ class Dock(Window):
         self.hover_activator.connect("enter-notify-event", self._on_hover_enter)
         self.hover_activator.connect("leave-notify-event", self._on_hover_leave)
 
-        self.main_box = Box(
-            orientation="v", children=[self.dock_eventbox, self.hover_activator]
-        )
+        self.main_box = Box(orientation="v", children=[self.dock_eventbox, self.hover_activator])
         self.add(self.main_box)
 
         # Drag-and-drop setup for the viewport
         self.view.drag_source_set(
             Gdk.ModifierType.BUTTON1_MASK,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-            Gdk.DragAction.MOVE,
+            Gdk.DragAction.MOVE
         )
         self.view.drag_dest_set(
             Gtk.DestDefaults.ALL,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-            Gdk.DragAction.MOVE,
+            Gdk.DragAction.MOVE
         )
         self.view.connect("drag-data-get", self.on_drag_data_get)
         self.view.connect("drag-data-received", self.on_drag_data_received)
@@ -140,9 +130,7 @@ class Dock(Window):
         # Immediate occlusion check on true leave
         occlusion_region = (0, data.CURRENT_HEIGHT - 70, data.CURRENT_WIDTH, 70)
         # Only add occlusion style if not dragging an icon.
-        if not self._drag_in_progress and (
-            check_occlusion(occlusion_region) or not self.view.get_children()
-        ):
+        if not self._drag_in_progress and (check_occlusion(occlusion_region) or not self.view.get_children()):
             self.wrapper.add_style_class("occluded")
         return True
 
@@ -154,10 +142,7 @@ class Dock(Window):
             return self.app_map[app_identifier]
         # Otherwise, try a case-insensitive comparison with display_name
         for desktop_app in self.app_map.values():
-            if (
-                desktop_app.display_name
-                and desktop_app.display_name.lower() == app_identifier.lower()
-            ):
+            if desktop_app.display_name and desktop_app.display_name.lower() == app_identifier.lower():
                 return desktop_app
         return None
 
@@ -178,9 +163,7 @@ class Dock(Window):
             icon_img = self.icon.get_icon_pixbuf(app, 36)
         if not icon_img:
             # Fallback icon if no DesktopApp is found
-            icon_img = self.icon.get_icon_pixbuf(
-                "application-x-executable-symbolic", 36
-            )
+            icon_img = self.icon.get_icon_pixbuf("application-x-executable-symbolic", 36)
             # Final fallback
             if not icon_img:
                 icon_img = self.icon.get_icon_pixbuf("image-missing", 36)
@@ -194,11 +177,7 @@ class Dock(Window):
                 children=items,
             ),
             on_clicked=lambda *a: self.handle_app(app, instances),
-            tooltip_text=(
-                app
-                if app.lower() in [p.lower() for p in self.pinned]
-                else (instances[0]["title"] if instances else app)
-            ),
+            tooltip_text=app if app.lower() in [p.lower() for p in self.pinned] else (instances[0]["title"] if instances else app),
             name="dock-app-button",
         )
 
@@ -210,17 +189,15 @@ class Dock(Window):
         button.drag_source_set(
             Gdk.ModifierType.BUTTON1_MASK,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-            Gdk.DragAction.MOVE,
+            Gdk.DragAction.MOVE
         )
         button.connect("drag-begin", self.on_drag_begin)
         button.connect("drag-end", self.on_drag_end)  # Connect drag-end to ALL buttons
-        if app.lower() in [
-            p.lower() for p in self.pinned
-        ]:  # Only pinned apps can be reordered
+        if app.lower() in [p.lower() for p in self.pinned]:  # Only pinned apps can be reordered
             button.drag_dest_set(
                 Gtk.DestDefaults.ALL,
                 [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-                Gdk.DragAction.MOVE,
+                Gdk.DragAction.MOVE
             )
             button.connect("drag-data-get", self.on_drag_data_get)
             button.connect("drag-data-received", self.on_drag_data_received)
@@ -380,18 +357,14 @@ class Dock(Window):
 
     def on_drag_data_get(self, widget, drag_context, data, info, time):
         """Handle drag start"""
-        target = self._find_drag_target(
-            widget.get_parent() if isinstance(widget, Box) else widget
-        )
+        target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
         if target is not None:
             index = self.view.get_children().index(target)
             data.set_text(str(index), -1)
 
     def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
         """Handle drop event"""
-        target = self._find_drag_target(
-            widget.get_parent() if isinstance(widget, Box) else widget
-        )
+        target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
         if target is None:
             return
         try:
@@ -426,9 +399,7 @@ class Dock(Window):
                 window = self.get_window()
                 if window:  # Check if we got a window
                     win_x, win_y, width, height = window.get_geometry()
-                    if not (
-                        win_x <= x <= win_x + width and win_y <= y <= win_y + height
-                    ):
+                    if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
                         # Drag ended outside the dock
                         app_to_remove = widget.get_tooltip_text()
                         instances = widget.instances  # Access the attribute directly
@@ -440,9 +411,7 @@ class Dock(Window):
                             # Assuming the first instance is the relevant one.
                             address = instances[0].get("address")
                             if address:
-                                exec_shell_command(
-                                    f"hyprctl dispatch closewindow address:{address}"
-                                )
+                                exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
             self.update_dock()  # Always update the dock after drag end
 
         GLib.idle_add(process_drag_end)  # Deferred execution with idle_add

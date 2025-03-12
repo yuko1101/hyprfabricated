@@ -14,11 +14,13 @@ from fabric.core.fabricator import Fabricator
 
 import modules.icons as icons
 
+
 class MetricsProvider:
     """
     Class responsible for obtaining centralized CPU, memory, and disk usage metrics.
     It updates periodically so that all widgets querying it display the same values.
     """
+
     def __init__(self):
         self.cpu = 0.0
         self.mem = 0.0
@@ -37,8 +39,10 @@ class MetricsProvider:
     def get_metrics(self):
         return (self.cpu, self.mem, self.disk)
 
+
 # Global instance to share data between both widgets.
 shared_provider = MetricsProvider()
+
 
 class Metrics(Box):
     def __init__(self, **kwargs):
@@ -54,9 +58,9 @@ class Metrics(Box):
         self.cpu_usage = Scale(
             name="cpu-usage",
             value=0.25,
-            orientation='v',
+            orientation="v",
             inverted=True,
-            v_align='fill',
+            v_align="fill",
             v_expand=True,
         )
 
@@ -67,20 +71,20 @@ class Metrics(Box):
 
         self.cpu = Box(
             name="cpu-box",
-            orientation='v',
+            orientation="v",
             spacing=8,
             children=[
                 self.cpu_usage,
                 self.cpu_label,
-            ]
+            ],
         )
 
         self.ram_usage = Scale(
             name="ram-usage",
             value=0.5,
-            orientation='v',
+            orientation="v",
             inverted=True,
-            v_align='fill',
+            v_align="fill",
             v_expand=True,
         )
 
@@ -91,20 +95,20 @@ class Metrics(Box):
 
         self.ram = Box(
             name="ram-box",
-            orientation='v',
+            orientation="v",
             spacing=8,
             children=[
                 self.ram_usage,
                 self.ram_label,
-            ]
+            ],
         )
 
         self.disk_usage = Scale(
             name="disk-usage",
             value=0.75,
-            orientation='v',
+            orientation="v",
             inverted=True,
-            v_align='fill',
+            v_align="fill",
             v_expand=True,
         )
 
@@ -115,12 +119,12 @@ class Metrics(Box):
 
         self.disk = Box(
             name="disk-box",
-            orientation='v',
+            orientation="v",
             spacing=8,
             children=[
                 self.disk_usage,
                 self.disk_label,
-            ]
+            ],
         )
 
         self.scales = [
@@ -149,6 +153,7 @@ class Metrics(Box):
         self.disk_usage.value = disk / 100.0
 
         return True  # Continue calling this function.
+
 
 class MetricsSmall(Overlay):
     def __init__(self, **kwargs):
@@ -252,6 +257,7 @@ class MetricsSmall(Overlay):
             start_angle=150,
             end_angle=390,
             style_classes="bat",
+            child=self.bat_icon,
         )
         self.bat_level = Label(name="metrics-level", style_classes="bat", label="100%")
         self.bat_revealer = Revealer(
@@ -287,14 +293,19 @@ class MetricsSmall(Overlay):
             child=main_box,
             visible=True,
             all_visible=True,
-            overlays=[event_box]
+            overlays=[event_box],
         )
 
         # Actualización de métricas cada segundo
         GLib.timeout_add_seconds(1, self.update_metrics)
 
         # Actualización de la batería cada segundo
-        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
+        self.batt_fabricator = Fabricator(
+            lambda *args, **kwargs: self.poll_battery(),
+            interval=1000,
+            stream=False,
+            default_value=0,
+        )
         self.batt_fabricator.changed.connect(self.update_battery)
         GLib.idle_add(self.update_battery, None, self.poll_battery())
 
@@ -352,8 +363,8 @@ class MetricsSmall(Overlay):
             output = subprocess.check_output(["acpi", "-b"]).decode("utf-8").strip()
             if "Battery" not in output:
                 return (0, None)
-            match_percent = re.search(r'(\d+)%', output)
-            match_status = re.search(r'Battery \d+: (\w+)', output)
+            match_percent = re.search(r"(\d+)%", output)
+            match_status = re.search(r"Battery \d+: (\w+)", output)
             if match_percent:
                 percent = int(match_percent.group(1))
                 status = match_status.group(1) if match_status else None

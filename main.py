@@ -39,16 +39,15 @@ if __name__ == "__main__":
         assets.append(corners)
     if config["Basic"]["bar"]:
         from modules.bar import Bar
+        from modules.notch import Notch
 
         bar = Bar()
         assets.append(bar)
-    if config["Basic"]["notch"]:
-        from modules.notch import Notch
-
         notch = Notch()
         bar.notch = notch
         notch.bar = bar
         assets.append(notch)
+
     if config["Basic"]["dock"]:
         from modules.dock import Dock
 
