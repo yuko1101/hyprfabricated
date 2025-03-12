@@ -60,4 +60,3 @@ class Weather(Box):
             print(f"Error fetching weather: {e}")
             GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Error")
             GLib.idle_add(self.set_visible, False)
-

@@ -6,7 +6,14 @@ from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
 from fabric.widgets.image import Image
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async, get_relative_path
+from fabric.utils import (
+    DesktopApp,
+    get_desktop_applications,
+    idle_add,
+    remove_handler,
+    exec_shell_command_async,
+    get_relative_path,
+)
 from gi.repository import GLib, Gdk
 import modules.icons as icons
 import config.data as data
@@ -15,6 +22,7 @@ import os
 import re
 import math
 import subprocess
+
 
 class AppLauncher(Box):
     def __init__(self, **kwargs):
@@ -45,10 +53,13 @@ class AppLauncher(Box):
             placeholder="Search Applications...",
             h_expand=True,
             notify_text=lambda entry, *_: (
-                self.update_calculator_viewport() if entry.get_text().startswith("=")
+                self.update_calculator_viewport()
+                if entry.get_text().startswith("=")
                 else self.arrange_viewport(entry.get_text())
             ),
-            on_activate=lambda entry, *_: self.on_search_entry_activate(entry.get_text()),
+            on_activate=lambda entry, *_: self.on_search_entry_activate(
+                entry.get_text()
+            ),
             on_key_press_event=self.on_search_entry_key_press,  # Handle key presses
         )
         self.search_entry.props.xalign = 0.5
@@ -68,14 +79,17 @@ class AppLauncher(Box):
                 Button(
                     name="config-button",
                     child=Label(name="config-label", markup=icons.config),
-                    on_clicked=lambda *_: (exec_shell_command_async(f"python {self.configpath}"), self.close_launcher()),
+                    on_clicked=lambda *_: (
+                        exec_shell_command_async(f"python {self.configpath}"),
+                        self.close_launcher(),
+                    ),
                 ),
                 self.search_entry,
                 Button(
                     name="close-button",
                     child=Label(name="close-label", markup=icons.cancel),
                     tooltip_text="Exit",
-                    on_clicked=lambda *_: self.close_launcher()
+                    on_clicked=lambda *_: self.close_launcher(),
                 ),
             ],
         )
@@ -132,7 +146,8 @@ class AppLauncher(Box):
         should_resize = operator.length_hint(filtered_apps_iter) == len(self._all_apps)
 
         self._arranger_handler = idle_add(
-            lambda apps_iter: self.add_next_application(apps_iter) or self.handle_arrange_complete(should_resize, query),
+            lambda apps_iter: self.add_next_application(apps_iter)
+            or self.handle_arrange_complete(should_resize, query),
             filtered_apps_iter,
             pin=True,
         )
@@ -165,7 +180,11 @@ class AppLauncher(Box):
                 orientation="h",
                 spacing=10,
                 children=[
-                    Image(name="app-icon", pixbuf=app.get_icon_pixbuf(size=24), h_align="start"),
+                    Image(
+                        name="app-icon",
+                        pixbuf=app.get_icon_pixbuf(size=24),
+                        h_align="start",
+                    ),
                     Label(
                         name="app-label",
                         label=app.display_name or "Unknown",
@@ -183,7 +202,9 @@ class AppLauncher(Box):
 
     def update_selection(self, new_index: int):
         # Unselect current
-        if self.selected_index != -1 and self.selected_index < len(self.viewport.get_children()):
+        if self.selected_index != -1 and self.selected_index < len(
+            self.viewport.get_children()
+        ):
             current_button = self.viewport.get_children()[self.selected_index]
             current_button.get_style_context().remove_class("selected")
         # Select new
@@ -220,6 +241,7 @@ class AppLauncher(Box):
                 adj.set_value(new_value)
             # No action if already fully visible
             return False
+
         GLib.idle_add(scroll)
 
     def on_search_entry_activate(self, text):
@@ -241,12 +263,16 @@ class AppLauncher(Box):
                     # Only activate if we have selection or non-empty query
                     if text.strip() == "" and self.selected_index == -1:
                         return  # Prevent accidental activation when empty
-                    selected_index = self.selected_index if self.selected_index != -1 else 0
+                    selected_index = (
+                        self.selected_index if self.selected_index != -1 else 0
+                    )
                     if 0 <= selected_index < len(children):
                         children[selected_index].clicked()
 
     def on_search_entry_key_press(self, widget, event):
-        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter) and (event.state & Gdk.ModifierType.SHIFT_MASK):
+        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter) and (
+            event.state & Gdk.ModifierType.SHIFT_MASK
+        ):
             self.add_selected_app_to_dock()
             return True
         text = widget.get_text()
@@ -290,13 +316,25 @@ class AppLauncher(Box):
     def add_selected_app_to_dock(self):
         """Adds the currently selected application to the dock.json file."""
         children = self.viewport.get_children()
-        if not children or self.selected_index == -1 or self.selected_index >= len(children):
+        if (
+            not children
+            or self.selected_index == -1
+            or self.selected_index >= len(children)
+        ):
             return  # No app selected
 
         selected_button = children[self.selected_index]
         # Assuming the app's name/command is stored in the tooltip_text of the button.
         # We need to extract the app's command from the DesktopApp object.
-        selected_app = next((app for app in self._all_apps if app.display_name == selected_button.get_child().get_children()[1].props.label), None)
+        selected_app = next(
+            (
+                app
+                for app in self._all_apps
+                if app.display_name
+                == selected_button.get_child().get_children()[1].props.label
+            ),
+            None,
+        )
         if not selected_app:
             return
 
@@ -308,7 +346,7 @@ class AppLauncher(Box):
                 data = json.load(file)
         except (FileNotFoundError, json.JSONDecodeError):
             data = {}  # Initialize as an empty dictionary if file not found or corrupted
-            with open(config_path, "w") as file: #create the file
+            with open(config_path, "w") as file:  # create the file
                 pass
         if app_command not in data.get("pinned_apps", []):
             data.setdefault("pinned_apps", []).append(app_command)
@@ -339,7 +377,7 @@ class AppLauncher(Box):
         # Replace operators: '^' -> '**', and '×' -> '*'
         expr = expr.replace("^", "**").replace("×", "*")
         # Replace factorial: e.g. 5! -> math.factorial(5)
-        expr = re.sub(r'(\d+)!', r'math.factorial(\1)', expr)
+        expr = re.sub(r"(\d+)!", r"math.factorial(\1)", expr)
         # Replace brackets: allow [] and {} as ()
         for old, new in [("[", "("), ("]", ")"), ("{", "("), ("}", ")")]:
             expr = expr.replace(old, new)

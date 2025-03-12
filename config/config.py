@@ -520,7 +520,7 @@ class HyprConfGUI(Gtk.Window):
 
         try:
             subprocess.Popen(
-                f"killall {data.APP_NAME}; uwsm app -- python {data.HOME_DIR}/.config/{data.APP_NAME}/main.py",
+                f"killall {data.APP_NAME}; uwsm app -- python {data.HOME_DIR}/.config/{data.APP_NAME_CAP}/main.py",
                 shell=True,
                 start_new_session=True,
             )
@@ -551,7 +551,7 @@ class HyprConfGUI(Gtk.Window):
 
         try:
             subprocess.Popen(
-                f"killall {data.APP_NAME}; uwsm app -- python {data.HOME_DIR}/.config/{data.APP_NAME}/main.py",
+                f"killall {data.APP_NAME}; uwsm app -- python {data.HOME_DIR}/.config/{data.APP_NAME_CAP}/main.py",
                 shell=True,
                 start_new_session=True,
             )
