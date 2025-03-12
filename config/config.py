@@ -1,15 +1,17 @@
-import config.data as data
+import subprocess
+import data
 import os
 import json
 import shutil
-import gi
 from fabric.utils.helpers import get_relative_path
-from gi.repository import Gtk
-from PIL import Image
 import toml
+
+from PIL import Image
+import gi
 
 gi.require_version("Gtk", "3.0")
 
+from gi.repository import Gtk  # noqa: E402
 
 SOURCE_STRING = f"""
 # {data.APP_NAME_CAP}
@@ -37,6 +39,8 @@ bind_vars = {
     "suffix_overview": "TAB",
     "prefix_emoji": "SUPER",
     "suffix_emoji": "PERIOD",
+    "prefix_config": "SUPER",
+    "suffix_config": "I",
     "prefix_power": "SUPER",
     "suffix_power": "ESCAPE",
     "prefix_toggle": "SUPER CTRL",
@@ -131,7 +135,9 @@ def ensure_matugen_config():
         image_path = os.path.expanduser(
             f"~/.config/{data.APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg"
         )
-        os.system(f"matugen image {image_path}")
+        subprocess.Popen(
+            f"matugen image {image_path}", shell=True, start_new_session=True
+        )
 
 
 def load_bind_vars():
@@ -175,6 +181,7 @@ bind = {bind_vars["prefix_toggle"]}, {bind_vars["suffix_toggle"]}, exec, $fabric
 bind = {bind_vars["prefix_toggle"]}, {bind_vars["suffix_toggle"]}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars["prefix_css"]}, {bind_vars["suffix_css"]}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
 bind = {bind_vars["prefix_restart_inspector"]}, {bind_vars["suffix_restart_inspector"]}, exec, killall {data.APP_NAME}; GTK_DEBUG=interactive uwsm app -- python {home}/.config/{data.APP_NAME_CAP}/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
+bind = {bind_vars["prefix_config"]}, {bind_vars["suffix_config"]}, exec,uwsm app -- python {home}/.config/{data.APP_NAME_CAP}/config/config.py # restart with inspector | default: super ctrl alt + b
 
 # Wallpapers directory: {bind_vars["wallpapers_dir"]}
 
@@ -259,13 +266,50 @@ class HyprConfGUI(Gtk.Window):
 
         self.selected_face_icon = None
 
-        # Use a grid for a more homogeneous layout
+        # Create a vertical box to hold the dropdown and the content area
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.add(vbox)
+
+        # Dropdown menu for selecting config type
+        self.config_selector = Gtk.ComboBoxText()
+        self.config_selector.append_text("Keybinds Config")
+        self.config_selector.append_text("General Config")
+        self.config_selector.set_active(0)
+        self.config_selector.connect("changed", self.on_config_selected)
+        vbox.pack_start(self.config_selector, False, False, 0)
+
+        # Stack to switch between different config views
+        self.stack = Gtk.Stack()
+        vbox.pack_start(self.stack, True, True, 0)
+
+        # Keybinds Config UI
+        self.keybinds_grid = self.create_keybinds_grid(
+            show_lock_checkbox, show_idle_checkbox
+        )
+        self.stack.add_titled(self.keybinds_grid, "keybinds", "Keybinds Config")
+
+        # General Config UI
+        self.general_grid = self.create_general_grid()
+        self.stack.add_titled(self.general_grid, "general", "General Config")
+
+        # Apply and Close buttons
+        button_box = Gtk.Box(spacing=10)
+        vbox.pack_start(button_box, False, False, 0)
+
+        apply_btn = Gtk.Button(label="Apply")
+        apply_btn.connect("clicked", self.on_apply)
+        button_box.pack_start(apply_btn, True, True, 0)
+
+        close_btn = Gtk.Button(label="Close")
+        close_btn.connect("clicked", self.on_close)
+        button_box.pack_start(close_btn, True, True, 0)
+
+    def create_keybinds_grid(self, show_lock_checkbox, show_idle_checkbox):
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
         grid.set_margin_top(10)
         grid.set_margin_bottom(10)
         grid.set_margin_start(10)
         grid.set_margin_end(10)
-        self.add(grid)
 
         # Header label spanning across columns
         header = Gtk.Label(label="Configure Key Bindings")
@@ -285,6 +329,7 @@ class HyprConfGUI(Gtk.Window):
             ("Power Menu", "prefix_power", "suffix_power"),
             ("Toggle Bar and Notch", "prefix_toggle", "suffix_toggle"),
             ("Reload CSS", "prefix_css", "suffix_css"),
+            ("Open Config", "prefix_config", "suffix_config"),
             (
                 "Restart with inspector",
                 "prefix_restart_inspector",
@@ -348,13 +393,171 @@ class HyprConfGUI(Gtk.Window):
             grid.attach(self.idle_checkbox, 2, row, 2, 1)
         row += 1
 
-        # Row for Cancel and Accept buttons, aligned to the right
-        cancel_btn = Gtk.Button(label="Cancel")
-        cancel_btn.connect("clicked", self.on_cancel)
-        accept_btn = Gtk.Button(label="Accept")
-        accept_btn.connect("clicked", self.on_accept)
-        grid.attach(cancel_btn, 2, row, 1, 1)
-        grid.attach(accept_btn, 3, row, 1, 1)
+        return grid
+
+    def create_general_grid(self):
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        grid = Gtk.Grid(column_spacing=10, row_spacing=10)
+        grid.set_margin_top(10)
+        grid.set_margin_bottom(10)
+        grid.set_margin_start(10)
+        grid.set_margin_end(10)
+        scrolled_window.add(grid)
+
+        self.general_entries = []
+
+        # Load general config from JSON
+        config_json = get_relative_path("../config.json")
+        with open(config_json, "r") as f:
+            self.general_config = json.load(f)
+
+        self.add_config_to_grid(grid, self.general_config, 0)
+
+        return scrolled_window
+
+    def add_config_to_grid(self, grid, config, row, parent_key="", tooltips=None):
+        if tooltips is None:
+            tooltips = config.get("tooltip", {})
+
+        for key, value in config.items():
+            if key == "tooltip":
+                continue  # Skip the tooltip section
+
+            full_key = f"{parent_key}.{key}" if parent_key else key
+            if isinstance(value, dict):
+                section_label = Gtk.Label()
+                section_label.set_markup(f"<b>{key.upper()}</b>")
+                section_label.set_halign(Gtk.Align.START)
+                section_label.set_margin_top(10)
+                section_label.set_margin_bottom(5)
+                grid.attach(section_label, 0, row, 2, 1)
+                row += 1
+                row = self.add_config_to_grid(grid, value, row, full_key, tooltips)
+            else:
+                # Check for a tooltip in the tooltips section
+                comment = tooltips.get(f"{key}_tooltip", "")
+
+                option_label = Gtk.Label(label=key.capitalize())
+                option_label.set_halign(Gtk.Align.START)
+                if comment:
+                    option_label.set_tooltip_text(comment)
+                grid.attach(option_label, 0, row, 1, 1)
+
+                if isinstance(value, bool):
+                    option_widget = Gtk.Switch()
+                    option_widget.set_active(value)
+                    option_widget.set_size_request(
+                        60, 20
+                    )  # Set width request to a smaller value
+                else:
+                    option_widget = Gtk.Entry()
+                    option_widget.set_text(str(value))
+                    option_widget.set_width_chars(20)  # Set a fixed width for the entry
+
+                if comment:
+                    option_widget.set_tooltip_text(comment)
+
+                # Use a Gtk.Box to contain the widget and control its expansion
+                box = Gtk.Box()
+                box.pack_start(option_widget, False, False, 0)
+                grid.attach(box, 1, row, 1, 1)
+
+                self.general_entries.append((full_key, option_widget))
+                row += 1
+        return row
+
+    def on_config_selected(self, widget):
+        active_text = widget.get_active_text()
+        if active_text == "Keybinds Config":
+            self.stack.set_visible_child(self.keybinds_grid)
+        elif active_text == "General Config":
+            self.stack.set_visible_child(self.general_grid)
+
+    def on_apply(self, widget):
+        active_text = self.config_selector.get_active_text()
+        print(f"Applying configuration for: {active_text}")
+        if active_text == "Keybinds Config":
+            self.save_keybinds_config()
+        elif active_text == "General Config":
+            self.save_general_config()
+
+    def save_keybinds_config(self):
+        print("Saving keybinds configuration...")
+        for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
+            bind_vars[prefix_key] = prefix_entry.get_text()
+            bind_vars[suffix_key] = suffix_entry.get_text()
+            print(
+                f"Updated {prefix_key}: {bind_vars[prefix_key]}, {suffix_key}: {bind_vars[suffix_key]}"
+            )
+
+        # Update wallpaper directory
+        bind_vars["wallpapers_dir"] = self.wall_dir_chooser.get_filename()
+
+        config_json = os.path.expanduser(
+            f"~/.config/{data.APP_NAME_CAP}/config/config.json"
+        )
+        os.makedirs(os.path.dirname(config_json), exist_ok=True)
+        try:
+            with open(config_json, "w") as f:
+                json.dump(bind_vars, f, indent=4)
+            print(f"Keybinds configuration saved to {config_json}")
+        except Exception as e:
+            print(f"Error saving keybinds configuration: {e}")
+
+        # Update the Hyprland configuration file
+        hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
+        try:
+            with open(hyprland_config_path, "r") as f:
+                content = f.read()
+            if SOURCE_STRING not in content:
+                with open(hyprland_config_path, "a") as f:
+                    f.write(SOURCE_STRING)
+            print(f"Hyprland configuration updated at {hyprland_config_path}")
+        except Exception as e:
+            print(f"Error updating Hyprland configuration: {e}")
+        start_config()
+
+        try:
+            subprocess.Popen(
+                f"killall {data.APP_NAME}; uwsm app -- python {data.HOME_DIR}/.config/{data.APP_NAME}/main.py",
+                shell=True,
+                start_new_session=True,
+            )
+            print("Hyprfabricated process restarted.")
+        except Exception as e:
+            print(f"Error restarting Hyprfabricated process: {e}")
+
+    def save_general_config(self):
+        print("Saving general configuration...")
+        for full_key, widget in self.general_entries:
+            keys = full_key.split(".")
+            config_section = self.general_config
+            for key in keys[:-1]:
+                config_section = config_section[key]
+            if isinstance(widget, Gtk.Switch):
+                config_section[keys[-1]] = widget.get_active()
+            else:
+                config_section[keys[-1]] = widget.get_text()
+            print(f"Updated {full_key}: {config_section[keys[-1]]}")
+
+        config_json = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config.json")
+        try:
+            with open(config_json, "w") as f:
+                json.dump(self.general_config, f, indent=4)
+            print(f"General configuration saved to {config_json}")
+        except Exception as e:
+            print(f"Error saving general configuration: {e}")
+
+        try:
+            subprocess.Popen(
+                f"killall {data.APP_NAME}; uwsm app -- python {data.HOME_DIR}/.config/{data.APP_NAME}/main.py",
+                shell=True,
+                start_new_session=True,
+            )
+            print("Hyprfabricated process restarted.")
+        except Exception as e:
+            print(f"Error restarting Hyprfabricated process: {e}")
 
     def on_select_face_icon(self, widget):
         """
@@ -447,7 +650,7 @@ class HyprConfGUI(Gtk.Window):
         start_config()
         self.destroy()
 
-    def on_cancel(self, widget):
+    def on_close(self, widget):
         self.destroy()
 
 

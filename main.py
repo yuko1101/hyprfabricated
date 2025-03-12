@@ -7,8 +7,8 @@ import setproctitle
 from fabric import Application
 from fabric.utils import get_relative_path
 from gi.repository import Gdk
-import modules.data as data
-from config.config import open_config
+import config.data as data
+
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 gi.require_version("Gtk", "3.0")
@@ -28,9 +28,6 @@ def load_config():
 
 if __name__ == "__main__":
     setproctitle.setproctitle("hyprfabricated")
-
-    if not os.path.isfile(hyprconf):
-        open_config()
 
     config = load_config()
 
@@ -71,7 +68,6 @@ if __name__ == "__main__":
             assets.append(widgets)
             pass
 
-
     app = Application(f"{data.APP_NAME}", *assets)
 
     def set_css():
@@ -87,4 +83,3 @@ if __name__ == "__main__":
 
     app.set_css()
     app.run()
-

@@ -66,7 +66,7 @@ def get_weather(callback):
                 with open(config_path, "r") as file:
                     config = json.load(file)
 
-                temp_unit = config.get("temp", "C")
+                temp_unit = config.get("Temprature_Unit", "C")
                 if temp_unit == "F":
                     temp = f"{responseinfo['current_condition'][0]['temp_F']}°"
                     feels_like = (
@@ -470,4 +470,3 @@ class Deskwidgetsbasic(Window):
             )
         else:
             sys_widget = None
-

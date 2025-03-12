@@ -68,7 +68,7 @@ class AppLauncher(Box):
                 Button(
                     name="config-button",
                     child=Label(name="config-label", markup=icons.config),
-                    on_clicked=lambda *_: (exec_shell_command_async(f"python {get_relative_path('../config/config.py')}"), self.close_launcher()),
+                    on_clicked=lambda *_: (exec_shell_command_async(f"python {self.configpath}"), self.close_launcher()),
                 ),
                 self.search_entry,
                 Button(

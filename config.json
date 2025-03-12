@@ -1,36 +1,42 @@
 {
-  "city": "",
-  "temp": "C",
-  "quotetype": "stoic",
-  "Basic": {
-    "corners": true,
-    "bar": true,
-    "notch": true,
-    "widgets": true,
-    "dock": false
-  },
-  "Bar": {
-    "systray": true,
-    "workspaces": true,
-    "buttonapps": true,
-    "buttontools": true,
-    "datetime": true,
-    "buttonpower": true,
-    "Barright": {
-      "metrics": false,
-      "controls": true
+    "city": "",
+    "Temprature_Unit": "C",
+    "quotetype": "stoic",
+    "Basic": {
+        "corners": true,
+        "bar": true,
+        "notch": true,
+        "widgets": true,
+        "dock": false
     },
-    "Barleft": {
-      "weather": false,
-      "overview": true
-    }
-  },
+    "Bar": {
+        "systray": true,
+        "workspaces": true,
+        "buttonapps": true,
+        "buttontools": true,
+        "datetime": true,
+        "buttonpower": true,
+        "Barright": {
+            "metrics": false,
+            "controls": true
+        },
+        "Barleft": {
+            "weather": false,
+            "overview": true
+        }
+    },
     "widgetstyle": "full",
-  "desktopwidgets": {
-    "date": true,
-    "clock": true,
-    "quote": true,
-    "weather": true,
-    "sysinfo": true
-  }
+    "desktopwidgets": {
+        "date": true,
+        "clock": true,
+        "quote": true,
+        "weather": true,
+        "sysinfo": true
+    },
+    "tooltip": {
+        "Temprature_Unit_tooltip": "C for Celsius, F for Fahrenheit",
+        "quotetype_tooltip": "stoic for Stoic quotes, zen for Random quotes",
+        "city_tooltip": "Enter the city name for weather updates",
+        "widgetstyle_tooltip": "full for full widgets, basic for minimal widgets"
+    }
 }
