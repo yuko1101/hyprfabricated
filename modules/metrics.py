@@ -358,6 +358,100 @@ class MetricsSmall(Overlay):
         self.disk_level.set_label(self._format_percentage(int(disk)))
         return True
 
+
+class Battery(Overlay):
+    def __init__(self, **kwargs):
+        # Creamos el contenedor principal para los widgets métricos
+        main_box = Box(
+            name="metrics-small",
+            spacing=0,
+            orientation="h",
+            visible=True,
+            all_visible=True,
+        )
+
+        # ------------------ Battery ------------------
+        self.bat_icon = Label(name="metrics-icon", markup=icons.battery)
+        self.bat_circle = CircularProgressBar(
+            name="metrics-circle",
+            value=0,
+            size=28,
+            line_width=2,
+            start_angle=150,
+            end_angle=390,
+            style_classes="bat",
+            child=self.bat_icon,
+        )
+        self.bat_level = Label(name="metrics-level", style_classes="bat", label="100%")
+        self.bat_revealer = Revealer(
+            name="metrics-bat-revealer",
+            transition_duration=250,
+            transition_type="slide-left",
+            child=self.bat_level,
+            child_revealed=False,
+        )
+        self.bat_box = Box(
+            name="metrics-bat-box",
+            orientation="h",
+            spacing=0,
+            children=[self.bat_circle, self.bat_revealer],
+        )
+
+        # Agregamos cada widget métrico al contenedor principal
+        main_box.add(self.bat_box)
+
+        # Se crea un único EventBox que envuelve todo el contenedor, para que
+        # los eventos de hover se capturen de forma central y siempre queden por encima
+        # de los widgets internos.
+        event_box = EventBox(events=["enter-notify-event", "leave-notify-event"])
+        event_box.connect("enter-notify-event", self.on_mouse_enter)
+        event_box.connect("leave-notify-event", self.on_mouse_leave)
+
+        # Inicializamos MetricsSmall como un Overlay cuyo "child" es el EventBox
+        super().__init__(
+            name="metrics-small",
+            child=main_box,
+            visible=True,
+            all_visible=True,
+            overlays=[event_box]
+        )
+
+        # Actualización de la batería cada segundo
+        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
+        self.batt_fabricator.changed.connect(self.update_battery)
+        GLib.idle_add(self.update_battery, None, self.poll_battery())
+
+        # Estado inicial de los revealers y variables para la gestión del hover
+        self.hide_timer = None
+        self.hover_counter = 0
+
+    def _format_percentage(self, value: int) -> str:
+        """Formato natural del porcentaje sin forzar ancho fijo."""
+        return f"{value}%"
+
+    def on_mouse_enter(self, widget, event):
+        self.hover_counter += 1
+        if self.hide_timer is not None:
+            GLib.source_remove(self.hide_timer)
+            self.hide_timer = None
+        # Revelar niveles en hover para todas las métricas
+        self.bat_revealer.set_reveal_child(True)
+        return False
+
+    def on_mouse_leave(self, widget, event):
+        if self.hover_counter > 0:
+            self.hover_counter -= 1
+        if self.hover_counter == 0:
+            if self.hide_timer is not None:
+                GLib.source_remove(self.hide_timer)
+            self.hide_timer = GLib.timeout_add(500, self.hide_revealer)
+        return False
+
+    def hide_revealer(self):
+        self.bat_revealer.set_reveal_child(False)
+        self.hide_timer = None
+        return False
+
     def poll_battery(self):
         try:
             output = subprocess.check_output(["acpi", "-b"]).decode("utf-8").strip()

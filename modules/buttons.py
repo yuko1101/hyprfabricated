@@ -6,10 +6,10 @@ from fabric.utils.helpers import exec_shell_command_async
 import gi
 import modules.icons as icons
 from services.network import NetworkClient
+gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk, Gdk, GLib  # Added GLib import
 
-gi.require_version("Gtk", "3.0")
 
 
 def add_hover_cursor(widget):

@@ -2,22 +2,14 @@ import json
 import os
 import warnings
 
-import gi
 import setproctitle
 from fabric import Application
-from fabric.utils import get_relative_path
-from gi.repository import Gdk
+from fabric.utils import get_relative_path, exec_shell_command_async
 import config.data as data
 
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-gi.require_version("Gtk", "3.0")
 
-screen = Gdk.Screen.get_default()
-CURRENT_WIDTH = screen.get_width()
-CURRENT_HEIGHT = screen.get_height()
-fonts_updated_file = os.path.expanduser("~/.cache/hyprfabricated/fonts_updated")
-cache_dir = os.path.expanduser("~/.cache/hyprfabricated/")
+fonts_updated_file = f"{data.CACHE_DIR}/fonts_updated"
 hyprconf = get_relative_path("config.json")
 
 
@@ -27,7 +19,10 @@ def load_config():
 
 
 if __name__ == "__main__":
-    setproctitle.setproctitle("hyprfabricated")
+    setproctitle.setproctitle(data.APP_NAME)
+
+    if not os.path.isfile(data.CONFIG_FILE):
+        exec_shell_command_async(f"python {get_relative_path('../config/config.py')}")
 
     config = load_config()
 
@@ -48,11 +43,7 @@ if __name__ == "__main__":
         notch.bar = bar
         assets.append(notch)
 
-    if config["Basic"]["dock"]:
-        from modules.dock import Dock
 
-        dock = Dock()
-        assets.append(dock)
     if config["Basic"]["widgets"]:
         if config["widgetstyle"] == "full":
             from modules.deskwidgets import Deskwidgetsfull
@@ -66,7 +57,11 @@ if __name__ == "__main__":
             widgets = Deskwidgetsbasic()
             assets.append(widgets)
             pass
+    if config["Basic"]["dock"]:
+        from modules.dock import Dock
 
+        dock = Dock()
+        assets.append(dock)
     app = Application(f"{data.APP_NAME}", *assets)
 
     def set_css():

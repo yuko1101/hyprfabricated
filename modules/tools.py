@@ -11,6 +11,7 @@ SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 
+
 class Toolbox(Box):
     def __init__(self, **kwargs):
         super().__init__(
@@ -68,10 +69,7 @@ class Toolbox(Box):
         self.btn_color = Button(
             name="toolbox-button",
             tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB\n\nKeyboard:\nEnter: HEX\nShift+Enter: RGB\nCtrl+Enter: HSV",
-            child=Label(
-                name="button-bar-label",
-                markup=icons.colorpicker
-            ),
+            child=Label(name="button-bar-label", markup=icons.colorpicker),
             h_expand=False,
             v_expand=False,
             h_align="center",
@@ -109,7 +107,9 @@ class Toolbox(Box):
         self.show_all()
 
         # Start polling for process state every second.
-        self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
+        self.recorder_timer_id = GLib.timeout_add_seconds(
+            1, self.update_screenrecord_state
+        )
 
     def close_menu(self):
         self.notch.close_notch()
@@ -121,7 +121,9 @@ class Toolbox(Box):
 
     def screenrecord(self, *args):
         # Launch screenrecord script in detached mode so that it remains running independently of this program.
-        exec_shell_command_async(f"bash -c 'nohup bash {SCREENRECORD_SCRIPT} > /dev/null 2>&1 & disown'")
+        exec_shell_command_async(
+            f"bash -c 'nohup bash {SCREENRECORD_SCRIPT} > /dev/null 2>&1 & disown'"
+        )
         self.close_menu()
 
     def ocr(self, *args):
@@ -135,13 +137,15 @@ class Toolbox(Box):
     def colorpicker(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             cmd = {
-                1: "-hex",   # Left click
-                2: "-hsv",   # Middle click
-                3: "-rgb"    # Right click
+                1: "-hex",  # Left click
+                2: "-hsv",  # Middle click
+                3: "-rgb",  # Right click
             }.get(event.button)
 
             if cmd:
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker.sh')} {cmd}")
+                exec_shell_command_async(
+                    f"bash {get_relative_path('../scripts/hyprpicker.sh')} {cmd}"
+                )
                 self.close_menu()
 
     def colorpicker_key(self, widget, event):
@@ -149,13 +153,17 @@ class Toolbox(Box):
             modifiers = event.get_state()
             cmd = "-hex"  # Default
 
-            match modifiers & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK):
+            match modifiers & (
+                Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK
+            ):
                 case Gdk.ModifierType.SHIFT_MASK:
                     cmd = "-rgb"
                 case Gdk.ModifierType.CONTROL_MASK:
                     cmd = "-hsv"
 
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker.sh')} {cmd}")
+            exec_shell_command_async(
+                f"bash {get_relative_path('../scripts/hyprpicker.sh')} {cmd}"
+            )
             self.close_menu()
             return True
         return False
@@ -169,7 +177,12 @@ class Toolbox(Box):
         """
         try:
             # Use pgrep with -f to check for the process name anywhere in the command line
-            result = subprocess.run("pgrep -f gpu-screen-recorder", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            result = subprocess.run(
+                "pgrep -f gpu-screen-recorder",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
             running = result.returncode == 0
         except Exception:
             running = False

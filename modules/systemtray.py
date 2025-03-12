@@ -14,8 +14,6 @@ class SystemTray(Gtk.Box):
         self._update_visibility()  # Ensure visibility is updated after initialization.
 
     def _update_visibility(self):
-        self.set_sensitive(len(self.get_children()) > 0)
-        self.set_opacity(1.0 if len(self.get_children()) > 0 else 0.0)
         self.set_visible(len(self.get_children()) > 0)
 
 

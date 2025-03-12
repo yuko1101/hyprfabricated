@@ -97,9 +97,6 @@ class Bar(Window):
 
         end_children = []
 
-        if config["Bar"]["systray"]:
-            self.systray = SystemTray()
-            end_children.append(self.systray)
 
         if config["Bar"]["Barright"]["metrics"]:
             self.metrics = MetricsSmall()
@@ -107,6 +104,9 @@ class Bar(Window):
         if config["Bar"]["Barright"]["controls"]:
             self.control = ControlSmall()
             end_children.append(self.control)
+        if config["Bar"]["systray"]:
+            self.systray = SystemTray()
+            end_children.append(self.systray)
 
         self.revealer_right = Revealer(
             name="bar-revealer",
@@ -183,6 +183,7 @@ class Bar(Window):
         self.hidden = False
 
         self.show_all()
+        self.systray._update_visibility()
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()

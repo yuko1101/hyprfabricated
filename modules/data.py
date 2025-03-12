@@ -1,10 +1,10 @@
 import os
 import json
 import gi
+gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, GLib
 from fabric.utils.helpers import get_relative_path
 
-gi.require_version("Gtk", "3.0")
 
 APP_NAME = "hyprfabricated"
 APP_NAME_CAP = "hyprfabricated"

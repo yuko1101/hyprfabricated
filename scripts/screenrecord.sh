@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Directory where the recordings will be saved
-SAVE_DIR="$XDG_VIDEOS_DIR/Recordings"
+SAVE_DIR="$(xdg-user-dir VIDEOS)/Recordings"
 mkdir -p "$SAVE_DIR"
 
 # If gpu-screen-recorder is already running, send SIGINT to stop it properly

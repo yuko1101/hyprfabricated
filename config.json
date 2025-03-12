@@ -6,7 +6,7 @@
         "corners": true,
         "bar": true,
         "widgets": true,
-        "dock": true
+        "dock": false
     },
     "Bar": {
         "systray": true,
@@ -16,7 +16,7 @@
         "datetime": true,
         "buttonpower": true,
         "Barright": {
-            "metrics": true,
+            "metrics": false,
             "controls": true
         },
         "Barleft": {

@@ -12,6 +12,7 @@ PACKAGES=(
     cava
     fabric-cli-git
     gnome-bluetooth-3.0
+    gobject-introspection
     gpu-screen-recorder
     grimblast
     hypridle
@@ -70,26 +71,13 @@ else
     git clone --depth=1 "$REPO_URL" "$INSTALL_DIR"
 fi
 
-
-echo "Installing gray-git..."
-yes | "$aur_helper" -Syy --needed --devel --noconfirm gray-git || true
-
 # Install required packages using the detected AUR helper (only if missing)
 echo "Installing required packages..."
-"$aur_helper" -Syy --needed --devel --noconfirm "${PACKAGES[@]}" || true
+$aur_helper -Syy --needed --devel --noconfirm "${PACKAGES[@]}" || true
 
-# Update outdated packages from the list
-echo "Updating outdated required packages..."
-outdated=$("$aur_helper" -Qu | awk '{print $1}')
-to_update=()
-for pkg in "${PACKAGES[@]}"; do
-    if echo "$outdated" | grep -q "^$pkg$"; then
-        to_update+=("$pkg")
-    fi
-done
+echo "Installing gray-git..."
+yes | $aur_helper -Syy --needed --devel --noconfirm gray-git || true
 
-if [ ${#to_update[@]} -gt 0 ]; then
-    "$aur_helper" -S --noconfirm "${to_update[@]}" || true
 echo "Installing required fonts..."
 
 FONT_URL="https://github.com/zed-industries/zed-fonts/releases/download/1.2.0/zed-sans-1.2.0.zip"
