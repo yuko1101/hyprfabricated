@@ -15,14 +15,17 @@ from fabric.utils.helpers import get_relative_path
 
 import configparser
 
+
 def get_bars(file_path):
     config = configparser.ConfigParser()
     config.read(file_path)
-    return int(config['general']['bars'])
+    return int(config["general"]["bars"])
+
 
 CAVA_CONFIG = get_relative_path("../config/cavalcade/cava.ini")
 
 bars = get_bars(CAVA_CONFIG)
+
 
 def set_death_signal():
     """
@@ -33,11 +36,13 @@ def set_death_signal():
     PR_SET_PDEATHSIG = 1
     libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
 
+
 class Cava:
     """
     CAVA wrapper.
     Launch cava process with certain settings and read output.
     """
+
     NONE = 0
     RUNNING = 1
     RESTARTING = 2
@@ -56,7 +61,9 @@ class Cava:
         self.env["LC_ALL"] = "en_US.UTF-8"  # not sure if it's necessary
 
         is_16bit = True
-        self.byte_type, self.byte_size, self.byte_norm = ("H", 2, 65535) if is_16bit else ("B", 1, 255)
+        self.byte_type, self.byte_size, self.byte_norm = (
+            ("H", 2, 65535) if is_16bit else ("B", 1, 255)
+        )
 
         if not os.path.exists(self.path):
             os.mkfifo(self.path)
@@ -69,7 +76,7 @@ class Cava:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 env=self.env,
-                preexec_fn=set_death_signal  # Ensure cava gets killed when the parent dies.
+                preexec_fn=set_death_signal,  # Ensure cava gets killed when the parent dies.
             )
             logger.debug("cava successfully launched!")
             self.state = self.RUNNING
@@ -130,16 +137,20 @@ class Cava:
             self.process.kill()
         os.remove(self.path)
 
+
 class AttributeDict(dict):
     """Dictionary with keys as attributes. Does nothing but easy reading"""
+
     def __getattr__(self, attr):
-        return self.get(attr,3)
+        return self.get(attr, 3)
 
     def __setattr__(self, attr, value):
         self[attr] = value
 
+
 class Spectrum:
     """Spectrum drawing"""
+
     def __init__(self):
         self.silence_value = 0
         self.audio_sample = []
@@ -184,7 +195,6 @@ class Spectrum:
 
         center_y = self.sizes.area.height / 2  # Centro vertical del área de dibujo
         for i, value in enumerate(self.audio_sample):
-
             # width = self.sizes.bar.width + int(i < self.sizes.wcpi)
             width = self.sizes.area.width / self.sizes.number - self.sizes.padding
             radius = width / 2
@@ -209,7 +219,7 @@ class Spectrum:
     def size_update(self, *args):
         """Update drawing geometry"""
         self.sizes.number = bars
-        self.sizes.padding = 100/bars
+        self.sizes.padding = 100 / bars
         self.sizes.zero = 0
 
         self.sizes.area.width = self.area.get_allocated_width()
@@ -236,7 +246,8 @@ class Spectrum:
         blue = int(color[5:7], 16) / 255
         self.color = Gdk.RGBA(red=red, green=green, blue=blue, alpha=1.0)
 
-class SpectrumRender():
+
+class SpectrumRender:
     def __init__(self, mode=None, **kwargs):
         super().__init__(**kwargs)
         self.mode = mode
@@ -247,7 +258,7 @@ class SpectrumRender():
 
     def get_spectrum_box(self):
         # Get the spectrum box
-        box = Overlay(name="cavalcade", h_align='center', v_align='center')
+        box = Overlay(name="cavalcade", h_align="center", v_align="center")
         box.set_size_request(180, 40)
         box.add_overlay(self.draw.area)
         return box

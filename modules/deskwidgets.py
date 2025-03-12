@@ -9,9 +9,9 @@ from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.utils import invoke_repeater, get_relative_path
 import requests
 import urllib.parse
-import threading
 import datetime
 import json
+from gi.repository import GLib
 
 
 def get_location():
@@ -39,12 +39,12 @@ def get_location():
     return ""
 
 
-def get_location_threaded(callback):
+def get_location_async(callback):
     def run():
         location = get_location()
-        callback(location)
+        GLib.idle_add(callback, location)
 
-    threading.Thread(target=run, daemon=True).start()
+    GLib.idle_add(run)
 
 
 def get_weather(callback):
@@ -89,24 +89,27 @@ def get_weather(callback):
 
                 update_time = datetime.datetime.now().strftime("%I:%M:%S %p")
 
-                callback([emoji, temp, condition, feels_like, location, update_time])
+                GLib.idle_add(
+                    callback,
+                    [emoji, temp, condition, feels_like, location, update_time],
+                )
             else:
                 print("Error getting weather from wttr.in.")
-                callback(None)
+                GLib.idle_add(callback, None)
         except Exception as e:
             print(f"Error getting weather: {e}")
-            callback(None)
+            GLib.idle_add(callback, None)
 
-    get_location_threaded(fetch_weather)
+    get_location_async(fetch_weather)
 
 
 def update_weather(widget):
     def fetch_and_update():
-        while True:
-            get_weather(lambda weather_info: update_widget(widget, weather_info))
-            time.sleep(600)  # 10 minutes
+        get_weather(lambda weather_info: update_widget(widget, weather_info))
+        return True
 
-    threading.Thread(target=fetch_and_update, daemon=True).start()
+    GLib.timeout_add_seconds(600, fetch_and_update)
+    fetch_and_update()
 
 
 def update_widget(widget, weather_info):
@@ -159,7 +162,6 @@ class Sysinfo(Box):
                                 self.bake_progress_icon(
                                     label="",
                                     name="progress-icon-cpu",
-                                    # style="margin-right: 8px; text-shadow: 0 0 10px #fff, 0 0 10px #fff, 0 0 10px #fff;",
                                 )
                             ],
                         ),
@@ -174,7 +176,6 @@ class Sysinfo(Box):
                                 self.bake_progress_icon(
                                     name="progress-icon-ram",
                                     label="󰘚",
-                                    # style="margin-right: 4px; text-shadow: 0 0 10px #fff;",
                                 )
                             ],
                         )
@@ -189,7 +190,6 @@ class Sysinfo(Box):
                                 self.bake_progress_icon(
                                     label="󱊣",
                                     name="progress-icon-bat",
-                                    # style="margin-right: 0px; text-shadow: 0 0 10px #fff, 0 0 18px #fff;",
                                 )
                             ],
                         ),
@@ -294,7 +294,6 @@ class weather(Box):
                 children=[self.header, self.temp, self.header_right],
             ),
         )
-        # self.show_all()
         self.set_visible(False)
         update_weather(self)
 
@@ -349,11 +348,11 @@ def fetch_quote(callback):
         print(f"Error reading quotes type from config: {e}")
         quote = fetch_zen_quote()
 
-    callback(quote)
+    GLib.idle_add(callback, quote)
 
 
-def fetch_quote_threaded(callback):
-    threading.Thread(target=lambda: fetch_quote(callback), daemon=True).start()
+def fetch_quote_async(callback):
+    GLib.idle_add(lambda: fetch_quote(callback))
 
 
 class qoute(Label):
@@ -367,7 +366,7 @@ class qoute(Label):
             v_expand=True,
             visible=False,
         )
-        fetch_quote_threaded(self.update_label)
+        fetch_quote_async(self.update_label)
 
     def update_label(self, quote):
         self.set_label(quote)
@@ -384,7 +383,6 @@ def load_config():
         return {}
 
 
-# Function to create widgets based on config
 def create_widgets(config, widget_type):
     widgets = []
     if widget_type == "full":
@@ -472,3 +470,4 @@ class Deskwidgetsbasic(Window):
             )
         else:
             sys_widget = None
+

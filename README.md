@@ -44,6 +44,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 
 ### Manual Installation
 1. Install dependencies:
+<<<<<<< HEAD
   - Aur/Pacman:
     - [`Fabric`](https://github.com/Fabric-Development/fabric)
     - [`fabric-cli`](https://github.com/Fabric-Development/fabric-cli)
@@ -79,7 +80,6 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
     - [setproctitle](https://pypi.org/project/setproctitle/)
     - [toml](https://pypi.org/project/toml/)
     - [watchdog](https://pypi.org/project/watchdog/)
-
 - Fonts (automated on first run):
     - [Zed Sans](https://github.com/zed-industries/zed-fonts)
     - [Tabler Icons](https://tabler.io/icons)

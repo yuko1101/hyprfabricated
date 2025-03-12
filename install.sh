@@ -72,10 +72,10 @@ fi
 
 # Install required packages using the detected AUR helper (only if missing)
 echo "Installing required packages..."
-$aur_helper -Syy --needed --noconfirm "${PACKAGES[@]}" || true
+$aur_helper -Syy --needed --devel --noconfirm "${PACKAGES[@]}" || true
 
 echo "Installing gray-git..."
-yes | "$aur_helper" -Syy --needed --noconfirm gray-git || true
+yes | $aur_helper -Syy --needed --devel --noconfirm gray-git || true
 
 # Install required packages using the detected AUR helper (only if missing)
 echo "Installing required packages..."
