@@ -1,5 +1,4 @@
 import gi
-import threading
 import urllib.parse
 import requests
 from gi.repository import GLib
@@ -33,10 +32,10 @@ class Weather(Box):
         return ""
 
     def fetch_weather(self):
-        threading.Thread(target=self._fetch_weather_thread, daemon=True).start()
+        GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
         return True
 
-    def _fetch_weather_thread(self):
+    def _fetch_weather_thread(self, data):
         location = self.get_location()
         if location:
             url = f"https://wttr.in/{urllib.parse.quote(location)}?format=%c+%t"
