@@ -26,31 +26,21 @@
 
 #control-slider.vol slider {
   background-image: url("./.config/hyprfabricated/assets/icons/volume.png");
-/*=======*/
-/*  background-image: url("/home/saumya/.config/hyprfabricated/assets/icons/volume.png");*/
-/*>>>>>>> main*/
   background-size: contain;
 }
 
 #control-slider.mic slider {
   background-image: url("./.config/hyprfabricated/assets/icons/microphone.png");
-/*=======*/
-/*  background-image: url("/home/saumya/.config/hyprfabricated/assets/icons/microphone.png");*/
-/*>>>>>>> main*/
   background-size: contain;
 }
 
 #control-slider.brightness slider {
   background-image: url("./.config/hyprfabricated/assets/icons/brightness.png");
-/*=======*/
-/*  background-image: url("/home/saumya/.config/hyprfabricated/assets/icons/brightness.png");*/
-/*>>>>>>> main*/
   background-size: contain;
 }
 
 #control-small {
   padding: 4px;
-  /*margin-top: 4px;*/
   border-radius: 16px;
   background-color: var(--shadow);
 }
@@ -71,7 +61,7 @@
 #vol-label,
 #mic-label,
 #brightness-label {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 #vol-label.muted,

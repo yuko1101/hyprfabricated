@@ -13,6 +13,7 @@ import json
 from gi.repository import GLib
 
 
+
 def get_location():
     config_path = get_relative_path("../config.json")
     try:
@@ -115,6 +116,7 @@ def update_widget(widget, weather_info):
     if weather_info:
         widget.weatherinfo = weather_info
         widget.update_labels()
+
 
 
 class Sysinfo(Box):
@@ -423,7 +425,7 @@ class Deskwidgetsfull(Window):
             all_visible=False,
             **kwargs,
         )
-        if config.get("desktopwidgets", {}).get("sysinfo", False):
+        if config.get("desktopwidgets", {}).get("systeminfo", False):
             sys_widget = Window(
                 layer="bottom",
                 anchor="bottom center",
@@ -454,7 +456,7 @@ class Deskwidgetsbasic(Window):
             ),
             all_visible=True,
         )
-        if config.get("desktopwidgets", {}).get("sysinfo", False):
+        if config.get("desktopwidgets", {}).get("systeminfo", False):
             sys_widget = Window(
                 layer="bottom",
                 anchor="bottom center",

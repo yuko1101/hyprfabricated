@@ -17,7 +17,8 @@
         "buttonpower": true,
         "Barright": {
             "metrics": false,
-            "controls": true
+            "controls": true,
+            "battery": false
         },
         "Barleft": {
             "weather": false,
@@ -30,7 +31,7 @@
         "clock": true,
         "quote": true,
         "weather": true,
-        "sysinfo": true
+        "systeminfo": true
     },
     "tooltip": {
         "Temprature_Unit_tooltip": "C for Celsius, F for Fahrenheit",

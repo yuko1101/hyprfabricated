@@ -13,7 +13,7 @@ from modules.systemtray import SystemTray
 import modules.icons as icons
 from modules.controls import ControlSmall
 from modules.weather import Weather
-from modules.metrics import MetricsSmall
+from modules.metrics import MetricsSmall, Battery
 
 
 class Bar(Window):
@@ -97,13 +97,15 @@ class Bar(Window):
 
         end_children = []
 
-
         if config["Bar"]["Barright"]["metrics"]:
             self.metrics = MetricsSmall()
             end_children.append(self.metrics)
         if config["Bar"]["Barright"]["controls"]:
             self.control = ControlSmall()
             end_children.append(self.control)
+        if config["Bar"]["Barright"]["battery"]:
+            self.battery = Battery()
+            end_children.append(self.battery)
         if config["Bar"]["systray"]:
             self.systray = SystemTray()
             end_children.append(self.systray)

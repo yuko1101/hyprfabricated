@@ -7,10 +7,12 @@ from fabric.widgets.label import Label
 from fabric.widgets.box import Box
 from fabric.widgets.scale import Scale
 from fabric.widgets.eventbox import EventBox
+from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
 from fabric.core.fabricator import Fabricator
+from fabric.utils.helpers import exec_shell_command_async
 
 import modules.icons as icons
 
@@ -58,6 +60,7 @@ class Metrics(Box):
         self.cpu_usage = Scale(
             name="cpu-usage",
             value=0.25,
+            tooltip_text="Cpu usage",
             orientation="v",
             inverted=True,
             v_align="fill",
@@ -82,6 +85,7 @@ class Metrics(Box):
         self.ram_usage = Scale(
             name="ram-usage",
             value=0.5,
+            tooltip_text="Ram usage",
             orientation="v",
             inverted=True,
             v_align="fill",
@@ -106,6 +110,7 @@ class Metrics(Box):
         self.disk_usage = Scale(
             name="disk-usage",
             value=0.75,
+            tooltip_text="Disk usage",
             orientation="v",
             inverted=True,
             v_align="fill",
@@ -160,7 +165,7 @@ class MetricsSmall(Overlay):
         # Creamos el contenedor principal para los widgets métricos
         main_box = Box(
             name="metrics-small",
-            spacing=4,
+            spacing=0,
             orientation="h",
             visible=True,
             all_visible=True,
@@ -247,38 +252,12 @@ class MetricsSmall(Overlay):
             children=[self.disk_circle, self.disk_revealer],
         )
 
-        # ------------------ Battery ------------------
-        self.bat_icon = Label(name="metrics-icon", markup=icons.battery)
-        self.bat_circle = CircularProgressBar(
-            name="metrics-circle",
-            value=0,
-            size=28,
-            line_width=2,
-            start_angle=150,
-            end_angle=390,
-            style_classes="bat",
-            child=self.bat_icon,
-        )
-        self.bat_level = Label(name="metrics-level", style_classes="bat", label="100%")
-        self.bat_revealer = Revealer(
-            name="metrics-bat-revealer",
-            transition_duration=250,
-            transition_type="slide-left",
-            child=self.bat_level,
-            child_revealed=False,
-        )
-        self.bat_box = Box(
-            name="metrics-bat-box",
-            orientation="h",
-            spacing=0,
-            children=[self.bat_circle, self.bat_revealer],
-        )
-
         # Agregamos cada widget métrico al contenedor principal
-        # main_box.add(self.disk_box)
-        main_box.add(self.cpu_box)
+        main_box.add(self.disk_box)
+        main_box.add(Box(name="metrics-sep"))
         main_box.add(self.ram_box)
-        main_box.add(self.bat_box)
+        main_box.add(Box(name="metrics-sep"))
+        main_box.add(self.cpu_box)
 
         # Se crea un único EventBox que envuelve todo el contenedor, para que
         # los eventos de hover se capturen de forma central y siempre queden por encima
@@ -299,16 +278,6 @@ class MetricsSmall(Overlay):
         # Actualización de métricas cada segundo
         GLib.timeout_add_seconds(1, self.update_metrics)
 
-        # Actualización de la batería cada segundo
-        self.batt_fabricator = Fabricator(
-            lambda *args, **kwargs: self.poll_battery(),
-            interval=1000,
-            stream=False,
-            default_value=0,
-        )
-        self.batt_fabricator.changed.connect(self.update_battery)
-        GLib.idle_add(self.update_battery, None, self.poll_battery())
-
         # Estado inicial de los revealers y variables para la gestión del hover
         self.hide_timer = None
         self.hover_counter = 0
@@ -326,7 +295,6 @@ class MetricsSmall(Overlay):
         self.cpu_revealer.set_reveal_child(True)
         self.ram_revealer.set_reveal_child(True)
         self.disk_revealer.set_reveal_child(True)
-        self.bat_revealer.set_reveal_child(True)
         return False
 
     def on_mouse_leave(self, widget, event):
@@ -342,7 +310,6 @@ class MetricsSmall(Overlay):
         self.cpu_revealer.set_reveal_child(False)
         self.ram_revealer.set_reveal_child(False)
         self.disk_revealer.set_reveal_child(False)
-        self.bat_revealer.set_reveal_child(False)
         self.hide_timer = None
         return False
 
@@ -413,11 +380,16 @@ class Battery(Overlay):
             child=main_box,
             visible=True,
             all_visible=True,
-            overlays=[event_box]
+            overlays=[event_box],
         )
 
         # Actualización de la batería cada segundo
-        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
+        self.batt_fabricator = Fabricator(
+            lambda *args, **kwargs: self.poll_battery(),
+            interval=1000,
+            stream=False,
+            default_value=0,
+        )
         self.batt_fabricator.changed.connect(self.update_battery)
         GLib.idle_add(self.update_battery, None, self.poll_battery())
 
@@ -470,9 +442,9 @@ class Battery(Overlay):
     def update_battery(self, sender, battery_data):
         value, status = battery_data
         if value == 0:
-            self.bat_box.set_visible(False)
+            self.set_visible(False)
         else:
-            self.bat_box.set_visible(True)
+            self.set_visible(True)
             self.bat_circle.set_value(value)
         percentage = int(value * 100)
         self.bat_level.set_label(self._format_percentage(percentage))
