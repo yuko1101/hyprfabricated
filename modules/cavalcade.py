@@ -92,13 +92,13 @@ class Cava:
         try:
             data = os.read(self.fifo_fd, chunk)
         except OSError as e:
-            logger.error("Error reading FIFO: {}".format(e))
+            # logger.error("Error reading FIFO: {}".format(e))
             return False
 
         # When no data is read, do not remove the IO watch immediately.
         if len(data) < chunk:
             # Instead of closing the FIFO, we log a warning and continue.
-            logger.warning("Incomplete data packet received (expected {} bytes, got {}). Waiting for more data...".format(chunk, len(data)))
+            # logger.warning("Incomplete data packet received (expected {} bytes, got {}). Waiting for more data...".format(chunk, len(data)))
             # Returning True keeps the IO watch active. A real EOF will only occur when the writer closes.
             return True
 
