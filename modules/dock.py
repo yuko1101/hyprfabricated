@@ -146,7 +146,108 @@ class Dock(Window):
             self.wrapper.add_style_class("occluded")
         return True
 
-    # Add this new method to handle child widget hover
+    # New method to find the DesktopApp using the given identifier.
+    def find_app(self, app_identifier):
+        """Return the DesktopApp object by matching the executable or display name."""
+        # Try matching by executable key first
+        if app_identifier in self.app_map:
+            return self.app_map[app_identifier]
+        # Otherwise, try a case-insensitive comparison with display_name
+        for desktop_app in self.app_map.values():
+            if (
+                desktop_app.display_name
+                and desktop_app.display_name.lower() == app_identifier.lower()
+            ):
+                return desktop_app
+        return None
+
+    # Update the dock's app map using DesktopApp objects from the system.
+    def update_app_map(self):
+        """Updates the mapping of commands to DesktopApp objects."""
+        all_apps = get_desktop_applications()
+        self.app_map = {app.executable: app for app in all_apps}
+
+    def create_button(self, app, instances):
+        """Create dock application button"""
+        desktop_app = self.find_app(app)
+        icon_img = None
+        if desktop_app:
+            icon_img = desktop_app.get_icon_pixbuf(size=36)
+        if not icon_img:
+            # Fallback to IconResolver with the app command
+            icon_img = self.icon.get_icon_pixbuf(app, 36)
+        if not icon_img:
+            # Fallback icon if no DesktopApp is found
+            icon_img = self.icon.get_icon_pixbuf(
+                "application-x-executable-symbolic", 36
+            )
+            # Final fallback
+            if not icon_img:
+                icon_img = self.icon.get_icon_pixbuf("image-missing", 36)
+        items = [Image(pixbuf=icon_img)]
+
+        button = Button(
+            child=Box(
+                name="dock-icon",
+                orientation="v",
+                h_align="center",
+                children=items,
+            ),
+            on_clicked=lambda *a: self.handle_app(app, instances),
+            tooltip_text=(
+                app
+                if app.lower() in [p.lower() for p in self.pinned]
+                else (instances[0]["title"] if instances else app)
+            ),
+            name="dock-app-button",
+        )
+
+        if instances:
+            button.add_style_class("instance")
+
+        button.instances = instances  # Use a normal Python attribute
+        # Enable DnD for ALL apps
+        button.drag_source_set(
+            Gdk.ModifierType.BUTTON1_MASK,
+            [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
+            Gdk.DragAction.MOVE,
+        )
+        button.connect("drag-begin", self.on_drag_begin)
+        button.connect("drag-end", self.on_drag_end)  # Connect drag-end to ALL buttons
+        if app.lower() in [
+            p.lower() for p in self.pinned
+        ]:  # Only pinned apps can be reordered
+            button.drag_dest_set(
+                Gtk.DestDefaults.ALL,
+                [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
+                Gdk.DragAction.MOVE,
+            )
+            button.connect("drag-data-get", self.on_drag_data_get)
+            button.connect("drag-data-received", self.on_drag_data_received)
+
+        button.connect("enter-notify-event", self._on_child_enter)
+        return button
+
+    # Updated to try using the DesktopApp's launch method if available.
+    def handle_app(self, app, instances):
+        """Handle application button clicks"""
+        desktop_app = self.find_app(app)
+        if not instances:
+            if desktop_app:
+                desktop_app.launch()
+            else:
+                exec_shell_command_async(f"nohup {app}")
+        else:
+            focused = self.get_focused()
+            idx = next(
+                (i for i, inst in enumerate(instances) if inst["address"] == focused),
+                -1,
+            )
+            next_inst = instances[(idx + 1) % len(instances)]
+            exec_shell_command(
+                f"hyprctl dispatch focuswindow address:{next_inst['address']}"
+            )
+
     def _on_child_enter(self, widget, event):
         """Maintain hover state when entering child widgets"""
         self.is_hovered = True
@@ -231,87 +332,6 @@ class Dock(Window):
         width, _ = self.view.get_preferred_width()
         self.set_size_request(width, -1)
         return False
-
-    def update_app_map(self):
-        """Updates the mapping of commands to DesktopApp objects."""
-        all_apps = get_desktop_applications()
-        self.app_map = {app.executable: app for app in all_apps}
-
-    def create_button(self, app, instances):
-        """Create dock application button"""
-        desktop_app = self.app_map.get(app)
-        icon_img = None
-        if desktop_app:
-            icon_img = desktop_app.get_icon_pixbuf(size=36)
-        if not icon_img:
-            # Fallback to IconResolver with the app command
-            icon_img = self.icon.get_icon_pixbuf(app, 36)
-        if not icon_img:
-            # Fallback icon if no DesktopApp is found
-            icon_img = self.icon.get_icon_pixbuf(
-                "application-x-executable-symbolic", 36
-            )
-            # Final fallback
-            if not icon_img:
-                icon_img = self.icon.get_icon_pixbuf("image-missing", 36)
-        items = [Image(pixbuf=icon_img)]
-
-        button = Button(
-            child=Box(
-                name="dock-icon",
-                orientation="v",
-                h_align="center",
-                children=items,
-            ),
-            on_clicked=lambda *a: self.handle_app(app, instances),
-            tooltip_text=(
-                app
-                if app.lower() in [p.lower() for p in self.pinned]
-                else (instances[0]["title"] if instances else app)
-            ),
-            name="dock-app-button",
-        )
-
-        if instances:
-            button.add_style_class("instance")
-
-        button.instances = instances  # Use a normal Python attribute
-        # Enable DnD for ALL apps
-        button.drag_source_set(
-            Gdk.ModifierType.BUTTON1_MASK,
-            [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-            Gdk.DragAction.MOVE,
-        )
-        button.connect("drag-begin", self.on_drag_begin)
-        button.connect("drag-end", self.on_drag_end)  # Connect drag-end to ALL buttons
-        if app.lower() in [
-            p.lower() for p in self.pinned
-        ]:  # Only pinned apps can be reordered
-            button.drag_dest_set(
-                Gtk.DestDefaults.ALL,
-                [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-                Gdk.DragAction.MOVE,
-            )
-            button.connect("drag-data-get", self.on_drag_data_get)
-            button.connect("drag-data-received", self.on_drag_data_received)
-
-        button.connect("enter-notify-event", self._on_child_enter)
-        return button
-
-    def handle_app(self, app, instances):
-        """Handle application button clicks"""
-        if not instances:
-            exec_shell_command_async(f"nohup {app}")
-        else:
-            focused = self.get_focused()
-            idx = next(
-                (i for i, inst in enumerate(instances) if inst["address"] == focused),
-                -1,
-            )
-            next_inst = instances[(idx + 1) % len(instances)]
-            exec_shell_command(
-                f"hyprctl dispatch focuswindow address:{next_inst['address']}"
-            )
 
     def get_clients(self):
         """Get current client list"""

@@ -33,10 +33,10 @@ class Weather(Box):
         return ""
 
     def fetch_weather(self):
-        GLib.idle_add(self._fetch_weather_thread)
+        GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
         return True
 
-    def _fetch_weather_thread(self):
+    def _fetch_weather_thread(self, data):
         location = self.get_location()
         if location:
             url = f"https://wttr.in/{urllib.parse.quote(location)}?format=%c+%t"
