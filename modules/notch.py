@@ -62,7 +62,7 @@ class Notch(Window):
 
         self.active_window = ActiveWindow(
             name="hyprland-window",
-            h_expand=True,
+            h_expand=False,
             h_align="fill",
             formatter=FormattedString(
                 f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 64)}}",  # noqa: F541

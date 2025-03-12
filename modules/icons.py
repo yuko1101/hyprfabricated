@@ -239,47 +239,46 @@ def get_class_icon(win_class):
         case "nwg-look":
             icon = theme
         case "thunderbird":
-            icon = mail
+            icon = "&#xf0e0;"  # mail
         case "vlc" | "mpv" | "org.kde.kdenlive":
-            icon = video
+            icon = "&#xeafa;"  # video
         case "steam":
-            icon = steam
+            icon = "&#xf1b6;"  # steam
         case "lutris":
-            icon = lutris
+            icon = "&#xf11b;"  # lutris
         case "heroic":
-            icon = heroic
+            icon = "&#xe3e5;"  # heroic
         case "telegram-desktop":
-            icon = telegram
+            icon = "&#xf2c6;"  # telegram
         case "signal":
-            icon = signal
+            icon = "&#xf3f7;"  # signal
         case "whatsapp-for-linux":
-            icon = whatsapp
+            icon = "&#xf232;"  # whatsapp
         case "slack":
-            icon = slack
+            icon = "&#xf198;"  # slack
         case "teams-for-linux" | "Microsoft Teams - Preview":
-            icon = teams
+            icon = "&#xf4c4;"  # teams
         case "element":
-            icon = matrix
+            icon = "&#xf3b6;"  # matrix
         case "bitwarden":
-            icon = password
+            icon = "&#xf2c1;"  # password
         case "qbittorrent":
-            icon = torrent
+            icon = "&#xf2e4;"  # torrent
         case "android-studio":
-            icon = android
+            icon = "&#xf17b;"  # android
         case "inkscape":
-            icon = vector
+            icon = "&#xf5d1;"  # vector
         case "gimp":
-            icon = gimp
+            icon = "&#xf1fc;"  # gimp
         case "libreoffice-writer" | "libreoffice":
-            icon = libreoffice
+            icon = "&#xf5c3;"  # libreoffice
         case "blender":
-            icon = blender
+            icon = "&#xf1d1;"  # blender
         case "godot":
-            icon = godot
+            icon = "&#xf313;"  # godot
         case "unityhub":
-            icon = unity
+            icon = "&#xf949;"  # unity
         case _:
             icon = ghost  # Default
 
     return icon
-
