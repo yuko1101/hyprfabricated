@@ -6,7 +6,7 @@
         "corners": true,
         "bar": true,
         "widgets": true,
-        "dock": false
+        "dock": true
     },
     "Bar": {
         "systray": true,
@@ -22,7 +22,8 @@
         },
         "Barleft": {
             "weather": false,
-            "overview": true
+            "overview": true,
+            "networkapplet": true
         }
     },
     "widgetstyle": "full",

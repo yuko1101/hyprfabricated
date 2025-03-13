@@ -16,6 +16,12 @@ video : str = "&#xeafa;"  # video
 colorpicker: str = "&#xebe6;"
 media: str = "&#xf00d;"
 
+
+#Network
+
+
+download: str = "&#xea96;"
+upload: str = "&#xeb47;"
 #Toolbox
 
 toolbox: str = "&#xebca;"       # toolbox
