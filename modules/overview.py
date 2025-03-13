@@ -198,21 +198,7 @@ class Overview(Box):
         self._all_apps = get_desktop_applications()
         self.app_identifiers = self._build_app_identifiers_map()
         
-        # Window class aliases from dock for consistent behavior
-        self.window_class_aliases = {
-            "audacity": ["audacity.bin"],
-            "firefox": ["firefox-esr", "firefoxdeveloperedition", "firefox-developer-edition"],
-            "libreoffice": ["libreoffice-writer", "libreoffice-calc", "libreoffice-impress", "soffice"],
-            "gimp": ["gimp-2.10"],
-            "chromium": ["chromium-browser", "chrome"],
-            "google-chrome": ["chrome"],
-            "steam": ["steam_app_", "steamwebhelper"],
-            "code": ["code-oss", "vscodium"],
-            "jetbrains-idea": ["jetbrains-idea-ce"],
-            "vlc": ["vlc-qt-interface"],
-            "krita": ["krita.bin"],
-            "blender": ["blender.bin"],
-        }
+        # Remove the window_class_aliases dictionary completely
 
         connection.connect("event::openwindow", self.do_update)
         connection.connect("event::closewindow", self.do_update)
@@ -235,7 +221,7 @@ class Overview(Box):
         return normalized
     
     def _classes_match(self, class1, class2):
-        """Check if two window class names match accounting for variations."""
+        """Check if two window class names match with stricter comparison."""
         if not class1 or not class2:
             return False
             
@@ -247,18 +233,8 @@ class Overview(Box):
         if norm1 == norm2:
             return True
             
-        # Check aliases
-        for base_class, aliases in self.window_class_aliases.items():
-            if norm1 == base_class and norm2 in aliases:
-                return True
-            if norm2 == base_class and norm1 in aliases:
-                return True
-                
-        # Check if one is contained within the other
-        if len(norm1) > 3 and len(norm2) > 3:  # Avoid short class names which could lead to false matches
-            if norm1 in norm2 or norm2 in norm1:
-                return True
-                
+        # Don't do substring matching as it's too error-prone
+        # This avoids incorrectly matching flatpak apps and others
         return False
         
     def _build_app_identifiers_map(self):
@@ -299,26 +275,30 @@ class Overview(Box):
         if normalized_id in self.app_identifiers:
             return self.app_identifiers[normalized_id]
             
-        # Try fuzzy matching - look for the app in our class mappings
-        for app in self._all_apps:
-            if app.name and normalized_id in app.name.lower():
-                return app
-            if app.display_name and normalized_id in app.display_name.lower():
-                return app
-            if app.window_class and normalized_id in app.window_class.lower():
-                return app
-            if app.executable and normalized_id in app.executable.lower():
-                return app
-            if app.command_line and normalized_id in app.command_line.lower():
-                return app
-                
-        # Try window class aliases
+        # Try with normalized class name
         norm_id = self._normalize_window_class(normalized_id)
-        for base_class, aliases in self.window_class_aliases.items():
-            if norm_id == base_class or norm_id in aliases:
-                if base_class in self.app_identifiers:
-                    return self.app_identifiers[base_class]
-                    
+        if norm_id in self.app_identifiers:
+            return self.app_identifiers[norm_id]
+            
+        # More targeted matching with exact names only
+        for app in self._all_apps:
+            if app.name and app.name.lower() == normalized_id:
+                return app
+            if app.window_class and app.window_class.lower() == normalized_id:
+                return app
+            if app.display_name and app.display_name.lower() == normalized_id:
+                return app
+            # Try with executable basename
+            if app.executable:
+                exe_base = app.executable.split('/')[-1].lower()
+                if exe_base == normalized_id:
+                    return app
+            # Try with command basename
+            if app.command_line:
+                cmd_base = app.command_line.split()[0].split('/')[-1].lower()
+                if cmd_base == normalized_id:
+                    return app
+                
         return None
 
     def update(self, signal_update=False):
