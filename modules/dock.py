@@ -1,5 +1,6 @@
 import json
 from gi.repository import GLib, Gtk, Gdk, Gio
+import cairo
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
 from fabric.widgets.box import Box
@@ -51,6 +52,21 @@ def read_config():
     except (FileNotFoundError, json.JSONDecodeError):
         data = {"pinned_apps": []}  # Default to empty pinned apps
     return data
+
+# Credit to Aylur for the createSurfaceFromWidget code
+def createSurfaceFromWidget(widget: Gtk.Widget) -> cairo.ImageSurface:
+    alloc = widget.get_allocation()
+    surface = cairo.ImageSurface(
+        cairo.Format.ARGB32,
+        alloc.width,
+        alloc.height,
+    )
+    cr = cairo.Context(surface)
+    cr.set_source_rgba(255, 255, 255, 0)
+    cr.rectangle(0, 0, alloc.width, alloc.height)
+    cr.fill()
+    widget.draw(cr)
+    return surface
 
 class Dock(Window):
     # Static registry to track all active dock instances
@@ -223,6 +239,8 @@ class Dock(Window):
     def on_drag_begin(self, widget, drag_context):
         """Handle drag begin event by setting the drag lock flag."""
         self._drag_in_progress = True
+        # Set custom drag icon using the widget surface
+        Gtk.drag_set_icon_surface(drag_context, createSurfaceFromWidget(widget))
 
     def _on_hover_enter(self, *args):
         """Handle hover over bottom activation area"""
