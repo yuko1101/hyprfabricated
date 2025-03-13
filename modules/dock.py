@@ -661,6 +661,7 @@ class Dock(Window):
 
         # Assemble dock layout
         children = pinned_buttons
+        # Only add separator if both pinned and open buttons exist
         if pinned_buttons and open_buttons:
             children += [Box(orientation="v", v_expand=True, name="dock-separator")]
         children += open_buttons
@@ -744,10 +745,29 @@ class Dock(Window):
             return
 
         if source_index != target_index:
+            # Check for separator to detect cross-section drag
+            separator_index = -1
+            for i, child in enumerate(children):
+                if child.get_name() == "dock-separator":
+                    separator_index = i
+                    break
+                    
+            # Detect if we're dragging across the separator (between pinned/unpinned)
+            cross_section_drag = (separator_index != -1 and
+                                 ((source_index < separator_index and target_index > separator_index) or
+                                  (source_index > separator_index and target_index < separator_index)))
+            
+            # Move the item in the children list
             child = children.pop(source_index)
             children.insert(target_index, child)
             self.view.children = children  # Update view immediately
-            self.update_pinned_apps(skip_update=True)  # Skip dock update to avoid recursive updates
+            
+            # Update pinned apps configuration
+            self.update_pinned_apps(skip_update=not cross_section_drag)
+            
+            # Force immediate update if we dragged across sections to update separator visibility
+            if cross_section_drag:
+                GLib.idle_add(self.update_dock)
 
     def on_drag_end(self, widget, drag_context):
         """Handles drag end, for unpinning and closing apps."""
