@@ -3,15 +3,17 @@ from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
 import gi
-gi.require_version('Gtk', '3.0')
+
+gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk, Pango
 import modules.icons as icons
 from modules.buttons import Buttons
-from modules.calendar import Calendar
+from modules.calendar_module import Calendar
 from modules.player import Player
 from modules.bluetooth import BluetoothConnections
 from modules.metrics import Metrics
 from modules.controls import ControlSliders
+
 
 class Widgets(Box):
     def __init__(self, **kwargs):
@@ -62,7 +64,7 @@ class Widgets(Box):
             children=[
                 self.notification_history,
                 self.bluetooth,
-            ]
+            ],
         )
 
         self.applet_stack_box = Box(
@@ -71,7 +73,7 @@ class Widgets(Box):
             v_expand=True,
             children=[
                 self.applet_stack,
-            ]
+            ],
         )
 
         self.container_1 = Box(
@@ -89,10 +91,10 @@ class Widgets(Box):
                     children=[
                         Calendar(),
                         self.applet_stack_box,
-                    ]
+                    ],
                 ),
                 self.metrics,
-            ]
+            ],
         )
 
         self.container_2 = Box(
@@ -105,7 +107,7 @@ class Widgets(Box):
                 self.buttons,
                 self.controls,
                 self.container_1,
-            ]
+            ],
         )
 
         self.container_3 = Box(
@@ -117,7 +119,7 @@ class Widgets(Box):
             children=[
                 self.player,
                 self.container_2,
-            ]
+            ],
         )
 
         self.add(self.container_3)

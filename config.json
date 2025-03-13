@@ -1,44 +1,45 @@
 {
-    "city": "",
-    "Temprature_Unit": "C",
-    "quotetype": "stoic",
-    "Basic": {
-        "corners": true,
-        "bar": true,
-        "widgets": true,
-        "dock": false
+  "checkupdates": true,
+  "city": "",
+  "Temprature_Unit": "C",
+  "quotetype": "stoic",
+  "Basic": {
+    "corners": true,
+    "bar": true,
+    "widgets": true,
+    "dock": false
+  },
+  "Bar": {
+    "systray": true,
+    "workspaces": true,
+    "buttonapps": true,
+    "buttontools": true,
+    "datetime": true,
+    "buttonpower": true,
+    "Barright": {
+      "metrics": false,
+      "controls": true,
+      "battery": false
     },
-    "Bar": {
-        "systray": true,
-        "workspaces": true,
-        "buttonapps": true,
-        "buttontools": true,
-        "datetime": true,
-        "buttonpower": true,
-        "Barright": {
-            "metrics": false,
-            "controls": true,
-            "battery": false
-        },
-        "Barleft": {
-            "weather": false,
-            "overview": true,
-            "networkapplet": true
-        }
-    },
-    "widgetstyle": "full",
-    "desktopwidgets": {
-        "date": true,
-        "clock": true,
-        "quote": true,
-        "weather": true,
-        "systeminfo": true
-    },
-    "tooltip": {
-        "Temprature_Unit_tooltip": "C for Celsius, F for Fahrenheit",
-        "quotetype_tooltip": "stoic for Stoic quotes, zen for Random quotes",
-        "city_tooltip": "Enter the city name for weather updates",
-        "widgetstyle_tooltip": "full for full widgets, basic for minimal widgets",
-        "bar_tooltip": "This hides Notch too as bar and notch are deeply integrated"
+    "Barleft": {
+      "weather": false,
+      "overview": true,
+      "networkapplet": true
     }
+  },
+  "widgetstyle": "full",
+  "desktopwidgets": {
+    "date": true,
+    "clock": true,
+    "quote": true,
+    "weather": true,
+    "systeminfo": true
+  },
+  "tooltip": {
+    "Temprature_Unit_tooltip": "C for Celsius, F for Fahrenheit",
+    "quotetype_tooltip": "stoic for Stoic quotes, zen for Random quotes",
+    "city_tooltip": "Enter the city name for weather updates",
+    "widgetstyle_tooltip": "full for full widgets, basic for minimal widgets",
+    "bar_tooltip": "This hides Notch too as bar and notch are deeply integrated"
+  }
 }

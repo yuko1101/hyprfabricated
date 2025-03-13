@@ -1,12 +1,11 @@
 import json
 import os
 import warnings
-
+import subprocess
 import setproctitle
 from fabric import Application
 from fabric.utils import get_relative_path, exec_shell_command_async
 import config.data as data
-
 
 
 fonts_updated_file = f"{data.CACHE_DIR}/fonts_updated"
@@ -18,6 +17,18 @@ def load_config():
         return json.load(f)
 
 
+def run_updater():
+    try:
+        subprocess.Popen(
+            f"uwsm app -- python {data.HOME_DIR}/.config/{data.APP_NAME_CAP}/modules/updater.py",
+            shell=True,
+            start_new_session=True,
+        )
+        print("Updater process restarted.")
+    except Exception as e:
+        print(f"Error restarting Updater process: {e}")
+
+
 if __name__ == "__main__":
     setproctitle.setproctitle(data.APP_NAME)
 
@@ -25,6 +36,9 @@ if __name__ == "__main__":
         exec_shell_command_async(f"python {get_relative_path('../config/config.py')}")
 
     config = load_config()
+
+    if config.get("checkupdates", False):
+        run_updater()
 
     assets = []
     if config["Basic"]["corners"]:
@@ -42,7 +56,6 @@ if __name__ == "__main__":
         bar.notch = notch
         notch.bar = bar
         assets.append(notch)
-
 
     if config["Basic"]["widgets"]:
         if config["widgetstyle"] == "full":
