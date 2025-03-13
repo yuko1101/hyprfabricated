@@ -39,7 +39,7 @@ class AppLauncher(Box):
                 self.calc_history = json.load(f)
         else:
             self.calc_history = []
-        
+
         self.viewport = Box(name="viewport", spacing=4, orientation="v")
         self.search_entry = Entry(
             name="search-entry",
@@ -80,7 +80,7 @@ class AppLauncher(Box):
                 ),
             ],
         )
-        
+
         self.launcher_box = Box(
             name="launcher-box",
             spacing=10,
@@ -202,12 +202,12 @@ class AppLauncher(Box):
             alloc = button.get_allocation()
             if alloc.height == 0:
                 return False  # Retry if allocation isn't ready
-            
+
             y = alloc.y
             height = alloc.height
             page_size = adj.get_page_size()
             current_value = adj.get_value()
-            
+
             # Calculate visible boundaries
             visible_top = current_value
             visible_bottom = current_value + page_size
@@ -287,7 +287,7 @@ class AppLauncher(Box):
                 self.close_launcher()
                 return True
             return False
-    
+
     def add_selected_app_to_dock(self):
         """Adds the currently selected application to the dock.json file."""
         children = self.viewport.get_children()
@@ -296,7 +296,7 @@ class AppLauncher(Box):
 
         selected_button = children[self.selected_index]
         # Assuming the app's name/command is stored in the tooltip_text of the button.
-        # We need to extract the app's command from the DesktopApp object.
+        # Now we extract the app's display name from the label to find the DesktopApp object.
         selected_app = next((app for app in self._all_apps if app.display_name == selected_button.get_child().get_children()[1].props.label), None)
         if not selected_app:
             return
@@ -312,7 +312,7 @@ class AppLauncher(Box):
             with open(config_path, "w") as file: #create the file
                 pass
         if app_command not in data.get("pinned_apps", []):
-            data.setdefault("pinned_apps", []).append(app_command)
+            data.setdefault("pinned_apps", []).append(selected_app.name) # Store app.name instead of command
             with open(config_path, "w") as file:
                 json.dump(data, file, indent=4)
 

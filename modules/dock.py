@@ -29,7 +29,7 @@ class Dock(Window):
             name="dock-window",
             layer="top",
             anchor="bottom center",
-            margin="0 0 -4px 0",
+            margin="-8px 0 -4px 0",
             exclusivity="none",
             **kwargs,
         )
@@ -39,6 +39,7 @@ class Dock(Window):
         self.pinned = self.config.get("pinned_apps", [])
         self.config_path = get_relative_path("../config/dock.json")
         self.app_map = {}  # Initialize the app map
+        self._all_apps = get_desktop_applications() # Get all apps for lookup
         self.is_hidden = False
         self.hide_id = None
         self._arranger_handler = None
@@ -48,19 +49,19 @@ class Dock(Window):
         # Set up UI containers
         self.view = Box(name="viewport", orientation="h", spacing=8)
         self.wrapper = Box(name="dock", orientation="v", children=[self.view])
-        
+
         # Main dock container with hover handling
         self.dock_eventbox = EventBox()
         self.dock_eventbox.add(self.wrapper)
         self.dock_eventbox.connect("enter-notify-event", self._on_dock_enter)
         self.dock_eventbox.connect("leave-notify-event", self._on_dock_leave)
-        
+
         # Bottom hover activation area
         self.hover_activator = EventBox()
         self.hover_activator.set_size_request(-1, 1)
         self.hover_activator.connect("enter-notify-event", self._on_hover_enter)
         self.hover_activator.connect("leave-notify-event", self._on_hover_leave)
-        
+
         self.main_box = Box(orientation="v", children=[self.dock_eventbox, self.hover_activator])
         self.add(self.main_box)
 
@@ -91,7 +92,7 @@ class Dock(Window):
         for ev in ("activewindow", "openwindow", "closewindow", "changefloatingmode"):
             self.conn.connect(f"event::{ev}", self.update_dock)
         self.conn.connect("event::workspace", self.check_hide)
-        
+
         GLib.timeout_add(250, self.check_occlusion_state)
         # Monitor dock.json for changes
         GLib.timeout_add_seconds(1, self.check_config_change)
@@ -124,7 +125,7 @@ class Dock(Window):
         # Only trigger if mouse actually left the entire dock area
         if event.detail == Gdk.NotifyType.INFERIOR:
             return False  # Ignore child-to-child mouse movements
-        
+
         self.is_hovered = False
         self.delay_hide()
         # Immediate occlusion check on true leave
@@ -136,41 +137,41 @@ class Dock(Window):
 
     # New method to find the DesktopApp using the given identifier.
     def find_app(self, app_identifier):
-        """Return the DesktopApp object by matching the executable or display name."""
+        """Return the DesktopApp object by matching the app name."""
         normalized_id = app_identifier.lower()
-        # Try matching by executable key, checking case-insensitively.
-        for key, desktop_app in self.app_map.items():
-            if key.lower() == normalized_id:
-                return desktop_app
-        # Otherwise, try a case-insensitive comparison with display_name
-        for desktop_app in self.app_map.values():
-            if desktop_app.display_name and desktop_app.display_name.lower() == normalized_id:
+        for desktop_app in self._all_apps: # Use _all_apps instead of app_map, as app_map keys are executable paths.
+            if desktop_app.name and desktop_app.name.lower() == normalized_id:
                 return desktop_app
         return None
 
     # Update the dock's app map using DesktopApp objects from the system.
     def update_app_map(self):
         """Updates the mapping of commands to DesktopApp objects."""
-        all_apps = get_desktop_applications()
-        self.app_map = {app.executable: app for app in all_apps}
+        self._all_apps = get_desktop_applications() # Refresh all apps
+        self.app_map = {app.name: app for app in self._all_apps} # Map app names to DesktopApp objects
 
-    def create_button(self, app, instances):
+    def create_button(self, app_identifier, instances):
         """Create dock application button"""
-        desktop_app = self.find_app(app)
+        desktop_app = self.find_app(app_identifier) # Find app by identifier
         icon_img = None
         if desktop_app:
             icon_img = desktop_app.get_icon_pixbuf(size=36)
         if not icon_img:
             # Fallback to IconResolver with the app command
-            icon_img = self.icon.get_icon_pixbuf(app, 36)
+            icon_img = self.icon.get_icon_pixbuf(app_identifier, 36) # Use identifier for fallback
         if not icon_img:
+            # Try to get icon from executable if DesktopApp not found or icon failed.
+            found_app_by_exec = next((da for da in self._all_apps if da.executable == app_identifier), None)
+            if found_app_by_exec:
+                icon_img = found_app_by_exec.get_icon_pixbuf(size=36)
+        if not icon_img: # Double check after exec path try
             # Fallback icon if no DesktopApp is found
             icon_img = self.icon.get_icon_pixbuf("application-x-executable-symbolic", 36)
             # Final fallback
             if not icon_img:
                 icon_img = self.icon.get_icon_pixbuf("image-missing", 36)
         items = [Image(pixbuf=icon_img)]
-        
+
         button = Button(
             child=Box(
                 name="dock-icon",
@@ -178,13 +179,13 @@ class Dock(Window):
                 h_align="center",
                 children=items,
             ),
-            on_clicked=lambda *a: self.handle_app(app, instances),
-            tooltip_text=app if app.lower() in [p.lower() for p in self.pinned] else (instances[0]["title"] if instances else app),
+            on_clicked=lambda *a: self.handle_app(app_identifier, instances), # Pass identifier to handler
+            tooltip_text=desktop_app.display_name if desktop_app else app_identifier if app_identifier.lower() in [p.lower() for p in self.pinned] else (instances[0]["title"] if instances else app_identifier),
             name="dock-app-button",
         )
-        
+
         if instances:
-            button.add_style_class("instance")
+            button.add_style_class("instance") # Style running apps
 
         button.instances = instances  # Use a normal Python attribute
         # Enable DnD for ALL apps
@@ -195,7 +196,7 @@ class Dock(Window):
         )
         button.connect("drag-begin", self.on_drag_begin)
         button.connect("drag-end", self.on_drag_end)  # Connect drag-end to ALL buttons
-        if app.lower() in [p.lower() for p in self.pinned]:  # Only pinned apps can be reordered
+        if app_identifier.lower() in [p.lower() for p in self.pinned]:  # Only pinned apps can be reordered
             button.drag_dest_set(
                 Gtk.DestDefaults.ALL,
                 [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
@@ -203,19 +204,19 @@ class Dock(Window):
             )
             button.connect("drag-data-get", self.on_drag_data_get)
             button.connect("drag-data-received", self.on_drag_data_received)
-        
+
         button.connect("enter-notify-event", self._on_child_enter)
         return button
 
     # Updated to try using the DesktopApp's launch method if available.
-    def handle_app(self, app, instances):
+    def handle_app(self, app_identifier, instances):
         """Handle application button clicks"""
-        desktop_app = self.find_app(app)
+        desktop_app = self.find_app(app_identifier) # Find by identifier
         if not instances:
             if desktop_app:
                 desktop_app.launch()
-            else:
-                exec_shell_command_async(f"nohup {app}")
+            elif app_identifier: # Fallback to exec if identifier is valid path
+                exec_shell_command_async(f"nohup {app_identifier}")
         else:
             focused = self.get_focused()
             idx = next(
@@ -262,7 +263,7 @@ class Dock(Window):
         self.toggle_dock(show=False)
         self.hide_id = None
         return False
-    
+
     def check_hide(self, *args):
         """Determine if dock should auto-hide"""
         clients = self.get_clients()
@@ -287,20 +288,20 @@ class Dock(Window):
         for c in clients:
             key = c["initialClass"].lower()
             running.setdefault(key, []).append(c)
-        
+
         # Create buttons for pinned apps. Note that if an app is pinned but not running,
         # an empty instance list is passed.
         pinned_buttons = [
-            self.create_button(app, running.get(app.lower(), []))
+            self.create_button(app, running.get(app.lower(), [])) # Pass identifier
             for app in self.pinned
         ]
-        
+
         # For open (unpinned) apps, group by unique application key rather than per instance.
         open_buttons = []
         for app, instances in running.items():
-            if app not in [p.lower() for p in self.pinned]:
+            if app not in [p.lower() for p in self.pinned]: # Only add if not pinned
                 open_buttons.append(self.create_button(app, instances))
-        
+
         children = pinned_buttons
         if pinned_buttons and open_buttons:
             children += [Box(orientation="v", v_expand=True, name="dock-separator")]
@@ -366,7 +367,7 @@ class Dock(Window):
         if target is not None:
             index = self.view.get_children().index(target)
             data.set_text(str(index), -1)
-    
+
     def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
         """Handle drop event"""
         target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
@@ -411,7 +412,7 @@ class Dock(Window):
                         if app_to_remove in self.config["pinned_apps"]:  # Remove pinned
                             self.config["pinned_apps"].remove(app_to_remove)
                             self.update_pinned_apps_file()  # Write to the file
-                        elif instances:
+                        elif instances: # Close if running and unpinned
                             # Close running app (if not pinned)
                             # Assuming the first instance is the relevant one.
                             address = instances[0].get("address")
@@ -444,11 +445,11 @@ class Dock(Window):
             if child.get_name() == "dock-separator":
                 break  # Stop at separator
             pinned_children.append(child.get_tooltip_text())
-        
+
         # Directly update both config and local pinned list
         self.config["pinned_apps"] = pinned_children
         self.pinned = pinned_children  # Update local state immediately
-        
+
         # Force UI update and write to file
         self.update_dock()  # Refresh dock immediately
         self.update_pinned_apps_file()  # Persist to disk
