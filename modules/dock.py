@@ -618,10 +618,45 @@ class Dock(Window):
                             
                 if skip:
                     continue
-                            
-                # Try to find a proper app identifier for this window class
+                        
+                # Enhanced app identification for running windows
+                app = None
+                
+                # Try multiple methods to find the correct app
+                # 1. Direct lookup by class name
                 app = self.app_identifiers.get(class_name)
-                identifier = app.name if app else class_name
+                
+                # 2. Try with normalized class name
+                if not app:
+                    norm_class = self._normalize_window_class(class_name)
+                    app = self.app_identifiers.get(norm_class)
+                    
+                # 3. Try with our more robust find_app method
+                if not app:
+                    app = self.find_app_by_key(class_name)
+                
+                # 4. Try using window title which often contains app name
+                if not app and instances and instances[0].get("title"):
+                    title = instances[0].get("title", "")
+                    # Extract potential app name from title (common format: "App Name - Document")
+                    potential_name = title.split(" - ")[0].strip()
+                    if len(potential_name) > 2:  # Avoid very short names
+                        app = self.find_app_by_key(potential_name)
+                
+                # Create comprehensive app data if app was found
+                if app:
+                    app_data = {
+                        "name": app.name,
+                        "display_name": app.display_name,
+                        "window_class": app.window_class,
+                        "executable": app.executable,
+                        "command_line": app.command_line
+                    }
+                    identifier = app_data
+                else:
+                    # Fallback to just class name
+                    identifier = class_name
+                
                 open_buttons.append(self.create_button(identifier, instances))
 
         # Assemble dock layout
