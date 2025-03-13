@@ -11,82 +11,74 @@ import urllib.parse
 import datetime
 import json
 from gi.repository import GLib
+from concurrent.futures import ThreadPoolExecutor
 
+executor = ThreadPoolExecutor(max_workers=4)
+
+CONFIG_CACHE = None
+
+
+def load_config():
+    """Load and cache config file to reduce file I/O latency."""
+    global CONFIG_CACHE
+    if CONFIG_CACHE is None:
+        try:
+            with open(get_relative_path("../config.json"), "r") as file:
+                CONFIG_CACHE = json.load(file)
+        except Exception as e:
+            print(f"Error reading config: {e}")
+            CONFIG_CACHE = {}
+    return CONFIG_CACHE
 
 
 def get_location():
-    config_path = get_relative_path("../config.json")
-    try:
-        with open(config_path, "r") as file:
-            config = json.load(file)
-            location = config.get("city", "")
-            if location:
-                return location
-    except Exception as e:
-        print(f"Error reading location from config: {e}")
+    """Fetch location from config file or IP API asynchronously."""
+    config = load_config()
+    if city := config.get("city"):
+        return city
 
     try:
-        response = requests.get("https://ipinfo.io/json")
-        response.encoding = "utf-8"  # Ensure the response is decoded using UTF-8
-
+        response = requests.get("https://ipinfo.io/json", timeout=3)
         if response.status_code == 200:
-            data = response.json()
-            return data.get("city", "").replace(" ", "")
-        else:
-            print("Error getting location from ipinfo.")
-    except Exception as e:
+            return response.json().get("city", "").replace(" ", "")
+    except requests.RequestException as e:
         print(f"Error getting location: {e}")
     return ""
 
 
 def get_location_async(callback):
-    def run():
-        location = get_location()
-        GLib.idle_add(callback, location)
-
-    GLib.idle_add(run)
+    """Fetch location asynchronously to prevent UI freeze."""
+    executor.submit(lambda: GLib.idle_add(callback, get_location()))
 
 
 def get_weather(callback):
-    def fetch_weather(location):
+    """Fetch weather data asynchronously and update UI."""
+
+    def fetch_weather():
+        location = get_location()
         if not location:
-            callback(None)
-            return
+            return GLib.idle_add(callback, None)
 
         encoded_location = urllib.parse.quote(location)
         url = f"https://wttr.in/{encoded_location}?format=j1"
         urlemoji = f"https://wttr.in/{encoded_location}?format=%c"
 
         try:
-            response = requests.get(urlemoji)
-            responseinfo = requests.get(url).json()
+            response = requests.get(urlemoji, timeout=3)
+            responseinfo = requests.get(url, timeout=3).json()
 
             if response.status_code == 200:
-                config_path = get_relative_path("../config.json")
-                with open(config_path, "r") as file:
-                    config = json.load(file)
-
+                config = load_config()
                 temp_unit = config.get("Temprature_Unit", "C")
-                if temp_unit == "F":
-                    temp = f"{responseinfo['current_condition'][0]['temp_F']}°"
-                    feels_like = (
-                        f"{responseinfo['current_condition'][0]['FeelsLikeF']}°"
-                    )
-                else:
-                    temp = f"{responseinfo['current_condition'][0]['temp_C']}°"
-                    feels_like = (
-                        f"{responseinfo['current_condition'][0]['FeelsLikeC']}°"
-                    )
-
+                temp = responseinfo["current_condition"][0][f"temp_{temp_unit}"] + "°"
+                feels_like = (
+                    responseinfo["current_condition"][0][f"FeelsLike{temp_unit}"] + "°"
+                )
                 condition = responseinfo["current_condition"][0]["weatherDesc"][0][
                     "value"
                 ]
                 location = responseinfo["nearest_area"][0]["areaName"][0]["value"]
                 emoji = response.text.strip()
-
-                temp = temp.replace("+", "").replace("C", "")
-                feels_like = feels_like.replace("+", "").replace("C", "")
-
                 update_time = datetime.datetime.now().strftime("%I:%M:%S %p")
 
                 GLib.idle_add(
@@ -94,13 +86,12 @@ def get_weather(callback):
                     [emoji, temp, condition, feels_like, location, update_time],
                 )
             else:
-                print("Error getting weather from wttr.in.")
                 GLib.idle_add(callback, None)
-        except Exception as e:
-            print(f"Error getting weather: {e}")
+        except requests.RequestException as e:
+            print(f"Error fetching weather: {e}")
             GLib.idle_add(callback, None)
 
-    get_location_async(fetch_weather)
+    executor.submit(fetch_weather)
 
 
 def update_weather(widget):
@@ -115,8 +106,7 @@ def update_weather(widget):
 def update_widget(widget, weather_info):
     if weather_info:
         widget.weatherinfo = weather_info
-        widget.update_labels()
-
+        widget.update_labels(weather_info)
 
 
 class Sysinfo(Box):
@@ -213,22 +203,20 @@ class Sysinfo(Box):
         self.show_all()
 
     def update_status(self):
-        self.cpu_progress.value = psutil.cpu_percent()
-        self.ram_progress.value = psutil.virtual_memory().percent
-        if not (bat_sen := psutil.sensors_battery()):
-            self.bat_circular.value = 42
-        else:
-            self.bat_circular.value = bat_sen.percent
-        self.progress_container.children[0].set_tooltip_text(
-            f"{int(psutil.cpu_percent(interval=0) or 0)}%"
-        )
-        self.progress_container.children[1].set_tooltip_text(
-            f"{int(psutil.virtual_memory().percent or 0)}%"
-        )
-        self.progress_container.children[2].set_tooltip_text(
-            f"{int((bat_sen := psutil.sensors_battery()) and bat_sen.percent or 0)}%"
-        )
+        """Update system info asynchronously to prevent UI lag."""
 
+        def update():
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            battery = (
+                psutil.sensors_battery().percent if psutil.sensors_battery() else 42
+            )
+
+            GLib.idle_add(self.cpu_progress.set_value, cpu)
+            GLib.idle_add(self.ram_progress.set_value, ram)
+            GLib.idle_add(self.bat_circular.set_value, battery)
+
+        executor.submit(update)
         return True
 
 
@@ -298,58 +286,58 @@ class weather(Box):
         self.set_visible(False)
         update_weather(self)
 
-    def update_labels(self):
-        if self.weatherinfo:
-            self.set_visible(True)
-            self.header.children[0].children[0].set_label(f"{self.weatherinfo[4]}")
-            self.header.children[0].children[1].set_label(
-                f"Updated {self.weatherinfo[5]}"
-            )
-            self.header.children[0].children[2].set_label(f"{self.weatherinfo[2]}")
-            self.temp.children[0].children[0].set_label(f"{self.weatherinfo[1]}")
-            self.temp.children[0].children[1].set_label(
-                f"Feels like {self.weatherinfo[3]}"
-            )
-            self.header_right.children[0].children[0].set_label(
-                f"{self.weatherinfo[0]}"
-            )
+    def update_labels(self, weather_info):
+        if not self.weatherinfo:
+            return
+
+        # Unpack weather info into variables for better readability
+        emoji, temp, condition, feels_like, location, update_time = self.weatherinfo
+
+        print(self.weatherinfo)
+        # Store references to deeply nested children to avoid repeated lookups
+        header_left = self.header.children[0].children
+        temp_labels = self.temp.children[0].children
+        header_right = self.header_right.children[0].children
+
+        # Update labels efficiently
+        self.set_visible(True)
+        header_left[0].set_label(location)
+        header_left[1].set_label(f"Updated {update_time}")
+        header_left[2].set_label(condition)
+        temp_labels[0].set_label(temp)
+        temp_labels[1].set_label(f"Feels like {feels_like}")
+        header_right[0].set_label(emoji)
 
 
 def fetch_quote(callback):
-    def fetch_stoic_quote():
+    """Fetch quotes asynchronously."""
+
+    def fetch():
+        config = load_config()
+        quotes_type = config.get("quotetype", "zen")
+
+        url = (
+            "https://stoic-quotes.com/api/quote"
+            if quotes_type == "stoic"
+            else "https://zenquotes.io/api/random"
+        )
+
         try:
-            response = requests.get("https://stoic-quotes.com/api/quote")
+            response = requests.get(url, timeout=3)
             response.raise_for_status()
             data = response.json()
-            return f"{data['text']} - {data['author']}"
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching stoic quote: {e}")
-            return "I learn from the mistakes of people who take my advice - Trix"
+            quote = (
+                f"{data[0]['q']} - {data[0]['a']}"
+                if quotes_type == "zen"
+                else f"{data['text']} - {data['author']}"
+            )
+        except requests.RequestException as e:
+            print(f"Error fetching quote: {e}")
+            quote = "I learn from the mistakes of people who take my advice - Trix"
 
-    def fetch_zen_quote():
-        try:
-            response = requests.get("https://zenquotes.io/api/random")
-            response.raise_for_status()
-            data = response.json()
-            return f"{data[0]['q']} - {data[0]['a']}"
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching zen quote: {e}")
-            return "I learn from the mistakes of people who take my advice - Trix"
+        GLib.idle_add(callback, quote)
 
-    config_path = get_relative_path("../config.json")
-    try:
-        with open(config_path, "r") as file:
-            config = json.load(file)
-            quotes_type = config.get("quotetype", "zen")
-            if quotes_type == "stoic":
-                quote = fetch_stoic_quote()
-            else:
-                quote = fetch_zen_quote()
-    except Exception as e:
-        print(f"Error reading quotes type from config: {e}")
-        quote = fetch_zen_quote()
-
-    GLib.idle_add(callback, quote)
+    executor.submit(fetch)
 
 
 def fetch_quote_async(callback):
@@ -370,18 +358,9 @@ class qoute(Label):
         fetch_quote_async(self.update_label)
 
     def update_label(self, quote):
+        """Update quote asynchronously."""
         self.set_label(quote)
         self.set_visible(True)
-
-
-def load_config():
-    config_path = get_relative_path("../config.json")
-    try:
-        with open(config_path, "r") as file:
-            return json.load(file)
-    except Exception as e:
-        print(f"Error reading config: {e}")
-        return {}
 
 
 def create_widgets(config, widget_type):
