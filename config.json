@@ -6,7 +6,7 @@
         "corners": true,
         "bar": true,
         "widgets": true,
-        "dock": true
+        "dock": false
     },
     "Bar": {
         "systray": true,

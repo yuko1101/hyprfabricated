@@ -11,7 +11,7 @@
 }
 
 #metrics-circle.bat {
-    border: 3px solid var(--primary);
+  border: 3px solid var(--primary);
 }
 
 #metrics-circle.alert {
@@ -35,8 +35,6 @@
   min-width: 4px;
 }
 
-
-
 #network-icon-label {
   color: var(--foreground);
   font-size: 20px;
@@ -46,58 +44,61 @@
 }
 
 #download-label {
-  color: #E6FF95;
+  color: #e6ff95;
   font-size: 14px;
   font-weight: bold;
   padding: 4px;
   border-radius: 11px;
   transition: all 0.1s ease;
-  }
+}
 
-  #download-label.urgent {
+#download-label.urgent {
   color: var(--shadow);
-  }
+}
 
-  #network-icon-label.urgent {
+#network-icon-label.urgent {
   color: var(--shadow);
-  }
+}
 
-  #button-bar.download {
-    background-color: #E6FF95;
-  }
+#button-bar.download {
+  background-color: #e6ff95;
+}
 
-  #button-bar.upload {
-      background-color: #FFD695;
-  }
+#button-bar.upload {
+  background-color: #ffd695;
+}
 
-
-  #download-icon-label {
-  color: #E6FF95;
+#download-icon-label {
+  color: #e6ff95;
   font-size: 16px;
-  }
+}
 
-  #download-icon-label.urgent {
+#download-icon-label.urgent {
   color: var(--shadow);
-  }
+}
 
-  #upload-icon-label {
-      color: #FFD695;
-      font-size: 16px;
-  }
+#upload-icon-label {
+  color: #ffd695;
+  font-size: 16px;
+}
 
-  #upload-label {
-      color: #FFD695;
-      font-size: 14px;
-      font-weight: bold;
-      padding: 4px;
-      border-radius: 11px;
-      transition: all 0.1s ease;
-  }
+#upload-label {
+  color: #ffd695;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px;
+  border-radius: 11px;
+  transition: all 0.1s ease;
+}
 
-  #upload-label.urgent {
-      color: var(--shadow);
-  }
+#upload-label.urgent {
+  color: var(--shadow);
+}
 
-  #upload-icon-label.urgent {
-      color: var(--shadow);
-  }
+#upload-icon-label.urgent {
+  color: var(--shadow);
+}
+#download-label,
+#upload-label {
+  font-size: 12px;
+}

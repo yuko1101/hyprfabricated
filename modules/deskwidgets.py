@@ -225,6 +225,7 @@ class weather(Box):
         super().__init__(
             layer="bottom",
             name="weather-widget",
+            anchor="center",
             h_align="center",
             v_align="center",
             h_expand=True,
@@ -349,9 +350,11 @@ class qoute(Label):
         super().__init__(
             name="quote",
             label="",
+            anchor="center",
             h_align="center",
             v_align="center",
             h_expand=True,
+            justification="center",
             v_expand=True,
             visible=False,
         )
@@ -359,6 +362,16 @@ class qoute(Label):
 
     def update_label(self, quote):
         """Update quote asynchronously."""
+        max_width = 150  # Set the maximum width for the quote
+        if len(quote) > max_width:
+            words = quote.split()
+            line1, line2 = "", ""
+            for word in words:
+                if len(line1) + len(word) + 1 <= max_width:
+                    line1 += word + " "
+                else:
+                    line2 += word + " "
+            quote = line1.strip() + "\n" + line2.strip()
         self.set_label(quote)
         self.set_visible(True)
 
@@ -392,7 +405,6 @@ class Deskwidgetsfull(Window):
         super().__init__(
             name="desktop",
             layer="bottom",
-            anchor="center",
             exclusivity="none",
             child=Box(
                 orientation="v",
