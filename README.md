@@ -28,7 +28,8 @@
 > [!NOTE]
 >
 > - You need a functioning Hyprland installation. <br>
-> - You need to install plasma-browser-integration for mpris and cava to work as it is intended
+> - You need to install plasma-browser-integration for mpris and cava to work as it is intended <br>
+> - Join the discord server for better support
 
 ### Arch Linux
 
@@ -44,7 +45,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 ### Manual Installation
 
 1. Install dependencies:
-   <<<<<<< HEAD
+
 
 - Aur/Pacman:
   - [`Fabric`](https://github.com/Fabric-Development/fabric)
@@ -117,6 +118,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Full Gui Config
 - [x] Better Desktop Widgets
 - [x] Customizable Widgets and Bar
+- [x] Gui Updater and update notifier
 - [ ] Network Manager
 - [ ] Clipboard Manager
 - [ ] Multimodal AI Assistant
