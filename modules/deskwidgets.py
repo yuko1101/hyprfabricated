@@ -297,7 +297,6 @@ class weather(Box):
         # Unpack weather info into variables for better readability
         emoji, temp, condition, feels_like, location, update_time = self.weatherinfo
 
-        print(self.weatherinfo)
         # Store references to deeply nested children to avoid repeated lookups
         header_left = self.header.children[0].children
         temp_labels = self.temp.children[0].children
