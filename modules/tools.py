@@ -10,6 +10,7 @@ import subprocess
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
+GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
 
 
 class Toolbox(Box):
@@ -91,6 +92,15 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
+        self.btn_gamemode = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.gamemode),
+            on_clicked=self.gamemode,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
 
         self.buttons = [
             self.btn_ssregion,
@@ -98,6 +108,7 @@ class Toolbox(Box):
             self.btn_screenrecord,
             self.btn_ocr,
             self.btn_color,
+            self.btn_gamemode,
             self.btn_emoji,
         ]
 
@@ -167,6 +178,30 @@ class Toolbox(Box):
             self.close_menu()
             return True
         return False
+
+    def gamemode(self, *args):
+        exec_shell_command_async(f"bash {GAMEMODE_SCRIPT} toggle")
+        self.gamemode_check()
+        self.close_menu()
+
+    def gamemode_check(self, *args):
+        try:
+            result = subprocess.run(
+                f"bash {GAMEMODE_SCRIPT} check",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            enabled = result.stdout == b"1\n"
+        except Exception:
+            enabled = False
+
+        if enabled:
+            self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
+        else:
+            self.btn_gamemode.get_child().set_markup(icons.gamemode)
+
+        return True
 
     def update_screenrecord_state(self):
         """

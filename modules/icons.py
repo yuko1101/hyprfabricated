@@ -1,35 +1,37 @@
 # Parameters
-font_family: str = 'tabler-icons'
-font_weight: str = 'normal'
+font_family: str = "tabler-icons"
+font_weight: str = "normal"
 
 span: str = f"<span font-family='{font_family}' font-weight='{font_weight}'>"
 
-#Panels
+# Panels
 apps: str = "&#xf1fd;"
 dashboard: str = "&#xea87;"
 chat: str = "&#xf59f;"
 wallpapers: str = "&#xeb01;"
 windows: str = "&#xefe6;"
 
-video : str = "&#xeafa;"  # video
+video: str = "&#xeafa;"  # video
 # Bar
 colorpicker: str = "&#xebe6;"
 media: str = "&#xf00d;"
 
 
-#Network
+# Network
 
 
 download: str = "&#xea96;"
 upload: str = "&#xeb47;"
-#Toolbox
+# Toolbox
 
-toolbox: str = "&#xebca;"       # toolbox
-ssfull: str = "&#xeaea;"    # camera
-ssregion: str = "&#xf201;"    # camera
+toolbox: str = "&#xebca;"  # toolbox
+ssfull: str = "&#xeaea;"  # camera
+ssregion: str = "&#xf201;"  # camera
 screenrecord: str = "&#xeafa;"  # video
-ocr: str = "&#xfcc3;"          # text-recognition
-close : str = "&#xeb55;"
+ocr: str = "&#xfcc3;"  # text-recognition
+close: str = "&#xeb55;"
+gamemode: str = "&#xf026;"
+gamemode_off: str = "&#xf111;"
 
 # Circles
 temp: str = "&#xeb38;"
@@ -102,7 +104,7 @@ wifi_1: str = "&#xeba4;"
 wifi_2: str = "&#xeba5;"
 download: str = "&#xea96;"
 upload: str = "&#xeb47;"
-notifications_clear: str = "&#xf814;";
+notifications_clear: str = "&#xf814;"
 
 # Bluetooth
 bluetooth_connected: str = "&#xecea;"
@@ -191,15 +193,19 @@ loader: str = "&#xeca3;"
 radar: str = "&#xf017;"
 emoji: str = "&#xeaf7;"
 
-exceptions: list[str] = ['font_family', 'font_weight', 'span']
+exceptions: list[str] = ["font_family", "font_weight", "span"]
+
 
 def apply_span() -> None:
     global_dict = globals()
     for key in global_dict:
-        if key not in exceptions and not key.startswith('__'):
+        if key not in exceptions and not key.startswith("__"):
             global_dict[key] = f"{span}{global_dict[key]}</span>"
 
+
 apply_span()
+
+
 def get_class_icon(win_class):
     icon = ghost  # Default icon if no match is found
 
@@ -234,7 +240,12 @@ def get_class_icon(win_class):
             icon = appstore
         case "org.pulseaudio.pavucontrol" | "pavucontrol":
             icon = vol_high
-        case "com.github.flxzt.rnote" | "com.github.xournalpp.xournalpp" | "org.gnome.gedit" | "gedit":
+        case (
+            "com.github.flxzt.rnote"
+            | "com.github.xournalpp.xournalpp"
+            | "org.gnome.gedit"
+            | "gedit"
+        ):
             icon = writing
         case "krita":
             icon = brush

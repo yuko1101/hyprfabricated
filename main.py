@@ -1,6 +1,5 @@
 import json
 import os
-import warnings
 import subprocess
 import setproctitle
 from fabric import Application
