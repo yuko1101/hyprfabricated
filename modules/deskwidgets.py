@@ -209,12 +209,15 @@ class Sysinfo(Box):
             cpu = psutil.cpu_percent()
             ram = psutil.virtual_memory().percent
             battery = (
-                psutil.sensors_battery().percent if psutil.sensors_battery() else 42
+                psutil.sensors_battery().percent if psutil.sensors_battery() else 80
             )
-
             GLib.idle_add(self.cpu_progress.set_value, cpu)
             GLib.idle_add(self.ram_progress.set_value, ram)
             GLib.idle_add(self.bat_circular.set_value, battery)
+
+            GLib.idle_add(self.cpu_progress.set_tooltip_text, f"{str(round(cpu))}%")
+            GLib.idle_add(self.ram_progress.set_tooltip_text, f"{str(round(ram))}%")
+            GLib.idle_add(self.bat_circular.set_tooltip_text, f"{str(round(battery))}%")
 
         executor.submit(update)
         return True
