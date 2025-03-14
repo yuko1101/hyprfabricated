@@ -45,7 +45,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 ### Manual Installation
 
 1. Install dependencies:
-   <<<<<<< HEAD
+
 
 - Aur/Pacman:
   - [`Fabric`](https://github.com/Fabric-Development/fabric)
