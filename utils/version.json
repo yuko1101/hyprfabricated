@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "changelog": [
     "Added Updater!!!!!",
     "Enhance app docking functionality with comprehensive metadata storage",
@@ -8,6 +8,8 @@
     "Dock is now fully functional!!!!!",
     "Added Network speed indicator(check configs) - mariokhz",
     "Big qoutes are now centered and splitted for better looks",
-    "Tweaks"
+    "Tweaks",
+    "Added tooltips for some options",
+    "Added new config options: otherplayers (enables other players like chromium and firefox)"
   ]
 }

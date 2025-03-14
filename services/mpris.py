@@ -1,6 +1,9 @@
 import contextlib
-
+import json
+import os
 import gi
+from fabric.utils.helpers import get_relative_path
+
 from fabric.core.service import Property, Service, Signal
 from fabric.utils import bulk_connect
 from gi.repository import GLib  # type: ignore
@@ -64,6 +67,7 @@ class MprisPlayer(Service):
         def notify_property(prop):
             if self.get_property(prop) is not None:
                 self.notifier(prop)
+
         for prop in [
             "metadata",
             "title",
@@ -87,6 +91,7 @@ class MprisPlayer(Service):
             for prop in self.list_properties():  # type: ignore
                 self.notifier(prop.name)
             return False
+
         GLib.idle_add(notify_all, priority=GLib.PRIORITY_DEFAULT_IDLE)
 
     def notifier(self, name: str, args=None):
@@ -94,6 +99,7 @@ class MprisPlayer(Service):
             self.notify(name)
             self.emit("changed")
             return False
+
         GLib.idle_add(notify_and_emit, priority=GLib.PRIORITY_DEFAULT_IDLE)
 
     def on_player_exit(self, player):
@@ -107,7 +113,7 @@ class MprisPlayer(Service):
     def toggle_shuffle(self):
         if self.can_shuffle:
             # schedule the shuffle toggle in the GLib idle loop
-            GLib.idle_add(lambda: (setattr(self, 'shuffle', not self.shuffle), False))
+            GLib.idle_add(lambda: (setattr(self, "shuffle", not self.shuffle), False))
         # else do nothing
 
     def play_pause(self):
@@ -236,6 +242,16 @@ class MprisPlayer(Service):
 class MprisPlayerManager(Service):
     """A service to manage mpris players."""
 
+    _config = None
+
+    @classmethod
+    def load_config(cls):
+        if cls._config is None:
+            config_path = get_relative_path("../config.json")
+            with open(config_path, "r") as config_file:
+                cls._config = json.load(config_file)
+        return cls._config
+
     @Signal
     def player_appeared(self, player: Playerctl.Player) -> Playerctl.Player: ...
 
@@ -257,15 +273,18 @@ class MprisPlayerManager(Service):
         self.add_players()
         super().__init__(**kwargs)
 
+
     def on_name_appeard(self, manager, player_name: Playerctl.PlayerName):
-        if not player_name.name.startswith(("chromium", "firefox")):
+        config = self.load_config()
+        if config.get('otherplayers', False) or not player_name.name.startswith(("chromium", "firefox")):
             logger.info(f"[MprisPlayer] {player_name.name} appeared")
             new_player = Playerctl.Player.new_from_name(player_name)
             manager.manage_player(new_player)
             self.emit("player-appeared", new_player)  # type: ignore
 
     def on_name_vanished(self, manager, player_name: Playerctl.PlayerName):
-        if not player_name.name.startswith(("chromium", "firefox")):
+        config = self.load_config()
+        if config.get('otherplayers', False) or not player_name.name.startswith(("chromium", "firefox")):
             logger.info(f"[MprisPlayer] {player_name.name} vanished")
             self.emit("player-vanished", player_name.name)  # type: ignore
 
@@ -274,7 +293,7 @@ class MprisPlayerManager(Service):
         return self._manager.get_property("players")  # type: ignore
 
     def add_players(self):
+        config = self.load_config()
         for player in self._manager.get_property("player-names"):  # type: ignore
-            if not player.name.startswith(("chromium", "firefox")):
+            if config.get('otherplayers', False) or not player.name.startswith(("chromium", "firefox")):
                 self._manager.manage_player(Playerctl.Player.new_from_name(player))  # type: ignore
-
