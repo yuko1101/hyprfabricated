@@ -12,6 +12,7 @@ import datetime
 import json
 from gi.repository import GLib
 from concurrent.futures import ThreadPoolExecutor
+import time
 
 executor = ThreadPoolExecutor(max_workers=4)
 
@@ -36,14 +37,18 @@ def get_location():
     config = load_config()
     if city := config.get("city"):
         return city
-
-    try:
-        response = requests.get("https://ipinfo.io/json", timeout=3)
-        if response.status_code == 200:
-            return response.json().get("city", "").replace(" ", "")
-    except requests.RequestException as e:
-        print(f"Error getting location: {e}")
-    return ""
+    for attempt in range(5):
+        try:
+            print("Trying Location ", attempt)
+            response = requests.get("https://ipinfo.io/json", timeout=3)
+            if response.status_code == 200:
+                return response.json().get("city", "").replace(" ", "")
+        except requests.RequestException as e:
+            print(f"Error getting location: {e}")
+            if attempt < 4:
+                time.sleep(10)
+            else:
+                return ""
 
 
 def get_location_async(callback):
@@ -63,33 +68,41 @@ def get_weather(callback):
         url = f"https://wttr.in/{encoded_location}?format=j1"
         urlemoji = f"https://wttr.in/{encoded_location}?format=%c"
 
-        try:
-            response = requests.get(urlemoji, timeout=3)
-            responseinfo = requests.get(url, timeout=3).json()
+        for attempt in range(5):
+            try:
+                print("Trying Weather ", attempt)
+                response = requests.get(urlemoji, timeout=3)
+                responseinfo = requests.get(url, timeout=3).json()
 
-            if response.status_code == 200:
-                config = load_config()
-                temp_unit = config.get("Temprature_Unit", "C")
-                temp = responseinfo["current_condition"][0][f"temp_{temp_unit}"] + "°"
-                feels_like = (
-                    responseinfo["current_condition"][0][f"FeelsLike{temp_unit}"] + "°"
-                )
-                condition = responseinfo["current_condition"][0]["weatherDesc"][0][
-                    "value"
-                ]
-                location = responseinfo["nearest_area"][0]["areaName"][0]["value"]
-                emoji = response.text.strip()
-                update_time = datetime.datetime.now().strftime("%I:%M:%S %p")
+                if response.status_code == 200:
+                    config = load_config()
+                    temp_unit = config.get("Temprature_Unit", "C")
+                    temp = (
+                        responseinfo["current_condition"][0][f"temp_{temp_unit}"] + "°"
+                    )
+                    feels_like = (
+                        responseinfo["current_condition"][0][f"FeelsLike{temp_unit}"]
+                        + "°"
+                    )
+                    condition = responseinfo["current_condition"][0]["weatherDesc"][0][
+                        "value"
+                    ]
+                    location = responseinfo["nearest_area"][0]["areaName"][0]["value"]
+                    emoji = response.text.strip()
+                    update_time = datetime.datetime.now().strftime("%I:%M:%S %p")
 
-                GLib.idle_add(
-                    callback,
-                    [emoji, temp, condition, feels_like, location, update_time],
-                )
-            else:
-                GLib.idle_add(callback, None)
-        except requests.RequestException as e:
-            print(f"Error fetching weather: {e}")
-            GLib.idle_add(callback, None)
+                    GLib.idle_add(
+                        callback,
+                        [emoji, temp, condition, feels_like, location, update_time],
+                    )
+                    return
+            except requests.RequestException as e:
+                print(f"Error fetching weather (attempt {attempt + 1}): {e}")
+                if attempt < 4:
+                    time.sleep(10)
+                else:
+                    GLib.idle_add(callback, None)
+                    return
 
     executor.submit(fetch_weather)
 
@@ -325,18 +338,25 @@ def fetch_quote(callback):
             else "https://zenquotes.io/api/random"
         )
 
-        try:
-            response = requests.get(url, timeout=3)
-            response.raise_for_status()
-            data = response.json()
-            quote = (
-                f"{data[0]['q']} - {data[0]['a']}"
-                if quotes_type == "zen"
-                else f"{data['text']} - {data['author']}"
-            )
-        except requests.RequestException as e:
-            print(f"Error fetching quote: {e}")
-            quote = "I learn from the mistakes of people who take my advice - Trix"
+        for attempt in range(5):
+            try:
+                print("Trying qoute ", attempt)
+                response = requests.get(url, timeout=3)
+                response.raise_for_status()
+                data = response.json()
+                quote = (
+                    f"{data[0]['q']} - {data[0]['a']}"
+                    if quotes_type == "zen"
+                    else f"{data['text']} - {data['author']}"
+                )
+            except requests.RequestException as e:
+                print(f"Error fetching quote: {e}")
+                if attempt < 4:
+                    time.sleep(10)
+                else:
+                    quote = (
+                        "I learn from the mistakes of people who take my advice - Trix"
+                    )
 
         GLib.idle_add(callback, quote)
 
