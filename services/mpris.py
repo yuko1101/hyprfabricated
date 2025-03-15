@@ -238,19 +238,18 @@ class MprisPlayer(Service):
         except Exception:
             return False
 
-
+def load_config():
+    config = None
+    if config is None:
+        config_path = get_relative_path("../config.json")
+        with open(config_path, "r") as config_file:
+            config = json.load(config_file)
+    return config
 class MprisPlayerManager(Service):
     """A service to manage mpris players."""
 
-    _config = None
+    config = load_config()
 
-    @classmethod
-    def load_config(cls):
-        if cls._config is None:
-            config_path = get_relative_path("../config.json")
-            with open(config_path, "r") as config_file:
-                cls._config = json.load(config_file)
-        return cls._config
 
     @Signal
     def player_appeared(self, player: Playerctl.Player) -> Playerctl.Player: ...
@@ -275,25 +274,24 @@ class MprisPlayerManager(Service):
 
 
     def on_name_appeard(self, manager, player_name: Playerctl.PlayerName):
-        config = self.load_config()
-        if config.get('otherplayers', False) or not player_name.name.startswith(("chromium", "firefox")):
+        if self.config.get('misc', {}).get('otherplayers', False) or not player_name.name.startswith(("chromium", "firefox")):
             logger.info(f"[MprisPlayer] {player_name.name} appeared")
             new_player = Playerctl.Player.new_from_name(player_name)
             manager.manage_player(new_player)
             self.emit("player-appeared", new_player)  # type: ignore
 
     def on_name_vanished(self, manager, player_name: Playerctl.PlayerName):
-        config = self.load_config()
-        if config.get('otherplayers', False) or not player_name.name.startswith(("chromium", "firefox")):
+        if self.config.get('misc', {}).get('otherplayers', False) or not player_name.name.startswith(("chromium", "firefox")):
             logger.info(f"[MprisPlayer] {player_name.name} vanished")
             self.emit("player-vanished", player_name.name)  # type: ignore
 
     @Property(object, "readable")
     def players(self):
-        return self._manager.get_property("players")  # type: ignore
+        for player in self._manager.get_property("player-names"):  # type: ignore
+            if self.config.get('misc', {}).get('otherplayers', False) or not player.name.startswith(("chromium", "firefox")):
+                return self._manager.get_property("players")  # type: ignore
 
     def add_players(self):
-        config = self.load_config()
         for player in self._manager.get_property("player-names"):  # type: ignore
-            if config.get('otherplayers', False) or not player.name.startswith(("chromium", "firefox")):
+            if self.config.get('misc', {}).get('otherplayers', False) or not player.name.startswith(("chromium", "firefox")):
                 self._manager.manage_player(Playerctl.Player.new_from_name(player))  # type: ignore
