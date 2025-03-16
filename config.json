@@ -20,7 +20,7 @@
             "metrics": false,
             "controls": true,
             "battery": false,
-            "systemprofiles":true
+            "systemprofiles": false
         },
         "Barleft": {
             "weather": false,

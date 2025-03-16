@@ -51,8 +51,9 @@ def update_local_version():
         shutil.move(REMOTE_VERSION_FILE, VERSION_FILE)
 
 
-# Update local Git repository
 def update_local_repo(progress_callback):
+    subprocess.run(["git", "stash"], cwd=REPO_DIR, check=False)
+
     process = subprocess.Popen(
         ["git", "pull"],
         cwd=REPO_DIR,
@@ -63,6 +64,8 @@ def update_local_repo(progress_callback):
     for line in process.stdout:
         progress_callback(line)
     process.wait()
+
+    subprocess.run(["git", "stash", "apply"], cwd=REPO_DIR, check=False)
 
 
 # Kill processes
