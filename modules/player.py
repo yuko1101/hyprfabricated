@@ -262,7 +262,6 @@ class PlayerBox(Box):
     def _update_progress(self):
         if not self.mpris_player:
             return False
-        print(self.mpris_player.player_name ,self._format_time(self.mpris_player.position),self.mpris_player.position)
         try:
             current = self.mpris_player.position
         except Exception:

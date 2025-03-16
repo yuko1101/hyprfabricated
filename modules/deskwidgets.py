@@ -39,7 +39,6 @@ def get_location():
         return city
     for attempt in range(5):
         try:
-            print("Trying Location ", attempt)
             response = requests.get("https://ipinfo.io/json", timeout=3)
             if response.status_code == 200:
                 return response.json().get("city", "").replace(" ", "")
@@ -70,7 +69,6 @@ def get_weather(callback):
 
         for attempt in range(5):
             try:
-                print("Trying Weather ", attempt)
                 response = requests.get(urlemoji, timeout=3)
                 responseinfo = requests.get(url, timeout=3).json()
 
@@ -340,7 +338,6 @@ def fetch_quote(callback):
 
         for attempt in range(5):
             try:
-                print("Trying qoute ", attempt)
                 response = requests.get(url, timeout=3)
                 response.raise_for_status()
                 data = response.json()
