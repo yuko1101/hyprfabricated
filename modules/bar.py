@@ -14,6 +14,7 @@ import modules.icons as icons
 from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.metrics import MetricsSmall, Battery, NetworkApplet
+from modules.systemprofiles import Systemprofiles
 
 
 class Bar(Window):
@@ -110,6 +111,9 @@ class Bar(Window):
         if config["Bar"]["Barright"]["battery"]:
             self.battery = Battery()
             end_children.append(self.battery)
+        if config["Bar"]["Barright"]["systemprofiles"]:
+            self.powerctl = Systemprofiles()
+            end_children.append(self.powerctl)
         if config["Bar"]["systray"]:
             self.systray = SystemTray()
             end_children.append(self.systray)
