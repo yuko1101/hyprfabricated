@@ -19,8 +19,8 @@
         "Barright": {
             "metrics": false,
             "controls": true,
-            "battery": false,
-            "systemprofiles": false
+            "battery": true,
+            "systemprofiles": true
         },
         "Barleft": {
             "weather": false,

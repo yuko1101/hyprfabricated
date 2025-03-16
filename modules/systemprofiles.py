@@ -27,7 +27,7 @@ class Systemprofiles(Box):
         self.bat_save = Button(
             name="battery-save",
             child=Label(name="battery-save-label", markup=icons.power_saving),
-            on_clicked=lambda *_: self.set_power_mode("powersave"),
+            on_clicked=lambda *_: self.set_power_mode("power-saver"),
         )
         self.bat_balanced = Button(
             name="battery-balanced",
@@ -55,19 +55,23 @@ class Systemprofiles(Box):
         self.hover_counter = 0
         # self.set_power_mode("balanced")
 
+
     def get_current_power_mode(self):
         try:
             # Run the command to get the current power mode
-            process = subprocess.Popen(
-                ["powerprofilectl", "get"],
+            result = subprocess.run(
+                ["powerprofilesctl", "get"],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True
             )
-            stdout, stderr = process.communicate()
 
-            # Decode the output and determine the current mode
-            output = stdout.decode('utf-8').strip()
-            if output in ["powersave", "balanced", "performance"]:
+            # Get the output and strip unnecessary whitespace
+            output = result.stdout.strip()
+
+            # Validate the output
+            if output in ["power-saver", "balanced", "performance"]:
                 self.current_mode = output
             else:
                 self.current_mode = "balanced"
@@ -75,9 +79,13 @@ class Systemprofiles(Box):
             # Update button styles based on the current mode
             self.update_button_styles()
 
+        except subprocess.CalledProcessError as err:
+            print(f"Command failed: {err}")
+            self.current_mode = "balanced"
+
         except Exception as err:
-            # Optionally, handle errors or display a notification.
             print(f"Error retrieving current power mode: {err}")
+            self.current_mode = "balanced"
 
 
 
@@ -88,9 +96,9 @@ class Systemprofiles(Box):
         mode: one of 'powersave', 'balanced', or 'performance'
         """
         commands = {
-            "powersave": "powerprofilectl set power-saver",
-            "balanced": "powerprofilectl set balanced",
-            "performance": "powerprofilectl set performance",
+            "power-saver": "powerprofilesctl set power-saver",
+            "balanced": "powerprofilesctl set balanced",
+            "performance": "powerprofilesctl set performance",
         }
         if mode in commands:
             try:
@@ -106,7 +114,7 @@ class Systemprofiles(Box):
         Optionally updates button styles to reflect the current mode.
         Adjust the styling method based on your toolkit's capabilities.
         """
-        if self.current_mode == "powersave":
+        if self.current_mode == "power-saver":
             self.bat_save.add_style_class("active")
             self.bat_balanced.remove_style_class("active")
             self.bat_perf.remove_style_class("active")
