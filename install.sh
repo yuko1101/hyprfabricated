@@ -34,10 +34,10 @@ PACKAGES=(
     python-watchdog
     swappy
     swww
-    tesseract
     uwsm
     wl-clipboard
-    wlinhibit tesseract
+    wlinhibit
+    tesseract
     plasma-browser-integration
     cantarell-fonts
     ttf-jost
@@ -49,16 +49,20 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-aur_helper="yay"
+aur_helper="paru"
 
-# Check if paru exists, otherwise use yay
-if command -v paru &>/dev/null; then
-    aur_helper="paru"
-elif ! command -v yay &>/dev/null; then
-    echo "Installing yay-bin..."
+PARU_EXISTS_INITIALLY=1
+
+# Check if yay exists, otherwise use paru
+if command -v yay &>/dev/null; then
+    aur_helper="yay"
+elif ! command -v paru &>/dev/null; then
+    PARU_EXISTS_INITIALLY=0
+    echo "Installing paru-bin..."
     tmpdir=$(mktemp -d)
-    git clone --depth=1 https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
-    (cd "$tmpdir/yay-bin" && makepkg -si --noconfirm)
+    git clone --depth=1 https://aur.archlinux.org/paru-bin.git "$tmpdir/paru-bin"
+    sudo pacman -S --needed --noconfirm base-devel
+    (cd "$tmpdir/paru-bin" && makepkg -si --noconfirm)
     rm -rf "$tmpdir"
 fi
 
@@ -115,6 +119,17 @@ uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 
 echo "Doing Fallback Image..."
 cp "$INSTALL_DIR/assets/wallpapers_example/example-1.jpg" ~/.current.wall
+
+if [ $PARU_EXISTS_INITIALLY -eq 0 ]; then
+    echo "The script installed paru-bin. Do you want to keep it? (y/n)"
+    read -r choice
+    if [[ "$choice" =~ ^[Nn]$ ]]; then
+        echo "Uninstalling paru-bin..."
+        sudo pacman -Rns --noconfirm paru-bin
+    else
+        echo "Keeping paru-bin."
+    fi
+fi
 
 echo "If you see a transparent bar change the wallpaper from the notch"
 echo "Backup your hypridle and hyprlock config before accepting in config"
