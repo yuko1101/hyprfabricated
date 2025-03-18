@@ -190,12 +190,11 @@ class PlayerBox(Box):
             self.forward.set_visible(True)
 
     def _set_cover_image(self, image_path):
+
         def is_image(file_path):
-            try:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file(file_path)
-                return True
-            except GLib.Error:
-                return False
+            valid_extensions = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"}
+            return os.path.isfile(file_path) and os.path.splitext(file_path)[1].lower() in valid_extensions
+
 
         if image_path and os.path.isfile(image_path) and is_image(image_path):
             self.cover.set_image_from_file(image_path)

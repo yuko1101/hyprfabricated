@@ -1,6 +1,8 @@
 import math
 from typing import Literal
 
+import tempfile
+from PIL import Image
 import cairo
 import gi
 from fabric.core.service import Property
@@ -96,13 +98,31 @@ class CircleImage(Gtk.DrawingArea, Widget):
             ctx.paint()
             ctx.restore()
 
+    def convert_to_png(self,image_path):
+        """Convert an image to PNG if it's not already in a compatible format."""
+        try:
+            with Image.open(image_path) as img:
+                new_path = tempfile.mktemp(suffix=".png")  # Create a temp PNG file
+                img.save(new_path, format="PNG")
+            return new_path
+        except Exception as e:
+            print(f"Failed to convert image: {e}")
+            return image_path  # Return original if conversion fails
+
     def set_image_from_file(self, new_image_file: str):
         if not new_image_file:
             return
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(new_image_file)
-        self._orig_image = pixbuf
-        self._image = self._process_image(pixbuf)
-        self.queue_draw()
+
+        # Convert the file to PNG if necessary
+        new_image_file = self.convert_to_png(new_image_file)
+
+        try:
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(new_image_file)
+            self._orig_image = pixbuf
+            self._image = self._process_image(pixbuf)
+            self.queue_draw()
+        except Exception as e:
+            print(f"Failed to load image: {e}")
 
     def set_image_from_pixbuf(self, pixbuf: GdkPixbuf.Pixbuf):
         if not pixbuf:
