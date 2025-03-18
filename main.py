@@ -4,7 +4,6 @@ import setproctitle
 from fabric import Application
 from fabric.utils import get_relative_path, exec_shell_command_async
 
-# Direct import of data module to avoid possible circular imports
 from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE
 from modules.bar import Bar
 from modules.corners import Corners
