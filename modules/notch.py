@@ -2,7 +2,6 @@ from os import truncate
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
-from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer

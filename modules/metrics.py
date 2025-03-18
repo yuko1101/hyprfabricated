@@ -1,16 +1,11 @@
-# Standard library imports
 import re
 import subprocess
 
-# Third-party imports
 import psutil
 from gi.repository import GLib
 
-# Fabric imports
 from fabric.core.fabricator import Fabricator
-from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
-from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.label import Label
@@ -18,7 +13,6 @@ from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.scale import Scale
 
-# Local imports
 import modules.icons as icons
 
 class MetricsProvider:

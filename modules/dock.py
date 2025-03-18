@@ -1,5 +1,5 @@
 import json
-from gi.repository import GLib, Gtk, Gdk, Gio
+from gi.repository import GLib, Gtk, Gdk
 import cairo
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
