@@ -1,12 +1,13 @@
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
-from fabric.hyprland.widgets import Language
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
+from fabric.utils.helpers import FormattedString
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
-from fabric.hyprland.widgets import Workspaces, WorkspaceButton
+from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
+from fabric.hyprland.service import HyprlandEvent
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
@@ -48,15 +49,19 @@ class Bar(Window):
                 markup=icons.toolbox
             )
         )
+
+        self.connection = get_hyprland_connection()
         self.button_tools.connect("enter_notify_event", self.on_button_enter)
         self.button_tools.connect("leave_notify_event", self.on_button_leave)
-
 
         self.systray = SystemTray()
         self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
         self.language = Language(name="language", h_align="center", v_align="center")
+        self.switch_on_start()
+        self.connection.connect("event::activelayout", self.on_language_switch)
+
         self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
 
         self.button_apps = Button(
@@ -204,6 +209,11 @@ class Bar(Window):
     def tools_menu(self):
         self.notch.open_notch("tools")
 
+    def on_language_switch(self, _, event: HyprlandEvent):
+        self.language.set_label(self.language.get_label()[0:3])
+
+    def switch_on_start(self):
+        self.language.set_label(self.language.get_label()[0:3])
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
