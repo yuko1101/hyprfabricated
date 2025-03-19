@@ -230,6 +230,8 @@ class Notch(Window):
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
+        
+        self.update_window_icon( # Change from True to False to prevent resizing)
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()

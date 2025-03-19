@@ -477,11 +477,6 @@ class HyprConfGUI(Gtk.Window):
         # Hypr Configuration section
         hypr_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
 
-        # Add description
-        description = Gtk.Label(label="Replace Hyprland-related configuration files with Axenide's defaults")
-        description.set_halign(Gtk.Align.START)
-        hypr_section.pack_start(description, False, False, 0)
-
         # Checkboxes for Hyprlock and Hypridle
         if self.show_lock_checkbox:
             self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
