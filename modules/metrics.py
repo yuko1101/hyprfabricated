@@ -6,6 +6,7 @@ from gi.repository import GLib
 
 from fabric.core.fabricator import Fabricator
 from fabric.widgets.box import Box
+from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.label import Label
