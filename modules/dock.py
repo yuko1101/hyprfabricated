@@ -586,6 +586,8 @@ class Dock(Window):
                 used_window_classes.add(self._normalize_window_class(matched_class))
                 logging.debug(f"Matched pinned app {app_data} to running instances via {matched_class}")
 
+            # Create button for this pinned app with any found instances
+            pinned_buttons.append(self.create_button(app_data, instances))
 
         # For any remaining window classes that aren't assigned to pinned apps
         open_buttons = []
@@ -863,3 +865,4 @@ class Dock(Window):
             self.update_app_map()
             self.update_dock()
         return False  # Don't repeat
+
