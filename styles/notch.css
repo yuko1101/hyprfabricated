@@ -128,10 +128,9 @@
 }
 
 #hyprland-window label {
-  margin-left: 3px;
-  font-size: 12px;
+  margin: 0px 8px;
 }
-#icon-label {
-  font-size: 16px;
-  padding-left: 5px;
+
+#active-window-box {
+  margin: 10px;
 }

@@ -4,6 +4,7 @@ import subprocess
 import setproctitle
 from fabric import Application
 from fabric.utils import get_relative_path, exec_shell_command_async
+from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE
 import config.data as data
 
 
@@ -29,9 +30,9 @@ def run_updater():
 
 
 if __name__ == "__main__":
-    setproctitle.setproctitle(data.APP_NAME)
+    setproctitle.setproctitle(APP_NAME)
 
-    if not os.path.isfile(data.CONFIG_FILE):
+    if not os.path.isfile(CONFIG_FILE):
         exec_shell_command_async(f"python {get_relative_path('../config/config.py')}")
 
     config = load_config()
@@ -75,16 +76,15 @@ if __name__ == "__main__":
         dock = Dock()
         assets.append(dock)
     app = Application(f"{data.APP_NAME}", *assets)
-
     def set_css():
+        from config.data import CURRENT_WIDTH, CURRENT_HEIGHT
         app.set_stylesheet_from_file(
             get_relative_path("main.css"),
             exposed_functions={
-                "overview_width": lambda: f"min-width: {data.CURRENT_WIDTH * 0.1 * 5 + 92}px;",
-                "overview_height": lambda: f"min-height: {data.CURRENT_HEIGHT * 0.1 * 2 + 32 + 56}px;",
+                "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
+                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32 + 56}px;",
             },
         )
-
     app.set_css = set_css
 
     app.set_css()

@@ -4,7 +4,6 @@ from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
-import config.data as data
 import subprocess
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
@@ -36,6 +35,10 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
+        # Enable keyboard focus and connect events
+        self.btn_ssregion.set_can_focus(True)
+        self.btn_ssregion.connect("button-press-event", self.on_ssregion_click)
+        self.btn_ssregion.connect("key-press-event", self.on_ssregion_key)
 
         self.btn_ssfull = Button(
             name="toolbox-button",
@@ -46,6 +49,10 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
+        # Enable keyboard focus and connect events
+        self.btn_ssfull.set_can_focus(True) 
+        self.btn_ssfull.connect("button-press-event", self.on_ssfull_click)
+        self.btn_ssfull.connect("key-press-event", self.on_ssfull_key)
 
         self.btn_screenrecord = Button(
             name="toolbox-button",
@@ -130,6 +137,52 @@ class Toolbox(Box):
         exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p")
         self.close_menu()
 
+    def on_ssfull_click(self, button, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:  # Left click
+                self.ssfull()
+            elif event.button == 3:  # Right click
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p mockup")
+                self.close_menu()
+            return True
+        return False
+
+    def on_ssfull_key(self, widget, event):
+        if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
+            modifiers = event.get_state()
+            if modifiers & Gdk.ModifierType.SHIFT_MASK:
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p mockup")
+                self.close_menu()
+            else:
+                self.ssfull()
+            return True
+        return False
+
+    def ssregion(self, *args):
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
+        self.close_menu()
+
+    def on_ssregion_click(self, button, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:  # Left click
+                self.ssregion()
+            elif event.button == 3:  # Right click
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf mockup")
+                self.close_menu()
+            return True
+        return False
+
+    def on_ssregion_key(self, widget, event):
+        if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
+            modifiers = event.get_state()
+            if modifiers & Gdk.ModifierType.SHIFT_MASK:
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf mockup")
+                self.close_menu()
+            else:
+                self.ssregion()
+            return True
+        return False
+
     def screenrecord(self, *args):
         # Launch screenrecord script in detached mode so that it remains running independently of this program.
         exec_shell_command_async(
@@ -139,10 +192,6 @@ class Toolbox(Box):
 
     def ocr(self, *args):
         exec_shell_command_async(f"bash {OCR_SCRIPT} sf")
-        self.close_menu()
-
-    def ssregion(self, *args):
-        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
         self.close_menu()
 
     def colorpicker(self, button, event):
