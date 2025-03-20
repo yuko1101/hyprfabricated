@@ -6,14 +6,9 @@ from fabric.widgets.button import Button
 from fabric.utils.helpers import FormattedString
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
-<<<<<<< HEAD
-from fabric.hyprland.widgets import Workspaces, WorkspaceButton
-from fabric.utils.helpers import exec_shell_command_async
-=======
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
 from fabric.hyprland.service import HyprlandEvent
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
->>>>>>> langame
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
@@ -216,10 +211,10 @@ class Bar(Window):
         self.notch.open_notch("tools")
 
     def on_language_switch(self, _, event: HyprlandEvent):
-        self.language.set_label(self.language.get_label()[0:3])
+        self.language.set_label(self.language.get_label()[0:3].upper())
 
     def switch_on_start(self):
-        self.language.set_label(self.language.get_label()[0:3])
+        self.language.set_label(self.language.get_label()[0:3].upper())
 
     def toggle_hidden(self):
         self.hidden = not self.hidden

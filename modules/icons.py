@@ -17,11 +17,13 @@ media: str = "&#xf00d;"
 
 #Toolbox
 
-toolbox: str = "&#xebca;"       # toolbox
-ssfull: str = "&#xeaea;"    # camera
-ssregion: str = "&#xf201;"    # camera
-screenrecord: str = "&#xeafa;"  # video
-ocr: str = "&#xfcc3;"          # text-recognition
+toolbox: str = "&#xebca;"
+ssfull: str = "&#xec3c;"
+ssregion: str = "&#xf201;"
+screenshots: str = "&#xeb0a;"
+screenrecord: str = "&#xed22;"
+recordings: str = "&#xeafa;"
+ocr: str = "&#xfcc3;"
 gamemode: str = "&#xf026;"
 gamemode_off: str = "&#xf111;"
 close : str = "&#xeb55;"

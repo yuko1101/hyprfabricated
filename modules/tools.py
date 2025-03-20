@@ -4,18 +4,15 @@ from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
-<<<<<<< HEAD
-=======
 import os
 import modules.data as data
->>>>>>> langame
 import subprocess
 from loguru import logger
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
 GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
-GAMEMODE_CHECK_SCRIPT = os.path.join("/home", os.path.expanduser("~"), ".config", "Ax-Shell", "scripts", "gamemode_check.sh")
+GAMEMODE_CHECK_SCRIPT = get_relative_path("../scripts/gamemode_check.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 
 class Toolbox(Box):
@@ -118,13 +115,38 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
+        
+        self.btn_screenshots_folder = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.screenshots),
+            on_clicked=self.open_screenshots_folder,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+        
+        self.btn_recordings_folder = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.recordings),
+            on_clicked=self.open_recordings_folder,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
 
         self.buttons = [
             self.btn_ssregion,
             self.btn_ssfull,
+            self.btn_screenshots_folder,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_screenrecord,
+            self.btn_recordings_folder,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_ocr,
             self.btn_color,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_gamemode,
             self.btn_emoji,
         ]
@@ -201,8 +223,6 @@ class Toolbox(Box):
         exec_shell_command_async(f"bash {OCR_SCRIPT} sf")
         self.close_menu()
 
-<<<<<<< HEAD
-=======
     def gamemode(self, *args):
         exec_shell_command_async(f"bash {GAMEMODE_SCRIPT} sf")
         self.gamemode_check()
@@ -226,7 +246,6 @@ class Toolbox(Box):
         exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
         self.close_menu()
 
->>>>>>> langame
     def colorpicker(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             cmd = {
@@ -278,6 +297,24 @@ class Toolbox(Box):
         
         # Return True to keep this callback active.
         return True
+
+    def open_screenshots_folder(self, *args):
+        screenshots_dir = os.path.join(os.environ.get('XDG_PICTURES_DIR', 
+                                                    os.path.expanduser('~/Pictures')), 
+                                     'Screenshots')
+        # Create directory if it doesn't exist
+        os.makedirs(screenshots_dir, exist_ok=True)
+        exec_shell_command_async(f"xdg-open {screenshots_dir}")
+        self.close_menu()
+
+    def open_recordings_folder(self, *args):
+        recordings_dir = os.path.join(os.environ.get('XDG_VIDEOS_DIR', 
+                                                   os.path.expanduser('~/Videos')), 
+                                    'Recordings')
+        # Create directory if it doesn't exist
+        os.makedirs(recordings_dir, exist_ok=True)
+        exec_shell_command_async(f"xdg-open {recordings_dir}")
+        self.close_menu()
 
     def emoji(self, *args):
         self.notch.open_notch("emoji")

@@ -26,7 +26,6 @@ menu > menuitem > label,
   background-color: var(--shadow);
   padding: 8px;
   border-radius: 16px;
-  margin-top: 4px;
 }
 
 menu > menuitem > label,
@@ -38,7 +37,6 @@ menu > menuitem > label,
   background-color: var(--shadow);
   padding: 0 8px;
   border-radius: 16px;
-  /*margin-top: 4px;*/
 }
 
 #weather-label {
