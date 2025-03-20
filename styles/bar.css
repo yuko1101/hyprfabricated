@@ -14,7 +14,7 @@
   background-color: var(--shadow);
   padding: 8px;
   border-radius: 16px;
-  margin-top: 4px;
+  /*margin-top: 4px;*/
 }
 
 menu > menuitem > label,
@@ -24,9 +24,9 @@ menu > menuitem > label,
 
 #weather {
   background-color: var(--shadow);
-  padding: 8px;
+  padding: 0 8px;
   border-radius: 16px;
-  margin-top: 4px;
+  /*margin-top: 4px;*/
 }
 
 #weather-label {
@@ -37,7 +37,7 @@ menu > menuitem > label,
   background-color: var(--shadow);
   padding: 8px;
   border-radius: 16px;
-  margin-top: 4px;
+  /*margin-top: 4px;*/
 }
 
 menu {
@@ -86,7 +86,7 @@ tooltip > * {
   padding: 4px;
   min-width: 28px;
   min-height: 28px;
-  margin-top: 4px;
+  /*margin-top: 4px;*/
   border-radius: 16px;
   background-color: var(--shadow);
   transition: all 0.1s ease;

@@ -115,7 +115,7 @@
 
 #notification-history scrollbar.vertical slider {
   background: var(--primary);
-  border-radius: 16px;
+  border-radius: 8px;
   min-width: 16px;
   min-height: 48px;
   margin: 4px;
@@ -124,6 +124,7 @@
 #notification-history scrollbar.vertical trough {
   background: var(--surface);
   border: none;
+  border-radius: 12px;
   margin: 4px;
 }
 
@@ -178,4 +179,15 @@
   border-radius: 16px;
   background-color: var(--surface-bright);
   margin: 0 8px;
+}
+
+#notif-date-sep {
+  padding: 4px;
+  border-radius: 12px;
+  background-color: var(--surface);
+}
+
+#notif-date-sep-label {
+  color: var(--outline);
+  font-weight: bold;
 }

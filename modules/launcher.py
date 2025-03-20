@@ -7,14 +7,16 @@ from fabric.widgets.entry import Entry
 from fabric.widgets.image import Image
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async
+from fabric.utils.helpers import get_relative_path
 from gi.repository import GLib, Gdk
 import modules.icons as icons
-import modules.data as data
+import config.data as data
 import json
 import os
 import re
 import math
 import subprocess
+from modules.dock import Dock  # Import the Dock class
 
 class AppLauncher(Box):
     def __init__(self, **kwargs):
@@ -32,13 +34,13 @@ class AppLauncher(Box):
         self._all_apps = get_desktop_applications()
 
         # Calculator history initialization
-        self.calc_history_path = os.path.expanduser("~/.cache/ax-shell/calc.json")
+        self.calc_history_path = f"{data.CACHE_DIR}/calc.json"
         if os.path.exists(self.calc_history_path):
             with open(self.calc_history_path, "r") as f:
                 self.calc_history = json.load(f)
         else:
             self.calc_history = []
-        
+
         self.viewport = Box(name="viewport", spacing=4, orientation="v")
         self.search_entry = Entry(
             name="search-entry",
@@ -68,7 +70,7 @@ class AppLauncher(Box):
                 Button(
                     name="config-button",
                     child=Label(name="config-label", markup=icons.config),
-                    on_clicked=lambda *_: (exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"), self.close_launcher()),
+                    on_clicked=lambda *_: (exec_shell_command_async(f"python {get_relative_path('../config/config.py')}"), self.close_launcher()),
                 ),
                 self.search_entry,
                 Button(
@@ -79,7 +81,7 @@ class AppLauncher(Box):
                 ),
             ],
         )
-        
+
         self.launcher_box = Box(
             name="launcher-box",
             spacing=10,
@@ -201,12 +203,12 @@ class AppLauncher(Box):
             alloc = button.get_allocation()
             if alloc.height == 0:
                 return False  # Retry if allocation isn't ready
-            
+
             y = alloc.y
             height = alloc.height
             page_size = adj.get_page_size()
             current_value = adj.get_value()
-            
+
             # Calculate visible boundaries
             visible_top = current_value
             visible_bottom = current_value + page_size
@@ -246,6 +248,9 @@ class AppLauncher(Box):
                         children[selected_index].clicked()
 
     def on_search_entry_key_press(self, widget, event):
+        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter) and (event.state & Gdk.ModifierType.SHIFT_MASK):
+            self.add_selected_app_to_dock()
+            return True
         text = widget.get_text()
         if text.startswith("="):
             if event.keyval == Gdk.KEY_Down:
@@ -283,6 +288,62 @@ class AppLauncher(Box):
                 self.close_launcher()
                 return True
             return False
+
+    def add_selected_app_to_dock(self):
+        """Adds the currently selected application to the dock.json file with comprehensive metadata."""
+        children = self.viewport.get_children()
+        if not children or self.selected_index == -1 or self.selected_index >= len(children):
+            return  # No app selected
+
+        selected_button = children[self.selected_index]
+        # Extract the app's display name from the label to find the DesktopApp object
+        selected_app = next((app for app in self._all_apps if app.display_name == selected_button.get_child().get_children()[1].props.label), None)
+        if not selected_app:
+            return
+
+        # Create comprehensive app data dictionary - Include all available properties
+        # Filter out None values to keep the JSON clean
+        app_data = {k: v for k, v in {
+            "name": selected_app.name,
+            "display_name": selected_app.display_name,
+            "window_class": selected_app.window_class,
+            "executable": selected_app.executable,
+            "command_line": selected_app.command_line,
+            "icon_name": selected_app.icon_name
+        }.items() if v is not None}
+
+        config_path = get_relative_path("../config/dock.json")
+        try:
+            with open(config_path, "r") as file:
+                data = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {"pinned_apps": []}
+
+        # Check if app is already pinned (by name)
+        already_pinned = False
+        for pinned_app in data.get("pinned_apps", []):
+            if isinstance(pinned_app, dict) and pinned_app.get("name") == app_data["name"]:
+                already_pinned = True
+                # Update existing entry with latest app data
+                pinned_app.update(app_data)
+                break
+            elif isinstance(pinned_app, str) and pinned_app == app_data["name"]:
+                already_pinned = True
+                # Replace string format with new comprehensive format
+                data["pinned_apps"].remove(pinned_app)
+                data["pinned_apps"].append(app_data)
+                break
+
+        # Add to pinned apps if not already there
+        if not already_pinned:
+            data.setdefault("pinned_apps", []).append(app_data)
+        
+        # Write the updated config
+        with open(config_path, "w") as file:
+            json.dump(data, file, indent=4)
+            
+        # Notify dock instances of the configuration change immediately
+        Dock.notify_config_change()
 
     def move_selection(self, delta: int):
         children = self.viewport.get_children()
