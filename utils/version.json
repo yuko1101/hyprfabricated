@@ -1,6 +1,7 @@
 {
-  "version": "1.4.3",
+  "version": "1.4.5",
   "changelog": [
+        "Misc Tweaks",
         "Hotfix: Added Nmapplet back got removed during merging",
         "Added Activation nag",
         "Better handeling of thumbnails form mpris",
