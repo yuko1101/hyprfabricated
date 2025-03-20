@@ -106,6 +106,9 @@ download: str = "&#xea96;"
 upload: str = "&#xeb47;"
 notifications_clear: str = "&#xf814;"
 
+download: str = "&#xea96;"
+upload: str = "&#xeb47;"
+
 # Bluetooth
 bluetooth_connected: str = "&#xecea;"
 bluetooth_disconnected: str = "&#xf081;"

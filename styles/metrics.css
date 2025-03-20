@@ -44,7 +44,7 @@
 }
 
 #download-label {
-  color: #e6ff95;
+  color: var(--green);
   font-size: 14px;
   font-weight: bold;
   padding: 4px;
@@ -61,15 +61,16 @@
 }
 
 #button-bar.download {
-  background-color: #e6ff95;
+  background-color: var(--green);
 }
 
 #button-bar.upload {
-  background-color: #ffd695;
+  background-color: var(--yellow);
 }
 
+
 #download-icon-label {
-  color: #e6ff95;
+  color: var(--green);
   font-size: 16px;
 }
 
@@ -78,13 +79,13 @@
 }
 
 #upload-icon-label {
-  color: #ffd695;
+  color: var(--yellow);
   font-size: 16px;
 }
 
 #upload-label {
-  color: #ffd695;
-  font-size: 11px;
+  color: var(--yellow);
+  font-size: 14px;
   font-weight: bold;
   padding: 4px;
   border-radius: 11px;
@@ -97,8 +98,4 @@
 
 #upload-icon-label.urgent {
   color: var(--shadow);
-}
-#download-label,
-#upload-label {
-  font-size: 12px;
 }

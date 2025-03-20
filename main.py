@@ -4,7 +4,7 @@ import subprocess
 import setproctitle
 from fabric import Application
 from fabric.utils import get_relative_path, exec_shell_command_async
-from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE
+from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE, DOCK_ICON_SIZE
 import config.data as data
 
 
@@ -83,6 +83,7 @@ if __name__ == "__main__":
             exposed_functions={
                 "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
                 "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32 + 56}px;",
+                "dock_nmargin": lambda: f"margin-bottom: -{28 + DOCK_ICON_SIZE}px;",
             },
         )
     app.set_css = set_css

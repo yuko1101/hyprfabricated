@@ -11,6 +11,7 @@ from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
+import modules.data as data
 from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.metrics import MetricsSmall, Battery,NetworkApplet

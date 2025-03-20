@@ -6,11 +6,14 @@ from gi.repository import GLib
 
 from fabric.core.fabricator import Fabricator
 from fabric.widgets.box import Box
+from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
+from fabric.core.fabricator import Fabricator
+from fabric.utils.helpers import exec_shell_command_async, invoke_repeater
 from fabric.widgets.scale import Scale
 from fabric.widgets.button import Button
 
@@ -19,6 +22,8 @@ from fabric.utils.helpers import invoke_repeater
 from services.network import NetworkClient
 import time
 import modules.icons as icons
+from services.network import NetworkClient
+import time
 
 class MetricsProvider:
     """
@@ -484,12 +489,9 @@ class NetworkApplet(Button):
             children=[self.upload_label, self.upload_icon],
         )
 
-        self.download_revealer = Revealer(
-            child=self.download_box, transition_type="slide-right", child_revealed=False
-        )
-        self.upload_revealer = Revealer(
-            child=self.upload_box, transition_type="slide-left", child_revealed=False
-        )
+        self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-right", child_revealed=False)
+        self.upload_revealer = Revealer(child=self.upload_box, transition_type="slide-left" ,child_revealed=False)
+
 
         self.children = Box(
             children=[self.upload_revealer, self.wifi_label, self.download_revealer],
@@ -505,17 +507,13 @@ class NetworkApplet(Button):
         current_time = time.time()
         elapsed = current_time - self.last_time
         current_counters = psutil.net_io_counters()
-        download_speed = (
-            current_counters.bytes_recv - self.last_counters.bytes_recv
-        ) / elapsed
-        upload_speed = (
-            current_counters.bytes_sent - self.last_counters.bytes_sent
-        ) / elapsed
+        download_speed = (current_counters.bytes_recv - self.last_counters.bytes_recv) / elapsed
+        upload_speed = (current_counters.bytes_sent - self.last_counters.bytes_sent) / elapsed
         self.download_label.set_markup(self.format_speed(download_speed))
         self.upload_label.set_markup(self.format_speed(upload_speed))
 
-        self.downloading = download_speed >= 20e6
-        self.uploading = upload_speed >= 2e6
+        self.downloading = (download_speed >= 10e6)
+        self.uploading = (upload_speed >= 2e6)
 
         if self.downloading and not self.is_mouse_over:
             self.download_urgent()
@@ -549,6 +547,7 @@ class NetworkApplet(Button):
         else:
             self.wifi_label.set_markup(icons.world_off)
             self.set_tooltip_text("Disconnected")
+
 
         self.last_counters = current_counters
         self.last_time = current_time
