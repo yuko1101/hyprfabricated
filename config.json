@@ -4,7 +4,7 @@
     "Temprature_Unit": "C",
     "quotetype": "stoic",
     "Basic": {
-        "corners": true,
+        "corners": false,
         "bar": true,
         "widgets": true,
         "dock": false
@@ -17,10 +17,10 @@
         "datetime": true,
         "buttonpower": true,
         "Barright": {
-            "metrics": false,
+            "metrics": true,
             "controls": true,
             "battery": true,
-            "systemprofiles": true
+            "systemprofiles": false
         },
         "Barleft": {
             "weather": false,
@@ -28,16 +28,17 @@
             "networkapplet": true
         }
     },
-    "widgetstyle": "full",
+    "widgetstyle": "basic",
     "desktopwidgets": {
+        "activation": true,
         "date": true,
         "clock": true,
         "quote": true,
         "weather": true,
-        "systeminfo": true
+        "systeminfo": false
     },
     "misc": {
-        "otherplayers": true
+        "otherplayers": false
     },
     "tooltip": {
         "Temprature_Unit_tooltip": "C for Celsius, F for Fahrenheit",

@@ -165,3 +165,21 @@ Changes are applied instantly and globally, for the whole application.
   text-shadow: 0 0 10px #fff;
   font-size: 20px;
 }
+
+
+#activation1,
+#activation2{
+    color: rgba(255, 255, 255, 0.6); /* Semi-transparent white */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#activation1{
+font-size:20px
+}
+
+#activation2{
+font-size:17px;
+margin-bottom:12px;
+margin-right:16px;
+}

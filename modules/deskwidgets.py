@@ -395,6 +395,35 @@ class qoute(Label):
         self.set_visible(True)
 
 
+class activation(Label):
+    def __init__(self, **kwargs):
+        super().__init__(
+            name="activation1",
+            label="",
+            anchor="bottom right",
+            justification="left",
+            v_align="start",
+            h_align="start",
+            h_expand=True,
+            v_expand=True,
+            visible=False,
+        )
+        self.set_label("Activate Linux")
+
+class activationbot(Label):
+    def __init__(self, **kwargs):
+        super().__init__(
+            name="activation2",
+            label="",
+            anchor="bottom right",
+            justification="left",
+            v_align="start",
+            h_align="start",
+            h_expand=True,
+            v_expand=True,
+            visible=False,
+        )
+        self.set_label("Go to Settings to activate Linux")
 def create_widgets(config, widget_type):
     widgets = []
     if widget_type == "full":
@@ -416,6 +445,7 @@ def create_widgets(config, widget_type):
         if config.get("desktopwidgets", {}).get("clock", False):
             widgets.append(DateTime(formatters=["%I:%M"], name="clock"))
     return widgets
+
 
 
 class Deskwidgetsfull(Window):
@@ -450,7 +480,27 @@ class Deskwidgetsfull(Window):
             )
         else:
             sys_widget = None
-
+        if config.get("desktopwidgets", {}).get("activation", False):
+                activationnag= Window(
+                    name="activation",
+                anchor="bottom right",
+                layer="top",
+                justification="left",
+                v_align="start",
+                h_align="start",
+                h_expand=True,
+                v_expand=True,
+                child=Box(
+                    orientation="v",
+                    children=[
+                        activation(),
+                        activationbot(),
+                    ],
+                ),
+                all_visible=True,
+            )
+        else:
+           activationnag = None
 
 class Deskwidgetsbasic(Window):
     def __init__(self, **kwargs):
@@ -466,6 +516,27 @@ class Deskwidgetsbasic(Window):
             ),
             all_visible=True,
         )
+        if config.get("desktopwidgets", {}).get("activation", False):
+                activationnag= Window(
+                    name="activation",
+                anchor="bottom right",
+                layer="top",
+                justification="left",
+                v_align="start",
+                h_align="start",
+                h_expand=True,
+                v_expand=True,
+                child=Box(
+                    orientation="v",
+                    children=[
+                        activation(),
+                        activationbot(),
+                    ],
+                ),
+                all_visible=True,
+            )
+        else:
+           activationnag = None
         if config.get("desktopwidgets", {}).get("systeminfo", False):
             sys_widget = Window(
                 layer="bottom",
