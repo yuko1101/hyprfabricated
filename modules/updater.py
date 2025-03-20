@@ -5,6 +5,7 @@ import shutil
 import threading
 import gi
 
+import socket
 from fabric.utils.helpers import get_relative_path
 import data
 
@@ -167,15 +168,17 @@ class UpdateWindow(Gtk.Window):
 
 
 # Check for updates
-import socket
 
 def is_connected():
     try:
         # Connect to the host -- tells us if the host is actually reachable
+        print("Checking internet connection...")
         socket.create_connection(("www.google.com", 80))
         return True
     except OSError:
         pass
+
+    print("No internet connection.")
     return False
 
 def check_for_updates():

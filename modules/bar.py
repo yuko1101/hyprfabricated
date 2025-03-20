@@ -13,7 +13,7 @@ from modules.systemtray import SystemTray
 import modules.icons as icons
 from modules.controls import ControlSmall
 from modules.weather import Weather
-from modules.metrics import MetricsSmall, Battery
+from modules.metrics import MetricsSmall, Battery,NetworkApplet
 from modules.systemprofiles import Systemprofiles
 
 
@@ -77,9 +77,9 @@ class Bar(Window):
             self.button_overview.connect("leave_notify_event", self.on_button_leave)
             start_children.append(self.button_overview)
 
-        # if config["Bar"]["Barleft"]["networkapplet"]:
-        #     self.network = NetworkApplet()
-        #     start_children.append(self.network)
+        if config["Bar"]["Barleft"]["networkapplet"]:
+            self.network = NetworkApplet()
+            start_children.append(self.network)
 
         self.revealer_left = Revealer(
             name="bar-revealer",
@@ -92,6 +92,9 @@ class Bar(Window):
                 children=start_children,
             ),
         )
+
+
+
 
         self.boxed_revealer_left = Box(
             name="boxed-revealer",
