@@ -126,8 +126,8 @@ class Bar(Window):
                 orientation="h",
                 spacing=4,
                 children=[
-                    self.network,
                     self.weather,
+                    self.network,
                 ],
             ),
         )
