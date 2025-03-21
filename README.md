@@ -109,6 +109,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] Workspaces Overview
 - [ ] Network Manager
 - [ ] Clipboard Manager
+- [ ] Tmux Session Manager
 - [ ] Multimodal AI Assistant
 - [ ] Vertical Layout
 - [ ] Multi-monitor support
