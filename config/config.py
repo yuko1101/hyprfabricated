@@ -1,14 +1,11 @@
-# Standard library imports
 import os
 import shutil
 import json
 import sys
 from pathlib import Path
 
-# Add the parent directory to sys.path to allow the direct execution of this script
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# Third-party imports
 import toml
 from PIL import Image
 import subprocess
@@ -17,14 +14,12 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
-# Local imports - now using absolute import that will work when executed directly
 from config.data import (
     APP_NAME, APP_NAME_CAP, CONFIG_DIR, HOME_DIR, WALLPAPERS_DIR_DEFAULT
 )
 from fabric.utils.helpers import get_relative_path
 from gi.repository import GdkPixbuf
 
-# Constants
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
 source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
