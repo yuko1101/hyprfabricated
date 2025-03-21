@@ -338,17 +338,20 @@ class HyprConfGUI(Gtk.Window):
         scrolled_window.add(grid)
 
         # Create labels for columns
-        action_label = Gtk.Label(label="Action")
+        action_label = Gtk.Label()
+        action_label.set_markup("<b>Action</b>")
         action_label.set_halign(Gtk.Align.START)
         action_label.set_margin_bottom(5)
         action_label.get_style_context().add_class("heading")
 
-        modifier_label = Gtk.Label(label="Modifier")
+        modifier_label = Gtk.Label()
+        modifier_label.set_markup("<b>Modifier</b>")
         modifier_label.set_halign(Gtk.Align.START)
         modifier_label.set_margin_bottom(5)
         modifier_label.get_style_context().add_class("heading")
 
-        key_label = Gtk.Label(label="Key")
+        key_label = Gtk.Label()
+        key_label.set_markup("<b>Key</b>")
         key_label.set_halign(Gtk.Align.START)
         key_label.set_margin_bottom(5)
         key_label.get_style_context().add_class("heading")
@@ -411,16 +414,25 @@ class HyprConfGUI(Gtk.Window):
         box.set_margin_start(15)
         box.set_margin_end(15)
 
-        # Wallpapers section
+        # Wallpapers section with header
+        wall_header = Gtk.Label()
+        wall_header.set_markup("<b>Wallpapers</b>")
+        wall_header.set_halign(Gtk.Align.START)
+        box.pack_start(wall_header, False, False, 0)
+        
         wall_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        wall_section.set_margin_start(10)
+        wall_section.set_margin_top(5)
+        wall_section.set_margin_bottom(15)
 
         wall_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        wall_label = Gtk.Label(label="Wallpapers Directory:")
+        wall_label = Gtk.Label(label="Directory:")
         wall_label.set_halign(Gtk.Align.START)
         self.wall_dir_chooser = Gtk.FileChooserButton(
             title="Select a folder",
             action=Gtk.FileChooserAction.SELECT_FOLDER
         )
+        self.wall_dir_chooser.set_tooltip_text("Select the directory containing your wallpaper images")
         self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
         wall_hbox.pack_start(wall_label, False, False, 0)
         wall_hbox.pack_start(self.wall_dir_chooser, True, True, 0)
@@ -432,34 +444,49 @@ class HyprConfGUI(Gtk.Window):
         separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
         box.pack_start(separator, False, False, 5)
 
-        # Profile Icon section
-        face_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-
-        face_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        face_label = Gtk.Label(label="Profile Icon:")
-        face_label.set_halign(Gtk.Align.START)
-        face_btn = Gtk.Button(label="Select Image")
-        face_btn.connect("clicked", self.on_select_face_icon)
+        # Profile Icon section with header
+        face_header = Gtk.Label()
+        face_header.set_markup("<b>Profile Icon</b>")
+        face_header.set_halign(Gtk.Align.START)
+        box.pack_start(face_header, False, False, 10)
         
-        # Show current face icon if it exists as a pixbuf of size 24
+        face_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        face_section.set_margin_start(10)
+        
+        # Current icon display
         current_face = os.path.expanduser("~/.face.icon")
+        current_icon_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        
+        face_image_frame = Gtk.Frame()
+        face_image_frame.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
         face_image = Gtk.Image()
         try:
             if os.path.exists(current_face):
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file(current_face)
-                pixbuf = pixbuf.scale_simple(24, 24, GdkPixbuf.InterpType.BILINEAR)
+                pixbuf = pixbuf.scale_simple(96, 96, GdkPixbuf.InterpType.BILINEAR)
             else:
-                pixbuf = Gtk.IconTheme.get_default().load_icon("user-info", 24, 0)
+                pixbuf = Gtk.IconTheme.get_default().load_icon("user-info", 96, 0)
             face_image.set_from_pixbuf(pixbuf)
         except Exception:
-            pass
-        face_hbox.pack_start(face_image, False, False, 0)
-            
+            face_image.set_from_icon_name("user-info", Gtk.IconSize.DIALOG)
+        
+        face_image_frame.add(face_image)
+        current_icon_box.pack_start(face_image_frame, False, False, 0)
+        face_section.pack_start(current_icon_box, False, False, 0)
+        
+        # Select new icon
+        face_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        face_label = Gtk.Label(label="Select New Icon:")
+        face_label.set_halign(Gtk.Align.START)
+        face_btn = Gtk.Button(label="Browse...")
+        face_btn.set_tooltip_text("Select a square image for your profile icon")
+        face_btn.connect("clicked", self.on_select_face_icon)
         face_hbox.pack_start(face_label, False, False, 0)
-        face_hbox.pack_start(face_btn, True, False, 0)
+        face_hbox.pack_start(face_btn, False, False, 0)
         face_section.pack_start(face_hbox, False, False, 0)
         
         self.face_status_label = Gtk.Label(label="")
+        self.face_status_label.set_halign(Gtk.Align.START)
         face_section.pack_start(self.face_status_label, False, False, 0)
 
         box.pack_start(face_section, False, False, 0)
