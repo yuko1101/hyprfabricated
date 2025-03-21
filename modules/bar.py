@@ -4,10 +4,12 @@ from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
+from fabric.utils.helpers import FormattedString
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
-from fabric.hyprland.widgets import Workspaces, WorkspaceButton
-from fabric.utils.helpers import exec_shell_command_async, get_relative_path
+from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
+from fabric.hyprland.service import HyprlandEvent
+from fabric.utils.helpers import get_relative_path, exec_shell_command_async
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
@@ -35,29 +37,31 @@ class Bar(Window):
         with open(config_path) as config_file:
             config = json.load(config_file)
 
-        self.workspaces = Workspaces(
-            name="workspaces",
-            invert_scroll=True,
-            empty_scroll=True,
-            v_align="fill",
-            orientation="h",
-            spacing=10,
-            buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
-        )
+        self.connection = get_hyprland_connection()
 
-        self.button_apps = Button(
-            name="button-bar",
-            on_clicked=lambda *_: self.search_apps(),
-            child=Label(name="button-bar-label", markup=icons.apps),
-        )
-        self.button_apps.connect("enter_notify_event", self.on_button_enter)
-        self.button_apps.connect("leave_notify_event", self.on_button_leave)
+
 
         left_children = []
 
         if config["Bar"]["buttonapps"]:
+            self.button_apps = Button(
+                name="button-bar",
+                on_clicked=lambda *_: self.search_apps(),
+                child=Label(name="button-bar-label", markup=icons.apps),
+            )
+            self.button_apps.connect("enter_notify_event", self.on_button_enter)
+            self.button_apps.connect("leave_notify_event", self.on_button_leave)
             left_children.append(self.button_apps)
         if config["Bar"]["workspaces"]:
+            self.workspaces = Workspaces(
+                name="workspaces",
+                invert_scroll=True,
+                empty_scroll=True,
+                v_align="fill",
+                orientation="h",
+                spacing=10,
+                buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
+            )
             left_children.append(
                 Box(name="workspaces-container", children=[self.workspaces])
             )
@@ -154,7 +158,12 @@ class Bar(Window):
             self.button_tools.connect("leave_notify_event", self.on_button_leave)
             end_children.append(self.button_tools)
 
-        if config["Bar"]["datetime"]:
+        if config["Bar"]["Barright"]["languageindicator"]:
+            self.language = Language(name="language", h_align="center", v_align="center")
+            self.switch_on_start()
+            self.connection.connect("event::activelayout", self.on_language_switch)
+            end_children.append(self.language)
+        if config["Bar"]["buttonapps"]:
             self.date_time = DateTime(
                 name="date-time",
                 formatters=["%I:%M %P"],
@@ -223,6 +232,12 @@ class Bar(Window):
 
     def tools_menu(self):
         self.notch.open_notch("tools")
+
+    def on_language_switch(self, _, event: HyprlandEvent):
+        self.language.set_label(self.language.get_label()[0:3].upper())
+
+    def switch_on_start(self):
+        self.language.set_label(self.language.get_label()[0:3].upper())
 
     def toggle_hidden(self):
         self.hidden = not self.hidden

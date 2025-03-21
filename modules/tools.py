@@ -4,10 +4,13 @@ from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
+import os
 import subprocess
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
+GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
+GAMEMODE_CHECK_SCRIPT = get_relative_path("../scripts/gamemode_check.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
 
@@ -30,6 +33,7 @@ class Toolbox(Box):
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.ssregion),
             on_clicked=self.ssregion,
+            tooltip_text="Screenshot Region",
             h_expand=False,
             v_expand=False,
             h_align="center",
@@ -44,13 +48,14 @@ class Toolbox(Box):
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.ssfull),
             on_clicked=self.ssfull,
+            tooltip_text="Screenshot Fullscreen",
             h_expand=False,
             v_expand=False,
             h_align="center",
             v_align="center",
         )
         # Enable keyboard focus and connect events
-        self.btn_ssfull.set_can_focus(True) 
+        self.btn_ssfull.set_can_focus(True)
         self.btn_ssfull.connect("button-press-event", self.on_ssfull_click)
         self.btn_ssfull.connect("key-press-event", self.on_ssfull_key)
 
@@ -58,6 +63,7 @@ class Toolbox(Box):
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.screenrecord),
             on_clicked=self.screenrecord,
+            tooltip_text="Screen Record",
             h_expand=False,
             v_expand=False,
             h_align="center",
@@ -68,6 +74,7 @@ class Toolbox(Box):
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.ocr),
             on_clicked=self.ocr,
+            tooltip_text="Text Recognition",
             h_expand=False,
             v_expand=False,
             h_align="center",
@@ -84,6 +91,17 @@ class Toolbox(Box):
             v_align="center",
         )
 
+        self.btn_gamemode = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.gamemode),
+            on_clicked=self.gamemode,
+            h_expand=False,
+            tooltip_text="Toggle Game Mode",
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+
         # Enable keyboard focus for the colorpicker button.
         self.btn_color.set_can_focus(True)
         # Connect both mouse and keyboard events.
@@ -95,14 +113,28 @@ class Toolbox(Box):
             child=Label(name="button-label", markup=icons.emoji),
             on_clicked=self.emoji,
             h_expand=False,
+            tooltip_text="Emoji Picker",
             v_expand=False,
             h_align="center",
             v_align="center",
         )
-        self.btn_gamemode = Button(
+
+        self.btn_screenshots_folder = Button(
             name="toolbox-button",
-            child=Label(name="button-label", markup=icons.gamemode),
-            on_clicked=self.gamemode,
+            child=Label(name="button-label", markup=icons.screenshots),
+            on_clicked=self.open_screenshots_folder,
+            tooltip_text="Open Screenshots Folder",
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+
+        self.btn_recordings_folder = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.recordings),
+            on_clicked=self.open_recordings_folder,
+            tooltip_text="Open Recordings Folder",
             h_expand=False,
             v_expand=False,
             h_align="center",
@@ -112,9 +144,14 @@ class Toolbox(Box):
         self.buttons = [
             self.btn_ssregion,
             self.btn_ssfull,
+            self.btn_screenshots_folder,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_screenrecord,
+            self.btn_recordings_folder,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_ocr,
             self.btn_color,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_gamemode,
             self.btn_emoji,
         ]
@@ -125,9 +162,8 @@ class Toolbox(Box):
         self.show_all()
 
         # Start polling for process state every second.
-        self.recorder_timer_id = GLib.timeout_add_seconds(
-            1, self.update_screenrecord_state
-        )
+        self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
+        self.gamemode_updater = GLib.timeout_add_seconds(1, self.gamemode_check)
 
     def close_menu(self):
         self.notch.close_notch()
@@ -158,9 +194,6 @@ class Toolbox(Box):
             return True
         return False
 
-    def ssregion(self, *args):
-        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
-        self.close_menu()
 
     def on_ssregion_click(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -192,6 +225,10 @@ class Toolbox(Box):
 
     def ocr(self, *args):
         exec_shell_command_async(f"bash {OCR_SCRIPT} sf")
+        self.close_menu()
+
+    def ssregion(self, *args):
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
         self.close_menu()
 
     def colorpicker(self, button, event):
@@ -247,8 +284,10 @@ class Toolbox(Box):
 
         if enabled:
             self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
+            self.btn_gamemode.set_tooltip_text("GameMode : OFF")
         else:
             self.btn_gamemode.get_child().set_markup(icons.gamemode)
+            self.btn_gamemode.set_tooltip_text("GameMode : ON")
 
         return True
 
@@ -280,6 +319,24 @@ class Toolbox(Box):
 
         # Return True to keep this callback active.
         return True
+
+    def open_screenshots_folder(self, *args):
+        screenshots_dir = os.path.join(os.environ.get('XDG_PICTURES_DIR',
+                                                    os.path.expanduser('~/Pictures')),
+                                     'Screenshots')
+        # Create directory if it doesn't exist
+        os.makedirs(screenshots_dir, exist_ok=True)
+        exec_shell_command_async(f"xdg-open {screenshots_dir}")
+        self.close_menu()
+
+    def open_recordings_folder(self, *args):
+        recordings_dir = os.path.join(os.environ.get('XDG_VIDEOS_DIR',
+                                                   os.path.expanduser('~/Videos')),
+                                    'Recordings')
+        # Create directory if it doesn't exist
+        os.makedirs(recordings_dir, exist_ok=True)
+        exec_shell_command_async(f"xdg-open {recordings_dir}")
+        self.close_menu()
 
     def emoji(self, *args):
         self.notch.open_notch("emoji")

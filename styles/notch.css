@@ -41,9 +41,8 @@
 }
 
 #notch-content.tools {
-  padding: 10px;
-  min-height: 60px;
-  min-width: 364px;
+  min-height: 84px;
+  min-width: 580px;
   border-radius: 0 0 36px 36px;
 }
 

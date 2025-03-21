@@ -20,7 +20,8 @@
             "metrics": true,
             "controls": true,
             "battery": true,
-            "systemprofiles": false
+            "systemprofiles": false,
+            "languageindicator": true
         },
         "Barleft": {
             "weather": false,
@@ -30,7 +31,7 @@
     },
     "widgetstyle": "basic",
     "desktopwidgets": {
-        "activation": true,
+        "activation": false,
         "date": true,
         "clock": true,
         "quote": true,

@@ -17,21 +17,22 @@ colorpicker: str = "&#xebe6;"
 media: str = "&#xf00d;"
 
 
-# Network
+# network
 
 
 download: str = "&#xea96;"
 upload: str = "&#xeb47;"
 # Toolbox
-
-toolbox: str = "&#xebca;"  # toolbox
-ssfull: str = "&#xeaea;"  # camera
-ssregion: str = "&#xf201;"  # camera
-screenrecord: str = "&#xeafa;"  # video
-ocr: str = "&#xfcc3;"  # text-recognition
-close: str = "&#xeb55;"
+toolbox: str = "&#xebca;"
+ssfull: str = "&#xec3c;"
+ssregion: str = "&#xf201;"
+screenshots: str = "&#xeb0a;"
+screenrecord: str = "&#xed22;"
+recordings: str = "&#xeafa;"
+ocr: str = "&#xfcc3;"
 gamemode: str = "&#xf026;"
 gamemode_off: str = "&#xf111;"
+close : str = "&#xeb55;"
 
 # Circles
 temp: str = "&#xeb38;"
