@@ -5,7 +5,7 @@ from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
 import os
-import modules.data as data
+import config.data as data
 import subprocess
 from loguru import logger
 

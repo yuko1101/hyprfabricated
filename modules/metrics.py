@@ -511,46 +511,79 @@ class NetworkApplet(Button):
         current_counters = psutil.net_io_counters()
         download_speed = (current_counters.bytes_recv - self.last_counters.bytes_recv) / elapsed
         upload_speed = (current_counters.bytes_sent - self.last_counters.bytes_sent) / elapsed
-        self.download_label.set_markup(self.format_speed(download_speed))
-        self.upload_label.set_markup(self.format_speed(upload_speed))
+        download_str = self.format_speed(download_speed)
+        upload_str = self.format_speed(upload_speed)
+        self.download_label.set_markup(download_str)
+        self.upload_label.set_markup(upload_str)
 
         self.downloading = (download_speed >= 10e6)
         self.uploading = (upload_speed >= 2e6)
 
-        if self.downloading and not self.is_mouse_over:
-            self.download_urgent()
-        if self.uploading and not self.is_mouse_over:
-            self.upload_urgent()
+        if not data.VERTICAL:
+            # Horizontal mode - original behavior
+            if self.downloading and not self.is_mouse_over:
+                self.download_urgent()
+            if self.uploading and not self.is_mouse_over:
+                self.upload_urgent()
 
-        self.download_revealer.set_reveal_child(self.downloading or self.is_mouse_over)
-        self.upload_revealer.set_reveal_child(self.uploading or self.is_mouse_over)
+            self.download_revealer.set_reveal_child(self.downloading or self.is_mouse_over)
+            self.upload_revealer.set_reveal_child(self.uploading or self.is_mouse_over)
 
-        if not self.downloading and not self.uploading:
-            self.remove_urgent()
+            if not self.downloading and not self.uploading:
+                self.remove_urgent()
 
-        if self.network_client and self.network_client.wifi_device:
-            if self.network_client.wifi_device.ssid != "Disconnected":
-                strength = self.network_client.wifi_device.strength
-                
-                if strength >= 75:
-                    self.wifi_label.set_markup(icons.wifi_3)
-                elif strength >= 50:
-                    self.wifi_label.set_markup(icons.wifi_2)
-                elif strength >= 25:
-                    self.wifi_label.set_markup(icons.wifi_1)
+            if self.network_client and self.network_client.wifi_device:
+                if self.network_client.wifi_device.ssid != "Disconnected":
+                    strength = self.network_client.wifi_device.strength
+                    
+                    if strength >= 75:
+                        self.wifi_label.set_markup(icons.wifi_3)
+                    elif strength >= 50:
+                        self.wifi_label.set_markup(icons.wifi_2)
+                    elif strength >= 25:
+                        self.wifi_label.set_markup(icons.wifi_1)
+                    else:
+                        self.wifi_label.set_markup(icons.wifi_0)
+
+                    self.set_tooltip_text(self.network_client.wifi_device.ssid)
                 else:
-                    self.wifi_label.set_markup(icons.wifi_0)
-
-                self.set_tooltip_text(self.network_client.wifi_device.ssid)
-
+                    self.wifi_label.set_markup(icons.world_off)
+                    self.set_tooltip_text("Disconnected")
             else:
                 self.wifi_label.set_markup(icons.world_off)
                 self.set_tooltip_text("Disconnected")
         else:
-            self.wifi_label.set_markup(icons.world_off)
-            self.set_tooltip_text("Disconnected")
-
-        
+            # Vertical mode - don't use revealers, change icon instead
+            self.download_revealer.set_reveal_child(False)
+            self.upload_revealer.set_reveal_child(False)
+            
+            if self.network_client and self.network_client.wifi_device:
+                if self.network_client.wifi_device.ssid != "Disconnected":
+                    # Change the WiFi icon based on network activity
+                    if self.downloading:
+                        self.wifi_label.set_markup(icons.download)
+                    elif self.uploading:
+                        self.wifi_label.set_markup(icons.upload)
+                    else:
+                        # Normal WiFi icon based on signal strength
+                        strength = self.network_client.wifi_device.strength
+                        if strength >= 75:
+                            self.wifi_label.set_markup(icons.wifi_3)
+                        elif strength >= 50:
+                            self.wifi_label.set_markup(icons.wifi_2)
+                        elif strength >= 25:
+                            self.wifi_label.set_markup(icons.wifi_1)
+                        else:
+                            self.wifi_label.set_markup(icons.wifi_0)
+                    
+                    # Vertical mode format for tooltip
+                    self.set_tooltip_text(f"SSID: {self.network_client.wifi_device.ssid}\nDownload: {download_str}\nUpload: {upload_str}")
+                else:
+                    self.wifi_label.set_markup(icons.world_off)
+                    self.set_tooltip_text("Disconnected")
+            else:
+                self.wifi_label.set_markup(icons.world_off)
+                self.set_tooltip_text("Disconnected")
 
         self.last_counters = current_counters
         self.last_time = current_time
@@ -567,15 +600,17 @@ class NetworkApplet(Button):
     def on_mouse_enter(self, *_):
         self.is_mouse_over = True
         self.remove_urgent()
-        self.download_revealer.set_reveal_child(True)
-        self.upload_revealer.set_reveal_child(True)
+        if not data.VERTICAL:
+            self.download_revealer.set_reveal_child(True)
+            self.upload_revealer.set_reveal_child(True)
         return
     
     def on_mouse_leave(self, *_):
         self.is_mouse_over = False
         self.remove_urgent()
-        self.download_revealer.set_reveal_child(False)
-        self.upload_revealer.set_reveal_child(False)
+        if not data.VERTICAL:
+            self.download_revealer.set_reveal_child(False)
+            self.upload_revealer.set_reveal_child(False)
         return
 
     def upload_urgent(self):

@@ -133,3 +133,7 @@
 #active-window-box {
   margin: 10px;
 }
+
+#vert-comp {
+  min-width: 40px;
+}

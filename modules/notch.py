@@ -221,8 +221,16 @@ class Notch(Window):
         self.hidden = False
         self._is_notch_open = False
         self._scrolling = False
+        
+        self.notch_wrap = Box(
+            name="notch-wrap",
+            children=[
+                self.notch_complete,
+                Box(name="vert-comp" if data.VERTICAL else None),
+            ]
+        )
 
-        self.add(self.notch_complete)
+        self.add(self.notch_wrap)
         self.show_all()
 
         self._show_overview_children(False)

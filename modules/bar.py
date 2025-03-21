@@ -171,14 +171,15 @@ class Bar(Window):
         self.v_start_children = [
             self.button_apps,
             self.systray,
-            self.button_overview,
             self.control,
-            self.weather,
+            self.network,
             self.button_tools,
         ]
         
         self.v_center_children = [
+            self.button_overview,
             self.workspaces,
+            self.weather,
         ]
         
         self.v_end_children = [
@@ -200,7 +201,7 @@ class Bar(Window):
                 orientation="h" if not data.VERTICAL else "v",
                 children=self.h_start_children if not data.VERTICAL else self.v_start_children,
             ),
-            center_children=None if not data.VERTICAL else self.v_center_children,
+            center_children=None if not data.VERTICAL else Box(orientation="v", spacing=4, children=self.v_center_children),
             end_children=Box(
                 name="end-container",
                 spacing=4,

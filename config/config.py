@@ -58,6 +58,7 @@ DEFAULT_KEYBINDINGS = {
     'wallpapers_dir': WALLPAPERS_DIR_DEFAULT,
     'prefix_restart_inspector': "SUPER CTRL ALT",
     'suffix_restart_inspector': "B",
+    'vertical': False,  # New default for vertical layout
 }
 
 bind_vars = DEFAULT_KEYBINDINGS.copy()
@@ -158,7 +159,9 @@ def ensure_matugen_config():
     current_wall = os.path.expanduser("~/.current.wall")
     if not os.path.exists(current_wall):
         image_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
-        os.system(f"matugen image {image_path}")
+        # Replace os.system with subprocess.run
+        subprocess.run(["matugen", "image", image_path])
+
 
 def load_bind_vars():
     """
@@ -248,7 +251,7 @@ animations {{
     animation = windows, 1, 2.5, myBezier, popin 80%
     animation = border, 1, 2.5, myBezier
     animation = fade, 1, 2.5, myBezier
-    animation = workspaces, 1, 2.5, myBezier, slidefade 20%
+    animation = workspaces, 1, 2.5, myBezier, {'slidefadevert' if bind_vars['vertical'] else 'slidefade'} 20%
 }}
 """
 
@@ -486,6 +489,16 @@ class HyprConfGUI(Gtk.Window):
 
         box.pack_start(face_section, False, False, 0)
 
+        # New vertical layout switch added to Appearance tab
+        vertical_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        vertical_label = Gtk.Label(label="Vertical Layout")
+        vertical_label.set_halign(Gtk.Align.START)
+        self.vertical_switch = Gtk.Switch()
+        self.vertical_switch.set_active(bind_vars.get('vertical', False))
+        vertical_box.pack_start(vertical_label, True, True, 0)
+        vertical_box.pack_end(self.vertical_switch, False, False, 0)
+        box.pack_start(vertical_box, False, False, 10)
+
         return box
 
     def create_system_tab(self):
@@ -499,20 +512,29 @@ class HyprConfGUI(Gtk.Window):
         # Hypr Configuration section
         hypr_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
 
-        # Checkboxes for Hyprlock and Hypridle
+        # Replacing checkboxes with switches for Hyprlock config
         if self.show_lock_checkbox:
-            self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
-            self.lock_checkbox.set_active(False)
-            hypr_section.pack_start(self.lock_checkbox, False, False, 10)
+            lock_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            lock_label = Gtk.Label(label="Replace Hyprlock config")
+            lock_label.set_halign(Gtk.Align.START)
+            self.lock_switch = Gtk.Switch()
+            lock_box.pack_start(lock_label, True, True, 0)
+            lock_box.pack_end(self.lock_switch, False, False, 0)
+            hypr_section.pack_start(lock_box, False, False, 10)
         else:
-            self.lock_checkbox = None
+            self.lock_switch = None
 
+        # Replacing checkboxes with switches for Hypridle config
         if self.show_idle_checkbox:
-            self.idle_checkbox = Gtk.CheckButton(label="Replace Hypridle config")
-            self.idle_checkbox.set_active(False)
-            hypr_section.pack_start(self.idle_checkbox, False, False, 10)
+            idle_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            idle_label = Gtk.Label(label="Replace Hypridle config")
+            idle_label.set_halign(Gtk.Align.START)
+            self.idle_switch = Gtk.Switch()
+            idle_box.pack_start(idle_label, True, True, 0)
+            idle_box.pack_end(self.idle_switch, False, False, 0)
+            hypr_section.pack_start(idle_box, False, False, 10)
         else:
-            self.idle_checkbox = None
+            self.idle_switch = None
 
         box.pack_start(hypr_section, False, False, 0)
 
@@ -563,6 +585,9 @@ class HyprConfGUI(Gtk.Window):
         # Update wallpaper directory
         bind_vars['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
 
+        # Update vertical setting from the new switch
+        bind_vars['vertical'] = self.vertical_switch.get_active()
+
         # Save the updated bind_vars to a JSON file
         config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
@@ -582,14 +607,14 @@ class HyprConfGUI(Gtk.Window):
             except Exception as e:
                 print("Error processing face icon:", e)
 
-        # Replace hyprlock config if requested
-        if self.lock_checkbox and self.lock_checkbox.get_active():
+        # Replace hyprlock config if requested using the new switch
+        if self.lock_switch and self.lock_switch.get_active():
             src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
             dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
             backup_and_replace(src_lock, dest_lock, "Hyprlock")
 
-        # Replace hypridle config if requested
-        if self.idle_checkbox and self.idle_checkbox.get_active():
+        # Replace hypridle config if requested using the new switch
+        if self.idle_switch and self.idle_switch.get_active():
             src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
             dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
             backup_and_replace(src_idle, dest_idle, "Hypridle")
@@ -598,11 +623,18 @@ class HyprConfGUI(Gtk.Window):
         hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
         with open(hyprland_config_path, "r") as f:
             content = f.read()
-        if SOURCE_STRING not in content:
+        if (SOURCE_STRING not in content):
             with open(hyprland_config_path, "a") as f:
                 f.write(SOURCE_STRING)
 
         start_config()
+        subprocess.run(["killall", APP_NAME])
+        subprocess.Popen(
+            ["uwsm", "app", "--", "python", os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
         self.destroy()
 
     def on_cancel(self, widget):
@@ -623,8 +655,8 @@ def start_config():
     with open(hypr_conf_path, "w") as f:
         f.write(generate_hyprconf())
 
-    # Reload Hyprland configuration
-    os.system("hyprctl reload")
+    # Reload Hyprland configuration using subprocess.run instead of os.system
+    subprocess.run(["hyprctl", "reload"])
 
 
 def open_config():
