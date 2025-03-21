@@ -4,12 +4,13 @@ import requests
 from gi.repository import GLib
 
 from fabric.widgets.label import Label
-from fabric.widgets.box import Box
+from fabric.widgets.button import Button
 
 gi.require_version("Gtk", "3.0")
 import modules.icons as icons
+import config.data as data
 
-class Weather(Box):
+class Weather(Button):
     def __init__(self, **kwargs) -> None:
         super().__init__(name="weather", orientation="h", spacing=8, **kwargs)
         self.label = Label(name="weather-label", markup=icons.loader)
@@ -20,27 +21,16 @@ class Weather(Box):
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
 
-    def get_location(self):
-        try:
-            response = self.session.get("https://ipinfo.io/json", timeout=5)
-            if response.ok:
-                return response.json().get("city", "")
-            else:
-                print("Error getting location from ipinfo.")
-        except Exception as e:
-            print(f"Error getting location: {e}")
-        return ""
-
     def fetch_weather(self):
         GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
         return True
 
-    def _fetch_weather_thread(self, data):
-        location = self.get_location()
-        if location:
-            url = f"https://wttr.in/{urllib.parse.quote(location)}?format=%c+%t"
-        else:
-            url = "https://wttr.in/?format=%c+%t"
+    def _fetch_weather_thread(self, user_data):
+        # Let wttr.in determine location based on IP
+        url = "https://wttr.in/?format=%c+%t" if not data.VERTICAL else "https://wttr.in/?format=%c"
+        # Get detailed info for tooltip
+        tooltip_url = "https://wttr.in/?format=%l:+%C,+%t+(%f),+Humidity:+%h,+Wind:+%w"
+        
         try:
             response = self.session.get(url, timeout=5)
             if response.ok:
@@ -48,6 +38,12 @@ class Weather(Box):
                 if "Unknown" in weather_data:
                     GLib.idle_add(self.set_visible, False)
                 else:
+                    # Get tooltip data
+                    tooltip_response = self.session.get(tooltip_url, timeout=5)
+                    if tooltip_response.ok:
+                        tooltip_text = tooltip_response.text.strip()
+                        GLib.idle_add(self.set_tooltip_text, tooltip_text)
+                    
                     GLib.idle_add(self.set_visible, True)
                     GLib.idle_add(self.label.set_label, weather_data.replace(" ", ""))
             else:

@@ -12,7 +12,7 @@ from fabric.utils.helpers import get_relative_path, exec_shell_command_async
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
-import modules.data as data
+import config.data as data
 from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
 from modules.weather import Weather
@@ -22,8 +22,8 @@ class Bar(Window):
         super().__init__(
             name="bar",
             layer="top",
-            anchor="left top right",
-            margin="-4px -4px -8px -4px",
+            anchor="left top right" if not data.VERTICAL else "top left bottom",
+            margin="-4px -4px -8px -4px" if not data.VERTICAL else "-4px -8px -4px -4px",
             exclusivity="auto",
             visible=True,
             all_visible=True,
@@ -36,8 +36,8 @@ class Bar(Window):
             invert_scroll=True,
             empty_scroll=True,
             v_align="fill",
-            orientation="h",
-            spacing=10,
+            orientation="h" if not data.VERTICAL else "v",
+            spacing=8,
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
         self.button_tools = Button(
@@ -58,11 +58,12 @@ class Bar(Window):
         self.network = NetworkApplet()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
-        self.language = Language(name="language", h_align="center", v_align="center")
+        self.lang_label = Label(name="lang-label")
+        self.language = Button(name="language", h_align="center", v_align="center", child=self.lang_label)
         self.switch_on_start()
         self.connection.connect("event::activelayout", self.on_language_switch)
 
-        self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
+        self.date_time = DateTime(name="date-time", formatters=["%H:%M"] if not data.VERTICAL else ["%H\n%M"], h_align="center" if not data.VERTICAL else "fill", v_align="center", h_expand=True, v_expand=True)
 
         self.button_apps = Button(
             name="button-bar",
@@ -101,6 +102,11 @@ class Bar(Window):
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
         self.battery = Battery()
+        
+        self.rev_right = [
+            self.metrics,
+            self.control,
+        ]
 
         self.revealer_right = Revealer(
             name="bar-revealer",
@@ -110,19 +116,21 @@ class Bar(Window):
                 name="bar-revealer-box",
                 orientation="h",
                 spacing=4,
-                children=[
-                    self.metrics,
-                    self.control,
-                ],
+                children=self.rev_right if not data.VERTICAL else None,
             ),
         )
-
+        
         self.boxed_revealer_right = Box(
             name="boxed-revealer",
             children=[
                 self.revealer_right,
             ],
         )
+        
+        self.rev_left = [
+            self.weather,
+            self.network,
+        ]
 
         self.revealer_left = Revealer(
             name="bar-revealer",
@@ -132,10 +140,7 @@ class Bar(Window):
                 name="bar-revealer-box",
                 orientation="h",
                 spacing=4,
-                children=[
-                    self.weather,
-                    self.network,
-                ],
+                children=self.rev_left if not data.VERTICAL else None,
             ),
         )
 
@@ -145,36 +150,62 @@ class Bar(Window):
                 self.revealer_left,
             ],
         )
+        
+        self.h_start_children = [
+            self.button_apps,
+            self.workspaces,
+            self.button_overview,
+            self.boxed_revealer_left,
+        ]
+        
+        self.h_end_children = [
+            self.boxed_revealer_right,
+            self.battery,
+            self.systray,
+            self.button_tools,
+            self.language,
+            self.date_time,
+            self.button_power,
+        ]
+        
+        self.v_start_children = [
+            self.button_apps,
+            self.systray,
+            self.button_overview,
+            self.control,
+            self.weather,
+            self.button_tools,
+        ]
+        
+        self.v_center_children = [
+            self.workspaces,
+        ]
+        
+        self.v_end_children = [
+            self.battery,
+            self.metrics,
+            self.language,
+            self.date_time,
+            self.button_power,
+        ]
 
         self.bar_inner = CenterBox(
             name="bar-inner",
-            orientation="h",
+            orientation="h" if not data.VERTICAL else "v",
             h_align="fill",
-            v_align="center",
+            v_align="fill",
             start_children=Box(
                 name="start-container",
                 spacing=4,
-                orientation="h",
-                children=[
-                    self.button_apps,
-                    Box(name="workspaces-container", children=[self.workspaces]),
-                    self.button_overview,
-                    self.boxed_revealer_left,
-                ]
+                orientation="h" if not data.VERTICAL else "v",
+                children=self.h_start_children if not data.VERTICAL else self.v_start_children,
             ),
+            center_children=None if not data.VERTICAL else self.v_center_children,
             end_children=Box(
                 name="end-container",
                 spacing=4,
-                orientation="h",
-                children=[
-                    self.boxed_revealer_right,
-                    self.battery,
-                    self.systray,
-                    self.button_tools,
-                    self.language,
-                    self.date_time,
-                    self.button_power,
-                ],
+                orientation="h" if not data.VERTICAL else "v",
+                children=self.h_end_children if not data.VERTICAL else self.v_end_children,
             ),
         )
 
@@ -211,10 +242,20 @@ class Bar(Window):
         self.notch.open_notch("tools")
 
     def on_language_switch(self, _, event: HyprlandEvent):
-        self.language.set_label(self.language.get_label()[0:3].upper())
+        self.language.set_tooltip_text(Language().get_label())
+        if not data.VERTICAL:
+            self.lang_label.set_label(Language().get_label()[0:3].upper())
+        else:
+            self.lang_label.add_style_class("icon")
+            self.lang_label.set_markup(icons.keyboard)
 
     def switch_on_start(self):
-        self.language.set_label(self.language.get_label()[0:3].upper())
+        self.language.set_tooltip_text(Language().get_label())
+        if not data.VERTICAL:
+            self.lang_label.set_label(Language().get_label()[0:3].upper())
+        else:
+            self.lang_label.add_style_class("icon")
+            self.lang_label.set_markup(icons.keyboard)
 
     def toggle_hidden(self):
         self.hidden = not self.hidden

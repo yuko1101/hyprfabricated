@@ -17,6 +17,7 @@ from fabric.utils.helpers import exec_shell_command_async, invoke_repeater
 from fabric.widgets.scale import Scale
 
 import modules.icons as icons
+import config.data as data
 from services.network import NetworkClient
 import time
 
@@ -172,13 +173,15 @@ class Metrics(Box):
 
         return True  # Continue calling this function.
 
-class MetricsSmall(Overlay):
+class MetricsSmall(Button):
     def __init__(self, **kwargs):
-        # Creamos el contenedor principal para los widgets métricos
+        super().__init__(name="metrics-small", **kwargs)
+        
+        # Create the main box for metrics widgets
         main_box = Box(
             name="metrics-small",
             spacing=0,
-            orientation="h",
+            orientation="h" if not data.VERTICAL else "v",
             visible=True,
             all_visible=True,
         )
@@ -271,24 +274,15 @@ class MetricsSmall(Overlay):
         main_box.add(Box(name="metrics-sep"))
         main_box.add(self.cpu_box)
 
-        # Se crea un único EventBox que envuelve todo el contenedor, para que
-        # los eventos de hover se capturen de forma central y siempre queden por encima
-        # de los widgets internos.
-        event_box = EventBox(events=["enter-notify-event", "leave-notify-event"])
-        event_box.connect("enter-notify-event", self.on_mouse_enter)
-        event_box.connect("leave-notify-event", self.on_mouse_leave)
+        # Set the main box as the button's child
+        self.add(main_box)
+        
+        # Connect events directly to the button
+        self.connect("enter-notify-event", self.on_mouse_enter)
+        self.connect("leave-notify-event", self.on_mouse_leave)
 
-        # Inicializamos MetricsSmall como un Overlay cuyo "child" es el EventBox
-        super().__init__(
-            name="metrics-small",
-            child=main_box,
-            visible=True,
-            all_visible=True,
-            overlays=[event_box]
-        )
-
-        # Actualización de métricas cada segundo
         GLib.timeout_add_seconds(1, self.update_metrics)
+        # Actualización de métricas cada segundo
 
         # Estado inicial de los revealers y variables para la gestión del hover
         self.hide_timer = None
@@ -299,31 +293,34 @@ class MetricsSmall(Overlay):
         return f"{value}%"
 
     def on_mouse_enter(self, widget, event):
-        self.hover_counter += 1
-        if self.hide_timer is not None:
-            GLib.source_remove(self.hide_timer)
-            self.hide_timer = None
-        # Revelar niveles en hover para todas las métricas
-        self.cpu_revealer.set_reveal_child(True)
-        self.ram_revealer.set_reveal_child(True)
-        self.disk_revealer.set_reveal_child(True)
-        return False
-
-    def on_mouse_leave(self, widget, event):
-        if self.hover_counter > 0:
-            self.hover_counter -= 1
-        if self.hover_counter == 0:
+        if not data.VERTICAL:
+            self.hover_counter += 1
             if self.hide_timer is not None:
                 GLib.source_remove(self.hide_timer)
-            self.hide_timer = GLib.timeout_add(500, self.hide_revealer)
-        return False
+                self.hide_timer = None
+            # Revelar niveles en hover para todas las métricas
+            self.cpu_revealer.set_reveal_child(True)
+            self.ram_revealer.set_reveal_child(True)
+            self.disk_revealer.set_reveal_child(True)
+            return False
+
+    def on_mouse_leave(self, widget, event):
+        if not data.VERTICAL:
+            if self.hover_counter > 0:
+                self.hover_counter -= 1
+            if self.hover_counter == 0:
+                if self.hide_timer is not None:
+                    GLib.source_remove(self.hide_timer)
+                self.hide_timer = GLib.timeout_add(500, self.hide_revealer)
+            return False
 
     def hide_revealer(self):
-        self.cpu_revealer.set_reveal_child(False)
-        self.ram_revealer.set_reveal_child(False)
-        self.disk_revealer.set_reveal_child(False)
-        self.hide_timer = None
-        return False
+        if not data.VERTICAL:
+            self.cpu_revealer.set_reveal_child(False)
+            self.ram_revealer.set_reveal_child(False)
+            self.disk_revealer.set_reveal_child(False)
+            self.hide_timer = None
+            return False
 
     def update_metrics(self):
         # Recuperar datos centralizados
@@ -335,12 +332,15 @@ class MetricsSmall(Overlay):
         self.cpu_level.set_label(self._format_percentage(int(cpu)))
         self.ram_level.set_label(self._format_percentage(int(mem)))
         self.disk_level.set_label(self._format_percentage(int(disk)))
+        self.set_tooltip_markup(f"{icons.disk} DISK - {icons.memory} RAM - {icons.cpu} CPU" if not data.VERTICAL else f"{icons.disk} DISK: {self.disk_level.get_label()}\n{icons.memory} RAM: {self.ram_level.get_label()}\n{icons.cpu} CPU: {self.cpu_level.get_label()}")
         return True
 
 
-class Battery(Overlay):
+class Battery(Button):
     def __init__(self, **kwargs):
-        # Creamos el contenedor principal para los widgets métricos
+        super().__init__(name="metrics-small", **kwargs)
+        
+        # Create the main box for metrics widgets
         main_box = Box(
             name="metrics-small",
             spacing=0,
@@ -376,24 +376,15 @@ class Battery(Overlay):
             children=[self.bat_circle, self.bat_revealer],
         )
 
-        # Agregamos cada widget métrico al contenedor principal
+        # Add the battery widget to the main container
         main_box.add(self.bat_box)
 
-        # Se crea un único EventBox que envuelve todo el contenedor, para que
-        # los eventos de hover se capturen de forma central y siempre queden por encima
-        # de los widgets internos.
-        event_box = EventBox(events=["enter-notify-event", "leave-notify-event"])
-        event_box.connect("enter-notify-event", self.on_mouse_enter)
-        event_box.connect("leave-notify-event", self.on_mouse_leave)
-
-        # Inicializamos MetricsSmall como un Overlay cuyo "child" es el EventBox
-        super().__init__(
-            name="metrics-small",
-            child=main_box,
-            visible=True,
-            all_visible=True,
-            overlays=[event_box]
-        )
+        # Set the main box as the button's child
+        self.add(main_box)
+        
+        # Connect events directly to the button
+        self.connect("enter-notify-event", self.on_mouse_enter)
+        self.connect("leave-notify-event", self.on_mouse_leave)
 
         # Actualización de la batería cada segundo
         self.batt_fabricator = Fabricator(
@@ -415,27 +406,30 @@ class Battery(Overlay):
         return f"{value}%"
 
     def on_mouse_enter(self, widget, event):
-        self.hover_counter += 1
-        if self.hide_timer is not None:
-            GLib.source_remove(self.hide_timer)
-            self.hide_timer = None
-        # Revelar niveles en hover para todas las métricas
-        self.bat_revealer.set_reveal_child(True)
-        return False
-
-    def on_mouse_leave(self, widget, event):
-        if self.hover_counter > 0:
-            self.hover_counter -= 1
-        if self.hover_counter == 0:
+        if not data.VERTICAL:
+            self.hover_counter += 1
             if self.hide_timer is not None:
                 GLib.source_remove(self.hide_timer)
-            self.hide_timer = GLib.timeout_add(500, self.hide_revealer)
-        return False
+                self.hide_timer = None
+            # Revelar niveles en hover para todas las métricas
+            self.bat_revealer.set_reveal_child(True)
+            return False
+
+    def on_mouse_leave(self, widget, event):
+        if not data.VERTICAL:
+            if self.hover_counter > 0:
+                self.hover_counter -= 1
+            if self.hover_counter == 0:
+                if self.hide_timer is not None:
+                    GLib.source_remove(self.hide_timer)
+                self.hide_timer = GLib.timeout_add(500, self.hide_revealer)
+            return False
 
     def hide_revealer(self):
-        self.bat_revealer.set_reveal_child(False)
-        self.hide_timer = None
-        return False
+        if not data.VERTICAL:
+            self.bat_revealer.set_reveal_child(False)
+            self.hide_timer = None
+            return False
 
     def update_battery(self, sender, battery_data):
         value, charging = battery_data
@@ -446,21 +440,34 @@ class Battery(Overlay):
             self.bat_circle.set_value(value / 100)
         percentage = int(value)
         self.bat_level.set_label(self._format_percentage(percentage))
+        
+        # Apply alert styling if battery is low, regardless of charging status
         if percentage <= 15:
-            self.bat_icon.set_markup(icons.alert)
             self.bat_icon.add_style_class("alert")
             self.bat_circle.add_style_class("alert")
         else:
             self.bat_icon.remove_style_class("alert")
             self.bat_circle.remove_style_class("alert")
-            if charging == False:
-                self.bat_icon.set_markup(icons.discharging)
-            elif percentage == 100:
-                self.bat_icon.set_markup(icons.battery)
-            elif charging == True:
-                self.bat_icon.set_markup(icons.charging)
-            else:
-                self.bat_icon.set_markup(icons.battery)
+        
+        # Choose the icon based on charging state first, then battery level
+        if percentage == 100:
+            self.bat_icon.set_markup(icons.battery)
+            charging_status = f"{icons.bat_full} Fully Charged"
+        elif charging == True:
+            self.bat_icon.set_markup(icons.charging)
+            charging_status = f"{icons.bat_charging} Charging"
+        elif percentage <= 15 and charging == False:
+            self.bat_icon.set_markup(icons.alert)
+            charging_status = f"{icons.bat_low} Low Battery"
+        elif charging == False:
+            self.bat_icon.set_markup(icons.discharging)
+            charging_status = f"{icons.bat_discharging} Discharging"
+        else:
+            self.bat_icon.set_markup(icons.battery)
+            charging_status = "Battery"
+            
+        # Set a descriptive tooltip with battery percentage
+        self.set_tooltip_markup(f"{charging_status}" if not data.VERTICAL else f"{charging_status}: {percentage}%")
 
                 
 class NetworkApplet(Button):

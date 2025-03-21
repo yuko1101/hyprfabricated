@@ -4,7 +4,7 @@ import setproctitle
 from fabric import Application
 from fabric.utils import get_relative_path, exec_shell_command_async
 
-from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE, DOCK_ICON_SIZE
+from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE, DOCK_ICON_SIZE, VERTICAL
 from modules.bar import Bar
 from modules.corners import Corners
 from modules.dock import Dock
@@ -32,7 +32,10 @@ if __name__ == "__main__":
             exposed_functions={
                 "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
                 "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32 + 56}px;",
-                "dock_nmargin": lambda: f"margin-bottom: -{28 + DOCK_ICON_SIZE}px;",
+                "dock_nmargin": lambda: f"margin-bottom: -{28 + DOCK_ICON_SIZE}px;" if not VERTICAL else f"margin-right: -{28 + DOCK_ICON_SIZE}px;",
+                "ws_width": lambda: "min-width: 48px;" if not VERTICAL else "min-width: 8px;",
+                "ws_height": lambda: "min-height: 8px;" if not VERTICAL else "min-height: 48px;",
+                "dock_sep": lambda: f"margin: 8px 0;" if not VERTICAL else f"margin: 0 8px;",
             },
         )
     app.set_css = set_css

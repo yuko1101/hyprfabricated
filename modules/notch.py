@@ -29,8 +29,8 @@ class Notch(Window):
         super().__init__(
             name="notch",
             layer="top",
-            anchor="top center",
-            margin="-40px 0px 0px 0px",
+            anchor="top",
+            margin="-40px 0px 0px 0px" if not data.VERTICAL else "0px 0px 0px -60px",
             keyboard_mode="none",
             exclusivity="normal",
             visible=True,
