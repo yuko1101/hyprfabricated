@@ -3,12 +3,11 @@ from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
-from fabric.utils.helpers import FormattedString
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
 from fabric.hyprland.service import HyprlandEvent
-from fabric.utils.helpers import get_relative_path, exec_shell_command_async
+from fabric.utils.helpers import exec_shell_command_async
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
