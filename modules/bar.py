@@ -38,41 +38,30 @@ class Bar(Window):
             config = json.load(config_file)
 
         self.connection = get_hyprland_connection()
-        # INITIALIZING Components
-        self.button_apps = Button(
-            name="button-bar",
-            on_clicked=lambda *_: self.search_apps(),
-            child=Label(name="button-bar-label", markup=icons.apps),
-        )
-        self.button_apps.connect("enter_notify_event", self.on_button_enter)
-        self.button_apps.connect("leave_notify_event", self.on_button_leave)
 
-        self.workspaces = Workspaces(
-            name="workspaces",
-            invert_scroll=True,
-            empty_scroll=True,
-            v_align="fill",
-            orientation="h",
-            spacing=10,
-            buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
-        )
 
-        self.button_overview = Button(
-            name="button-bar",
-            on_clicked=lambda *_: self.overview(),
-            child=Label(name="button-bar-label", markup=icons.windows),
-        )
-        self.button_overview.connect("enter_notify_event", self.on_button_enter)
-        self.button_overview.connect("leave_notify_event", self.on_button_leave)
-
-        self.network = NetworkApplet()
-        self.metrics = MetricsSmall()
 
         left_children = []
 
         if config["Bar"]["buttonapps"]:
+            self.button_apps = Button(
+                name="button-bar",
+                on_clicked=lambda *_: self.search_apps(),
+                child=Label(name="button-bar-label", markup=icons.apps),
+            )
+            self.button_apps.connect("enter_notify_event", self.on_button_enter)
+            self.button_apps.connect("leave_notify_event", self.on_button_leave)
             left_children.append(self.button_apps)
         if config["Bar"]["workspaces"]:
+            self.workspaces = Workspaces(
+                name="workspaces",
+                invert_scroll=True,
+                empty_scroll=True,
+                v_align="fill",
+                orientation="h",
+                spacing=10,
+                buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
+            )
             left_children.append(
                 Box(name="workspaces-container", children=[self.workspaces])
             )
@@ -84,9 +73,17 @@ class Bar(Window):
             start_children.append(self.weather)
 
         if config["Bar"]["Barleft"]["overview"]:
+            self.button_overview = Button(
+                name="button-bar",
+                on_clicked=lambda *_: self.overview(),
+                child=Label(name="button-bar-label", markup=icons.windows),
+            )
+            self.button_overview.connect("enter_notify_event", self.on_button_enter)
+            self.button_overview.connect("leave_notify_event", self.on_button_leave)
             start_children.append(self.button_overview)
 
         if config["Bar"]["Barleft"]["networkapplet"]:
+            self.network = NetworkApplet()
             start_children.append(self.network)
 
         self.revealer_left = Revealer(
@@ -112,20 +109,21 @@ class Bar(Window):
         )
 
         end_children = []
-        self.systray = SystemTray()
-        self.control = ControlSmall()
-        self.battery = Battery()
-        self.powerctl = Systemprofiles()
 
         if config["Bar"]["Barright"]["metrics"]:
+            self.metrics = MetricsSmall()
             end_children.append(self.metrics)
         if config["Bar"]["Barright"]["controls"]:
+            self.control = ControlSmall()
             end_children.append(self.control)
         if config["Bar"]["Barright"]["battery"]:
+            self.battery = Battery()
             end_children.append(self.battery)
         if config["Bar"]["Barright"]["systemprofiles"]:
+            self.powerctl = Systemprofiles()
             end_children.append(self.powerctl)
         if config["Bar"]["systray"]:
+            self.systray = SystemTray()
             end_children.append(self.systray)
 
         self.revealer_right = Revealer(
@@ -149,42 +147,39 @@ class Bar(Window):
 
         end_children = [self.boxed_revealer_right]
 
-        self.button_tools = Button(
-            name="button-bar",
-            tooltip_text="Opens Toolbox",
-            on_clicked=lambda *_: self.tools_menu(),
-            child=Label(name="button-bar-label", markup=icons.toolbox),
-        )
-        self.button_tools.connect("enter_notify_event", self.on_button_enter)
-        self.button_tools.connect("leave_notify_event", self.on_button_leave)
-
-        self.language = Language(name="language", h_align="center", v_align="center")
-        self.switch_on_start()
-        self.connection.connect("event::activelayout", self.on_language_switch)
-
-        self.date_time = DateTime(
-            name="date-time",
-            formatters=["%I:%M %P"],
-            h_align="center",
-            v_align="center",
-        )
-        self.button_power = Button(
-            name="button-bar",
-            on_clicked=lambda *_: self.power_menu(),
-            child=Label(name="button-bar-label", markup=icons.shutdown),
-        )
-        self.button_power.connect("enter_notify_event", self.on_button_enter)
-        self.button_power.connect("leave_notify_event", self.on_button_leave)
-
         if config["Bar"]["buttontools"]:
+            self.button_tools = Button(
+                name="button-bar",
+                tooltip_text="Opens Toolbox",
+                on_clicked=lambda *_: self.tools_menu(),
+                child=Label(name="button-bar-label", markup=icons.toolbox),
+            )
+            self.button_tools.connect("enter_notify_event", self.on_button_enter)
+            self.button_tools.connect("leave_notify_event", self.on_button_leave)
             end_children.append(self.button_tools)
 
         if config["Bar"]["Barright"]["languageindicator"]:
+            self.language = Language(name="language", h_align="center", v_align="center")
+            self.switch_on_start()
+            self.connection.connect("event::activelayout", self.on_language_switch)
             end_children.append(self.language)
         if config["Bar"]["buttonapps"]:
+            self.date_time = DateTime(
+                name="date-time",
+                formatters=["%I:%M %P"],
+                h_align="center",
+                v_align="center",
+            )
             end_children.append(self.date_time)
 
         if config["Bar"]["buttonpower"]:
+            self.button_power = Button(
+                name="button-bar",
+                on_clicked=lambda *_: self.power_menu(),
+                child=Label(name="button-bar-label", markup=icons.shutdown),
+            )
+            self.button_power.connect("enter_notify_event", self.on_button_enter)
+            self.button_power.connect("leave_notify_event", self.on_button_leave)
             end_children.append(self.button_power)
 
         self.bar_inner = CenterBox(
