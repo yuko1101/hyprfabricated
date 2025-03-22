@@ -41,6 +41,8 @@ DEFAULT_KEYBINDINGS = {
     'suffix_kanban': "N",
     'prefix_launcher': "SUPER",
     'suffix_launcher': "R",
+    'prefix_tmux': "SUPER",
+    'suffix_tmux': "T",
     'prefix_toolbox': "SUPER",
     'suffix_toolbox': "S",
     'prefix_overview': "SUPER",
@@ -59,6 +61,7 @@ DEFAULT_KEYBINDINGS = {
     'prefix_restart_inspector': "SUPER CTRL ALT",
     'suffix_restart_inspector': "B",
     'vertical': False,  # New default for vertical layout
+    'terminal_command': "kitty -e",  # Default terminal command for tmux
 }
 
 bind_vars = DEFAULT_KEYBINDINGS.copy()
@@ -196,6 +199,7 @@ bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $
 bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend 'notch.open_notch("pins")' # Pins | Default: SUPER + Q
 bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban | Default: SUPER + N
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
+bind = {bind_vars['prefix_tmux']}, {bind_vars['suffix_tmux']}, exec, $fabricSend 'notch.open_notch("tmux")' # App Launcher | Default: SUPER + T
 bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
@@ -367,6 +371,7 @@ class HyprConfGUI(Gtk.Window):
             ("Pins", 'prefix_pins', 'suffix_pins'),
             ("Kanban", 'prefix_kanban', 'suffix_kanban'),
             ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
+            ("Tmux", 'prefix_tmux', 'suffix_tmux'),
             ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
             ("Overview", 'prefix_overview', 'suffix_overview'),
             ("Wallpapers", 'prefix_wallpapers', 'suffix_wallpapers'),
@@ -509,6 +514,35 @@ class HyprConfGUI(Gtk.Window):
         box.set_margin_start(15)
         box.set_margin_end(15)
 
+        # Terminal Command section
+        terminal_header = Gtk.Label()
+        terminal_header.set_markup("<b>Terminal Settings</b>")
+        terminal_header.set_halign(Gtk.Align.START)
+        box.pack_start(terminal_header, False, False, 0)
+        
+        terminal_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        terminal_section.set_margin_start(10)
+        terminal_section.set_margin_top(5)
+        terminal_section.set_margin_bottom(15)
+        
+        terminal_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        terminal_label = Gtk.Label(label="Terminal Command:")
+        terminal_label.set_halign(Gtk.Align.START)
+        self.terminal_entry = Gtk.Entry()
+        self.terminal_entry.set_text(bind_vars['terminal_command'])
+        self.terminal_entry.set_tooltip_text("Command used to launch terminal apps (e.g., 'kitty -e', 'alacritty -e')")
+        terminal_hbox.pack_start(terminal_label, False, False, 0)
+        terminal_hbox.pack_start(self.terminal_entry, True, True, 0)
+        terminal_section.pack_start(terminal_hbox, False, False, 0)
+        
+        # Example hint
+        hint_label = Gtk.Label()
+        hint_label.set_markup("<small>Examples: 'kitty -e', 'alacritty -e', 'foot -e'</small>")
+        hint_label.set_halign(Gtk.Align.START)
+        terminal_section.pack_start(hint_label, False, False, 5)
+        
+        box.pack_start(terminal_section, False, False, 0)
+
         # Hypr Configuration section
         hypr_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
 
@@ -587,6 +621,9 @@ class HyprConfGUI(Gtk.Window):
 
         # Update vertical setting from the new switch
         bind_vars['vertical'] = self.vertical_switch.get_active()
+        
+        # Update terminal command
+        bind_vars['terminal_command'] = self.terminal_entry.get_text()
 
         # Save the updated bind_vars to a JSON file
         config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')

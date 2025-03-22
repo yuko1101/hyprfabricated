@@ -161,9 +161,9 @@ class AppLauncher(Box):
 
     def bake_application_slot(self, app: DesktopApp, **kwargs) -> Button:
         button = Button(
-            name="app-slot-button",
+            name="slot-button",
             child=Box(
-                name="app-slot-box",
+                name="slot-box",
                 orientation="h",
                 spacing=10,
                 children=[
@@ -394,7 +394,7 @@ class AppLauncher(Box):
 
     def create_calc_history_button(self, text: str) -> Button:
         btn = Button(
-            name="app-slot-button",  # reuse existing CSS styling
+            name="slot-button",  # reuse existing CSS styling
             child=Box(
                 name="calc-slot-box",
                 orientation="h",

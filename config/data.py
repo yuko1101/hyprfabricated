@@ -31,8 +31,10 @@ if os.path.exists(CONFIG_FILE):
         config = json.load(f)
     WALLPAPERS_DIR = config.get('wallpapers_dir', WALLPAPERS_DIR_DEFAULT)
     VERTICAL = config.get('vertical', False)  # Use saved value or False as default
+    TERMINAL_COMMAND = config.get('terminal_command', "kitty -e")  # Load terminal command
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
     VERTICAL = False  # Default value when no config exists
+    TERMINAL_COMMAND = "kitty -e"  # Default terminal command when no config
 
 DOCK_ICON_SIZE = 28

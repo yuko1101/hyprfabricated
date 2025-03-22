@@ -155,6 +155,7 @@ loader: str = "&#xeca3;"
 radar: str = "&#xf017;"
 emoji: str = "&#xeaf7;"
 keyboard: str = "&#xebd6;"
+terminal: str = "&#xebef;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 
