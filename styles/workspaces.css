@@ -1,13 +1,18 @@
 #workspaces {
   padding: 14px;
   background-color: var(--shadow);
+  margin: 8px;
+}
+
+#workspaces-container {
+  margin: -8px;
 }
 
 #workspaces>button {
   min-width: 8px;
   min-height: 8px;
   border-radius: 16px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0, 0, 0.25, 1);
   background-color: var(--foreground);
 }
 

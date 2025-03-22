@@ -22,6 +22,7 @@ from modules.tools import Toolbox
 from utils.icon_resolver import IconResolver
 from fabric.utils.helpers import get_desktop_applications
 from fabric.widgets.image import Image
+from utils.occlusion import check_occlusion
 
 
 class Notch(Window):
@@ -30,14 +31,18 @@ class Notch(Window):
             name="notch",
             layer="top",
             anchor="top",
-            margin="-40px 0px 0px 0px" if not data.VERTICAL else "0px 0px 0px -60px",
+            margin="-40px 0px 0px 0px" if not data.VERTICAL else "0px 0px 0px 0px",
+            
             keyboard_mode="none",
-            exclusivity="normal",
+            exclusivity="none",
             visible=True,
             all_visible=True,
         )
 
         self.bar = kwargs.get("bar", None)
+        self.is_hovered = False  # Add hover tracking property
+        self._prevent_occlusion = False  # Flag to prevent occlusion temporarily
+        self._occlusion_timer_id = None  # Track the timeout ID to cancel it if needed
 
         self.notification = NotificationContainer(notch=self)
         self.notification_history = self.notification.history
@@ -90,6 +95,7 @@ class Notch(Window):
         self.active_window_box.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
 
         self.active_window.connect("notify::label", self.update_window_icon)
+        self.active_window.connect("notify::label", self.on_active_window_changed)  # Connect to window change event
 
         self.active_window.get_children()[0].set_hexpand(True)
         self.active_window.get_children()[0].set_halign(Gtk.Align.FILL)
@@ -191,6 +197,12 @@ class Notch(Window):
             ],
         )
 
+        # Add event handling for hover detection to notch_overlay
+        self.notch_overlay_eventbox = Gtk.EventBox()
+        self.notch_overlay_eventbox.add(self.notch_overlay)
+        self.notch_overlay_eventbox.connect("enter-notify-event", self.on_notch_enter)
+        self.notch_overlay_eventbox.connect("leave-notify-event", self.on_notch_leave)
+
         self.notch_overlay.set_overlay_pass_through(self.corner_left, True)
         self.notch_overlay.set_overlay_pass_through(self.corner_right, True)
 
@@ -213,7 +225,7 @@ class Notch(Window):
             name="notch-complete",
             orientation="v",
             children=[
-                self.notch_overlay,
+                self.notch_overlay_eventbox,  # Use the eventbox instead of the direct overlay
                 self.boxed_notification_revealer,
             ]
         )
@@ -240,16 +252,51 @@ class Notch(Window):
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
         
         self.update_window_icon()
+        
+        # Track current window class
+        self._current_window_class = self._get_current_window_class()
+        
+        # Start checking for occlusion every 250ms
+        GLib.timeout_add(250, self._check_occlusion)
 
     def on_button_enter(self, widget, event):
+        self.is_hovered = True  # Set hover state
         window = widget.get_window()
         if window:
             window.set_cursor(Gdk.Cursor(Gdk.CursorType.HAND2))
+        # Remove occluded style class when hovered, but only in vertical mode
+        if data.VERTICAL:
+            self.notch_wrap.remove_style_class("occluded")
+        return True
 
     def on_button_leave(self, widget, event):
+        # Only mark as not hovered if actually leaving to outside
+        if event.detail == Gdk.NotifyType.INFERIOR:
+            return False  # Ignore child-to-child movements
+            
+        self.is_hovered = False
         window = widget.get_window()
         if window:
             window.set_cursor(None)
+        return True
+
+    # Add new hover event handlers for the entire notch
+    def on_notch_enter(self, widget, event):
+        """Handle hover enter for the entire notch area"""
+        self.is_hovered = True
+        # Remove occluded class when hovered, but only in vertical mode
+        if data.VERTICAL:
+            self.notch_wrap.remove_style_class("occluded")
+        return False  # Allow event propagation
+
+    def on_notch_leave(self, widget, event):
+        """Handle hover leave for the entire notch area"""
+        # Only mark as not hovered if actually leaving to outside
+        if event.detail == Gdk.NotifyType.INFERIOR:
+            return False  # Ignore child-to-child movements
+            
+        self.is_hovered = False
+        return False  # Allow event propagation
 
     def close_notch(self):
         self.set_keyboard_mode("none")
@@ -273,6 +320,7 @@ class Notch(Window):
         self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
+        self.notch_wrap.remove_style_class("occluded")
         # Handle special behavior for "bluetooth"
         if widget == "bluetooth":
             # If dashboard is already open
@@ -714,3 +762,79 @@ class Notch(Window):
                 self.window_icon.set_from_icon_name("application-x-executable", 20)
             except:
                 self.window_icon.set_from_icon_name("application-x-executable-symbolic", 20)
+
+    def _check_occlusion(self):
+        """
+        Check if top 40px of the screen is occluded by any window
+        and update the notch_box style accordingly.
+        """
+        # If notch is open or hovered, remove occluded class and skip further checks
+        if self._is_notch_open or self.is_hovered or self._prevent_occlusion:
+            if data.VERTICAL:
+                self.notch_wrap.remove_style_class("occluded")
+            return True
+            
+        # Only check occlusion if not hovered, not open, and in vertical mode
+        if data.VERTICAL:
+            is_occluded = check_occlusion(("top", 40))
+            
+            # Add or remove style class based on occlusion
+            if is_occluded:
+                self.notch_wrap.add_style_class("occluded")
+            else:
+                self.notch_wrap.remove_style_class("occluded")
+        
+        return True  # Return True to keep the timeout active
+
+    def _get_current_window_class(self):
+        """Get the class of the currently active window"""
+        try:
+            from fabric.hyprland.widgets import get_hyprland_connection
+            conn = get_hyprland_connection()
+            if conn:
+                import json
+                active_window = json.loads(conn.send_command("j/activewindow").reply.decode())
+                return active_window.get("initialClass", "") or active_window.get("class", "")
+        except Exception as e:
+            print(f"Error getting window class: {e}")
+        return ""
+
+    def on_active_window_changed(self, *args):
+        """
+        Temporarily remove the 'occluded' class when active window class changes
+        to make the notch visible momentarily.
+        """
+        # Skip occlusion handling if not in vertical mode
+        if not data.VERTICAL:
+            return
+            
+        # Get the current window class
+        new_window_class = self._get_current_window_class()
+        
+        # Only proceed if the window class has actually changed
+        if new_window_class != self._current_window_class:
+            # Update the stored window class
+            self._current_window_class = new_window_class
+            
+            # If there's an existing timer, cancel it
+            if self._occlusion_timer_id is not None:
+                GLib.source_remove(self._occlusion_timer_id)
+                self._occlusion_timer_id = None
+            
+            # Set flag to prevent occlusion
+            self._prevent_occlusion = True
+            
+            # Remove occluded class
+            self.notch_wrap.remove_style_class("occluded")
+            
+            # Set up a new timeout to re-enable occlusion check after 500ms
+            self._occlusion_timer_id = GLib.timeout_add(500, self._restore_occlusion_check)
+        
+    def _restore_occlusion_check(self):
+        """Re-enable occlusion checking after temporary visibility"""
+        # Reset the prevent flag
+        self._prevent_occlusion = False
+        self._occlusion_timer_id = None
+        
+        # Now let the regular check handle it
+        return False  # Don't repeat the timeout

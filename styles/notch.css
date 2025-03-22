@@ -6,6 +6,14 @@
   opacity: 0;
 }
 
+#notch-wrap {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#notch-wrap.occluded {
+  margin-top: -38px;
+}
+
 #notch-box.hideshow {
   opacity: 1;
   margin-top: 40px;

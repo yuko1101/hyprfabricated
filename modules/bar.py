@@ -40,6 +40,12 @@ class Bar(Window):
             spacing=8,
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
+        
+        self.ws_container = Box(
+            name="workspaces-container",
+            children=self.workspaces,
+        )
+
         self.button_tools = Button(
             name="button-bar",
             on_clicked=lambda *_: self.tools_menu(),
@@ -153,7 +159,7 @@ class Bar(Window):
         
         self.h_start_children = [
             self.button_apps,
-            self.workspaces,
+            self.ws_container,
             self.button_overview,
             self.boxed_revealer_left,
         ]
@@ -178,7 +184,7 @@ class Bar(Window):
         
         self.v_center_children = [
             self.button_overview,
-            self.workspaces,
+            self.ws_container,
             self.weather,
         ]
         
@@ -189,6 +195,11 @@ class Bar(Window):
             self.date_time,
             self.button_power,
         ]
+        
+        self.v_all_children = []
+        self.v_all_children.extend(self.v_start_children)
+        self.v_all_children.extend(self.v_center_children)
+        self.v_all_children.extend(self.v_end_children)
 
         self.bar_inner = CenterBox(
             name="bar-inner",
