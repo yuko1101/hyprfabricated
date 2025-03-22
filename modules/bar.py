@@ -16,7 +16,6 @@ import config.data as data
 from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
 from modules.weather import Weather
-from modules.metrics import MetricsSmall, Battery,NetworkApplet
 from modules.systemprofiles import Systemprofiles
 
 
