@@ -1,14 +1,8 @@
 {
-  "version": "1.4.5",
+  "version": "2.1.0",
   "changelog": [
-        "Misc Tweaks",
-        "Hotfix: Added Nmapplet back got removed during merging",
-        "Added Activation nag",
-        "Better handeling of thumbnails form mpris",
-        "Replace icons with coloured one",
-        "Better Fetching logic in updater",
-        "Dock Tweaks",
-        "Misc Tweaks for bar",
-        "Merge Conflicts from Ax-shell"
+        "Vertical Mode",
+        "Bar Optimization to reduce load times",
+        "Misc Tweaks(im lazy to type them all)"
   ]
 }
