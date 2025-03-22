@@ -5,12 +5,12 @@ from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
 import os
+import config.data as data
 import subprocess
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
 GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
-GAMEMODE_CHECK_SCRIPT = get_relative_path("../scripts/gamemode_check.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
 

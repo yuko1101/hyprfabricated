@@ -4,10 +4,12 @@ import subprocess
 import shutil
 import threading
 import gi
-
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import socket
 from fabric.utils.helpers import get_relative_path
-import data
+import config.data as data
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib

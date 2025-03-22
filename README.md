@@ -118,10 +118,11 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Better Desktop Widgets
 - [x] Customizable Widgets and Bar
 - [x] Gui Updater and update notifier
+- [x] Vertical Layout
 - [ ] Network Manager
 - [ ] Clipboard Manager
+- [ ] Tmux Session Manager
 - [ ] Multimodal AI Assistant
-- [ ] Vertical Layout
 - [ ] Multi-monitor support
 
 ## Star History

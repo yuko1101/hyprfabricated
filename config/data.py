@@ -27,13 +27,18 @@ CURRENT_HEIGHT = screen.get_height()
 
 # Rename to match what's being imported in config.py
 WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
-CONFIG_FILE = get_relative_path('../config/config.json')
+CONFIG_FILE = get_relative_path('../config.json')
+WAL_CONFIG = get_relative_path('../config/config.json')
 
-if os.path.exists(CONFIG_FILE):
+if os.path.exists(CONFIG_FILE) and os.path.exists(WAL_CONFIG):
+    with open(WAL_CONFIG, "r") as f:
+        configwal = json.load(f)
     with open(CONFIG_FILE, "r") as f:
         config = json.load(f)
-    WALLPAPERS_DIR = config.get('wallpapers_dir', WALLPAPERS_DIR_DEFAULT)
+    WALLPAPERS_DIR = configwal.get('wallpapers_dir', WALLPAPERS_DIR_DEFAULT)
+    VERTICAL = config.get('vertical', False)  # Use saved value or False as default
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
+    VERTICAL = False  # Default value when no config exists
 
 DOCK_ICON_SIZE = 28

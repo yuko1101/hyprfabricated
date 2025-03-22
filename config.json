@@ -3,6 +3,7 @@
     "city": "",
     "Temprature_Unit": "C",
     "quotetype": "stoic",
+    "vertical": false,
     "Basic": {
         "corners": false,
         "bar": true,
@@ -21,7 +22,7 @@
             "controls": true,
             "battery": true,
             "systemprofiles": false,
-            "languageindicator": true
+            "languageindicator": false
         },
         "Barleft": {
             "weather": false,
