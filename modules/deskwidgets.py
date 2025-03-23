@@ -323,6 +323,8 @@ class weather(Box):
         header_right[0].set_label(emoji)
 
 
+import subprocess
+
 def fetch_quote(callback):
     """Fetch quotes asynchronously."""
 
@@ -346,14 +348,25 @@ def fetch_quote(callback):
                     if quotes_type == "zen"
                     else f"{data['text']} - {data['author']}"
                 )
+                break
             except requests.RequestException as e:
                 print(f"Error fetching quote: {e}")
                 if attempt < 4:
                     time.sleep(10)
                 else:
-                    quote = (
-                        "I learn from the mistakes of people who take my advice - Trix"
-                    )
+                    try:
+                        result = subprocess.run(
+                            ["hyprctl", "splash"],
+                            capture_output=True,
+                            text=True,
+                            check=True
+                        )
+                        quote = result.stdout.strip() + " - Team Hyprland"
+                    except subprocess.CalledProcessError as e:
+                        print(f"Error fetching quote from hyprctl: {e}")
+                        quote = (
+                            "I learn from the mistakes of people who take my advice - Trix"
+                        )
 
         GLib.idle_add(callback, quote)
 
