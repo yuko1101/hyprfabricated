@@ -20,6 +20,16 @@ class Weather(Button):
         # Update every 10 minutes
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
+    def get_location(self):
+        """Fetch user's city using IP geolocation."""
+        try:
+            response = self.session.get("https://ipinfo.io/json", timeout=5, stream=True)
+            if response.ok:
+                return response.json().get("city", "")
+        except requests.RequestException:
+            pass
+        return ""
+
 
     def fetch_weather(self):
         GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
@@ -27,9 +37,13 @@ class Weather(Button):
 
     def _fetch_weather_thread(self, user_data):
         # Let wttr.in determine location based on IP
-        url = "https://wttr.in/?format=%c+%t" if not data.VERTICAL else "https://wttr.in/?format=%c"
+        location = self.get_location()
+        locsafe = urllib.parse.quote(location)
+        if not location:
+            return self._update_ui(error=True)
+        url = f"https://wttr.in/{locsafe}?format=%c+%t" if not data.VERTICAL else f"https://wttr.in/{locsafe}?format=%c"
         # Get detailed info for tooltip
-        tooltip_url = "https://wttr.in/?format=%l:+%C,+%t+(%f),+Humidity:+%h,+Wind:+%w"
+        tooltip_url = f"https://wttr.in/{locsafe}?format=%l:+%C,+%t+(%f),+Humidity:+%h,+Wind:+%w"
 
         try:
             response = self.session.get(url, timeout=5)
