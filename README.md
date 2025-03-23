@@ -68,6 +68,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `wlinhibit`
     - Python dependencies:
         - ijson
+        - numpy
         - pillow
         - psutil
         - requests
