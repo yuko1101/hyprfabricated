@@ -40,6 +40,11 @@ class Notch(Window):
             all_visible=True,
         )
 
+        # Add character buffer for launcher transition
+        self._typed_chars_buffer = ""
+        self._launcher_transitioning = False
+        self._launcher_transition_timeout = None
+
         self.bar = kwargs.get("bar", None)
         self.is_hovered = False  # Add hover tracking property
         self._prevent_occlusion = False  # Flag to prevent occlusion temporarily
@@ -874,6 +879,13 @@ class Notch(Window):
 
     def open_launcher_with_text(self, initial_text):
         """Open the launcher with initial text in the search field."""
+        # Set the transition flag to capture subsequent keystrokes
+        self._launcher_transitioning = True
+        
+        # Store the initial character in our buffer
+        if initial_text:
+            self._typed_chars_buffer = initial_text
+        
         # Check if launcher is already open
         if self.stack.get_visible_child() == self.launcher:
             # If already open, just append text to existing search
@@ -910,50 +922,91 @@ class Notch(Window):
         # Now fully initialize the launcher UI
         self.launcher.open_launcher()
         
-        # Wait for the next UI cycle before setting text to avoid selection
-        GLib.idle_add(self._set_launcher_text, initial_text)
+        # Set a timeout to apply the text after the transition (200ms should be enough)
+        if self._launcher_transition_timeout:
+            GLib.source_remove(self._launcher_transition_timeout)
+            
+        self._launcher_transition_timeout = GLib.timeout_add(150, self._finalize_launcher_transition)
         
         # Show the standard bar elements
         self.bar.revealer_right.set_reveal_child(True)
         self.bar.revealer_left.set_reveal_child(True)
         
         self._is_notch_open = True
+    
+    def _finalize_launcher_transition(self):
+        """Apply buffered text and finalize launcher transition"""
+        # Apply all buffered characters
+        if self._typed_chars_buffer:
+            # Set the full text at once
+            entry = self.launcher.search_entry
+            entry.set_text(self._typed_chars_buffer)
+            
+            # Place cursor at the end without selecting - with careful focus timing
+            entry.grab_focus()
+            
+            # Use multiple deselection attempts at different time intervals
+            # GTK can re-select text during the focus event cycle, so we need several checks
+            GLib.timeout_add(10, self._ensure_no_text_selection)
+            GLib.timeout_add(50, self._ensure_no_text_selection)
+            GLib.timeout_add(100, self._ensure_no_text_selection)
+            
+            # Debug
+            print(f"Applied buffered text: '{self._typed_chars_buffer}'")
+            
+            # Clear the buffer
+            self._typed_chars_buffer = ""
         
-    def _set_launcher_text(self, text):
-        """Set launcher text without selecting it (used by idle_add)"""
-        entry = self.launcher.search_entry
-        
-        # First set the text
-        entry.set_text(text)
-        
-        # Explicitly place cursor at the end without selecting text
-        entry.set_position(-1)
-        
-        # Disable the selection
-        entry.select_region(-1, -1)
-        
-        # Focus the entry without selecting text
-        entry.grab_focus()
-        
-        # Add another idle callback to clear selection again after focus
-        # This helps with race conditions in GTK's selection handling
-        GLib.timeout_add(50, self._ensure_no_selection)
+        # Mark transition as complete
+        self._launcher_transitioning = False
+        self._launcher_transition_timeout = None
         
         return False  # Don't repeat
-
-    def _ensure_no_selection(self):
+    
+    def _ensure_no_text_selection(self):
         """Make absolutely sure no text is selected in the search entry"""
         entry = self.launcher.search_entry
-        pos = entry.get_position()
         
-        # Clear any selection
-        entry.select_region(pos, pos)
+        # Get current text length
+        text_len = len(entry.get_text())
+        
+        # Move cursor to end
+        entry.set_position(text_len)
+        
+        # Clear any selection that might have happened
+        entry.select_region(text_len, text_len)
+        
+        # Check if entry has focus, if not give it focus
+        if not entry.has_focus():
+            entry.grab_focus()
+            # When grabbing focus again, immediately clear selection
+            GLib.idle_add(lambda: entry.select_region(text_len, text_len))
+        
         return False  # Don't repeat
     
     # Add new method for handling key presses at the window level
     def on_key_press(self, widget, event):
         """Handle key presses at the notch level"""
-        # Only process when dashboard is visible 
+        # Special handling during launcher transition - capture all valid keystrokes
+        if self._launcher_transitioning:
+            keyval = event.keyval
+            keychar = chr(keyval) if 32 <= keyval <= 126 else None
+            
+            # Only capture valid text characters during transition
+            is_valid_char = (
+                (keyval >= Gdk.KEY_a and keyval <= Gdk.KEY_z) or
+                (keyval >= Gdk.KEY_A and keyval <= Gdk.KEY_Z) or
+                (keyval >= Gdk.KEY_0 and keyval <= Gdk.KEY_9) or
+                keyval in (Gdk.KEY_space, Gdk.KEY_underscore, Gdk.KEY_minus, Gdk.KEY_period)
+            )
+            
+            if is_valid_char and keychar:
+                # Add to our buffer during transition
+                self._typed_chars_buffer += keychar
+                print(f"Buffered character: {keychar}, buffer now: '{self._typed_chars_buffer}'")
+                return True
+        
+        # Only process when dashboard is visible and not in wallpapers section
         if (self.stack.get_visible_child() == self.dashboard and 
             self.dashboard.stack.get_visible_child() != self.dashboard.wallpapers):
             

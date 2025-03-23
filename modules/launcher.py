@@ -104,6 +104,19 @@ class AppLauncher(Box):
     def open_launcher(self):
         self._all_apps = get_desktop_applications()
         self.arrange_viewport()
+        
+        # Disable text selection when opening
+        def clear_selection():
+            # Make sure no text gets selected during open
+            entry = self.search_entry
+            if entry.get_text():
+                pos = len(entry.get_text())
+                entry.set_position(pos)
+                entry.select_region(pos, pos)
+            return False
+        
+        # Schedule a selection clear after GTK finishes rendering
+        GLib.idle_add(clear_selection)
 
     def ensure_initialized(self):
         """Make sure the launcher is initialized with apps list before opening"""
