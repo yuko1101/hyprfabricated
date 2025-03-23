@@ -202,7 +202,7 @@ class Notch(Window):
             overlays=[
                 self.corner_left,
                 self.corner_right,
-            ],
+            ]
         )
 
         # Add event handling for hover detection to notch_overlay
@@ -1006,9 +1006,9 @@ class Notch(Window):
                 print(f"Buffered character: {keychar}, buffer now: '{self._typed_chars_buffer}'")
                 return True
         
-        # Only process when dashboard is visible and not in wallpapers section
+        # Only process when dashboard is visible AND specifically in the widgets section
         if (self.stack.get_visible_child() == self.dashboard and 
-            self.dashboard.stack.get_visible_child() != self.dashboard.wallpapers):
+            self.dashboard.stack.get_visible_child() == self.dashboard.widgets):
             
             # Don't process if launcher is already open
             if self.stack.get_visible_child() == self.launcher:
