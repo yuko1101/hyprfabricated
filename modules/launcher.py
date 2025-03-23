@@ -105,6 +105,15 @@ class AppLauncher(Box):
         self._all_apps = get_desktop_applications()
         self.arrange_viewport()
 
+    def ensure_initialized(self):
+        """Make sure the launcher is initialized with apps list before opening"""
+        if not hasattr(self, '_initialized'):
+            # Force pre-loading apps
+            self._all_apps = get_desktop_applications()
+            self._initialized = True
+            return True  # Was initialized for first time
+        return False  # Was already initialized
+
     def arrange_viewport(self, query: str = ""):
         if query.startswith("="):
             # In calculator mode, update history view once (not per keystroke)

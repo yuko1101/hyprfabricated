@@ -261,6 +261,9 @@ class Notch(Window):
         
         # Start checking for occlusion every 250ms
         GLib.timeout_add(250, self._check_occlusion)
+        
+        # Add key press event handling to the entire notch window
+        self.connect("key-press-event", self.on_key_press)
 
     def on_button_enter(self, widget, event):
         self.is_hovered = True  # Set hover state
@@ -868,3 +871,112 @@ class Notch(Window):
         
         # Now let the regular check handle it
         return False  # Don't repeat the timeout
+
+    def open_launcher_with_text(self, initial_text):
+        """Open the launcher with initial text in the search field."""
+        # Check if launcher is already open
+        if self.stack.get_visible_child() == self.launcher:
+            # If already open, just append text to existing search
+            current_text = self.launcher.search_entry.get_text()
+            self.launcher.search_entry.set_text(current_text + initial_text)
+            # Ensure cursor is at the end of text without selection
+            self.launcher.search_entry.set_position(-1)
+            self.launcher.search_entry.select_region(-1, -1)  # Prevent selection
+            self.launcher.search_entry.grab_focus()
+            return
+        
+        # Otherwise similar to standard open_notch("launcher") but with text
+        self.set_keyboard_mode("exclusive")
+        self.notch_wrap.remove_style_class("occluded")
+        
+        if self.hidden:
+            self.notch_box.remove_style_class("hidden")
+            self.notch_box.add_style_class("hideshow")
+            
+        # Clear previous style classes and states
+        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
+            self.stack.remove_style_class(style)
+        for w in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools, self.tmux]:
+            w.remove_style_class("open")
+            
+        # Configure for launcher
+        self.stack.add_style_class("launcher")
+        self.stack.set_visible_child(self.launcher)
+        self.launcher.add_style_class("open")
+        
+        # Force initialization before opening - ensures apps are loaded
+        self.launcher.ensure_initialized()
+        
+        # Now fully initialize the launcher UI
+        self.launcher.open_launcher()
+        
+        # Wait for the next UI cycle before setting text to avoid selection
+        GLib.idle_add(self._set_launcher_text, initial_text)
+        
+        # Show the standard bar elements
+        self.bar.revealer_right.set_reveal_child(True)
+        self.bar.revealer_left.set_reveal_child(True)
+        
+        self._is_notch_open = True
+        
+    def _set_launcher_text(self, text):
+        """Set launcher text without selecting it (used by idle_add)"""
+        entry = self.launcher.search_entry
+        
+        # First set the text
+        entry.set_text(text)
+        
+        # Explicitly place cursor at the end without selecting text
+        entry.set_position(-1)
+        
+        # Disable the selection
+        entry.select_region(-1, -1)
+        
+        # Focus the entry without selecting text
+        entry.grab_focus()
+        
+        # Add another idle callback to clear selection again after focus
+        # This helps with race conditions in GTK's selection handling
+        GLib.timeout_add(50, self._ensure_no_selection)
+        
+        return False  # Don't repeat
+
+    def _ensure_no_selection(self):
+        """Make absolutely sure no text is selected in the search entry"""
+        entry = self.launcher.search_entry
+        pos = entry.get_position()
+        
+        # Clear any selection
+        entry.select_region(pos, pos)
+        return False  # Don't repeat
+    
+    # Add new method for handling key presses at the window level
+    def on_key_press(self, widget, event):
+        """Handle key presses at the notch level"""
+        # Only process when dashboard is visible 
+        if (self.stack.get_visible_child() == self.dashboard and 
+            self.dashboard.stack.get_visible_child() != self.dashboard.wallpapers):
+            
+            # Don't process if launcher is already open
+            if self.stack.get_visible_child() == self.launcher:
+                return False
+                
+            # Get the character from the key press
+            keyval = event.keyval
+            keychar = chr(keyval) if 32 <= keyval <= 126 else None
+            
+            # Check if the key is a valid search character (alphanumeric or common search symbols)
+            is_valid_char = (
+                (keyval >= Gdk.KEY_a and keyval <= Gdk.KEY_z) or
+                (keyval >= Gdk.KEY_A and keyval <= Gdk.KEY_Z) or
+                (keyval >= Gdk.KEY_0 and keyval <= Gdk.KEY_9) or
+                keyval in (Gdk.KEY_space, Gdk.KEY_underscore, Gdk.KEY_minus, Gdk.KEY_period)
+            )
+            
+            if is_valid_char and keychar:
+                print(f"Notch received keypress: {keychar}")
+                # Directly open launcher with the typed character
+                self.open_launcher_with_text(keychar)
+                return True
+                
+        return False
