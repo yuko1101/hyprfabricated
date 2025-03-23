@@ -1,6 +1,7 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
   "changelog": [
+        "Fixing the bug where shell crash on launch?",
         "Vertical Mode",
         "Bar Optimization to reduce load times",
         "Misc Tweaks(im lazy to type them all)"

@@ -9,6 +9,9 @@ from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
 from fabric.hyprland.service import HyprlandEvent
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
+import gi
+gi.require_version('Gtk', '3.0')
+
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
