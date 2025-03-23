@@ -313,11 +313,15 @@ class HyprConfGUI(Gtk.Window):
         system_tab = self.create_system_tab()
         notebook.append_page(system_tab, Gtk.Label(label="System"))
 
-        # Button box for Cancel and Accept buttons
+        # Button box for Close and Accept buttons
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         button_box.set_halign(Gtk.Align.END)
 
-        cancel_btn = Gtk.Button(label="Cancel")
+        reset_btn = Gtk.Button(label="Reset to Defaults")
+        reset_btn.connect("clicked", self.on_reset)
+        button_box.pack_start(reset_btn, False, False, 0)
+
+        cancel_btn = Gtk.Button(label="Close")
         cancel_btn.connect("clicked", self.on_cancel)
         button_box.pack_start(cancel_btn, False, False, 0)
 
@@ -672,7 +676,47 @@ class HyprConfGUI(Gtk.Window):
             stderr=subprocess.DEVNULL,
             start_new_session=True
         )
-        self.destroy()
+        # self.destroy()
+
+    def on_reset(self, widget):
+        """
+        Reset all settings to default values.
+        """
+        # Ask for confirmation
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Reset all settings to defaults?"
+        )
+        dialog.format_secondary_text("This will reset all keybindings and other settings to their default values.")
+        response = dialog.run()
+        dialog.destroy()
+        
+        if response == Gtk.ResponseType.YES:
+            # Reset bind_vars to default values
+            global bind_vars
+            bind_vars = DEFAULT_KEYBINDINGS.copy()
+            
+            # Update UI elements
+            # Update key binding entries
+            for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
+                prefix_entry.set_text(bind_vars[prefix_key])
+                suffix_entry.set_text(bind_vars[suffix_key])
+            
+            # Update wallpaper directory chooser
+            self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
+            
+            # Update vertical switch
+            self.vertical_switch.set_active(bind_vars.get('vertical', False))
+            
+            # Update terminal command entry
+            self.terminal_entry.set_text(bind_vars['terminal_command'])
+            
+            # Clear face icon selection status
+            self.selected_face_icon = None
+            self.face_status_label.set_text("")
 
     def on_cancel(self, widget):
         self.destroy()
