@@ -7,6 +7,7 @@
 }
 
 #dock.vertical {
+  margin: 8px 79px 8px 8px;
   border-radius: 20px 0 0 20px;
 }
 
@@ -17,7 +18,7 @@
 
 #dock-full.occluded {
   @apply dock_nmargin();
-  opacity: 0;
+  /* opacity: 0; */
 }
 
 #dock-separator {
@@ -60,9 +61,9 @@
 }
 
 #dock-corner-top {
-  margin: 0 8px -8px 0;
+  margin: 0 79px -8px 0;
 }
 
 #dock-corner-bottom {
-  margin: -8px 8px 0 0;
+  margin: -8px 79px 0 0;
 }

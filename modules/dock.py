@@ -80,7 +80,7 @@ class Dock(Window):
             name="dock-window",
             layer="top",
             anchor="bottom center" if not data.VERTICAL else "right center",
-            margin="-8px 0 -8px 0" if not data.VERTICAL else "0 -9px 0 -8px",
+            margin="-8px 0 -8px 0" if not data.VERTICAL else "0 -80px 0 -8px",
             exclusivity="none",
             **kwargs,
         )
