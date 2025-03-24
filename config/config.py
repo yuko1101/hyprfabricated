@@ -185,14 +185,14 @@ def generate_hyprconf() -> str:
     Generate the Hypr configuration string using the current bind_vars.
     """
     home = os.path.expanduser('~')
-    return f"""exec-once = uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py
-exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
-exec = uwsm app -- swww-daemon
+    return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
+exec = pgrep -x "hypridle" > /dev/null || uwsm-app hypridle
+exec = uwsm-app swww-daemon
 
 $fabricSend = fabric-cli exec {APP_NAME}
 $axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
-bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {APP_NAME}; uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
+bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {APP_NAME}; uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py) # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
@@ -208,7 +208,7 @@ bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSe
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
-bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {APP_NAME}; GTK_DEBUG=interactive uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
+bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector | Default: SUPER CTRL ALT + B
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
@@ -613,7 +613,7 @@ class HyprConfGUI(Gtk.Window):
 
     def on_accept(self, widget):
         """
-        Save the configuration and update the necessary files.
+        Save the configuration and update the necessary files without closing the window.
         """
         # Update bind_vars from user inputs
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
@@ -668,15 +668,31 @@ class HyprConfGUI(Gtk.Window):
             with open(hyprland_config_path, "a") as f:
                 f.write(SOURCE_STRING)
 
+        # Update configuration
         start_config()
-        subprocess.run(["killall", APP_NAME])
-        subprocess.Popen(
-            ["uwsm", "app", "--", "python", os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
-        )
-        # self.destroy()
+        
+        # First prepare the restart command to be executed in background
+        restart_script = f"""#!/bin/bash
+killall {APP_NAME} 2>/dev/null
+python_output=$(python {os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")})
+uwsm-app "$python_output" &
+"""
+        
+        # Create a temporary script file
+        restart_path = "/tmp/ax_shell_restart.sh"
+        with open(restart_path, "w") as f:
+            f.write(restart_script)
+        os.chmod(restart_path, 0o755)
+        
+        # Start the script in the background
+        subprocess.Popen(["/bin/bash", restart_path], 
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        start_new_session=True)
+        
+        # Removed confirmation dialog to make the interface cleaner
+        
+        # The window remains open - don't call Gtk.main_quit()
 
     def on_reset(self, widget):
         """

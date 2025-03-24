@@ -11,6 +11,7 @@ from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import get_hyprland_connection
 from fabric.utils import exec_shell_command, exec_shell_command_async, idle_add, remove_handler, get_relative_path
 from fabric.utils.helpers import get_desktop_applications
+from modules.corners import MyCorner  # Add this import for corners
 
 import config.data as data
 import logging
@@ -79,7 +80,7 @@ class Dock(Window):
             name="dock-window",
             layer="top",
             anchor="bottom center" if not data.VERTICAL else "right center",
-            margin="-8px 0 -4px 0" if not data.VERTICAL else "0 -4px 0 -8px",
+            margin="-8px 0 -8px 0" if not data.VERTICAL else "0 -9px 0 -8px",
             exclusivity="none",
             **kwargs,
         )
@@ -110,13 +111,85 @@ class Dock(Window):
         self.dock_eventbox.connect("enter-notify-event", self._on_dock_enter)
         self.dock_eventbox.connect("leave-notify-event", self._on_dock_leave)
 
-        # Bottom hover activation area
+        # Create corners in the orientation-appropriate direction
+        if not data.VERTICAL:
+            # Horizontal mode - corners at the bottom
+            self.corner_left = Box(
+                name="dock-corner-left",
+                orientation="v",
+                h_align="start",
+                children=[
+                    Box(v_expand=True, v_align="fill"),
+                    MyCorner("bottom-right"),
+                ]
+            )
+
+            self.corner_right = Box(
+                name="dock-corner-right",
+                orientation="v",
+                h_align="end",
+                children=[
+                    Box(v_expand=True, v_align="fill"),
+                    MyCorner("bottom-left"),
+                ]
+            )
+
+            # Create a horizontal box that contains the corners and the dock
+            self.dock_full = Box(
+                name="dock-full",
+                orientation="h",
+                h_expand=True,
+                h_align="fill",
+                children=[
+                    self.corner_left,
+                    self.dock_eventbox,
+                    self.corner_right,
+                ]
+            )
+        else:
+            # Vertical mode - corners at top and bottom
+            self.corner_top = Box(
+                name="dock-corner-top",
+                orientation="h",
+                v_align="start",
+                children=[
+                    Box(h_expand=True, h_align="fill"),
+                    MyCorner("bottom-right"),
+                ]
+            )
+
+            self.corner_bottom = Box(
+                name="dock-corner-bottom",
+                orientation="h",
+                v_align="end",
+                children=[
+                    Box(h_expand=True, h_align="fill"),
+                    MyCorner("top-right"),
+                ]
+            )
+
+            # Create a vertical box that contains the corners and the dock
+            self.dock_full = Box(
+                name="dock-full",
+                orientation="v",
+                v_expand=True,
+                v_align="fill",
+                children=[
+                    self.corner_top,
+                    self.dock_eventbox,
+                    self.corner_bottom,
+                ]
+            )
+
+        # Bottom/side hover activation area
         self.hover_activator = EventBox()
-        self.hover_activator.set_size_request(-1, 1)
+        self.hover_activator.set_size_request(-1 if not data.VERTICAL else 1, 1 if not data.VERTICAL else -1)
         self.hover_activator.connect("enter-notify-event", self._on_hover_enter)
         self.hover_activator.connect("leave-notify-event", self._on_hover_leave)
 
-        self.main_box = Box(orientation="v", children=[self.dock_eventbox, self.hover_activator])
+        # Update main_box to include the dock_full and activator
+        self.main_box = Box(orientation="v" if not data.VERTICAL else "h", 
+                           children=[self.dock_full, self.hover_activator])
         self.add(self.main_box)
 
         # Drag-and-drop setup for the viewport
@@ -146,6 +219,9 @@ class Dock(Window):
         for ev in ("activewindow", "openwindow", "closewindow", "changefloatingmode"):
             self.conn.connect(f"event::{ev}", self.update_dock)
         self.conn.connect("event::workspace", self.check_hide)
+        
+        if data.VERTICAL:
+            self.wrapper.add_style_class("vertical")
 
         GLib.timeout_add(250, self.check_occlusion_state)
         # Monitor dock.json for changes
@@ -228,7 +304,7 @@ class Dock(Window):
     def _on_dock_enter(self, widget, event):
         """Handle hover over dock content"""
         self.is_hovered = True
-        self.wrapper.remove_style_class("occluded")
+        self.dock_full.remove_style_class("occluded")
         # Cancel any pending hide operations
         if self.hide_id:
             GLib.source_remove(self.hide_id)
@@ -248,7 +324,7 @@ class Dock(Window):
         occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
         # Only add occlusion style if not dragging an icon.
         if not self._drag_in_progress and (check_occlusion(occlusion_region) or not self.view.get_children()):
-            self.wrapper.add_style_class("occluded")
+            self.dock_full.add_style_class("occluded")
         return True
 
     # Enhanced app lookup methods
@@ -432,16 +508,16 @@ class Dock(Window):
         if show:
             if self.is_hidden:
                 self.is_hidden = False
-                self.wrapper.add_style_class("show-dock")
-                self.wrapper.remove_style_class("hide-dock")
+                self.dock_full.add_style_class("show-dock")
+                self.dock_full.remove_style_class("hide-dock")
             if self.hide_id:
                 GLib.source_remove(self.hide_id)
                 self.hide_id = None
         else:
             if not self.is_hidden:
                 self.is_hidden = True
-                self.wrapper.add_style_class("hide-dock")
-                self.wrapper.remove_style_class("show-dock")
+                self.dock_full.add_style_class("hide-dock")
+                self.dock_full.remove_style_class("show-dock")
 
     def delay_hide(self):
         """Schedule hiding after short delay"""
@@ -681,13 +757,13 @@ class Dock(Window):
         """Periodic occlusion check"""
         # Skip occlusion check if hovered or dragging an icon
         if self.is_hovered or self._drag_in_progress:
-            self.wrapper.remove_style_class("occluded")
+            self.dock_full.remove_style_class("occluded")
             return True
         occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
         if check_occlusion(occlusion_region) or not self.view.get_children():
-            self.wrapper.add_style_class("occluded")
+            self.dock_full.add_style_class("occluded")
         else:
-            self.wrapper.remove_style_class("occluded")
+            self.dock_full.remove_style_class("occluded")
         return True
 
     def _find_drag_target(self, widget):
