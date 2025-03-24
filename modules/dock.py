@@ -60,7 +60,7 @@ def read_config():
 def createSurfaceFromWidget(widget: Gtk.Widget) -> cairo.ImageSurface:
     alloc = widget.get_allocation()
     surface = cairo.ImageSurface(
-        cairo.Format.ARGB28,
+        cairo.Format.ARGB32,
         alloc.width,
         alloc.height,
     )
