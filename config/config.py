@@ -732,45 +732,6 @@ class HyprConfGUI(Gtk.Window):
         grid.attach(hypr_box, 1, row, 1, 1)
         row += 1
         
-        # === ADVANCED SETTINGS ROW ===
-        # Separator before advanced settings
-        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        separator.set_margin_top(10)
-        separator.set_margin_bottom(10)
-        grid.attach(separator, 0, row, 2, 1)  # Span both columns
-        row += 1
-        
-        # Create expander for advanced settings instead of always showing them
-        advanced_expander = Gtk.Expander(label="Advanced Options")
-        advanced_expander.set_expanded(False)  # Collapsed by default
-        
-        advanced_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        advanced_box.set_margin_start(10)
-        advanced_box.set_margin_top(10)
-        
-        # Create a grid for advanced options
-        adv_grid = Gtk.Grid()
-        adv_grid.set_column_spacing(20)
-        adv_grid.set_row_spacing(10)
-        
-        # Add some placeholders for future advanced settings
-        # Left side of advanced grid
-        adv_label1 = Gtk.Label()
-        adv_label1.set_markup("<small>Performance settings will be available in future updates</small>")
-        adv_label1.set_halign(Gtk.Align.START)
-        adv_grid.attach(adv_label1, 0, 0, 1, 1)
-        
-        # Right side of advanced grid
-        adv_label2 = Gtk.Label()
-        adv_label2.set_markup("<small>Advanced customization options coming soon</small>")
-        adv_label2.set_halign(Gtk.Align.START)
-        adv_grid.attach(adv_label2, 1, 0, 1, 1)
-        
-        advanced_box.pack_start(adv_grid, False, False, 0)
-        advanced_expander.add(advanced_box)
-        grid.attach(advanced_expander, 0, row, 2, 1)  # Span both columns
-        row += 1
-        
         # === SUPPORT INFO ===
         support_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         support_box.set_margin_top(15)
