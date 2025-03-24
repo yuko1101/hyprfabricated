@@ -64,6 +64,7 @@ DEFAULT_KEYBINDINGS = {
     'centered_bar': False,  # New default for centered bar option
     'terminal_command': "kitty -e",  # Default terminal command for tmux
     'dock_enabled': True,  # Default value for dock visibility
+    'dock_icon_size': 28,  # Default dock icon size
 }
 
 bind_vars = DEFAULT_KEYBINDINGS.copy()
@@ -572,6 +573,22 @@ class HyprConfGUI(Gtk.Window):
         dock_hover_box.pack_end(self.dock_hover_switch, False, False, 0)
         layout_grid.attach(dock_hover_box, 1, 1, 1, 1)
         
+        # Add dock icon size slider (new)
+        dock_size_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        dock_size_label = Gtk.Label(label="Dock Icon Size")
+        dock_size_label.set_halign(Gtk.Align.START)
+        
+        # Create a scale/slider for icon size
+        self.dock_size_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 16, 48, 2)
+        self.dock_size_scale.set_value(bind_vars.get('dock_icon_size', 28))
+        self.dock_size_scale.set_draw_value(True)
+        self.dock_size_scale.set_value_pos(Gtk.PositionType.RIGHT)
+        self.dock_size_scale.set_size_request(100, -1)
+        
+        dock_size_box.pack_start(dock_size_label, True, True, 0)
+        dock_size_box.pack_end(self.dock_size_scale, True, True, 0)
+        layout_grid.attach(dock_size_box, 0, 2, 2, 1)  # Span both columns
+        
         grid.attach(layout_grid, 0, row, 2, 1)  # Span both columns
         row += 1
         
@@ -815,6 +832,7 @@ class HyprConfGUI(Gtk.Window):
         bind_vars['centered_bar'] = self.centered_switch.get_active()
         bind_vars['dock_enabled'] = self.dock_switch.get_active()
         bind_vars['dock_always_occluded'] = self.dock_hover_switch.get_active()
+        bind_vars['dock_icon_size'] = int(self.dock_size_scale.get_value())
         
         # Update terminal command
         bind_vars['terminal_command'] = self.terminal_entry.get_text()
@@ -926,6 +944,7 @@ uwsm-app "$python_output" &
             self.dock_switch.set_active(bind_vars.get('dock_enabled', True))
             self.dock_hover_switch.set_active(bind_vars.get('dock_always_occluded', False))
             self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
+            self.dock_size_scale.set_value(bind_vars.get('dock_icon_size', 28))
             
             # Update terminal command entry
             self.terminal_entry.set_text(bind_vars['terminal_command'])
