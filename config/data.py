@@ -34,6 +34,7 @@ if os.path.exists(CONFIG_FILE):
     CENTERED_BAR = config.get('centered_bar', False)  # Load centered bar setting
     TERMINAL_COMMAND = config.get('terminal_command', "kitty -e")  # Load terminal command
     DOCK_ENABLED = config.get('dock_enabled', True)  # Load dock visibility setting
+    DOCK_ALWAYS_OCCLUDED = config.get('dock_always_occluded', False)  # Load dock hover-only setting
     
     # Load bar component visibility settings
     BAR_COMPONENTS_VISIBILITY = {
@@ -56,6 +57,7 @@ else:
     VERTICAL = False  # Default value when no config exists
     CENTERED_BAR = False  # Default value for centered bar
     DOCK_ENABLED = True  # Default value for dock visibility
+    DOCK_ALWAYS_OCCLUDED = False  # Default value for dock hover-only mode
     TERMINAL_COMMAND = "kitty -e"  # Default terminal command when no config
     
     # Default values for component visibility (all visible)

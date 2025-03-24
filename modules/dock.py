@@ -102,6 +102,7 @@ class Dock(Window):
         self._arranger_handler = None
         self._drag_in_progress = False  # Drag lock flag
         self.is_hovered = False
+        self.always_occluded = data.DOCK_ALWAYS_OCCLUDED  # Track the always occluded setting
 
         # Set up UI containers
         self.view = Box(name="viewport", orientation="h" if not data.VERTICAL else "v", spacing=4)
@@ -235,6 +236,10 @@ class Dock(Window):
         if not data.DOCK_ENABLED:
             self.set_visible(False)
             
+        # Apply always occluded state if enabled in settings
+        if self.always_occluded:
+            self.dock_full.add_style_class("occluded")
+            
     def _build_app_identifiers_map(self):
         """Build a mapping of app identifiers (class names, executables, names) to DesktopApp objects"""
         identifiers = {}
@@ -330,8 +335,8 @@ class Dock(Window):
         self.delay_hide()
         # Immediate occlusion check on true leave using simplified format
         occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
-        # Only add occlusion style if not dragging an icon.
-        if not self._drag_in_progress and (check_occlusion(occlusion_region) or not self.view.get_children()):
+        # Add occlusion style if not dragging an icon or if always_occluded is enabled
+        if (self.always_occluded or (not self._drag_in_progress and (check_occlusion(occlusion_region) or not self.view.get_children()))):
             self.dock_full.add_style_class("occluded")
         return True
 
@@ -767,6 +772,12 @@ class Dock(Window):
         if self.is_hovered or self._drag_in_progress:
             self.dock_full.remove_style_class("occluded")
             return True
+            
+        # If always_occluded is enabled, keep the dock occluded
+        if self.always_occluded:
+            self.dock_full.add_style_class("occluded")
+            return True
+            
         occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
         if check_occlusion(occlusion_region) or not self.view.get_children():
             self.dock_full.add_style_class("occluded")
@@ -945,6 +956,23 @@ class Dock(Window):
     def check_config_change_immediate(self):
         """Immediately check for configuration changes and update if needed."""
         new_config = read_config()
+        
+        # Check if always_occluded setting has changed
+        previous_always_occluded = self.always_occluded
+        self.always_occluded = data.DOCK_ALWAYS_OCCLUDED
+        
+        # If always_occluded changed, update the dock appearance
+        if previous_always_occluded != self.always_occluded:
+            if self.always_occluded and not self.is_hovered:
+                self.dock_full.add_style_class("occluded")
+            elif not self.always_occluded and not self.is_hovered:
+                # Perform a normal occlusion check
+                occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
+                if check_occlusion(occlusion_region) or not self.view.get_children():
+                    self.dock_full.add_style_class("occluded")
+                else:
+                    self.dock_full.remove_style_class("occluded")
+        
         if new_config.get("pinned_apps", []) != self.config.get("pinned_apps", []):
             self.config = new_config
             self.pinned = self.config.get("pinned_apps", [])

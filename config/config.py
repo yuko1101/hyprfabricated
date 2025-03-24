@@ -556,9 +556,21 @@ class HyprConfGUI(Gtk.Window):
         dock_label.set_halign(Gtk.Align.START)
         self.dock_switch = Gtk.Switch()
         self.dock_switch.set_active(bind_vars.get('dock_enabled', True))
+        self.dock_switch.connect("notify::active", self.on_dock_enabled_changed)
         dock_box.pack_start(dock_label, True, True, 0)
         dock_box.pack_end(self.dock_switch, False, False, 0)
         layout_grid.attach(dock_box, 0, 1, 1, 1)
+        
+        # Dock always occluded (show on hover only) (right column, second row)
+        dock_hover_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        dock_hover_label = Gtk.Label(label="Show Dock Only on Hover")
+        dock_hover_label.set_halign(Gtk.Align.START)
+        self.dock_hover_switch = Gtk.Switch()
+        self.dock_hover_switch.set_active(bind_vars.get('dock_always_occluded', False))
+        self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
+        dock_hover_box.pack_start(dock_hover_label, True, True, 0)
+        dock_hover_box.pack_end(self.dock_hover_switch, False, False, 0)
+        layout_grid.attach(dock_hover_box, 1, 1, 1, 1)
         
         grid.attach(layout_grid, 0, row, 2, 1)  # Span both columns
         row += 1
@@ -644,6 +656,12 @@ class HyprConfGUI(Gtk.Window):
         self.centered_switch.set_sensitive(switch.get_active())
         if not switch.get_active():
             self.centered_switch.set_active(False)  # Turn off centered_bar if vertical is disabled
+
+    def on_dock_enabled_changed(self, switch, gparam):
+        """Update dock hover switch sensitivity based on dock enabled state"""
+        self.dock_hover_switch.set_sensitive(switch.get_active())
+        if not switch.get_active():
+            self.dock_hover_switch.set_active(False)  # Turn off hover-only if dock is disabled
 
     def create_system_tab(self):
         """Create tab for system configurations with a more compact layout."""
@@ -796,6 +814,7 @@ class HyprConfGUI(Gtk.Window):
         bind_vars['vertical'] = self.vertical_switch.get_active()
         bind_vars['centered_bar'] = self.centered_switch.get_active()
         bind_vars['dock_enabled'] = self.dock_switch.get_active()
+        bind_vars['dock_always_occluded'] = self.dock_hover_switch.get_active()
         
         # Update terminal command
         bind_vars['terminal_command'] = self.terminal_entry.get_text()
@@ -905,6 +924,8 @@ uwsm-app "$python_output" &
             self.centered_switch.set_active(bind_vars.get('centered_bar', False))
             self.centered_switch.set_sensitive(self.vertical_switch.get_active())
             self.dock_switch.set_active(bind_vars.get('dock_enabled', True))
+            self.dock_hover_switch.set_active(bind_vars.get('dock_always_occluded', False))
+            self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
             
             # Update terminal command entry
             self.terminal_entry.set_text(bind_vars['terminal_command'])
