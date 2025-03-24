@@ -86,6 +86,8 @@ class Dock(Window):
         )
         # Add this instance to the registry
         Dock._instances.append(self)
+        
+        # Initialize configuration
         self.config = read_config()
         self.conn = get_hyprland_connection()
         self.icon = IconResolver()
@@ -229,6 +231,10 @@ class Dock(Window):
         # Monitor dock.json for changes
         GLib.timeout_add_seconds(1, self.check_config_change)
         
+        # Check if dock should be visible based on configuration
+        if not data.DOCK_ENABLED:
+            self.set_visible(False)
+            
     def _build_app_identifiers_map(self):
         """Build a mapping of app identifiers (class names, executables, names) to DesktopApp objects"""
         identifiers = {}
@@ -945,3 +951,10 @@ class Dock(Window):
             self.update_app_map()
             self.update_dock()
         return False  # Don't repeat
+
+    # Add a static method to handle dock visibility changes
+    @staticmethod
+    def update_visibility(visible):
+        """Update visibility for all dock instances."""
+        for dock in Dock._instances:
+            dock.set_visible(visible)

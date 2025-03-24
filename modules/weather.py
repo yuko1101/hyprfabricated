@@ -16,10 +16,20 @@ class Weather(Button):
         self.label = Label(name="weather-label", markup=icons.loader)
         self.add(self.label)
         self.show_all()
+        self.enabled = True  # Add a flag to track if the component should be shown
         self.session = requests.Session()  # Reuse HTTP connection
         # Update every 10 minutes
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
+
+    def set_visible(self, visible):
+        """Override to track external visibility setting"""
+        self.enabled = visible
+        # Only update actual visibility if weather data is available
+        if visible and hasattr(self, 'has_weather_data') and self.has_weather_data:
+            super().set_visible(True)
+        else:
+            super().set_visible(visible)
 
     def fetch_weather(self):
         GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
@@ -36,20 +46,25 @@ class Weather(Button):
             if response.ok:
                 weather_data = response.text.strip()
                 if "Unknown" in weather_data:
-                    GLib.idle_add(self.set_visible, False)
+                    self.has_weather_data = False
+                    GLib.idle_add(super().set_visible, False)
                 else:
+                    self.has_weather_data = True
                     # Get tooltip data
                     tooltip_response = self.session.get(tooltip_url, timeout=5)
                     if tooltip_response.ok:
                         tooltip_text = tooltip_response.text.strip()
                         GLib.idle_add(self.set_tooltip_text, tooltip_text)
                     
-                    GLib.idle_add(self.set_visible, True)
+                    # Only show if enabled externally
+                    GLib.idle_add(super().set_visible, self.enabled)
                     GLib.idle_add(self.label.set_label, weather_data.replace(" ", ""))
             else:
+                self.has_weather_data = False
                 GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Unavailable")
-                GLib.idle_add(self.set_visible, False)
+                GLib.idle_add(super().set_visible, False)
         except Exception as e:
+            self.has_weather_data = False
             print(f"Error fetching weather: {e}")
             GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Error")
-            GLib.idle_add(self.set_visible, False)
+            GLib.idle_add(super().set_visible, False)
