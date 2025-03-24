@@ -222,6 +222,8 @@ class Dock(Window):
         
         if data.VERTICAL:
             self.wrapper.add_style_class("vertical")
+        else:
+            self.wrapper.remove_style_class("vertical")
 
         GLib.timeout_add(250, self.check_occlusion_state)
         # Monitor dock.json for changes

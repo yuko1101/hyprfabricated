@@ -479,6 +479,8 @@ class NetworkApplet(Button):
         self.wifi_label = Label(name="network-icon-label", markup="WiFi: Unknown")
 
         self.is_mouse_over = False
+        self.downloading = False  # Track if downloading threshold is reached
+        self.uploading = False    # Track if uploading threshold is reached
 
         self.download_icon = Label(name="download-icon-label", markup=icons.download)
         self.upload_icon = Label(name="upload-icon-label", markup=icons.upload)
@@ -516,17 +518,18 @@ class NetworkApplet(Button):
         self.download_label.set_markup(download_str)
         self.upload_label.set_markup(upload_str)
 
+        # Store current network activity state
         self.downloading = (download_speed >= 10e6)
         self.uploading = (upload_speed >= 2e6)
 
-        # Apply urgent styles regardless of orientation
-        if self.downloading and not self.is_mouse_over:
-            self.download_urgent()
-        if self.uploading and not self.is_mouse_over:
-            self.upload_urgent()
-        
-        if not self.downloading and not self.uploading:
-            self.remove_urgent()
+        # Apply urgent styles based on network activity (if not being hovered)
+        if not self.is_mouse_over:
+            if self.downloading:
+                self.download_urgent()
+            elif self.uploading:
+                self.upload_urgent()
+            else:
+                self.remove_urgent()
 
         if not data.VERTICAL:
             # Horizontal mode - original behavior for revealers
@@ -537,7 +540,41 @@ class NetworkApplet(Button):
             self.download_revealer.set_reveal_child(False)
             self.upload_revealer.set_reveal_child(False)
         
-        if self.network_client and self.network_client.wifi_device:
+        # Check for primary device type (ethernet or wifi)
+        primary_device = None
+        if self.network_client:
+            primary_device = self.network_client.primary_device
+
+        # Handle Ethernet connection
+        if primary_device == "wired" and self.network_client.ethernet_device:
+            ethernet_state = self.network_client.ethernet_device.internet
+            if data.VERTICAL:
+                # Vertical mode with activity indicators
+                if self.downloading:
+                    self.wifi_label.set_markup(icons.download)
+                elif self.uploading:
+                    self.wifi_label.set_markup(icons.upload)
+                else:
+                    if ethernet_state == "activated":
+                        self.wifi_label.set_markup(icons.world)  # Connected ethernet icon
+                    else:
+                        self.wifi_label.set_markup(icons.world_off)  # Disconnected ethernet icon
+                
+                # Tooltip for ethernet connection
+                self.set_tooltip_text(f"Ethernet\nDownload: {download_str}\nUpload: {upload_str}")
+            else:
+                # Horizontal mode ethernet icons
+                if ethernet_state == "activated":
+                    self.wifi_label.set_markup(icons.world)
+                elif ethernet_state == "activating":
+                    self.wifi_label.set_markup(icons.world)
+                else:
+                    self.wifi_label.set_markup(icons.world_off)
+                
+                self.set_tooltip_text("Ethernet Connection")
+                
+        # Handle WiFi connection (existing code)
+        elif self.network_client and self.network_client.wifi_device:
             if self.network_client.wifi_device.ssid != "Disconnected":
                 strength = self.network_client.wifi_device.strength
                 
@@ -594,7 +631,7 @@ class NetworkApplet(Button):
     def on_mouse_enter(self, *_):
         self.is_mouse_over = True
         if not data.VERTICAL:
-            self.remove_urgent()
+            # Just reveal the panels, don't remove urgency styling anymore
             self.download_revealer.set_reveal_child(True)
             self.upload_revealer.set_reveal_child(True)
         return
@@ -602,9 +639,17 @@ class NetworkApplet(Button):
     def on_mouse_leave(self, *_):
         self.is_mouse_over = False
         if not data.VERTICAL:
-            self.remove_urgent()
-            self.download_revealer.set_reveal_child(False)
-            self.upload_revealer.set_reveal_child(False)
+            # When mouse leaves, only hide revealers if there's no active download/upload
+            self.download_revealer.set_reveal_child(self.downloading)
+            self.upload_revealer.set_reveal_child(self.uploading)
+            
+            # Restore urgency styling based on current network activity
+            if self.downloading:
+                self.download_urgent()
+            elif self.uploading:
+                self.upload_urgent()
+            else:
+                self.remove_urgent()
         return
 
     def upload_urgent(self):
@@ -613,6 +658,7 @@ class NetworkApplet(Button):
         self.upload_label.add_style_class("urgent")
         self.upload_icon.add_style_class("urgent")
         self.download_icon.add_style_class("urgent")
+        self.download_label.add_style_class("urgent")
         self.upload_revealer.set_reveal_child(True)
         self.download_revealer.set_reveal_child(self.downloading)
         return
@@ -623,6 +669,7 @@ class NetworkApplet(Button):
         self.download_label.add_style_class("urgent")
         self.download_icon.add_style_class("urgent")
         self.upload_icon.add_style_class("urgent")
+        self.upload_label.add_style_class("urgent")
         self.download_revealer.set_reveal_child(True)
         self.upload_revealer.set_reveal_child(self.uploading)
         return
