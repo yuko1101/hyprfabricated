@@ -161,13 +161,41 @@ def ensure_matugen_config():
     with open(config_path, 'w') as f:
         toml.dump(merged_config, f)
 
-    # Trigger image generation if "~/.current.wall" does not exist
+    # Expand paths for checking
     current_wall = os.path.expanduser("~/.current.wall")
-    if not os.path.exists(current_wall):
-        image_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
-        # Replace os.system with subprocess.run
-        subprocess.run(["matugen", "image", image_path])
-        os.symlink(image_path, os.path.expanduser(f"~/.current.wall"))
+    hypr_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/colors.conf")
+    css_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/styles/colors.css")
+    
+    # Check if any of the required files are missing
+    if not os.path.exists(current_wall) or not os.path.exists(hypr_colors) or not os.path.exists(css_colors):
+        # Ensure the directories exist
+        os.makedirs(os.path.dirname(hypr_colors), exist_ok=True)
+        os.makedirs(os.path.dirname(css_colors), exist_ok=True)
+        
+        # Use the example wallpaper if no current wallpaper
+        if not os.path.exists(current_wall):
+            image_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
+            # Create symlink to the example wallpaper if it doesn't exist already
+            if os.path.exists(image_path) and not os.path.exists(current_wall):
+                try:
+                    os.symlink(image_path, current_wall)
+                except FileExistsError:
+                    os.remove(current_wall)
+                    os.symlink(image_path, current_wall)
+        else:
+            # Use the existing wallpaper
+            image_path = os.path.realpath(current_wall) if os.path.islink(current_wall) else current_wall
+        
+        # Run matugen to generate the color files
+        print(f"Generating color theme from wallpaper: {image_path}")
+        try:
+            subprocess.run(["matugen", "image", image_path], check=True)
+            print("Color theme generated successfully")
+        except subprocess.CalledProcessError as e:
+            print(f"Error generating color theme: {e}")
+        except FileNotFoundError:
+            print("Error: matugen command not found. Please install matugen.")
+
 
 def load_bind_vars():
     """
@@ -481,7 +509,7 @@ class HyprConfGUI(Gtk.Window):
         face_image_frame.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
         face_image = Gtk.Image()
         try:
-            if os.path.exists(current_face):
+            if (os.path.exists(current_face)):
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file(current_face)
                 pixbuf = pixbuf.scale_simple(64, 64, GdkPixbuf.InterpType.BILINEAR)  # Smaller icon
             else:
