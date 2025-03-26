@@ -3,10 +3,6 @@
   margin: 12px 14px;
 }
 
-#control-slider.muted {
-  /* background-color: var(--surface); */
-}
-
 #control-slider trough {
   min-height: 4px;
   padding: 0 14px;
