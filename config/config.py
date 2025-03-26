@@ -26,36 +26,46 @@ SOURCE_STRING = f"""
 source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
 """
 
-# Default key binding values
-bind_vars = {
-    "prefix_restart": "SUPER ALT",
-    "suffix_restart": "B",
-    "prefix_axmsg": "SUPER",
-    "suffix_axmsg": "A",
-    "prefix_dash": "SUPER",
-    "suffix_dash": "D",
-    "prefix_bluetooth": "SUPER",
-    "suffix_bluetooth": "B",
-    "prefix_launcher": "SUPER",
-    "suffix_launcher": "R",
-    "prefix_toolbox": "SUPER",
-    "suffix_toolbox": "S",
-    "prefix_overview": "SUPER",
-    "suffix_overview": "TAB",
-    "prefix_emoji": "SUPER",
-    "suffix_emoji": "PERIOD",
-    "prefix_config": "SUPER",
-    "suffix_config": "I",
-    "prefix_power": "SUPER",
-    "suffix_power": "ESCAPE",
-    "prefix_toggle": "SUPER CTRL",
-    "suffix_toggle": "B",
-    "prefix_css": "SUPER SHIFT",
-    "suffix_css": "B",
-    "wallpapers_dir": WALLPAPERS_DIR_DEFAULT,
-    "prefix_restart_inspector": "SUPER CTRL ALT",
-    "suffix_restart_inspector": "B",
-    "vertical": VERTICAL,  # New default for vertical layout
+# Initialize bind_vars with default values
+DEFAULT_KEYBINDINGS = {
+    'prefix_restart': "SUPER ALT",
+    'suffix_restart': "B",
+    'prefix_axmsg': "SUPER",
+    'suffix_axmsg': "A",
+    'prefix_dash': "SUPER",
+    'suffix_dash': "D",
+    'prefix_bluetooth': "SUPER",
+    'suffix_bluetooth': "B",
+    'prefix_pins': "SUPER",
+    'suffix_pins': "Q",
+    'prefix_kanban': "SUPER",
+    'suffix_kanban': "N",
+    'prefix_launcher': "SUPER",
+    'suffix_launcher': "R",
+    'prefix_tmux': "SUPER",
+    'suffix_tmux': "T",
+    'prefix_toolbox': "SUPER",
+    'suffix_toolbox': "S",
+    'prefix_overview': "SUPER",
+    'suffix_overview': "TAB",
+    'prefix_wallpapers': "SUPER",
+    'suffix_wallpapers': "COMMA",
+    'prefix_emoji': "SUPER",
+    'suffix_emoji': "PERIOD",
+    'prefix_power': "SUPER",
+    'suffix_power': "ESCAPE",
+    'prefix_toggle': "SUPER CTRL",
+    'suffix_toggle': "B",
+    'prefix_css': "SUPER SHIFT",
+    'suffix_css': "B",
+    'wallpapers_dir': WALLPAPERS_DIR_DEFAULT,
+    'prefix_restart_inspector': "SUPER CTRL ALT",
+    'suffix_restart_inspector': "B",
+    'vertical': False,  # New default for vertical layout
+    'centered_bar': False,  # New default for centered bar option
+    'terminal_command': "kitty -e",  # Default terminal command for tmux
+    'dock_enabled': True,  # Default value for dock visibility
+    'dock_icon_size': 28,  # Default dock icon size
 }
 
 
@@ -135,18 +145,47 @@ def ensure_matugen_config():
     with open(config_path, "w") as f:
         toml.dump(merged_config, f)
 
-    # Trigger image generation if "~/.current.wall" does not exist
+    # Expand paths for checking
     current_wall = os.path.expanduser("~/.current.wall")
-    if not os.path.exists(current_wall):
-        image_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
-        # Replace os.system with subprocess.run
-        subprocess.run(["matugen", "image", image_path])
+    hypr_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/colors.conf")
+    css_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/styles/colors.css")
+
+    # Check if any of the required files are missing
+    if not os.path.exists(current_wall) or not os.path.exists(hypr_colors) or not os.path.exists(css_colors):
+        # Ensure the directories exist
+        os.makedirs(os.path.dirname(hypr_colors), exist_ok=True)
+        os.makedirs(os.path.dirname(css_colors), exist_ok=True)
+
+        # Use the example wallpaper if no current wallpaper
+        if not os.path.exists(current_wall):
+            image_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
+            # Create symlink to the example wallpaper if it doesn't exist already
+            if os.path.exists(image_path) and not os.path.exists(current_wall):
+                try:
+                    os.symlink(image_path, current_wall)
+                except FileExistsError:
+                    os.remove(current_wall)
+                    os.symlink(image_path, current_wall)
+        else:
+            # Use the existing wallpaper
+            image_path = os.path.realpath(current_wall) if os.path.islink(current_wall) else current_wall
+
+        # Run matugen to generate the color files
+        print(f"Generating color theme from wallpaper: {image_path}")
+        try:
+            subprocess.run(["matugen", "image", image_path], check=True)
+            print("Color theme generated successfully")
+        except subprocess.CalledProcessError as e:
+            print(f"Error generating color theme: {e}")
+        except FileNotFoundError:
+            print("Error: matugen command not found. Please install matugen.")
 
 
 def load_bind_vars():
     """
     Load saved key binding variables from JSON, if available.
     """
+    bind_vars = DEFAULT_KEYBINDINGS.copy()
     config_json = os.path.expanduser(
         f"~/.config/{APP_NAME_CAP}/config/config.json"
     )
@@ -163,28 +202,31 @@ def generate_hyprconf() -> str:
     """
     Generate the Hypr configuration string using the current bind_vars.
     """
-    home = os.path.expanduser("~")
-    return f"""exec-once = uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py
-exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
-exec = uwsm app -- swww-daemon
+    home = os.path.expanduser('~')
+    return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
+exec = pgrep -x "hypridle" > /dev/null || uwsm-app hypridle
+exec = uwsm-app swww-daemon
 
 $fabricSend = fabric-cli exec {APP_NAME}
 $axMessage = notify-send "Axenide" "What are you doing?" -i f"{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
-bind = {bind_vars["prefix_restart"]}, {bind_vars["suffix_restart"]}, exec, killall {APP_NAME}; uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
-bind = {bind_vars["prefix_axmsg"]}, {bind_vars["suffix_axmsg"]}, exec, $axMessage # Message | Default: SUPER + A
-bind = {bind_vars["prefix_dash"]}, {bind_vars["suffix_dash"]}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
-bind = {bind_vars["prefix_bluetooth"]}, {bind_vars["suffix_bluetooth"]}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
-bind = {bind_vars["prefix_launcher"]}, {bind_vars["suffix_launcher"]}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
-bind = {bind_vars["prefix_toolbox"]}, {bind_vars["suffix_toolbox"]}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
-bind = {bind_vars["prefix_overview"]}, {bind_vars["suffix_overview"]}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
-bind = {bind_vars["prefix_emoji"]}, {bind_vars["suffix_emoji"]}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji | Default: SUPER + PERIOD
-bind = {bind_vars["prefix_power"]}, {bind_vars["suffix_power"]}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE
-bind = {bind_vars["prefix_toggle"]}, {bind_vars["suffix_toggle"]}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
-bind = {bind_vars["prefix_toggle"]}, {bind_vars["suffix_toggle"]}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
-bind = {bind_vars["prefix_css"]}, {bind_vars["suffix_css"]}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
-bind = {bind_vars["prefix_restart_inspector"]}, {bind_vars["suffix_restart_inspector"]}, exec, killall {APP_NAME}; GTK_DEBUG=interactive uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
-bind = {bind_vars["prefix_config"]}, {bind_vars["suffix_config"]}, exec,uwsm app -- python {home}/.config/{APP_NAME_CAP}/config/config.py # restart with inspector | default: super ctrl alt + b
+bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {APP_NAME}; uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py) # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
+bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
+bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
+bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
+bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend 'notch.open_notch("pins")' # Pins | Default: SUPER + Q
+bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban | Default: SUPER + N
+bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
+bind = {bind_vars['prefix_tmux']}, {bind_vars['suffix_tmux']}, exec, $fabricSend 'notch.open_notch("tmux")' # App Launcher | Default: SUPER + T
+bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
+bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
+bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
+bind = {bind_vars['prefix_emoji']}, {bind_vars['suffix_emoji']}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji | Default: SUPER + PERIOD
+bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE
+bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
+bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
+bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
+bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector | Default: SUPER CTRL ALT + B
 
 # Wallpapers directory: {bind_vars["wallpapers_dir"]}
 
@@ -295,6 +337,8 @@ class HyprConfGUI(Gtk.Window):
         self.general_grid = self.create_general_grid()
         self.stack.add_titled(self.general_grid, "general", "General Config")
 
+
+
         # Apply and Close buttons
         button_box = Gtk.Box(spacing=10)
         vbox.pack_start(button_box, False, False, 0)
@@ -303,11 +347,17 @@ class HyprConfGUI(Gtk.Window):
         apply_btn.connect("clicked", self.on_apply)
         button_box.pack_start(apply_btn, True, True, 0)
 
+        reset_btn = Gtk.Button(label="Reset to Defaults")
+        reset_btn.connect("clicked", self.on_reset)
+        button_box.pack_start(reset_btn, True, True, 0)
+
         close_btn = Gtk.Button(label="Close")
         close_btn.connect("clicked", self.on_close)
         button_box.pack_start(close_btn, True, True, 0)
 
+
     def create_keybinds_grid(self, show_lock_checkbox, show_idle_checkbox):
+        bind_vars = DEFAULT_KEYBINDINGS.copy()
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
         grid.set_margin_top(10)
         grid.set_margin_bottom(10)
@@ -321,23 +371,22 @@ class HyprConfGUI(Gtk.Window):
 
         self.entries = []
         bindings = [
-            (f"Reload {APP_NAME_CAP}", "prefix_restart", "suffix_restart"),
-            ("Message", "prefix_axmsg", "suffix_axmsg"),
-            ("Dashboard", "prefix_dash", "suffix_dash"),
-            ("Bluetooth", "prefix_bluetooth", "suffix_bluetooth"),
-            ("App Launcher", "prefix_launcher", "suffix_launcher"),
-            ("Toolbox", "prefix_toolbox", "suffix_toolbox"),
-            ("Overview", "prefix_overview", "suffix_overview"),
-            ("Emoji Picker", "prefix_emoji", "suffix_emoji"),
-            ("Power Menu", "prefix_power", "suffix_power"),
-            ("Toggle Bar and Notch", "prefix_toggle", "suffix_toggle"),
-            ("Reload CSS", "prefix_css", "suffix_css"),
-            ("Open Config", "prefix_config", "suffix_config"),
-            (
-                "Restart with inspector",
-                "prefix_restart_inspector",
-                "suffix_restart_inspector",
-            ),
+            (f"Reload {APP_NAME_CAP}", 'prefix_restart', 'suffix_restart'),
+            ("Message", 'prefix_axmsg', 'suffix_axmsg'),
+            ("Dashboard", 'prefix_dash', 'suffix_dash'),
+            ("Bluetooth", 'prefix_bluetooth', 'suffix_bluetooth'),
+            ("Pins", 'prefix_pins', 'suffix_pins'),
+            ("Kanban", 'prefix_kanban', 'suffix_kanban'),
+            ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
+            ("Tmux", 'prefix_tmux', 'suffix_tmux'),
+            ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
+            ("Overview", 'prefix_overview', 'suffix_overview'),
+            ("Wallpapers", 'prefix_wallpapers', 'suffix_wallpapers'),
+            ("Emoji Picker", 'prefix_emoji', 'suffix_emoji'),
+            ("Power Menu", 'prefix_power', 'suffix_power'),
+            ("Toggle Bar and Notch", 'prefix_toggle', 'suffix_toggle'),
+            ("Reload CSS", 'prefix_css', 'suffix_css'),
+            ("Restart with inspector", 'prefix_restart_inspector', 'suffix_restart_inspector'),
         ]
 
         # Populate grid with key binding rows, starting at row 1
@@ -594,7 +643,7 @@ class HyprConfGUI(Gtk.Window):
 
     def on_accept(self, widget):
         """
-        Save the configuration and update the necessary files.
+        Save the configuration and update the necessary files without closing the window.
         """
         # Update bind_vars from user inputs
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
@@ -606,6 +655,18 @@ class HyprConfGUI(Gtk.Window):
 
         # Update vertical setting from the new switch
         bind_vars['vertical'] = self.vertical_switch.get_active()
+        bind_vars['centered_bar'] = self.centered_switch.get_active()
+        bind_vars['dock_enabled'] = self.dock_switch.get_active()
+        bind_vars['dock_always_occluded'] = self.dock_hover_switch.get_active()
+        bind_vars['dock_icon_size'] = int(self.dock_size_scale.get_value())
+
+        # Update terminal command
+        bind_vars['terminal_command'] = self.terminal_entry.get_text()
+
+        # Update component visibility settings
+        for component_name, switch in self.component_switches.items():
+            config_key = f'bar_{component_name}_visible'
+            bind_vars[config_key] = switch.get_active()
 
         # Save the updated bind_vars to a JSON file
         config_json = os.path.expanduser(
@@ -652,15 +713,64 @@ class HyprConfGUI(Gtk.Window):
             with open(hyprland_config_path, "a") as f:
                 f.write(SOURCE_STRING)
 
+        # Update configuration
         start_config()
-        subprocess.run(["killall", APP_NAME])
-        subprocess.Popen(
-            ["uwsm", "app", "--", "python", os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
+
+        # First prepare the restart command to be executed in background
+        restart_script = f"""#!/bin/bash
+killall {APP_NAME} 2>/dev/null
+python_output=$(python {os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")})
+uwsm-app "$python_output" &
+"""
+
+        # Create a temporary script file
+        restart_path = "/tmp/ax_shell_restart.sh"
+        with open(restart_path, "w") as f:
+            f.write(restart_script)
+        os.chmod(restart_path, 0o755)
+
+        # Start the script in the background
+        subprocess.Popen(["/bin/bash", restart_path],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        start_new_session=True)
+
+        # Removed confirmation dialog to make the interface cleaner
+
+        # The window remains open - don't call Gtk.main_quit()
+
+    def on_reset(self, widget):
+        """
+        Reset all settings to default values.
+        """
+        # Ask for confirmation
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Reset all settings to defaults?"
         )
-        self.destroy()
+        dialog.format_secondary_text("This will reset all keybindings and other settings to their default values.")
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == Gtk.ResponseType.YES:
+            # Reset bind_vars to default values
+            global bind_vars
+            bind_vars = DEFAULT_KEYBINDINGS.copy()
+
+            # Update UI elements
+            # Update key binding entries
+            for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
+                prefix_entry.set_text(bind_vars[prefix_key])
+                suffix_entry.set_text(bind_vars[suffix_key])
+
+            # Update wallpaper directory chooser
+            self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
+
+            # Clear face icon selection status
+            self.selected_face_icon = None
 
     def on_close(self, widget):
         self.destroy()

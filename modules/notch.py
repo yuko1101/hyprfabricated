@@ -16,6 +16,7 @@ from modules.power import PowerMenu
 from modules.overview import Overview
 from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
+from modules.tmux import TmuxManager  # Import the new TmuxManager
 import config.data as data
 from modules.player import PlayerSmall
 from modules.tools import Toolbox
@@ -31,12 +32,17 @@ class Notch(Window):
             layer="top",
             anchor="top",
             margin="-40px 0px 0px 0px" if not data.VERTICAL else "0px 0px 0px 0px",
-            
+
             keyboard_mode="none",
             exclusivity="none",
             visible=True,
             all_visible=True,
         )
+
+        # Add character buffer for launcher transition
+        self._typed_chars_buffer = ""
+        self._launcher_transitioning = False
+        self._launcher_transition_timeout = None
 
         self.bar = kwargs.get("bar", None)
         self.is_hovered = False  # Add hover tracking property
@@ -55,6 +61,7 @@ class Notch(Window):
         self.overview = Overview()
         self.emoji = EmojiPicker(notch=self)
         self.power = PowerMenu(notch=self)
+        self.tmux = TmuxManager(notch=self)  # Create TmuxManager instance
 
         self.applet_stack = self.dashboard.widgets.applet_stack
         self.nhistory = self.applet_stack.get_children()[0]
@@ -158,7 +165,8 @@ class Notch(Window):
                 self.emoji,
                 self.power,
                 self.tools,
-            ],
+                self.tmux,  # Add tmux to the stack
+            ]
         )
 
         self.corner_left = Box(
@@ -201,7 +209,7 @@ class Notch(Window):
             overlays=[
                 self.corner_left,
                 self.corner_right,
-            ],
+            ]
         )
 
         # Add event handling for hover detection to notch_overlay
@@ -240,7 +248,7 @@ class Notch(Window):
         self.hidden = False
         self._is_notch_open = False
         self._scrolling = False
-        
+
         self.notch_wrap = Box(
             name="notch-wrap",
             children=[
@@ -259,12 +267,15 @@ class Notch(Window):
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
 
         self.update_window_icon()
-        
+
         # Track current window class
         self._current_window_class = self._get_current_window_class()
-        
+
         # Start checking for occlusion every 250ms
         GLib.timeout_add(250, self._check_occlusion)
+
+        # Add key press event handling to the entire notch window
+        self.connect("key-press-event", self.on_key_press)
 
     def on_button_enter(self, widget, event):
         self.is_hovered = True  # Set hover state
@@ -280,7 +291,7 @@ class Notch(Window):
         # Only mark as not hovered if actually leaving to outside
         if event.detail == Gdk.NotifyType.INFERIOR:
             return False  # Ignore child-to-child movements
-            
+
         self.is_hovered = False
         window = widget.get_window()
         if window:
@@ -301,7 +312,7 @@ class Notch(Window):
         # Only mark as not hovered if actually leaving to outside
         if event.detail == Gdk.NotifyType.INFERIOR:
             return False  # Ignore child-to-child movements
-            
+
         self.is_hovered = False
         return False  # Allow event propagation
 
@@ -319,30 +330,40 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [
-            self.launcher,
-            self.dashboard,
-            self.notification,
-            self.overview,
-            self.emoji,
-            self.power,
-            self.tools,
-        ]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools, self.tmux]:
             widget.remove_style_class("open")
-        for style in [
-            "launcher",
-            "dashboard",
-            "notification",
-            "overview",
-            "emoji",
-            "power",
-            "tools",
-        ]:
+        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
         self.notch_wrap.remove_style_class("occluded")
+
+        # Handle tmux manager
+        if widget == "tmux":
+            if self.stack.get_visible_child() == self.tmux:
+                self.close_notch()
+                return
+
+            self.set_keyboard_mode("exclusive")
+
+            if self.hidden:
+                self.notch_box.remove_style_class("hidden")
+                self.notch_box.add_style_class("hideshow")
+
+            for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
+                self.stack.remove_style_class(style)
+            for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools, self.tmux]:
+                w.remove_style_class("open")
+
+            self.stack.add_style_class("launcher")  # Reuse launcher styling
+            self.stack.set_visible_child(self.tmux)
+            self.tmux.add_style_class("open")
+            self.tmux.open_manager()
+            self._is_notch_open = True
+
+            return
+
         # Handle special behavior for "bluetooth"
         if widget == "bluetooth":
             # If dashboard is already open
@@ -566,7 +587,8 @@ class Notch(Window):
             "emoji": self.emoji,
             "power": self.power,
             "tools": self.tools,
-            "dashboard": self.dashboard,  # Add dashboard here to ensure its style class is removed
+            "dashboard": self.dashboard,
+            "tmux": self.tmux,  # Add tmux to widgets dictionary
         }
         target_widget = widgets.get(widget, self.dashboard)
         # If already showing the requested widget, close the notch.
@@ -834,17 +856,17 @@ class Notch(Window):
             if data.VERTICAL:
                 self.notch_wrap.remove_style_class("occluded")
             return True
-            
+
         # Only check occlusion if not hovered, not open, and in vertical mode
         if data.VERTICAL:
             is_occluded = check_occlusion(("top", 40))
-            
+
             # Add or remove style class based on occlusion
             if is_occluded:
                 self.notch_wrap.add_style_class("occluded")
             else:
                 self.notch_wrap.remove_style_class("occluded")
-        
+
         return True  # Return True to keep the timeout active
 
     def _get_current_window_class(self):
@@ -868,34 +890,191 @@ class Notch(Window):
         # Skip occlusion handling if not in vertical mode
         if not data.VERTICAL:
             return
-            
+
         # Get the current window class
         new_window_class = self._get_current_window_class()
-        
+
         # Only proceed if the window class has actually changed
         if new_window_class != self._current_window_class:
             # Update the stored window class
             self._current_window_class = new_window_class
-            
+
             # If there's an existing timer, cancel it
             if self._occlusion_timer_id is not None:
                 GLib.source_remove(self._occlusion_timer_id)
                 self._occlusion_timer_id = None
-            
+
             # Set flag to prevent occlusion
             self._prevent_occlusion = True
-            
+
             # Remove occluded class
             self.notch_wrap.remove_style_class("occluded")
-            
+
             # Set up a new timeout to re-enable occlusion check after 500ms
             self._occlusion_timer_id = GLib.timeout_add(500, self._restore_occlusion_check)
-        
+
     def _restore_occlusion_check(self):
         """Re-enable occlusion checking after temporary visibility"""
         # Reset the prevent flag
         self._prevent_occlusion = False
         self._occlusion_timer_id = None
-        
+
         # Now let the regular check handle it
         return False  # Don't repeat the timeout
+
+    def open_launcher_with_text(self, initial_text):
+        """Open the launcher with initial text in the search field."""
+        # Set the transition flag to capture subsequent keystrokes
+        self._launcher_transitioning = True
+
+        # Store the initial character in our buffer
+        if initial_text:
+            self._typed_chars_buffer = initial_text
+
+        # Check if launcher is already open
+        if self.stack.get_visible_child() == self.launcher:
+            # If already open, just append text to existing search
+            current_text = self.launcher.search_entry.get_text()
+            self.launcher.search_entry.set_text(current_text + initial_text)
+            # Ensure cursor is at the end of text without selection
+            self.launcher.search_entry.set_position(-1)
+            self.launcher.search_entry.select_region(-1, -1)  # Prevent selection
+            self.launcher.search_entry.grab_focus()
+            return
+
+        # Otherwise similar to standard open_notch("launcher") but with text
+        self.set_keyboard_mode("exclusive")
+        self.notch_wrap.remove_style_class("occluded")
+
+        if self.hidden:
+            self.notch_box.remove_style_class("hidden")
+            self.notch_box.add_style_class("hideshow")
+
+        # Clear previous style classes and states
+        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
+            self.stack.remove_style_class(style)
+        for w in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools, self.tmux]:
+            w.remove_style_class("open")
+
+        # Configure for launcher
+        self.stack.add_style_class("launcher")
+        self.stack.set_visible_child(self.launcher)
+        self.launcher.add_style_class("open")
+
+        # Force initialization before opening - ensures apps are loaded
+        self.launcher.ensure_initialized()
+
+        # Now fully initialize the launcher UI
+        self.launcher.open_launcher()
+
+        # Set a timeout to apply the text after the transition (200ms should be enough)
+        if self._launcher_transition_timeout:
+            GLib.source_remove(self._launcher_transition_timeout)
+
+        self._launcher_transition_timeout = GLib.timeout_add(150, self._finalize_launcher_transition)
+
+        # Show the standard bar elements
+        self.bar.revealer_right.set_reveal_child(True)
+        self.bar.revealer_left.set_reveal_child(True)
+
+        self._is_notch_open = True
+
+    def _finalize_launcher_transition(self):
+        """Apply buffered text and finalize launcher transition"""
+        # Apply all buffered characters
+        if self._typed_chars_buffer:
+            # Set the full text at once
+            entry = self.launcher.search_entry
+            entry.set_text(self._typed_chars_buffer)
+
+            # Place cursor at the end without selecting - with careful focus timing
+            entry.grab_focus()
+
+            # Use multiple deselection attempts at different time intervals
+            # GTK can re-select text during the focus event cycle, so we need several checks
+            GLib.timeout_add(10, self._ensure_no_text_selection)
+            GLib.timeout_add(50, self._ensure_no_text_selection)
+            GLib.timeout_add(100, self._ensure_no_text_selection)
+
+            # Debug
+            print(f"Applied buffered text: '{self._typed_chars_buffer}'")
+
+            # Clear the buffer
+            self._typed_chars_buffer = ""
+
+        # Mark transition as complete
+        self._launcher_transitioning = False
+        self._launcher_transition_timeout = None
+
+        return False  # Don't repeat
+
+    def _ensure_no_text_selection(self):
+        """Make absolutely sure no text is selected in the search entry"""
+        entry = self.launcher.search_entry
+
+        # Get current text length
+        text_len = len(entry.get_text())
+
+        # Move cursor to end
+        entry.set_position(text_len)
+
+        # Clear any selection that might have happened
+        entry.select_region(text_len, text_len)
+
+        # Check if entry has focus, if not give it focus
+        if not entry.has_focus():
+            entry.grab_focus()
+            # When grabbing focus again, immediately clear selection
+            GLib.idle_add(lambda: entry.select_region(text_len, text_len))
+
+        return False  # Don't repeat
+
+    # Add new method for handling key presses at the window level
+    def on_key_press(self, widget, event):
+        """Handle key presses at the notch level"""
+        # Special handling during launcher transition - capture all valid keystrokes
+        if self._launcher_transitioning:
+            keyval = event.keyval
+            keychar = chr(keyval) if 32 <= keyval <= 126 else None
+
+            # Only capture valid text characters during transition
+            is_valid_char = (
+                (keyval >= Gdk.KEY_a and keyval <= Gdk.KEY_z) or
+                (keyval >= Gdk.KEY_A and keyval <= Gdk.KEY_Z) or
+                (keyval >= Gdk.KEY_0 and keyval <= Gdk.KEY_9) or
+                keyval in (Gdk.KEY_space, Gdk.KEY_underscore, Gdk.KEY_minus, Gdk.KEY_period)
+            )
+
+            if is_valid_char and keychar:
+                # Add to our buffer during transition
+                self._typed_chars_buffer += keychar
+                print(f"Buffered character: {keychar}, buffer now: '{self._typed_chars_buffer}'")
+                return True
+
+        # Only process when dashboard is visible AND specifically in the widgets section
+        if (self.stack.get_visible_child() == self.dashboard and
+            self.dashboard.stack.get_visible_child() == self.dashboard.widgets):
+
+            # Don't process if launcher is already open
+            if self.stack.get_visible_child() == self.launcher:
+                return False
+
+            # Get the character from the key press
+            keyval = event.keyval
+            keychar = chr(keyval) if 32 <= keyval <= 126 else None
+
+            # Check if the key is a valid search character (alphanumeric or common search symbols)
+            is_valid_char = (
+                (keyval >= Gdk.KEY_a and keyval <= Gdk.KEY_z) or
+                (keyval >= Gdk.KEY_A and keyval <= Gdk.KEY_Z) or
+                (keyval >= Gdk.KEY_0 and keyval <= Gdk.KEY_9) or
+                keyval in (Gdk.KEY_space, Gdk.KEY_underscore, Gdk.KEY_minus, Gdk.KEY_period)
+            )
+
+            if is_valid_char and keychar:
+                print(f"Notch received keypress: {keychar}")
+                # Directly open launcher with the typed character
+                self.open_launcher_with_text(keychar)
+                return True
+
+        return False

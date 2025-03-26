@@ -3,14 +3,20 @@
     "city": "",
     "Temprature_Unit": "C",
     "quotetype": "stoic",
-    "vertical": false,
+    "terminal_command": "ghostty -e",
+    "vertical": true,
     "Basic": {
-        "corners": false,
+        "corners": true,
         "bar": true,
         "widgets": true,
         "dock": false
     },
+    "Dock": {
+        "dock_icon_size": "28",
+        "dock_always_occluded": true
+    },
     "Bar": {
+        "centered_bar": true,
         "systray": true,
         "workspaces": true,
         "buttonapps": true,
@@ -18,7 +24,7 @@
         "datetime": true,
         "buttonpower": true,
         "Barright": {
-            "metrics": true,
+            "metrics": false,
             "controls": true,
             "battery": true,
             "systemprofiles": false,

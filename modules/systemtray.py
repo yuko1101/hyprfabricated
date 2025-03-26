@@ -21,6 +21,14 @@ class SystemTray(Gtk.Box):
         self.set_visible(False)  # Initially hidden when empty.
         self._update_visibility()  # Ensure visibility is updated after initialization.
 
+    def set_visible(self, visible):
+        """Override to track external visibility setting"""
+        # Only show if enabled AND has children
+        if visible and len(self.get_children()) > 0:
+            super().set_visible(True)
+        else:
+            super().set_visible(False)
+
     def _update_visibility(self):
         self.set_visible(len(self.get_children()) > 0)
 

@@ -40,6 +40,8 @@ PACKAGES=(
     plasma-browser-integration
     cantarell-fonts
     ttf-jost
+    unzip
+    tmux
 )
 
 # Prevent running as root

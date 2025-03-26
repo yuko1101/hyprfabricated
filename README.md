@@ -45,7 +45,6 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 ### Manual Installation
 1. Install dependencies:
 
-
 - Aur/Pacman:
   - [`Fabric`](https://github.com/Fabric-Development/fabric)
   - [`fabric-cli`](https://github.com/Fabric-Development/fabric-cli)
@@ -73,6 +72,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
   - [`wl-clipboard`](https://github.com/bugaevc/wl-clipboard)
   - [`wlinhibit`](https://github.com/0x5a4/wlinhibit)
   - [`grimblast-git`](https://github.com/hyprwm/contrib/blob/main/grimblast/grimblast)
+  - [`tmux`](https://github.com/tmux/tmux/wiki)
 - Python dependencies:
   - [ijson](https://pypi.org/project/ijson/)
   - [pillow](https://pypi.org/project/pillow/)
@@ -119,9 +119,9 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Customizable Widgets and Bar
 - [x] Gui Updater and update notifier
 - [x] Vertical Layout
+- [x] Tmux Session Manager
 - [ ] Network Manager
 - [ ] Clipboard Manager
-- [ ] Tmux Session Manager
 - [ ] Multimodal AI Assistant
 - [ ] Multi-monitor support
 
