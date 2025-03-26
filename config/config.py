@@ -71,6 +71,7 @@ DEFAULT_KEYBINDINGS = {
 }
 
 
+bind_vars = DEFAULT_KEYBINDINGS.copy()
 def deep_update(target: dict, update: dict) -> dict:
     """
     Recursively update a nested dictionary with values from another dictionary.
@@ -187,7 +188,6 @@ def load_bind_vars():
     """
     Load saved key binding variables from JSON, if available.
     """
-    bind_vars = DEFAULT_KEYBINDINGS.copy()
     config_json = os.path.expanduser(
         f"~/.config/{APP_NAME_CAP}/config/config.json"
     )
@@ -204,7 +204,6 @@ def generate_hyprconf() -> str:
     """
     Generate the Hypr configuration string using the current bind_vars.
     """
-    bind_vars = DEFAULT_KEYBINDINGS.copy()
     home = os.path.expanduser('~')
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
 exec = pgrep -x "hypridle" > /dev/null || uwsm-app hypridle
@@ -360,7 +359,6 @@ class HyprConfGUI(Gtk.Window):
 
 
     def create_keybinds_grid(self, show_lock_checkbox, show_idle_checkbox):
-        bind_vars = DEFAULT_KEYBINDINGS.copy()
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
         grid.set_margin_top(10)
         grid.set_margin_bottom(10)
@@ -538,7 +536,6 @@ class HyprConfGUI(Gtk.Window):
 
     def save_keybinds_config(self):
         print("Saving keybinds configuration...")
-        bind_vars = DEFAULT_KEYBINDINGS.copy()
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
             bind_vars[prefix_key] = prefix_entry.get_text()
             bind_vars[suffix_key] = suffix_entry.get_text()
