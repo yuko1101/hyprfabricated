@@ -63,6 +63,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `swappy`
     - `swww`
     - `tesseract`
+    - `tmux`
     - `uwsm`
     - `wl-clipboard`
     - `wlinhibit`
