@@ -1,5 +1,7 @@
 <p align="center">
+<a href="https://github.com/Axenide/Ax-Shell">
   <img src="assets/cover.png">
+  </a>
 </p>
 
 <p align="center">
@@ -10,18 +12,10 @@
   <a href="https://github.com/Fabric-Development/fabric/">
     <img src="https://img.shields.io/badge/Powered%20by-Fabric-FAFAFA?style=for-the-badge&logo=python&color=FAFAFA&logoColor=D9E0EE&labelColor=000000" alt="Powered by Fabric">
   <sub><sup><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25"/></sup></sub>
-  </a<p align="center">
-  <sub><sup><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25"/></sup></sub>
-  <a href="https://github.com/hyprwm/Hyprland">
-    <img src="https://img.shields.io/badge/A%20hackable%20shell%20for-Hyprland-0092CD?style=for-the-badge&logo=linux&color=0092CD&logoColor=D9E0EE&labelColor=000000" alt="A hackable shell for Hyprland">
   </a>
-  <a href="https://github.com/Fabric-Development/fabric/">
-    <img src="https://img.shields.io/badge/Powered%20by-Fabric-FAFAFA?style=for-the-badge&logo=python&color=FAFAFA&logoColor=D9E0EE&labelColor=000000" alt="Powered by Fabric">
-  <sub><sup><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25"/></sup></sub>
-  </a>>
-</p>
+  </p>
 
-<p align="center">
+  <p align="center">
   <a href="https://github.com/Axenide/Ax-Shell/stargazers">
     <img src="https://img.shields.io/github/stars/Axenide/Ax-Shell?style=for-the-badge&logo=github&color=E3B341&logoColor=D9E0EE&labelColor=000000" alt="GitHub stars">
   </a>
