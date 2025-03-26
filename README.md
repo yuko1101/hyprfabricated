@@ -125,11 +125,13 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [ ] Multimodal AI Assistant
 - [ ] Multi-monitor support
 
+# Contibutors
+<a href="https://github.com/tr1xem/hyprfabricated/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=tr1xem/hyprfabricated" />
+</a>
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=tr1xem/hyprfabricated&type=Date)](https://star-history.com/#tr1xem/hyprfabricated&Date)
 
-# Credits
 
-- <b>Huge Thanks to the original Project https://github.com/Axenide/Ax-Shell/ </b>
-- [Amariokhz](https://github.com/mariokhz)
