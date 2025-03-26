@@ -25,6 +25,13 @@ from fabric.utils.helpers import get_desktop_applications
 from fabric.widgets.image import Image
 from utils.occlusion import check_occlusion
 
+def truncate_title(title):
+    parts = title.rsplit(' - ', 1)
+    if len(parts) == 1:
+        parts = title.rsplit(' — ', 1)
+    return parts[0] if len(parts) > 1 else title
+
+
 class Notch(Window):
     def __init__(self, **kwargs):
         super().__init__(
@@ -79,15 +86,14 @@ class Notch(Window):
         )
 
 
-
-
         self.active_window = ActiveWindow(
             name="hyprland-window",
             h_expand=False,
             h_align="fill",
             formatter=FormattedString(
-                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 64)}}",  # noqa: F541
+                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(truncate_title(win_title), 64)}}",
                 truncate=truncate,
+                truncate_title=truncate_title,
             ),
         )
         self.active_window_box = CenterBox(
