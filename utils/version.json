@@ -1,11 +1,12 @@
 {
-  "version": "2.3.0",
+  "version": "2.3.1",
   "changelog": [
     "Vertical Mode Enhanced",
     "Bug Fixes",
     "Added a minimal mode for vertical mode",
     "Dock working enhanced",
     "Miscellaneous Enhancements",
-    "Tweaks and Fixes"
+    "Tweaks and Fixes",
+    "Quick Fix for config"
   ]
 }
