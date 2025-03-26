@@ -474,7 +474,6 @@ class Battery(Button):
         # Set a descriptive tooltip with battery percentage
         self.set_tooltip_markup(f"{charging_status}" if not data.VERTICAL else f"{charging_status}: {percentage}%")
 
-
 class NetworkApplet(Button):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar", **kwargs)
@@ -672,3 +671,4 @@ class NetworkApplet(Button):
         self.download_icon.remove_style_class("urgent")
         self.upload_icon.remove_style_class("urgent")
         return
+

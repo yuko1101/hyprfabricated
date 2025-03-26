@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
+import urllib.request
 import toml
 from PIL import Image
 from fabric.utils.helpers import get_relative_path
@@ -66,6 +66,8 @@ DEFAULT_KEYBINDINGS = {
     'terminal_command': "kitty -e",  # Default terminal command for tmux
     'dock_enabled': True,  # Default value for dock visibility
     'dock_icon_size': 28,  # Default dock icon size
+    "prefix_config": "SUPER",
+    "suffix_config": "I"
 }
 
 
@@ -202,13 +204,14 @@ def generate_hyprconf() -> str:
     """
     Generate the Hypr configuration string using the current bind_vars.
     """
+    bind_vars = DEFAULT_KEYBINDINGS.copy()
     home = os.path.expanduser('~')
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
 exec = pgrep -x "hypridle" > /dev/null || uwsm-app hypridle
 exec = uwsm-app swww-daemon
 
 $fabricSend = fabric-cli exec {APP_NAME}
-$axMessage = notify-send "Axenide" "What are you doing?" -i f"{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
+$axMessage = notify-send "tr1x_em" "What are you doing?" -i f"{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
 bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {APP_NAME}; uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py) # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
@@ -227,7 +230,7 @@ bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabric
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
 bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector | Default: SUPER CTRL ALT + B
-
+bind = {bind_vars["prefix_config"]}, {bind_vars["suffix_config"]}, exec,uwsm app -- python {home}/.config/{APP_NAME_CAP}/config/config.py
 # Wallpapers directory: {bind_vars["wallpapers_dir"]}
 
 source = {home}/.config/{APP_NAME_CAP}/config/hypr/colors.conf
@@ -478,7 +481,7 @@ class HyprConfGUI(Gtk.Window):
             full_key = f"{parent_key}.{key}" if parent_key else key
             if isinstance(value, dict):
                 section_label = Gtk.Label()
-                section_label.set_markup(f"<b>{key.upper()}</b>")
+                section_label.set_markup(f"<b>{key.replace("_"," ").upper()}</b>")
                 section_label.set_halign(Gtk.Align.START)
                 section_label.set_margin_top(10)
                 section_label.set_margin_bottom(5)
@@ -489,7 +492,7 @@ class HyprConfGUI(Gtk.Window):
                 # Check for a tooltip in the tooltips section
                 comment = tooltips.get(f"{key}_tooltip", "")
 
-                option_label = Gtk.Label(label=key.capitalize())
+                option_label = Gtk.Label(label=key.replace("_"," ").capitalize())
                 option_label.set_halign(Gtk.Align.START)
                 if comment:
                     option_label.set_tooltip_text(comment)
@@ -535,6 +538,7 @@ class HyprConfGUI(Gtk.Window):
 
     def save_keybinds_config(self):
         print("Saving keybinds configuration...")
+        bind_vars = DEFAULT_KEYBINDINGS.copy()
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
             bind_vars[prefix_key] = prefix_entry.get_text()
             bind_vars[suffix_key] = suffix_entry.get_text()
@@ -653,21 +657,6 @@ class HyprConfGUI(Gtk.Window):
         # Update wallpaper directory
         bind_vars["wallpapers_dir"] = self.wall_dir_chooser.get_filename()
 
-        # Update vertical setting from the new switch
-        bind_vars['vertical'] = self.vertical_switch.get_active()
-        bind_vars['centered_bar'] = self.centered_switch.get_active()
-        bind_vars['dock_enabled'] = self.dock_switch.get_active()
-        bind_vars['dock_always_occluded'] = self.dock_hover_switch.get_active()
-        bind_vars['dock_icon_size'] = int(self.dock_size_scale.get_value())
-
-        # Update terminal command
-        bind_vars['terminal_command'] = self.terminal_entry.get_text()
-
-        # Update component visibility settings
-        for component_name, switch in self.component_switches.items():
-            config_key = f'bar_{component_name}_visible'
-            bind_vars[config_key] = switch.get_active()
-
         # Save the updated bind_vars to a JSON file
         config_json = os.path.expanduser(
             f"~/.config/{APP_NAME_CAP}/config/config.json"
@@ -724,7 +713,7 @@ uwsm-app "$python_output" &
 """
 
         # Create a temporary script file
-        restart_path = "/tmp/ax_shell_restart.sh"
+        restart_path = "/tmp/hyprfabricated_restart.sh"
         with open(restart_path, "w") as f:
             f.write(restart_script)
         os.chmod(restart_path, 0o755)
@@ -755,12 +744,25 @@ uwsm-app "$python_output" &
         response = dialog.run()
         dialog.destroy()
 
+        FILE_URL = "https://raw.githubusercontent.com/tr1xem/hyprfabricated/refs/heads/main/config.json"
+        DESTINATION_FILE = get_relative_path("../config.json")
+        TEMP_FILE = "/tmp/temp_config.json"
+
         if response == Gtk.ResponseType.YES:
             # Reset bind_vars to default values
+            try:
+                urllib.request.urlretrieve(FILE_URL, TEMP_FILE)
+                print("Download successful!")
+
+                if os.path.exists(DESTINATION_FILE):
+                    os.remove(DESTINATION_FILE)
+                shutil.move(TEMP_FILE, DESTINATION_FILE)
+
+            except Exception as e:
+                print(f"Error downloading or replacing the file: {e}")
             global bind_vars
             bind_vars = DEFAULT_KEYBINDINGS.copy()
 
-            # Update UI elements
             # Update key binding entries
             for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
                 prefix_entry.set_text(bind_vars[prefix_key])

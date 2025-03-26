@@ -46,7 +46,7 @@ if __name__ == "__main__":
         os.symlink(example_wallpaper, current_wallpaper)
     config = load_config()
 
-    if config.get("checkupdates", False):
+    if config.get("check_for_updates", False):
         run_updater()
 
     assets = []

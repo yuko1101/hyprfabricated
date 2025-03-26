@@ -40,7 +40,7 @@ if os.path.exists(CONFIG_FILE) and os.path.exists(WAL_CONFIG):
     VERTICAL = config.get('vertical', False)  # Use saved value or False as default
     DOCK_ALWAYS_OCCLUDED = config.get("Dock", {}).get("dock_always_occluded", False) # Load dock hover-only setting
     TERMINAL_COMMAND = config.get('terminal_command', "ghostty -e")  # Load terminal command
-    CENTERED_BAR = config.get("Bar").get('centered_bar')  # Load centered bar setting
+    CENTERED_BAR = config.get("Bar").get('minimal_vertical_bar')  # Load centered bar setting
     # DOCK_ENABLED = config.get('dock_enabled', True)  # Load dock visibility setting
     # DOCK_ICON_SIZE = config.get('dock_icon_size', 28)  # Load dock icon size setting
     #
@@ -61,13 +61,13 @@ if os.path.exists(CONFIG_FILE) and os.path.exists(WAL_CONFIG):
     #     'button_power': config.get('bar_button_power_visible', True),
     # }
 else:
-    # WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
-    # VERTICAL = False  # Default value when no config exists
-    # CENTERED_BAR = False  # Default value for centered bar
-    # DOCK_ENABLED = True  # Default value for dock visibility
-    # DOCK_ALWAYS_OCCLUDED = False  # Default value for dock hover-only mode
-    # TERMINAL_COMMAND = "kitty -e"  # Default terminal command when no config
-    # DOCK_ICON_SIZE = 28  # Default dock icon size when no config
+    WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
+    VERTICAL = False  # Default value when no config exists
+    CENTERED_BAR = False  # Default value for centered bar
+    DOCK_ENABLED = True  # Default value for dock visibility
+    DOCK_ALWAYS_OCCLUDED = False  # Default value for dock hover-only mode
+    TERMINAL_COMMAND = "ghostty -e"  # Default terminal command when no config
+    DOCK_ICON_SIZE = 28  # Default dock icon size when no config
     #
     # # Default values for component visibility (all visible)
     # BAR_COMPONENTS_VISIBILITY = {
@@ -85,4 +85,3 @@ else:
     #     'date_time': True,
     #     'button_power': True,
     # }
-    pass
