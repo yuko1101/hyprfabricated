@@ -1,9 +1,11 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "changelog": [
-        "Fixing the bug where shell crash on launch?",
-        "Vertical Mode",
-        "Bar Optimization to reduce load times",
-        "Misc Tweaks(im lazy to type them all)"
+    "Vertical Mode Enhanced",
+    "Bug Fixes",
+    "Added a minimal mode for vertical mode",
+    "Dock working enhanced",
+    "Miscellaneous Enhancements",
+    "Tweaks and Fixes"
   ]
 }
