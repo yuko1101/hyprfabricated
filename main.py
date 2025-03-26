@@ -4,11 +4,19 @@ import subprocess
 import setproctitle
 from fabric import Application
 from fabric.utils import get_relative_path, exec_shell_command_async
-from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE, DOCK_ICON_SIZE, VERTICAL,HOME_DIR,APP_NAME_CAP
+from config.data import (
+    APP_NAME,
+    CACHE_DIR,
+    CONFIG_FILE,
+    DOCK_ICON_SIZE,
+    VERTICAL,
+    HOME_DIR,
+    APP_NAME_CAP,
+)
+
 
 fonts_updated_file = f"{CACHE_DIR}/fonts_updated"
 hyprconf = get_relative_path("config.json")
-
 
 def load_config():
     with open(hyprconf, "r") as f:
@@ -25,7 +33,6 @@ def run_updater():
         print("Updater process restarted.")
     except Exception as e:
         print(f"Error restarting Updater process: {e}")
-
 
 
 if __name__ == "__main__":
@@ -75,19 +82,32 @@ if __name__ == "__main__":
         dock = Dock()
         assets.append(dock)
     app = Application(f"{APP_NAME}", *assets)
+
     def set_css():
         from config.data import CURRENT_WIDTH, CURRENT_HEIGHT
+
         app.set_stylesheet_from_file(
             get_relative_path("main.css"),
             exposed_functions={
                 "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
                 "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32 + 64}px;",
-                "dock_nmargin": lambda: f"margin-bottom: -{28 + DOCK_ICON_SIZE}px;" if not VERTICAL else f"margin-right: -{28 + DOCK_ICON_SIZE}px;",
-                "ws_width": lambda: "min-width: 48px;" if not VERTICAL else "min-width: 8px;",
-                "ws_height": lambda: "min-height: 8px;" if not VERTICAL else "min-height: 48px;",
-                "dock_sep": lambda: "margin: 8px 0;" if not VERTICAL else "margin: 0 8px;",
+                "dock_nmargin": lambda: (
+                    f"margin-bottom: -{28 + DOCK_ICON_SIZE}px;"
+                    if not VERTICAL
+                    else f"margin-right: -{28 + DOCK_ICON_SIZE}px;"
+                ),
+                "ws_width": lambda: (
+                    "min-width: 48px;" if not VERTICAL else "min-width: 8px;"
+                ),
+                "ws_height": lambda: (
+                    "min-height: 8px;" if not VERTICAL else "min-height: 48px;"
+                ),
+                "dock_sep": lambda: (
+                    "margin: 8px 0;" if not VERTICAL else "margin: 0 8px;"
+                ),
             },
         )
+
     app.set_css = set_css
 
     app.set_css()

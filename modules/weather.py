@@ -67,3 +67,11 @@ class Weather(Button):
             print(f"Error fetching weather: {e}")
             GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Error")
             GLib.idle_add(self.set_visible, False)
+
+        def _update_ui(self, text=None, visible=True, error=False):
+            """Safely update UI elements from the worker thread."""
+            if error:
+                text = f"{icons.cloud_off} Unavailable"
+                visible = False
+            GLib.idle_add(self.label.set_markup if error else self.label.set_label, text)
+            GLib.idle_add(self.set_visible, visible)

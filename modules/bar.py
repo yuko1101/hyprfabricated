@@ -63,7 +63,6 @@ class Bar(Window):
             )
         )
 
-        self.weather = Weather()
         self.connection = get_hyprland_connection()
 
 
@@ -92,7 +91,6 @@ class Bar(Window):
             self.button_apps.connect("leave_notify_event", self.on_button_leave)
             left_children.append(self.button_apps)
 
-        self.network = NetworkApplet()
 
         if config["Bar"]["workspaces"]:
             left_children.append(
@@ -102,12 +100,14 @@ class Bar(Window):
         start_children = []
 
         if config["Bar"]["Barleft"]["weather"]:
+            self.weather = Weather()
             start_children.append(self.weather)
 
         if config["Bar"]["Barleft"]["overview"]:
             start_children.append(self.button_overview)
 
         if config["Bar"]["Barleft"]["networkapplet"]:
+            self.network = NetworkApplet()
             start_children.append(self.network)
 
         self.revealer_left = Revealer(
@@ -132,21 +132,21 @@ class Bar(Window):
 
         end_children = []
 
-        self.metrics = MetricsSmall()
         self.control = ControlSmall()
-        self.battery = Battery()
-        self.powerctl = Systemprofiles()
-        self.systray = SystemTray()
 
         if config["Bar"]["Barright"]["metrics"]:
+            self.metrics = MetricsSmall()
             end_children.append(self.metrics)
         if config["Bar"]["Barright"]["controls"]:
             end_children.append(self.control)
         if config["Bar"]["Barright"]["battery"]:
+            self.battery = Battery()
             end_children.append(self.battery)
         if config["Bar"]["Barright"]["systemprofiles"]:
+            self.powerctl = Systemprofiles()
             end_children.append(self.powerctl)
         if config["Bar"]["systray"]:
+            self.systray = SystemTray()
             end_children.append(self.systray)
 
         self.revealer_right = Revealer(
@@ -196,31 +196,44 @@ class Bar(Window):
         if config["Bar"]["buttonpower"]:
             end_children.append(self.button_power)
 
-        self.v_start_children = [
-            self.button_apps,
-            self.systray,
-            self.control,
-            self.network,
-            self.button_tools,
-        ]
+        if data.VERTICAL:
+            self.weather = Weather()
+            self.systray = SystemTray()
+            self.button_apps = Button(
+                name="button-bar",
+                on_clicked=lambda *_: self.search_apps(),
+                child=Label(name="button-bar-label", markup=icons.apps),
+            )
+            self.button_apps.connect("enter_notify_event", self.on_button_enter)
+            self.button_apps.connect("leave_notify_event", self.on_button_leave)
+            self.network = NetworkApplet()
+            self.battery = Battery()
+            self.metrics = MetricsSmall()
+            self.v_start_children = [
+                self.button_apps,
+                self.systray,
+                self.control,
+                self.network,
+                self.button_tools,
+            ]
 
-        self.v_center_children = [
-            self.button_overview,
-            self.ws_container,
-            self.weather,
-        ]
-        self.v_end_children = [
-            self.battery,
-            self.metrics,
-            self.language,
-            self.date_time,
-            self.button_power,
-        ]
+            self.v_center_children = [
+                self.button_overview,
+                self.ws_container,
+                self.weather,
+            ]
+            self.v_end_children = [
+                self.battery,
+                self.metrics,
+                self.language,
+                self.date_time,
+                self.button_power,
+            ]
 
-        self.v_all_children = []
-        self.v_all_children.extend(self.v_start_children)
-        self.v_all_children.extend(self.v_center_children)
-        self.v_all_children.extend(self.v_end_children)
+            self.v_all_children = []
+            self.v_all_children.extend(self.v_start_children)
+            self.v_all_children.extend(self.v_center_children)
+            self.v_all_children.extend(self.v_end_children)
 
         self.bar_inner = CenterBox(
             name="bar-inner",
@@ -247,7 +260,8 @@ class Bar(Window):
         self.hidden = False
 
         self.show_all()
-        self.systray._update_visibility()
+        if config["Bar"]["systray"]:
+            self.systray._update_visibility()
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()

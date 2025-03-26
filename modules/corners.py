@@ -4,7 +4,7 @@ from fabric.widgets.button import Button
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.widgets.shapes import Corner
 import gi
-gi.require_version('Gtk', '3.0')
+# gi.require_version('Gtk', '3.0')
 
 from gi.repository import GLib
 
