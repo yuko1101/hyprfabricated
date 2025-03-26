@@ -27,7 +27,7 @@ source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
 """
 
 # Initialize bind_vars with default values
-DEFAULT_KEYBINDINGS = {
+DEFAULTS = {
     'prefix_restart': "SUPER ALT",
     'suffix_restart': "B",
     'prefix_axmsg': "SUPER",
@@ -70,8 +70,9 @@ DEFAULT_KEYBINDINGS = {
     "suffix_config": "I"
 }
 
+bind_vars = DEFAULTS.copy()
 
-bind_vars = DEFAULT_KEYBINDINGS.copy()
+
 def deep_update(target: dict, update: dict) -> dict:
     """
     Recursively update a nested dictionary with values from another dictionary.
@@ -758,8 +759,9 @@ uwsm-app "$python_output" &
             except Exception as e:
                 print(f"Error downloading or replacing the file: {e}")
             global bind_vars
-            bind_vars = DEFAULT_KEYBINDINGS.copy()
+            bind_vars = DEFAULTS.copy()
 
+            # Update UI elements
             # Update key binding entries
             for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
                 prefix_entry.set_text(bind_vars[prefix_key])

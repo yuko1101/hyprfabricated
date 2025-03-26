@@ -135,3 +135,4 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 [![Star History Chart](https://api.star-history.com/svg?repos=tr1xem/hyprfabricated&type=Date)](https://star-history.com/#tr1xem/hyprfabricated&Date)
 
 
+
