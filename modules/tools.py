@@ -283,10 +283,10 @@ class Toolbox(Box):
             enabled = False
 
         if enabled:
-            self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
+            self.btn_gamemode.get_child().set_markup(icons.gamemode)
             self.btn_gamemode.set_tooltip_text("GameMode : OFF")
         else:
-            self.btn_gamemode.get_child().set_markup(icons.gamemode)
+            self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
             self.btn_gamemode.set_tooltip_text("GameMode : ON")
 
         return True
