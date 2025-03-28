@@ -217,8 +217,8 @@ def generate_hyprconf() -> str:
     """
     home = os.path.expanduser('~')
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
-exec = pgrep -x "hypridle" > /dev/null || uwsm-app hypridle
-exec = uwsm-app swww-daemon
+exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
+exec = uwsm app -- swww-daemon
 
 $fabricSend = fabric-cli exec {APP_NAME}
 $axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
