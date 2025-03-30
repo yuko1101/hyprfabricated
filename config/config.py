@@ -389,7 +389,7 @@ class HyprConfGUI(Window):
         super().__init__(
             title="Ax-Shell Settings",
             name="axshell-settings-window",
-            size=(600, 600),
+            size=(650, 550), # Adjusted size for vertical tabs
             **kwargs,
         )
 
@@ -399,13 +399,17 @@ class HyprConfGUI(Window):
         self.show_lock_checkbox = show_lock_checkbox
         self.show_idle_checkbox = show_idle_checkbox
 
-        # Main vertical box to contain the notebook and buttons
-        main_box = Box(orientation="v", spacing=10, style="margin: 10px;")
-        self.add(main_box)
+        # Overall vertical box to hold the main content and bottom buttons
+        root_box = Box(orientation="v", spacing=10, style="margin: 10px;")
+        self.add(root_box)
+
+        # Main horizontal box for switcher and stack
+        main_content_box = Box(orientation="h", spacing=6, v_expand=True, h_expand=True)
+        root_box.add(main_content_box)
 
         # --- Tab Control ---
         self.tab_stack = Stack(
-             transition_type="slide-left-right",
+             transition_type="slide-up-down", # Change transition for vertical feel
              transition_duration=250,
              v_expand=True, h_expand=True
         )
@@ -419,15 +423,19 @@ class HyprConfGUI(Window):
         self.tab_stack.add_titled(self.appearance_tab_content, "appearance", "Appearance")
         self.tab_stack.add_titled(self.system_tab_content, "system", "System")
 
-        # Use Gtk.StackSwitcher instead of individual buttons
+        # Use Gtk.StackSwitcher vertically on the left
         tab_switcher = Gtk.StackSwitcher()
         tab_switcher.set_stack(self.tab_stack)
-        tab_switcher.set_homogeneous(True)
-        tab_switcher_container = Box(h_align="center")
-        tab_switcher_container.add(tab_switcher)
+        tab_switcher.set_orientation(Gtk.Orientation.VERTICAL) # Set vertical orientation
+        # Optional: Adjust alignment if needed
+        # tab_switcher.set_valign(Gtk.Align.START)
 
-        main_box.add(tab_switcher_container)
-        main_box.add(self.tab_stack)
+        # Add switcher to the left of the main content box
+        main_content_box.add(tab_switcher)
+
+        # Add stack to the right of the main content box
+        main_content_box.add(self.tab_stack)
+
 
         # --- Bottom Buttons ---
         button_box = Box(orientation="h", spacing=10, h_align="end")
@@ -442,7 +450,8 @@ class HyprConfGUI(Window):
         accept_btn = Button(label="Apply & Reload", on_clicked=self.on_accept)
         button_box.add(accept_btn)
 
-        main_box.add(button_box)
+        # Add button box to the bottom of the root box
+        root_box.add(button_box)
 
     def create_key_bindings_tab(self):
         """Create tab for key bindings configuration using Fabric widgets and Gtk.Grid."""
@@ -452,10 +461,10 @@ class HyprConfGUI(Window):
             h_expand=True,
             v_expand=True
         )
+        # Remove fixed height constraints to allow stack to fill space
+        # scrolled_window.set_min_content_height(300)
+        # scrolled_window.set_max_content_height(300)
 
-        scrolled_window.set_min_content_height(300)
-        scrolled_window.set_max_content_height(300)
-        
         # Main container with padding
         main_vbox = Box(orientation="v", spacing=10, style="margin: 15px;")
         scrolled_window.add(main_vbox)
@@ -533,9 +542,9 @@ class HyprConfGUI(Window):
             h_expand=True,
             v_expand=True
         )
-
-        scrolled_window.set_min_content_height(300)
-        scrolled_window.set_max_content_height(300)
+        # Remove fixed height constraints
+        # scrolled_window.set_min_content_height(300)
+        # scrolled_window.set_max_content_height(300)
 
         # Main container with padding
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
@@ -763,9 +772,9 @@ class HyprConfGUI(Window):
             h_expand=True,
             v_expand=True
         )
-
-        scrolled_window.set_min_content_height(300)
-        scrolled_window.set_max_content_height(300)
+        # Remove fixed height constraints
+        # scrolled_window.set_min_content_height(300)
+        # scrolled_window.set_max_content_height(300)
 
         # Main container with padding
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
