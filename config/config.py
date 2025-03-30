@@ -462,8 +462,8 @@ class HyprConfGUI(Window):
             v_expand=True
         )
         # Remove fixed height constraints to allow stack to fill space
-        # scrolled_window.set_min_content_height(300)
-        # scrolled_window.set_max_content_height(300)
+        scrolled_window.set_min_content_height(300)
+        scrolled_window.set_max_content_height(300)
 
         # Main container with padding
         main_vbox = Box(orientation="v", spacing=10, style="margin: 15px;")
@@ -543,8 +543,8 @@ class HyprConfGUI(Window):
             v_expand=True
         )
         # Remove fixed height constraints
-        # scrolled_window.set_min_content_height(300)
-        # scrolled_window.set_max_content_height(300)
+        scrolled_window.set_min_content_height(300)
+        scrolled_window.set_max_content_height(300)
 
         # Main container with padding
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
@@ -773,8 +773,8 @@ class HyprConfGUI(Window):
             v_expand=True
         )
         # Remove fixed height constraints
-        # scrolled_window.set_min_content_height(300)
-        # scrolled_window.set_max_content_height(300)
+        scrolled_window.set_min_content_height(300)
+        scrolled_window.set_max_content_height(300)
 
         # Main container with padding
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
