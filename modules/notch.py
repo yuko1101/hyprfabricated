@@ -17,6 +17,7 @@ from modules.overview import Overview
 from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
 from modules.tmux import TmuxManager  # Import the new TmuxManager
+from modules.cliphist import ClipHistory  # Import the ClipHistory modulert ClipHistory  # Import the ClipHistory module
 import config.data as data
 from modules.player import PlayerSmall
 from modules.tools import Toolbox
@@ -63,6 +64,7 @@ class Notch(Window):
         self.emoji = EmojiPicker(notch=self)
         self.power = PowerMenu(notch=self)
         self.tmux = TmuxManager(notch=self)  # Create TmuxManager instance
+        self.cliphist = ClipHistory(notch=self)  # Create ClipHistory instance
 
         self.applet_stack = self.dashboard.widgets.applet_stack
         self.nhistory = self.applet_stack.get_children()[0]
@@ -159,6 +161,7 @@ class Notch(Window):
                 self.power,
                 self.tools,
                 self.tmux,  # Add tmux to the stack
+                self.cliphist,  # Add cliphist to the stack
             ]
         )
 
@@ -326,18 +329,18 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools, self.tmux]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools, self.tmux, self.cliphist]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux", "cliphist"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
         self.notch_wrap.remove_style_class("occluded")
         
-        # Handle tmux manager
-        if widget == "tmux":
-            if self.stack.get_visible_child() == self.tmux:
+        # Handle clipboard history
+        if widget == "cliphist":
+            if self.stack.get_visible_child() == self.cliphist:
                 self.close_notch()
                 return
                 
@@ -347,15 +350,15 @@ class Notch(Window):
                 self.notch_box.remove_style_class("hidden")
                 self.notch_box.add_style_class("hideshow")
 
-            for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
+            for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux", "cliphist"]:
                 self.stack.remove_style_class(style)
-            for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools, self.tmux]:
+            for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools, self.tmux, self.cliphist]:
                 w.remove_style_class("open")
 
             self.stack.add_style_class("launcher")  # Reuse launcher styling
-            self.stack.set_visible_child(self.tmux)
-            self.tmux.add_style_class("open")
-            self.tmux.open_manager()
+            self.stack.set_visible_child(self.cliphist)
+            self.cliphist.add_style_class("open")
+            self.cliphist.open()
             self._is_notch_open = True
 
             return
@@ -548,6 +551,7 @@ class Notch(Window):
             "tools": self.tools,
             "dashboard": self.dashboard,
             "tmux": self.tmux,  # Add tmux to widgets dictionary
+            "cliphist": self.cliphist,  # Add cliphist to widgets dictionary
         }
         target_widget = widgets.get(widget, self.dashboard)
         # If already showing the requested widget, close the notch.
