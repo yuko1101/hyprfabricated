@@ -102,6 +102,7 @@ DEFAULTS = {
     'bar_language_visible': True,
     'bar_date_time_visible': True,
     'bar_button_power_visible': True,
+    'corners_visible': True, # Added default for corners visibility
 }
 
 bind_vars = DEFAULTS.copy()
@@ -714,11 +715,11 @@ class HyprConfGUI(Window):
                          h_expand=True)
         vbox.add(separator2)
 
-        # --- Bar Components ---
-        components_header = Label(markup="<b>Bar Components</b>", h_align="start")
+        # --- Modules (renamed from Bar Components) ---
+        components_header = Label(markup="<b>Modules</b>", h_align="start")
         vbox.add(components_header)
 
-        # Create a grid for bar components
+        # Create a grid for bar components and other modules
         components_grid = Gtk.Grid()
         components_grid.set_column_spacing(15)
         components_grid.set_row_spacing(8)
@@ -735,15 +736,30 @@ class HyprConfGUI(Window):
             'button_power': "Power Button",
         }
 
+        # Add corners visibility switch
+        self.corners_switch = Gtk.Switch()
+        self.corners_switch.set_active(bind_vars.get('corners_visible', True))
+        
         # Calculate number of rows needed (we'll use 2 columns)
-        num_components = len(component_display_names)
+        num_components = len(component_display_names) + 1  # +1 for corners
         rows_per_column = (num_components + 1) // 2  # Ceiling division
+        
+        # First add corners to the top of first column
+        corners_label = Label(label="Rounded Corners", h_align="start", v_align="center")
+        components_grid.attach(corners_label, 0, 0, 1, 1)
+        
+        switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        switch_container.set_halign(Gtk.Align.START)
+        switch_container.set_valign(Gtk.Align.CENTER)
+        switch_container.add(self.corners_switch)
+        components_grid.attach(switch_container, 1, 0, 1, 1)
         
         # Add components to grid in two columns
         for i, (component_name, display_name) in enumerate(component_display_names.items()):
             # Determine position: first half in column 0, second half in column 2
-            col = 0 if i < rows_per_column else 2
-            row = i % rows_per_column
+            # Start at row 1 to account for corners at row 0
+            row = (i + 1) % rows_per_column  # +1 to start after corners
+            col = 0 if i < (rows_per_column - 1) else 2  # Adjust column calculation
             
             component_label = Label(label=display_name, h_align="start", v_align="center")
             components_grid.attach(component_label, col, row, 1, 1)
@@ -927,6 +943,7 @@ class HyprConfGUI(Window):
         bind_vars['dock_always_occluded'] = self.dock_hover_switch.get_active()
         bind_vars['dock_icon_size'] = int(self.dock_size_scale.value)
         bind_vars['terminal_command'] = self.terminal_entry.get_text()
+        bind_vars['corners_visible'] = self.corners_switch.get_active()
 
         for component_name, switch in self.component_switches.items():
             config_key = f'bar_{component_name}_visible'
@@ -1067,6 +1084,8 @@ echo "Restart script finished." >> /tmp/ax_shell_restart.log
             for component_name, switch in self.component_switches.items():
                  config_key = f'bar_{component_name}_visible'
                  switch.set_active(bind_vars.get(config_key, True))
+            
+            self.corners_switch.set_active(bind_vars.get('corners_visible', True))
 
             self.selected_face_icon = None
             self.face_status_label.label = ""
