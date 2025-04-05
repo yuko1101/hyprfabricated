@@ -12,6 +12,7 @@
 
 #notch-wrap.occluded {
   margin-top: -40px;
+  opacity: 0;
 }
 
 #notch-box.hideshow {
@@ -52,7 +53,8 @@
 
 #notch-content.tools {
   min-height: 84px;
-  min-width: 632px; /* Changed to include pomodoro btn */
+  min-width: 632px;
+  /* Changed to include pomodoro btn */
   border-radius: 0 0 36px 36px;
 }
 
