@@ -161,6 +161,30 @@ class ClipHistory(Box):
             if filter_text.lower() in content.lower():
                 filtered_items.append(item)
         
+        # Show message if no items are found
+        if not filtered_items:
+            # Create a container box to better center the message
+            container = Box(
+                name="no-clip-container",
+                orientation="v",
+                h_align="center",
+                v_align="center",
+                h_expand=True,
+                v_expand=True
+            )
+            
+            # Show a message if no clipboard items
+            label = Label(
+                name="no-clip",
+                markup=icons.clipboard,
+                h_align="center",
+                v_align="center",
+            )
+            
+            container.add(label)
+            self.viewport.add(container)
+            return
+            
         # Display items in batches to prevent UI freeze
         self._display_items_batch(filtered_items, 0, 10)
 
@@ -255,7 +279,7 @@ class ClipHistory(Box):
                     
                     # Resize for a reasonable thumbnail
                     width, height = pixbuf.get_width(), pixbuf.get_height()
-                    max_size = 24  # Same as app icons
+                    max_size = 72  # Same as app icons
                     
                     if width > height:
                         new_width = max_size
@@ -291,6 +315,11 @@ class ClipHistory(Box):
                 orientation="h",
                 spacing=10,
                 children=[
+                    Label(
+                        name="clip-icon",
+                        markup=icons.clip_text,
+                        h_align="start",
+                    ),
                     Label(
                         name="clip-label",
                         label=display_text,
