@@ -358,7 +358,7 @@ class Notch(Window):
             self.stack.add_style_class("launcher")  # Reuse launcher styling
             self.stack.set_visible_child(self.cliphist)
             self.cliphist.add_style_class("open")
-            self.cliphist.open()
+            GLib.idle_add(self.cliphist.open)
             self._is_notch_open = True
 
             return

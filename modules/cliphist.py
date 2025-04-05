@@ -95,7 +95,7 @@ class ClipHistory(Box):
 
     def open(self):
         """Open the clipboard history panel and load items"""
-        self.load_clipboard_items()
+        GLib.timeout_add(300, self.load_clipboard_items)
         self.search_entry.set_text("")  # Clear search
         self.search_entry.grab_focus()
 
