@@ -29,7 +29,10 @@ def truncate_title(title):
     parts = title.rsplit(' - ', 1)
     if len(parts) == 1:
         parts = title.rsplit(' — ', 1)
-    return parts[0] if len(parts) > 1 else title
+    return parts[1] if len(parts) == 2 and parts[0] == "" else parts[0] if len(parts) > 1 else title
+
+
+
 
 
 class Notch(Window):
