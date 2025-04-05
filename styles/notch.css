@@ -11,7 +11,8 @@
 }
 
 #notch-wrap.occluded {
-  margin-top: -38px;
+  margin-top: -40px;
+  opacity: 0;
 }
 
 #notch-box.hideshow {
@@ -28,7 +29,8 @@
 }
 
 #notch-content.launcher,
-#notch-content.tmux {
+#notch-content.tmux,
+#notch-content.cliphist {
   padding: 16px;
   min-height: 220px;
   min-width: 480px;
@@ -51,7 +53,8 @@
 
 #notch-content.tools {
   min-height: 84px;
-  min-width: 580px;
+  min-width: 632px;
+  /* Changed to include pomodoro btn */
   border-radius: 0 0 36px 36px;
 }
 
@@ -75,7 +78,8 @@
 #emoji,
 #power-menu,
 #toolbox,
-#tmux-manager {
+#tmux-manager,
+#clip-history {
   opacity: 1;
   margin: -800px;
   transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
@@ -89,7 +93,8 @@
 #power-menu.open,
 #toolbox.open,
 #bluetooth.open,
-#tmux-manager.open {
+#tmux-manager.open,
+#clip-history.open {
   opacity: 1;
   margin: 0px;
 }

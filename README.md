@@ -65,6 +65,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - [Matugen](https://github.com/InioX/matugen)
     - `brightnessctl`
     - `cava`
+    - `cliphist`
     - `gnome-bluetooth-3.0`
     - `gobject-introspection`
     - `gpu-screen-recorder`

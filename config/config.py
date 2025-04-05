@@ -23,7 +23,7 @@ from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.image import Image as FabricImage # Alias to avoid clash
 from fabric.widgets.stack import Stack
 from fabric.widgets.scale import Scale
-from fabric.utils.helpers import get_relative_path # If needed for assets
+from fabric.utils.helpers import exec_shell_command, exec_shell_command_async
 
 # Assuming data.py exists in the same directory or is accessible via sys.path
 # If data.py is in ./config/data.py relative to this script's original location:
@@ -65,6 +65,8 @@ DEFAULTS = {
     'suffix_launcher': "R",
     'prefix_tmux': "SUPER",
     'suffix_tmux': "T",
+    'prefix_cliphist': "SUPER",
+    'suffix_cliphist': "V",
     'prefix_toolbox': "SUPER",
     'suffix_toolbox': "S",
     'prefix_overview': "SUPER",
@@ -297,6 +299,7 @@ bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend
 bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban | Default: SUPER + N
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
 bind = {bind_vars['prefix_tmux']}, {bind_vars['suffix_tmux']}, exec, $fabricSend 'notch.open_notch("tmux")' # App Launcher | Default: SUPER + T
+bind = {bind_vars['prefix_cliphist']}, {bind_vars['suffix_cliphist']}, exec, $fabricSend 'notch.open_notch("cliphist")' # App Launcher | Default: SUPER + V
 bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
@@ -500,6 +503,7 @@ class HyprConfGUI(Window):
             ("Kanban", 'prefix_kanban', 'suffix_kanban'),
             ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
             ("Tmux", 'prefix_tmux', 'suffix_tmux'),
+            ("Clipboard History", 'prefix_cliphist', 'suffix_cliphist'),
             ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
             ("Overview", 'prefix_overview', 'suffix_overview'),
             ("Wallpapers", 'prefix_wallpapers', 'suffix_wallpapers'),
@@ -1015,36 +1019,18 @@ class HyprConfGUI(Window):
 
         start_config()
 
+        # Restart Ax-Shell using fabric's async command executor
         main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
-        restart_script_content = f"""#!/bin/bash
-echo "Attempting to restart {APP_NAME}..." > /tmp/ax_shell_restart.log
-killall {APP_NAME} &>> /tmp/ax_shell_restart.log
-sleep 0.5
-echo "Running main script: python {main_script_path}" >> /tmp/ax_shell_restart.log
-python_output=$(python {main_script_path} 2>&1)
-echo "Python script output:" >> /tmp/ax_shell_restart.log
-echo "$python_output" >> /tmp/ax_shell_restart.log
-if command -v uwsm-app &> /dev/null; then
-    echo "Running uwsm-app..." >> /tmp/ax_shell_restart.log
-    uwsm-app "$python_output" &>> /tmp/ax_shell_restart.log &
-else
-    echo "uwsm-app command not found. Cannot start application with uwsm." >> /tmp/ax_shell_restart.log
-fi
-echo "Restart script finished." >> /tmp/ax_shell_restart.log
-"""
-        restart_script_path = "/tmp/ax_shell_restart.sh"
+        kill_cmd = f"killall {APP_NAME}"
+        start_cmd = f"uwsm app -- python {main_script_path}"
+        
         try:
-            with open(restart_script_path, "w") as f:
-                f.write(restart_script_content)
-            os.chmod(restart_script_path, 0o755)
-
-            subprocess.Popen(["/bin/bash", restart_script_path],
-                             start_new_session=True,
-                             stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL)
-            print(f"{APP_NAME_CAP} restart initiated in background. Check /tmp/ax_shell_restart.log for details.")
+            # Use fabric's helper to run the command asynchronously
+            exec_shell_command(kill_cmd)
+            exec_shell_command_async(start_cmd)
+            print(f"{APP_NAME_CAP} restart initiated.")
         except Exception as e:
-            print(f"Error creating or running restart script: {e}")
+            print(f"Error restarting {APP_NAME_CAP}: {e}")
 
         print("Configuration applied and reload initiated.")
 
