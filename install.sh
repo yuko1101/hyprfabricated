@@ -42,6 +42,7 @@ PACKAGES=(
     ttf-jost
     unzip
     tmux
+    cliphist
 )
 
 # Prevent running as root

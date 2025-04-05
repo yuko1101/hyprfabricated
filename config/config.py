@@ -11,16 +11,13 @@ from PIL import Image
 from fabric.utils.helpers import get_relative_path
 import subprocess
 import gi
-from fabric.utils.helpers import get_relative_path
-from gi.repository import GdkPixbuf
 
 
 gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk  # noqa: E402
-from config.data import (
-    APP_NAME, APP_NAME_CAP, CONFIG_DIR, HOME_DIR, WALLPAPERS_DIR_DEFAULT,VERTICAL
-)
+from config.data import APP_NAME, APP_NAME_CAP, HOME_DIR, WALLPAPERS_DIR_DEFAULT
+
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
 source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
@@ -28,46 +25,46 @@ source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
 
 # Initialize bind_vars with default values
 DEFAULTS = {
-    'prefix_restart': "SUPER ALT",
-    'suffix_restart': "B",
-    'prefix_axmsg': "SUPER",
-    'suffix_axmsg': "A",
-    'prefix_dash': "SUPER",
-    'suffix_dash': "D",
-    'prefix_bluetooth': "SUPER",
-    'suffix_bluetooth': "B",
-    'prefix_pins': "SUPER",
-    'suffix_pins': "Q",
-    'prefix_kanban': "SUPER",
-    'suffix_kanban': "N",
-    'prefix_launcher': "SUPER",
-    'suffix_launcher': "R",
-    'prefix_tmux': "SUPER",
-    'suffix_tmux': "T",
-    'prefix_toolbox': "SUPER",
-    'suffix_toolbox': "S",
-    'prefix_overview': "SUPER",
-    'suffix_overview': "TAB",
-    'prefix_wallpapers': "SUPER",
-    'suffix_wallpapers': "COMMA",
-    'prefix_emoji': "SUPER",
-    'suffix_emoji': "PERIOD",
-    'prefix_power': "SUPER",
-    'suffix_power': "ESCAPE",
-    'prefix_toggle': "SUPER CTRL",
-    'suffix_toggle': "B",
-    'prefix_css': "SUPER SHIFT",
-    'suffix_css': "B",
-    'wallpapers_dir': WALLPAPERS_DIR_DEFAULT,
-    'prefix_restart_inspector': "SUPER CTRL ALT",
-    'suffix_restart_inspector': "B",
-    'vertical': False,  # New default for vertical layout
-    'centered_bar': False,  # New default for centered bar option
-    'terminal_command': "kitty -e",  # Default terminal command for tmux
-    'dock_enabled': True,  # Default value for dock visibility
-    'dock_icon_size': 28,  # Default dock icon size
+    "prefix_restart": "SUPER ALT",
+    "suffix_restart": "B",
+    "prefix_axmsg": "SUPER",
+    "suffix_axmsg": "A",
+    "prefix_dash": "SUPER",
+    "suffix_dash": "D",
+    "prefix_bluetooth": "SUPER",
+    "suffix_bluetooth": "B",
+    "prefix_pins": "SUPER",
+    "suffix_pins": "Q",
+    "prefix_kanban": "SUPER",
+    "suffix_kanban": "N",
+    "prefix_launcher": "SUPER",
+    "suffix_launcher": "R",
+    "prefix_tmux": "SUPER",
+    "suffix_tmux": "T",
+    "prefix_toolbox": "SUPER",
+    "suffix_toolbox": "S",
+    "prefix_overview": "SUPER",
+    "suffix_overview": "TAB",
+    "prefix_wallpapers": "SUPER",
+    "suffix_wallpapers": "COMMA",
+    "prefix_emoji": "SUPER",
+    "suffix_emoji": "PERIOD",
+    "prefix_power": "SUPER",
+    "suffix_power": "ESCAPE",
+    "prefix_toggle": "SUPER CTRL",
+    "suffix_toggle": "B",
+    "prefix_css": "SUPER SHIFT",
+    "suffix_css": "B",
+    "wallpapers_dir": WALLPAPERS_DIR_DEFAULT,
+    "prefix_restart_inspector": "SUPER CTRL ALT",
+    "suffix_restart_inspector": "B",
+    "vertical": False,  # New default for vertical layout
+    "centered_bar": False,  # New default for centered bar option
+    "terminal_command": "kitty -e",  # Default terminal command for tmux
+    "dock_enabled": True,  # Default value for dock visibility
+    "dock_icon_size": 28,  # Default dock icon size
     "prefix_config": "SUPER",
-    "suffix_config": "I"
+    "suffix_config": "I",
 }
 
 bind_vars = DEFAULTS.copy()
@@ -151,18 +148,26 @@ def ensure_matugen_config():
 
     # Expand paths for checking
     current_wall = os.path.expanduser("~/.current.wall")
-    hypr_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/colors.conf")
+    hypr_colors = os.path.expanduser(
+        f"~/.config/{APP_NAME_CAP}/config/hypr/colors.conf"
+    )
     css_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/styles/colors.css")
 
     # Check if any of the required files are missing
-    if not os.path.exists(current_wall) or not os.path.exists(hypr_colors) or not os.path.exists(css_colors):
+    if (
+        not os.path.exists(current_wall)
+        or not os.path.exists(hypr_colors)
+        or not os.path.exists(css_colors)
+    ):
         # Ensure the directories exist
         os.makedirs(os.path.dirname(hypr_colors), exist_ok=True)
         os.makedirs(os.path.dirname(css_colors), exist_ok=True)
 
         # Use the example wallpaper if no current wallpaper
         if not os.path.exists(current_wall):
-            image_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
+            image_path = os.path.expanduser(
+                f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg"
+            )
             # Create symlink to the example wallpaper if it doesn't exist already
             if os.path.exists(image_path) and not os.path.exists(current_wall):
                 try:
@@ -172,7 +177,11 @@ def ensure_matugen_config():
                     os.symlink(image_path, current_wall)
         else:
             # Use the existing wallpaper
-            image_path = os.path.realpath(current_wall) if os.path.islink(current_wall) else current_wall
+            image_path = (
+                os.path.realpath(current_wall)
+                if os.path.islink(current_wall)
+                else current_wall
+            )
 
         # Run matugen to generate the color files
         print(f"Generating color theme from wallpaper: {image_path}")
@@ -189,9 +198,7 @@ def load_bind_vars():
     """
     Load saved key binding variables from JSON, if available.
     """
-    config_json = os.path.expanduser(
-        f"~/.config/{APP_NAME_CAP}/config/config.json"
-    )
+    config_json = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
     try:
         with open(config_json, "r") as f:
             saved_vars = json.load(f)
@@ -205,7 +212,7 @@ def generate_hyprconf() -> str:
     """
     Generate the Hypr configuration string using the current bind_vars.
     """
-    home = os.path.expanduser('~')
+    home = os.path.expanduser("~")
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
@@ -340,8 +347,6 @@ class HyprConfGUI(Gtk.Window):
         self.general_grid = self.create_general_grid()
         self.stack.add_titled(self.general_grid, "general", "General Config")
 
-
-
         # Apply and Close buttons
         button_box = Gtk.Box(spacing=10)
         vbox.pack_start(button_box, False, False, 0)
@@ -358,7 +363,6 @@ class HyprConfGUI(Gtk.Window):
         close_btn.connect("clicked", self.on_close)
         button_box.pack_start(close_btn, True, True, 0)
 
-
     def create_keybinds_grid(self, show_lock_checkbox, show_idle_checkbox):
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
         grid.set_margin_top(10)
@@ -373,22 +377,26 @@ class HyprConfGUI(Gtk.Window):
 
         self.entries = []
         bindings = [
-            (f"Reload {APP_NAME_CAP}", 'prefix_restart', 'suffix_restart'),
-            ("Message", 'prefix_axmsg', 'suffix_axmsg'),
-            ("Dashboard", 'prefix_dash', 'suffix_dash'),
-            ("Bluetooth", 'prefix_bluetooth', 'suffix_bluetooth'),
-            ("Pins", 'prefix_pins', 'suffix_pins'),
-            ("Kanban", 'prefix_kanban', 'suffix_kanban'),
-            ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
-            ("Tmux", 'prefix_tmux', 'suffix_tmux'),
-            ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
-            ("Overview", 'prefix_overview', 'suffix_overview'),
-            ("Wallpapers", 'prefix_wallpapers', 'suffix_wallpapers'),
-            ("Emoji Picker", 'prefix_emoji', 'suffix_emoji'),
-            ("Power Menu", 'prefix_power', 'suffix_power'),
-            ("Toggle Bar and Notch", 'prefix_toggle', 'suffix_toggle'),
-            ("Reload CSS", 'prefix_css', 'suffix_css'),
-            ("Restart with inspector", 'prefix_restart_inspector', 'suffix_restart_inspector'),
+            (f"Reload {APP_NAME_CAP}", "prefix_restart", "suffix_restart"),
+            ("Message", "prefix_axmsg", "suffix_axmsg"),
+            ("Dashboard", "prefix_dash", "suffix_dash"),
+            ("Bluetooth", "prefix_bluetooth", "suffix_bluetooth"),
+            ("Pins", "prefix_pins", "suffix_pins"),
+            ("Kanban", "prefix_kanban", "suffix_kanban"),
+            ("App Launcher", "prefix_launcher", "suffix_launcher"),
+            ("Tmux", "prefix_tmux", "suffix_tmux"),
+            ("Toolbox", "prefix_toolbox", "suffix_toolbox"),
+            ("Overview", "prefix_overview", "suffix_overview"),
+            ("Wallpapers", "prefix_wallpapers", "suffix_wallpapers"),
+            ("Emoji Picker", "prefix_emoji", "suffix_emoji"),
+            ("Power Menu", "prefix_power", "suffix_power"),
+            ("Toggle Bar and Notch", "prefix_toggle", "suffix_toggle"),
+            ("Reload CSS", "prefix_css", "suffix_css"),
+            (
+                "Restart with inspector",
+                "prefix_restart_inspector",
+                "suffix_restart_inspector",
+            ),
         ]
 
         # Populate grid with key binding rows, starting at row 1
@@ -491,7 +499,7 @@ class HyprConfGUI(Gtk.Window):
                 # Check for a tooltip in the tooltips section
                 comment = tooltips.get(f"{key}_tooltip", "")
 
-                option_label = Gtk.Label(label=key.replace("_"," ").capitalize())
+                option_label = Gtk.Label(label=key.replace("_", " ").capitalize())
                 option_label.set_halign(Gtk.Align.START)
                 if comment:
                     option_label.set_tooltip_text(comment)
@@ -547,9 +555,7 @@ class HyprConfGUI(Gtk.Window):
         # Update wallpaper directory
         bind_vars["wallpapers_dir"] = self.wall_dir_chooser.get_filename()
 
-        config_json = os.path.expanduser(
-            f"~/.config/{APP_NAME_CAP}/config/config.json"
-        )
+        config_json = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
         try:
             with open(config_json, "w") as f:
@@ -656,9 +662,7 @@ class HyprConfGUI(Gtk.Window):
         bind_vars["wallpapers_dir"] = self.wall_dir_chooser.get_filename()
 
         # Save the updated bind_vars to a JSON file
-        config_json = os.path.expanduser(
-            f"~/.config/{APP_NAME_CAP}/config/config.json"
-        )
+        config_json = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
         with open(config_json, "w") as f:
             json.dump(bind_vars, f)
@@ -696,7 +700,7 @@ class HyprConfGUI(Gtk.Window):
         hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
         with open(hyprland_config_path, "r") as f:
             content = f.read()
-        if (SOURCE_STRING not in content):
+        if SOURCE_STRING not in content:
             with open(hyprland_config_path, "a") as f:
                 f.write(SOURCE_STRING)
 
@@ -717,10 +721,12 @@ uwsm-app "$python_output" &
         os.chmod(restart_path, 0o755)
 
         # Start the script in the background
-        subprocess.Popen(["/bin/bash", restart_path],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                        start_new_session=True)
+        subprocess.Popen(
+            ["/bin/bash", restart_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
 
         # Removed confirmation dialog to make the interface cleaner
 
@@ -736,9 +742,11 @@ uwsm-app "$python_output" &
             flags=0,
             message_type=Gtk.MessageType.QUESTION,
             buttons=Gtk.ButtonsType.YES_NO,
-            text="Reset all settings to defaults?"
+            text="Reset all settings to defaults?",
         )
-        dialog.format_secondary_text("This will reset all keybindings and other settings to their default values.")
+        dialog.format_secondary_text(
+            "This will reset all keybindings and other settings to their default values."
+        )
         response = dialog.run()
         dialog.destroy()
 
@@ -768,7 +776,7 @@ uwsm-app "$python_output" &
                 suffix_entry.set_text(bind_vars[suffix_key])
 
             # Update wallpaper directory chooser
-            self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
+            self.wall_dir_chooser.set_filename(bind_vars["wallpapers_dir"])
 
             # Clear face icon selection status
             self.selected_face_icon = None
@@ -803,9 +811,7 @@ def open_config():
 
     # Check and copy hyprlock config if needed
     dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
-    src_lock = os.path.expanduser(
-        f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf"
-    )
+    src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
     os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
     show_lock_checkbox = True
     if not os.path.exists(dest_lock):
@@ -814,9 +820,7 @@ def open_config():
 
     # Check and copy hypridle config if needed
     dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
-    src_idle = os.path.expanduser(
-        f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf"
-    )
+    src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
     show_idle_checkbox = True
     if not os.path.exists(dest_idle):
         shutil.copy(src_idle, dest_idle)
