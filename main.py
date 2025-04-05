@@ -8,8 +8,6 @@ from modules.bar import Bar
 from modules.corners import Corners
 from modules.dock import Dock
 from modules.notch import Notch
-# Import on_accept function from config
-from config.config import start_config
 
 fonts_updated_file = f"{CACHE_DIR}/fonts_updated"
 
@@ -18,9 +16,6 @@ if __name__ == "__main__":
 
     if not os.path.isfile(CONFIG_FILE):
         exec_shell_command_async(f"python {get_relative_path('../config/config.py')}")
-    else:
-        # Run config's start_config function to ensure configuration is applied
-        start_config()
 
     current_wallpaper = os.path.expanduser("~/.current.wall")
     if not os.path.exists(current_wallpaper):
