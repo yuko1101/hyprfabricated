@@ -4,20 +4,22 @@ from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
 from fabric.widgets.image import Image
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import idle_add, remove_handler, exec_shell_command_async
+from fabric.utils import idle_add, remove_handler
 from fabric.utils.helpers import get_relative_path
 from gi.repository import GLib, Gdk, GdkPixbuf
 import subprocess
-import base64
-import io
 import os
 import re
 import sys
 import tempfile
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import modules.icons as icons
 
 class ClipHistory(Box):
+    _executor = ThreadPoolExecutor(max_workers=4)  # Shared thread pool
+    
     def __init__(self, **kwargs):
         super().__init__(
             name="clip-history",
@@ -28,11 +30,14 @@ class ClipHistory(Box):
 
         # Create a temporary directory for image icons
         self.tmp_dir = tempfile.mkdtemp(prefix="cliphist-")
+        self.image_cache = {}  # Cache for image previews
         
         self.notch = kwargs["notch"]
         self.selected_index = -1  # Track the selected item index
         self._arranger_handler = 0
         self.clipboard_items = []
+        self._loading = False
+        self._pending_updates = False
 
         self.viewport = Box(name="viewport", spacing=4, orientation="v")
         self.search_entry = Entry(
@@ -74,7 +79,7 @@ class ClipHistory(Box):
         )
 
         self.history_box = Box(
-            name="launcher-box",  # Reuse launcher styling
+            name="launcher-box",
             spacing=10,
             h_expand=True,
             orientation="v",
@@ -95,12 +100,18 @@ class ClipHistory(Box):
 
     def open(self):
         """Open the clipboard history panel and load items"""
-        GLib.timeout_add(300, self.load_clipboard_items)
+        if self._loading:
+            return
+            
+        self._loading = True
         self.search_entry.set_text("")  # Clear search
         self.search_entry.grab_focus()
+        
+        # Start loading in background thread
+        self._executor.submit(self._load_clipboard_items_thread)
 
-    def load_clipboard_items(self):
-        """Load clipboard history items using cliphist"""
+    def _load_clipboard_items_thread(self):
+        """Thread worker for loading clipboard items"""
         try:
             # Get all clipboard items
             result = subprocess.run(
@@ -112,21 +123,29 @@ class ClipHistory(Box):
             
             # Parse the output
             lines = result.stdout.strip().split('\n')
-            self.clipboard_items = []
+            new_items = []
             
             for line in lines:
                 if not line or "<meta http-equiv" in line:
                     continue  # Skip empty lines and browser meta content
-                
-                # Store the raw line which contains the cliphist ID
-                self.clipboard_items.append(line)
+                new_items.append(line)
             
-            # Display items
-            self.display_clipboard_items()
+            # Update UI in main thread
+            GLib.idle_add(self._update_items, new_items)
         except subprocess.CalledProcessError as e:
             print(f"Error loading clipboard history: {e}", file=sys.stderr)
         except Exception as e:
             print(f"Unexpected error: {e}", file=sys.stderr)
+        finally:
+            self._loading = False
+            if self._pending_updates:
+                self._pending_updates = False
+                self._executor.submit(self._load_clipboard_items_thread)
+
+    def _update_items(self, new_items):
+        """Update the items list from main thread"""
+        self.clipboard_items = new_items
+        self.display_clipboard_items()
 
     def display_clipboard_items(self, filter_text=""):
         """Display clipboard items in the viewport"""
@@ -142,13 +161,24 @@ class ClipHistory(Box):
             if filter_text.lower() in content.lower():
                 filtered_items.append(item)
         
-        # Display items
-        for item in filtered_items:
+        # Display items in batches to prevent UI freeze
+        self._display_items_batch(filtered_items, 0, 10)
+
+    def _display_items_batch(self, items, start, batch_size):
+        """Display items in batches to keep UI responsive"""
+        end = min(start + batch_size, len(items))
+        
+        for i in range(start, end):
+            item = items[i]
             self.viewport.add(self.create_clipboard_item(item))
         
-        # Auto-select first item if we have filter text
-        if filter_text and self.viewport.get_children():
-            self.update_selection(0)
+        # Schedule next batch if there are more items
+        if end < len(items):
+            GLib.idle_add(self._display_items_batch, items, end, batch_size)
+        else:
+            # Auto-select first item if we have filter text
+            if self.search_entry.get_text() and self.viewport.get_children():
+                self.update_selection(0)
 
     def create_clipboard_item(self, item):
         """Create a button for a clipboard item"""
@@ -165,40 +195,31 @@ class ClipHistory(Box):
         # Check if this is an image by examining the content
         is_image = self.is_image_data(content)
         
-        button = None
-        
         if is_image:
             # For images, create item with image preview
-            try:
-                # Get image preview and save to temp file for icon
-                pixbuf = self.get_image_preview(item_id, save_to_file=True)
-                image_widget = Image(name="clip-icon", pixbuf=pixbuf, h_align="start")
-                
-                button = Button(
-                    name="slot-button",
-                    child=Box(
-                        name="slot-box",
-                        orientation="h",
-                        spacing=10,
-                        children=[
-                            image_widget,
-                            Label(
-                                name="clip-label",
-                                label="[Image]",
-                                ellipsization="end",
-                                v_align="center",
-                                h_align="start",
-                                h_expand=True,
-                            ),
-                        ],
-                    ),
-                    tooltip_text="Image in clipboard",
-                    on_clicked=lambda *_, id=item_id: self.paste_item(id),
-                )
-            except Exception as e:
-                # Fallback if image preview fails
-                print(f"Error creating image preview: {e}", file=sys.stderr)
-                button = self.create_text_item_button(item_id, "[Image data]")
+            button = Button(
+                name="slot-button",
+                child=Box(
+                    name="slot-box",
+                    orientation="h",
+                    spacing=10,
+                    children=[
+                        Image(name="clip-icon", h_align="start"),  # Placeholder
+                        Label(
+                            name="clip-label",
+                            label="[Image]",
+                            ellipsization="end",
+                            v_align="center",
+                            h_align="start",
+                            h_expand=True,
+                        ),
+                    ],
+                ),
+                tooltip_text="Image in clipboard",
+                on_clicked=lambda *_, id=item_id: self.paste_item(id),
+            )
+            # Load image preview in background
+            self._load_image_preview_async(item_id, button)
         else:
             # For text, create regular item
             button = self.create_text_item_button(item_id, display_text)
@@ -212,16 +233,64 @@ class ClipHistory(Box):
             
         return button
 
+    def _load_image_preview_async(self, item_id, button):
+        """Load image preview in background thread"""
+        def load_image():
+            try:
+                if item_id in self.image_cache:
+                    pixbuf = self.image_cache[item_id]
+                else:
+                    # Use cliphist to get the raw image data
+                    result = subprocess.run(
+                        ["cliphist", "decode", item_id],
+                        capture_output=True,
+                        check=True
+                    )
+                    
+                    # Create pixbuf from the raw data
+                    loader = GdkPixbuf.PixbufLoader()
+                    loader.write(result.stdout)
+                    loader.close()
+                    pixbuf = loader.get_pixbuf()
+                    
+                    # Resize for a reasonable thumbnail
+                    width, height = pixbuf.get_width(), pixbuf.get_height()
+                    max_size = 24  # Same as app icons
+                    
+                    if width > height:
+                        new_width = max_size
+                        new_height = int(height * (max_size / width))
+                    else:
+                        new_height = max_size
+                        new_width = int(width * (max_size / height))
+                        
+                    pixbuf = pixbuf.scale_simple(new_width, new_height, GdkPixbuf.InterpType.BILINEAR)
+                    self.image_cache[item_id] = pixbuf
+                
+                # Update UI in main thread
+                GLib.idle_add(self._update_image_button, button, pixbuf)
+            except Exception as e:
+                print(f"Error loading image preview: {e}", file=sys.stderr)
+
+        self._executor.submit(load_image)
+
+    def _update_image_button(self, button, pixbuf):
+        """Update the button with the loaded image preview"""
+        box = button.get_child()
+        if box and len(box.get_children()) > 0:
+            image_widget = box.get_children()[0]
+            if isinstance(image_widget, Image):
+                image_widget.set_from_pixbuf(pixbuf)
+
     def create_text_item_button(self, item_id, display_text):
         """Create a button for a text clipboard item"""
-        button = Button(
+        return Button(
             name="slot-button",
             child=Box(
                 name="slot-box",
                 orientation="h",
                 spacing=10,
                 children=[
-                    # No icon for text items
                     Label(
                         name="clip-label",
                         label=display_text,
@@ -235,15 +304,9 @@ class ClipHistory(Box):
             tooltip_text=display_text,
             on_clicked=lambda *_: self.paste_item(item_id),
         )
-        return button
 
     def is_image_data(self, content):
         """Determine if clipboard content is likely an image"""
-        # Various heuristics to detect image data:
-        # - Base64 image data often starts with specific patterns
-        # - Binary data has unusual characters
-        # - Image content often has specific keywords
-        
         # Check for common image data patterns
         return (
             content.startswith("data:image/") or
@@ -254,93 +317,58 @@ class ClipHistory(Box):
             "binary" in content.lower() and any(ext in content.lower() for ext in ["jpg", "jpeg", "png", "bmp", "gif"])
         )
 
-    def get_image_preview(self, item_id, save_to_file=False):
-        """Get a preview image for clipboard item"""
-        try:
-            # Use cliphist to get the raw image data
-            result = subprocess.run(
-                ["cliphist", "decode", item_id],
-                capture_output=True,
-                check=True
-            )
-            
-            # Create pixbuf from the raw data
-            loader = GdkPixbuf.PixbufLoader()
-            loader.write(result.stdout)
-            loader.close()
-            pixbuf = loader.get_pixbuf()
-            
-            # Resize for a reasonable thumbnail
-            width, height = pixbuf.get_width(), pixbuf.get_height()
-            max_size = 24  # Same as app icons
-            
-            if width > height:
-                new_width = max_size
-                new_height = int(height * (max_size / width))
-            else:
-                new_height = max_size
-                new_width = int(width * (max_size / height))
-                
-            scaled_pixbuf = pixbuf.scale_simple(new_width, new_height, GdkPixbuf.InterpType.BILINEAR)
-            
-            # Save to a temporary file if requested
-            if save_to_file:
-                # Determine file extension based on image type
-                if pixbuf.get_property("has-alpha"):
-                    ext = "png"
-                else:
-                    ext = "jpg"
-                
-                # Create the filename
-                filepath = os.path.join(self.tmp_dir, f"{item_id}.{ext}")
-                
-                # Save the full image for better quality
-                pixbuf.savev(filepath, ext, [], [])
-            
-            return scaled_pixbuf
-            
-        except Exception as e:
-            print(f"Error getting image preview: {e}", file=sys.stderr)
-            # Return a placeholder image
-            return GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, True, 8, 24, 24)
-
     def paste_item(self, item_id):
         """Copy the selected item to the clipboard and close"""
-        try:
-            # More reliable way to decode and copy
-            decode_proc = subprocess.Popen(
-                ["cliphist", "decode", item_id],
-                stdout=subprocess.PIPE
-            )
-            copy_proc = subprocess.Popen(
-                ["wl-copy"],
-                stdin=decode_proc.stdout
-            )
-            decode_proc.stdout.close()  # Allow decode_proc to receive SIGPIPE
-            copy_proc.communicate()
-            
-            self.close()
-        except subprocess.CalledProcessError as e:
-            print(f"Error pasting clipboard item: {e}", file=sys.stderr)
+        def paste():
+            try:
+                # More reliable way to decode and copy
+                decode_proc = subprocess.Popen(
+                    ["cliphist", "decode", item_id],
+                    stdout=subprocess.PIPE
+                )
+                copy_proc = subprocess.Popen(
+                    ["wl-copy"],
+                    stdin=decode_proc.stdout
+                )
+                decode_proc.stdout.close()  # Allow decode_proc to receive SIGPIPE
+                copy_proc.communicate()
+                
+                self.close()
+            except subprocess.CalledProcessError as e:
+                print(f"Error pasting clipboard item: {e}", file=sys.stderr)
+
+        self._executor.submit(paste)
 
     def delete_item(self, item_id):
         """Delete the selected clipboard item"""
-        try:
-            subprocess.run(
-                ["cliphist", "delete", item_id],
-                check=True
-            )
-            self.load_clipboard_items()  # Refresh the list
-        except subprocess.CalledProcessError as e:
-            print(f"Error deleting clipboard item: {e}", file=sys.stderr)
+        def delete():
+            try:
+                subprocess.run(
+                    ["cliphist", "delete", item_id],
+                    check=True
+                )
+                # Refresh the list
+                self._pending_updates = True
+                if not self._loading:
+                    self._executor.submit(self._load_clipboard_items_thread)
+            except subprocess.CalledProcessError as e:
+                print(f"Error deleting clipboard item: {e}", file=sys.stderr)
+
+        self._executor.submit(delete)
 
     def clear_history(self):
         """Clear all clipboard history"""
-        try:
-            subprocess.run(["cliphist", "wipe"], check=True)
-            self.load_clipboard_items()  # Refresh to show empty list
-        except subprocess.CalledProcessError as e:
-            print(f"Error clearing clipboard history: {e}", file=sys.stderr)
+        def clear():
+            try:
+                subprocess.run(["cliphist", "wipe"], check=True)
+                # Refresh to show empty list
+                self._pending_updates = True
+                if not self._loading:
+                    self._executor.submit(self._load_clipboard_items_thread)
+            except subprocess.CalledProcessError as e:
+                print(f"Error clearing clipboard history: {e}", file=sys.stderr)
+
+        self._executor.submit(clear)
 
     def filter_items(self, entry, *_):
         """Filter clipboard items based on search text"""
@@ -461,5 +489,6 @@ class ClipHistory(Box):
             if hasattr(self, 'tmp_dir') and os.path.exists(self.tmp_dir):
                 import shutil
                 shutil.rmtree(self.tmp_dir)
+            self.image_cache.clear()
         except Exception as e:
             print(f"Error cleaning up temporary files: {e}", file=sys.stderr)

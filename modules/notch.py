@@ -17,7 +17,7 @@ from modules.overview import Overview
 from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
 from modules.tmux import TmuxManager  # Import the new TmuxManager
-from modules.cliphist import ClipHistory  # Import the ClipHistory modulert ClipHistory  # Import the ClipHistory module
+from modules.cliphist import ClipHistory  # Import the ClipHistory module
 import config.data as data
 from modules.player import PlayerSmall
 from modules.tools import Toolbox
@@ -338,6 +338,31 @@ class Notch(Window):
     def open_notch(self, widget):
         self.notch_wrap.remove_style_class("occluded")
         
+        # Handle tmux manager
+        if widget == "tmux":
+            if self.stack.get_visible_child() == self.tmux:
+                self.close_notch()
+                return
+                
+            self.set_keyboard_mode("exclusive")
+
+            if self.hidden:
+                self.notch_box.remove_style_class("hidden")
+                self.notch_box.add_style_class("hideshow")
+
+            for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux", "cliphist"]:
+                self.stack.remove_style_class(style)
+            for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools, self.tmux, self.cliphist]:
+                w.remove_style_class("open")
+
+            self.stack.add_style_class("launcher")  # Reuse launcher styling
+            self.stack.set_visible_child(self.tmux)
+            self.tmux.add_style_class("open")
+            self.tmux.open_manager()
+            self._is_notch_open = True
+
+            return
+
         # Handle clipboard history
         if widget == "cliphist":
             if self.stack.get_visible_child() == self.cliphist:
