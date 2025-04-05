@@ -9,6 +9,7 @@ INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
   brightnessctl
   cava
+  cliphist
   fabric-cli-git
   gnome-bluetooth-3.0
   gobject-introspection
@@ -35,6 +36,7 @@ PACKAGES=(
   swappy
   swww
   tesseract
+  tmux
   unzip
   uwsm
   wl-clipboard
