@@ -246,8 +246,10 @@ class Toolbox(Box):
 
         if running:
             self.btn_pomodoro.get_child().set_markup(icons.timer_on)
+            self.btn_pomodoro.add_style_class("pomodoro")
         else:
             self.btn_pomodoro.get_child().set_markup(icons.timer_off)
+            self.btn_pomodoro.remove_style_class("pomodoro")
 
         return True
 
