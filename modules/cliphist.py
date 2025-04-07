@@ -350,19 +350,22 @@ class ClipHistory(Box):
         """Copy the selected item to the clipboard and close"""
         def paste():
             try:
-                # More reliable way to decode and copy
-                decode_proc = subprocess.Popen(
+                # Get the data from cliphist first
+                result = subprocess.run(
                     ["cliphist", "decode", item_id],
-                    stdout=subprocess.PIPE
+                    capture_output=True,
+                    check=True
                 )
-                copy_proc = subprocess.Popen(
-                    ["wl-copy"],
-                    stdin=decode_proc.stdout
-                )
-                decode_proc.stdout.close()  # Allow decode_proc to receive SIGPIPE
-                copy_proc.communicate()
                 
-                self.close()
+                # Then pass it to wl-copy
+                subprocess.run(
+                    ["wl-copy"],
+                    input=result.stdout,
+                    check=True
+                )
+                
+                # Close the UI after successful copy
+                GLib.idle_add(self.close)
             except subprocess.CalledProcessError as e:
                 print(f"Error pasting clipboard item: {e}", file=sys.stderr)
 
