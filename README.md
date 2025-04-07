@@ -95,6 +95,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Bluetooth Manager
 - [x] Calculator
 - [x] Calendar
+- [x] Clipboard Manager
 - [x] Color Picker
 - [x] Customizable UI
 - [x] Dashboard
@@ -119,7 +120,6 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] Vertical Layout
 - [x] Wallpaper Selector
 - [x] Workspaces Overview
-- [ ] Clipboard Manager
 - [ ] Multi-monitor support
 - [ ] Multimodal AI Assistant
 - [ ] Network Manager

@@ -216,6 +216,8 @@ def generate_hyprconf() -> str:
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
+exec-once =  wl-paste --type text --watch cliphist store
+exec-once =  wl-paste --type image --watch cliphist store
 
 $fabricSend = fabric-cli exec {APP_NAME}
 $axMessage = notify-send "tr1x_em" "What are you doing?" -i f"{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
