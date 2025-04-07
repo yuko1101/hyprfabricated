@@ -5,6 +5,7 @@ import os
 import subprocess
 import json
 import cairo
+import re
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -32,6 +33,23 @@ def open_file(filepath):
         subprocess.Popen(["xdg-open", filepath])
     except Exception as e:
         print("Error opening file:", e)
+
+def open_url(url):
+    try:
+        subprocess.Popen(["xdg-open", url])
+    except Exception as e:
+        print("Error opening URL:", e)
+
+def is_url(text):
+    # Simple URL validation pattern
+    url_pattern = re.compile(
+        r'^(https?|ftp)://'  # http://, https://, ftp://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain
+        r'localhost|'  # localhost
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # or IP
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    return bool(url_pattern.match(text))
 
 class FileChangeHandler(FileSystemEventHandler):
     def __init__(self, app):
@@ -102,8 +120,18 @@ class Cell(Gtk.EventBox):
                 label = Label(name="pin-file", label=os.path.basename(self.content), justification="center", ellipsization="middle")
                 self.box.pack_start(label, False, False, 0)
             elif self.content_type == 'text':
-                label = Label(name="pin-text", label=self.content.split('\n')[0], justification="center", ellipsization="end", line_wrap="word-char")
-                self.box.pack_start(label, True, True, 0)
+                if is_url(self.content):
+                    # If text is a URL, display with globe icon
+                    url_icon = Label(name="pin-url-icon", markup=icons.world)
+                    self.box.pack_start(url_icon, True, True, 0)
+                    domain = re.sub(r'^https?://', '', self.content)
+                    domain = domain.split('/')[0]
+                    label = Label(name="pin-url", label=domain, justification="center", ellipsization="end")
+                    self.box.pack_start(label, False, False, 0)
+                else:
+                    # Regular text display
+                    label = Label(name="pin-text", label=self.content.split('\n')[0], justification="center", ellipsization="end", line_wrap="word-char")
+                    self.box.pack_start(label, True, True, 0)
         self.box.show_all()
         if not self.app.loading_state:
             self.app.save_state()
@@ -203,8 +231,19 @@ class Cell(Gtk.EventBox):
                     self.clear_cell()
             elif self.content_type == 'text':
                 if event.button == 1:
-                    clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-                    clipboard.set_text(self.content, -1)
+                    # Add special handling for URLs
+                    if is_url(self.content):
+                        # Put URL in clipboard
+                        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+                        clipboard.set_text(self.content, -1)
+                        
+                        # If CTRL is not pressed, open the URL
+                        if not (event.state & Gdk.ModifierType.CONTROL_MASK):
+                            open_url(self.content)
+                    else:
+                        # Regular text behavior - just copy to clipboard
+                        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+                        clipboard.set_text(self.content, -1)
                 elif event.button == 3:
                     self.clear_cell()
         return True
