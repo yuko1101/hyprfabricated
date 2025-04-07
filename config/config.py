@@ -65,6 +65,8 @@ DEFAULTS = {
     "dock_icon_size": 28,  # Default dock icon size
     "prefix_config": "SUPER",
     "suffix_config": "I",
+    "prefix_cliphist": "SUPER",
+    "suffix_cliphist": "V",
 }
 
 bind_vars = DEFAULTS.copy()
@@ -231,6 +233,7 @@ bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabric
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
 bind = {bind_vars['prefix_tmux']}, {bind_vars['suffix_tmux']}, exec, $fabricSend 'notch.open_notch("tmux")' # App Launcher | Default: SUPER + T
 bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
+bind = {bind_vars['prefix_cliphist']}, {bind_vars['suffix_cliphist']}, exec, $fabricSend 'notch.open_notch("cliphist")' # App Launcher | Default: SUPER + V
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
 bind = {bind_vars['prefix_emoji']}, {bind_vars['suffix_emoji']}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji | Default: SUPER + PERIOD
@@ -388,6 +391,7 @@ class HyprConfGUI(Gtk.Window):
             ("App Launcher", "prefix_launcher", "suffix_launcher"),
             ("Tmux", "prefix_tmux", "suffix_tmux"),
             ("Toolbox", "prefix_toolbox", "suffix_toolbox"),
+            ("Clipboard History", "prefix_cliphist", "suffix_cliphist"),
             ("Overview", "prefix_overview", "suffix_overview"),
             ("Wallpapers", "prefix_wallpapers", "suffix_wallpapers"),
             ("Emoji Picker", "prefix_emoji", "suffix_emoji"),

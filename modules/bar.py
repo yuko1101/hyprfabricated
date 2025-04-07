@@ -78,7 +78,7 @@ class Bar(Window):
         self.connection.connect("event::activelayout", self.on_language_switch)
         self.date_time = DateTime(
             name="date-time",
-            formatters=["%I:%M:%S%P"] if not data.VERTICAL else ["%I\n%M"],
+            formatters=["%I:%M%P"] if not data.VERTICAL else ["%I\n%M"],
             h_align="center" if not data.VERTICAL else "fill",
             v_align="center",
             h_expand=True,
