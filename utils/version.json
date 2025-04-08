@@ -1,10 +1,8 @@
 {
-	"version": "2.7.0",
+	"version": "3.0.0",
 	"changelog": [
-		"Added Clipboard manager (have to regenrate config just open config and click on apply)",
-		"Language Bug fix",
-		"New Features added",
-		"Bug Fixes",
-		"Rest i forgor"
+		"Full Config Gui Revamp",
+		"New Way of config fetching (easy to maintian)",
+		"Misc Bug Fixes",
 	]
 }
