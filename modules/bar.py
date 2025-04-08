@@ -1,4 +1,3 @@
-import json
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
@@ -13,10 +12,7 @@ from fabric.hyprland.widgets import (
     get_hyprland_connection,
 )
 from fabric.hyprland.service import HyprlandEvent
-from fabric.utils.helpers import get_relative_path, exec_shell_command_async
-import gi
-
-gi.require_version("Gtk", "3.0")
+from fabric.utils.helpers import exec_shell_command_async
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
@@ -24,7 +20,6 @@ import config.data as data
 from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
 from modules.weather import Weather
-from modules.systemprofiles import Systemprofiles
 
 
 class Bar(Window):
@@ -42,9 +37,7 @@ class Bar(Window):
         )
 
         self.notch = kwargs.get("notch", None)
-        config_path = get_relative_path("../config.json")
-        with open(config_path) as config_file:
-            config = json.load(config_file)
+        self.component_visibility = data.BAR_COMPONENTS_VISIBILITY
 
         self.workspaces = Workspaces(
             name="workspaces",
@@ -68,17 +61,23 @@ class Bar(Window):
         )
 
         self.connection = get_hyprland_connection()
+        self.button_tools.connect("enter_notify_event", self.on_button_enter)
+        self.button_tools.connect("leave_notify_event", self.on_button_leave)
 
-        left_children = []
+        self.systray = SystemTray()
+        self.weather = Weather()
+        self.network = NetworkApplet()
+
         self.lang_label = Label(name="lang-label")
         self.language = Button(
             name="language", h_align="center", v_align="center", child=self.lang_label
         )
         self.on_language_switch()
         self.connection.connect("event::activelayout", self.on_language_switch)
+
         self.date_time = DateTime(
             name="date-time",
-            formatters=["%I:%M%P"] if not data.VERTICAL else ["%I\n%M"],
+            formatters=["%H:%M"] if not data.VERTICAL else ["%H\n%M"],
             h_align="center" if not data.VERTICAL else "fill",
             v_align="center",
             h_expand=True,
@@ -108,69 +107,18 @@ class Bar(Window):
         )
         self.button_overview.connect("enter_notify_event", self.on_button_enter)
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
-        if config["Bar"]["buttonapps"]:
-            self.button_apps = Button(
-                name="button-bar",
-                on_clicked=lambda *_: self.search_apps(),
-                child=Label(name="button-bar-label", markup=icons.apps),
-            )
-            self.button_apps.connect("enter_notify_event", self.on_button_enter)
-            self.button_apps.connect("leave_notify_event", self.on_button_leave)
-            left_children.append(self.button_apps)
-
-        if config["Bar"]["workspaces"]:
-            left_children.append(self.ws_container)
-
-        start_children = []
-
-        if config["Bar"]["Barleft"]["weather"]:
-            self.weather = Weather()
-            start_children.append(self.weather)
-
-        if config["Bar"]["Barleft"]["overview"]:
-            start_children.append(self.button_overview)
-
-        if config["Bar"]["Barleft"]["networkapplet"]:
-            self.network = NetworkApplet()
-            start_children.append(self.network)
-
-        self.revealer_left = Revealer(
-            name="bar-revealer",
-            transition_type="slide-right",
-            child_revealed=True,
-            child=Box(
-                name="bar-revealer-box",
-                orientation="h",
-                spacing=4,
-                children=start_children if not data.VERTICAL else None,
-            ),
-        )
-
-        self.boxed_revealer_left = Box(
-            name="boxed-revealer",
-            children=[
-                self.revealer_left,
-            ],
-        )
-
-        end_children = []
 
         self.control = ControlSmall()
+        self.metrics = MetricsSmall()
+        self.battery = Battery()
 
-        if config["Bar"]["Barright"]["metrics"]:
-            self.metrics = MetricsSmall()
-            end_children.append(self.metrics)
-        if config["Bar"]["Barright"]["controls"]:
-            end_children.append(self.control)
-        if config["Bar"]["Barright"]["battery"]:
-            self.battery = Battery()
-            end_children.append(self.battery)
-        if config["Bar"]["Barright"]["systemprofiles"]:
-            self.powerctl = Systemprofiles()
-            end_children.append(self.powerctl)
-        if config["Bar"]["systray"]:
-            self.systray = SystemTray()
-            end_children.append(self.systray)
+        # Apply visibility settings to components
+        self.apply_component_visibility()
+
+        self.rev_right = [
+            self.metrics,
+            self.control,
+        ]
 
         self.revealer_right = Revealer(
             name="bar-revealer",
@@ -180,7 +128,7 @@ class Bar(Window):
                 name="bar-revealer-box",
                 orientation="h",
                 spacing=4,
-                children=end_children if not data.VERTICAL else None,
+                children=self.rev_right if not data.VERTICAL else None,
             ),
         )
 
@@ -191,81 +139,77 @@ class Bar(Window):
             ],
         )
 
-        end_children = [self.boxed_revealer_right]
+        self.rev_left = [
+            self.weather,
+            self.network,
+        ]
 
-        self.button_tools = Button(
-            name="button-bar",
-            tooltip_text="Opens Toolbox",
-            on_clicked=lambda *_: self.tools_menu(),
-            child=Label(name="button-bar-label", markup=icons.toolbox),
+        self.revealer_left = Revealer(
+            name="bar-revealer",
+            transition_type="slide-right",
+            child_revealed=True,
+            child=Box(
+                name="bar-revealer-box",
+                orientation="h",
+                spacing=4,
+                children=self.rev_left if not data.VERTICAL else None,
+            ),
         )
-        self.button_tools.connect("enter_notify_event", self.on_button_enter)
-        self.button_tools.connect("leave_notify_event", self.on_button_leave)
-        if config["Bar"]["buttontools"]:
-            end_children.append(self.button_tools)
 
-        if config["Bar"]["Barright"]["languageindicator"]:
-            end_children.append(self.language)
-        if config["Bar"]["buttonapps"]:
-            end_children.append(self.date_time)
-
-        self.button_power = Button(
-            name="button-bar",
-            on_clicked=lambda *_: self.power_menu(),
-            child=Label(name="button-bar-label", markup=icons.shutdown),
+        self.boxed_revealer_left = Box(
+            name="boxed-revealer",
+            children=[
+                self.revealer_left,
+            ],
         )
-        self.button_power.connect("enter_notify_event", self.on_button_enter)
-        self.button_power.connect("leave_notify_event", self.on_button_leave)
-        if config["Bar"]["buttonpower"]:
-            end_children.append(self.button_power)
 
-        if data.VERTICAL:
-            self.weather = Weather()
-            self.systray = SystemTray()
-            self.button_apps = Button(
-                name="button-bar",
-                on_clicked=lambda *_: self.search_apps(),
-                child=Label(name="button-bar-label", markup=icons.apps),
-            )
-            self.button_apps.connect("enter_notify_event", self.on_button_enter)
-            self.button_apps.connect("leave_notify_event", self.on_button_leave)
-            self.network = NetworkApplet()
-            self.battery = Battery()
-            self.metrics = MetricsSmall()
-            self.v_start_children = [
-                self.button_apps,
-                self.systray,
-                self.control,
-                self.button_tools,
-            ]
+        self.h_start_children = [
+            self.button_apps,
+            self.ws_container,
+            self.button_overview,
+            self.boxed_revealer_left,
+        ]
 
-            self.minmal_children = [
-                self.button_apps,
-                self.button_overview,
-                self.ws_container,
-                self.weather,
-                self.button_power,
-            ]
-            self.v_center_children = [
-                self.button_overview,
-                self.ws_container,
-                self.weather,
-            ]
-            self.v_end_children = [
-                self.battery,
-                self.metrics,
-                self.language,
-                self.date_time,
-                self.button_power,
-            ]
+        self.h_end_children = [
+            self.boxed_revealer_right,
+            self.battery,
+            self.systray,
+            self.button_tools,
+            self.language,
+            self.date_time,
+            self.button_power,
+        ]
 
-            self.v_all_children = []
-            self.v_all_children.extend(self.v_start_children)
-            self.v_all_children.extend(self.v_center_children)
-            self.v_all_children.extend(self.v_end_children)
+        self.v_start_children = [
+            self.button_apps,
+            self.systray,
+            self.control,
+            self.network,
+            self.button_tools,
+        ]
+
+        self.v_center_children = [
+            self.button_overview,
+            self.ws_container,
+            self.weather,
+        ]
+
+        self.v_end_children = [
+            self.battery,
+            self.metrics,
+            self.language,
+            self.date_time,
+            self.button_power,
+        ]
+
+        self.v_all_children = []
+        self.v_all_children.extend(self.v_start_children)
+        self.v_all_children.extend(self.v_center_children)
+        self.v_all_children.extend(self.v_end_children)
 
         # Use centered layout when both vertical and centered_bar are enabled
         is_centered_bar = data.VERTICAL and getattr(data, "CENTERED_BAR", False)
+
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h" if not data.VERTICAL else "v",
@@ -279,7 +223,7 @@ class Bar(Window):
                     spacing=4,
                     orientation="h" if not data.VERTICAL else "v",
                     children=(
-                        left_children + [self.boxed_revealer_left]
+                        self.h_start_children
                         if not data.VERTICAL
                         else self.v_start_children
                     ),
@@ -287,12 +231,12 @@ class Bar(Window):
             ),
             center_children=(
                 Box(
-                    orientation="h" if not data.VERTICAL else "v",
+                    orientation="v",
                     spacing=4,
                     children=(
-                        self.v_center_children
-                        if not is_centered_bar
-                        else self.minmal_children
+                        self.v_all_children
+                        if is_centered_bar
+                        else self.v_center_children
                     ),
                 )
                 if data.VERTICAL
@@ -305,7 +249,11 @@ class Bar(Window):
                     name="end-container",
                     spacing=4,
                     orientation="h" if not data.VERTICAL else "v",
-                    children=end_children if not data.VERTICAL else self.v_end_children,
+                    children=(
+                        self.h_end_children
+                        if not data.VERTICAL
+                        else self.v_end_children
+                    ),
                 )
             ),
         )
@@ -314,9 +262,78 @@ class Bar(Window):
 
         self.hidden = False
 
-        self.show_all()
-        if config["Bar"]["systray"]:
-            self.systray._update_visibility()
+        # self.show_all()
+        self.systray._update_visibility()
+
+    def apply_component_visibility(self):
+        """Apply saved visibility settings to all components"""
+        components = {
+            "button_apps": self.button_apps,
+            "systray": self.systray,
+            "control": self.control,
+            "network": self.network,
+            "button_tools": self.button_tools,
+            "button_overview": self.button_overview,
+            "ws_container": self.ws_container,
+            "weather": self.weather,
+            "battery": self.battery,
+            "metrics": self.metrics,
+            "language": self.language,
+            "date_time": self.date_time,
+            "button_power": self.button_power,
+        }
+
+        for component_name, widget in components.items():
+            if component_name in self.component_visibility:
+                widget.set_visible(self.component_visibility[component_name])
+
+    def toggle_component_visibility(self, component_name):
+        """Toggle visibility for a specific component"""
+        components = {
+            "button_apps": self.button_apps,
+            "systray": self.systray,
+            "control": self.control,
+            "network": self.network,
+            "button_tools": self.button_tools,
+            "button_overview": self.button_overview,
+            "ws_container": self.ws_container,
+            "weather": self.weather,
+            "battery": self.battery,
+            "metrics": self.metrics,
+            "language": self.language,
+            "date_time": self.date_time,
+            "button_power": self.button_power,
+        }
+
+        if component_name in components and component_name in self.component_visibility:
+            # Toggle the visibility state
+            self.component_visibility[component_name] = not self.component_visibility[
+                component_name
+            ]
+            # Apply the new state
+            components[component_name].set_visible(
+                self.component_visibility[component_name]
+            )
+
+            # Update the configuration
+            config_file = os.path.expanduser(
+                f"~/.config/{data.APP_NAME}/config/config.json"
+            )
+            if os.path.exists(config_file):
+                with open(config_file, "r") as f:
+                    config = json.load(f)
+
+                # Update the config with the new visibility state
+                config[f"bar_{component_name}_visible"] = self.component_visibility[
+                    component_name
+                ]
+
+                with open(config_file, "w") as f:
+                    json.dump(config, f)
+
+            return self.component_visibility[component_name]
+
+        return None
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()
@@ -329,6 +346,7 @@ class Bar(Window):
             window.set_cursor(None)
 
     def on_button_clicked(self, *args):
+        # Ejecuta notify-send cuando se hace clic en el botón
         exec_shell_command_async("notify-send 'Botón presionado' '¡Funciona!'")
 
     def search_apps(self):
