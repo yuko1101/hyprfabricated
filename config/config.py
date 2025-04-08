@@ -26,7 +26,6 @@ from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.image import Image as FabricImage  # Alias to avoid clash
 from fabric.widgets.stack import Stack
 from fabric.widgets.scale import Scale
-from fabric.utils.helpers import exec_shell_command, exec_shell_command_async
 
 # Assuming data.py exists in the same directory or is accessible via sys.path
 # If data.py is in ./config/data.py relative to this script's original location:
@@ -107,19 +106,22 @@ DEFAULTS = {
     "bar_button_tools_visible": True,
     "bar_button_overview_visible": True,
     "bar_ws_container_visible": True,
-    "bar_weather_visible": True,
+    "bar_weather_visible": False,
     "bar_battery_visible": True,
-    "bar_metrics_visible": True,
-    "bar_language_visible": True,
+    "bar_metrics_visible": False,
+    "bar_language_visible": False,
     "bar_date_time_visible": True,
     "bar_button_power_visible": True,
     "corners_visible": True,  # Added default for corners visibility
-    "widgets_displaytype_visible": False,
-    "widgets_activation_visible": True,
+    # widgets config
+    "widgets_displaytype_visible": True,
+    "widgets_activation_visible": False,
     "widgets_date_visible": True,
     "widgets_clock_visible": True,
     "widgets_quote_visible": True,
-    "widgets_weather_visible": True,
+    "widgets_weatherwid_visible": True,
+    "widgets_weather_format": "C",
+    "widgets_weather_location": "",
     "widgets_sysinfo_visible": True,
     "misc_updater_visible": True,
     "misc_otherplayers_visible": False,
@@ -813,8 +815,8 @@ class HyprConfGUI(Window):
         self.corners_switch.set_active(bind_vars.get("corners_visible", True))
 
         # Calculate number of rows needed (we'll use 2 columns)
-        num_components = len(component_display_names) + 1  # +1 for corners
-        rows_per_column = (num_components + 1) // 2  # Ceiling division
+        num_components = len(component_display_names) + 2  # +1 for corners
+        rows_per_column = (num_components + 2) // 2  # Ceiling division
 
         # First add corners to the top of first column
         corners_label = Label(
@@ -895,7 +897,7 @@ class HyprConfGUI(Window):
             "date": "Date",
             "clock": "Clock",
             "quote": "Quote",
-            "weather": "Weather",
+            "weatherwid": "Weather",
             "sysinfo": "System Info",
         }
         num_components = len(component_display_names)
@@ -919,13 +921,64 @@ class HyprConfGUI(Window):
             switch_container.set_valign(Gtk.Align.CENTER)
 
             component_switch = Gtk.Switch()
-            config_key = f"widget_{component_name}_visible"
+            config_key = f"widgets_{component_name}_visible"
             component_switch.set_active(bind_vars.get(config_key, True))
             switch_container.add(component_switch)
 
             components_grid.attach(switch_container, col + 1, row, 1, 1)
 
             self.widgets_switches[component_name] = component_switch
+
+        separator1 = Box(
+            style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
+            h_expand=True,
+        )
+        vbox.add(separator1)
+
+        options_grid = Gtk.Grid()
+        options_grid.set_column_spacing(30)
+        options_grid.set_row_spacing(8)
+        options_grid.set_margin_start(10)
+        vbox.add(options_grid)
+        options_header = Label(markup="<b>Widget Settings</b>", h_align="start")
+        options_grid.attach(options_header, 0, 0, 2, 1)
+
+        weather_format_label = Label(
+            label="Weather format:", h_align="start", v_align="center"
+        )
+        options_grid.attach(weather_format_label, 0, 1, 1, 1)
+
+        self.terminal_entry = Entry(
+            text=bind_vars["widgets_weather_format"],
+            h_expand=True,
+        )
+        options_grid.attach(self.terminal_entry, 1, 1, 1, 1)
+        hint_label = Label(
+            markup="<small>Accepts: F for fahrenheit or C for celsius</small>",
+            h_align="start",
+        )
+        options_grid.attach(hint_label, 0, 2, 2, 1)
+        options2_grid = Gtk.Grid()
+        options2_grid.set_column_spacing(30)
+        options2_grid.set_row_spacing(8)
+        options2_grid.set_margin_start(10)
+        vbox.add(options2_grid)
+        weather_city_label = Label(
+            label="Weather City:", h_align="start", v_align="center"
+        )
+        options2_grid.attach(weather_city_label, 0, 1, 1, 1)
+
+        self.terminal_entry = Entry(
+            text=bind_vars["widgets_weather_location"],
+            h_expand=True,
+        )
+        options2_grid.attach(self.terminal_entry, 1, 1, 1, 1)
+        hint_label = Label(
+            markup="<small>Leave Blank for automatic fetching</small>",
+            h_align="start",
+        )
+        options2_grid.attach(hint_label, 0, 2, 2, 1)
+
         return scrolled_window
 
     def create_misc_tab(self):
@@ -947,7 +1000,6 @@ class HyprConfGUI(Window):
         components_grid.set_column_spacing(30)
         components_grid.set_row_spacing(8)
         components_grid.set_margin_start(10)
-        components_grid.set_margin_top(0)
         vbox.add(components_grid)
 
         self.misc_switches = {}
@@ -1243,40 +1295,40 @@ class HyprConfGUI(Window):
             else:
                 print(f"Warning: Source hypridle config not found at {src_idle}")
 
-        hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
-        try:
-            needs_append = True
-            if os.path.exists(hyprland_config_path):
-                with open(hyprland_config_path, "r") as f:
-                    content = f.read()
-                    if SOURCE_STRING.strip() in content:
-                        needs_append = False
-            else:
-                os.makedirs(os.path.dirname(hyprland_config_path), exist_ok=True)
-
-            if needs_append:
-                with open(hyprland_config_path, "a") as f:
-                    f.write("\n" + SOURCE_STRING)
-                print(f"Appended source string to {hyprland_config_path}")
-
-        except Exception as e:
-            print(f"Error updating {hyprland_config_path}: {e}")
-
-        start_config()
-
-        # Restart Hyprfabricated using fabric's async command executor
-        main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
-        kill_cmd = f"killall {APP_NAME}"
-        start_cmd = f"uwsm app -- python {main_script_path}"
-
-        try:
-            # Use fabric's helper to run the command asynchronously
-            exec_shell_command(kill_cmd)
-            exec_shell_command_async(start_cmd)
-            print(f"{APP_NAME_CAP} restart initiated.")
-        except Exception as e:
-            print(f"Error restarting {APP_NAME_CAP}: {e}")
-
+        # hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
+        # try:
+        #     needs_append = True
+        #     if os.path.exists(hyprland_config_path):
+        #         with open(hyprland_config_path, "r") as f:
+        #             content = f.read()
+        #             if SOURCE_STRING.strip() in content:
+        #                 needs_append = False
+        #     else:
+        #         os.makedirs(os.path.dirname(hyprland_config_path), exist_ok=True)
+        #
+        #     if needs_append:
+        #         with open(hyprland_config_path, "a") as f:
+        #             f.write("\n" + SOURCE_STRING)
+        #         print(f"Appended source string to {hyprland_config_path}")
+        #
+        # except Exception as e:
+        #     print(f"Error updating {hyprland_config_path}: {e}")
+        #
+        # start_config()
+        #
+        # # Restart Hyprfabricated using fabric's async command executor
+        # main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
+        # kill_cmd = f"killall {APP_NAME}"
+        # start_cmd = f"uwsm app -- python {main_script_path}"
+        #
+        # try:
+        #     # Use fabric's helper to run the command asynchronously
+        #     exec_shell_command(kill_cmd)
+        #     exec_shell_command_async(start_cmd)
+        #     print(f"{APP_NAME_CAP} restart initiated.")
+        # except Exception as e:
+        #     print(f"Error restarting {APP_NAME_CAP}: {e}")
+        #
         print("Configuration applied and reload initiated.")
 
     def on_reset(self, widget):
