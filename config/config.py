@@ -3,27 +3,58 @@ import shutil
 import json
 import sys
 from pathlib import Path
+import subprocess
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import urllib.request
 import toml
 from PIL import Image
-from fabric.utils.helpers import get_relative_path
-import subprocess
 import gi
 
-
 gi.require_version("Gtk", "3.0")
+from gi.repository import (
+    Gtk,
+    GdkPixbuf,
+)  # Keep Gtk for Switch, FileChooserButton, Expander, Grid
 
-from gi.repository import Gtk  # noqa: E402
-from config.data import APP_NAME, APP_NAME_CAP, HOME_DIR, WALLPAPERS_DIR_DEFAULT
+# Fabric Imports
+from fabric import Application
+from fabric.widgets.window import Window
+from fabric.widgets.box import Box
+from fabric.widgets.label import Label
+from fabric.widgets.button import Button
+from fabric.widgets.entry import Entry
+from fabric.widgets.scrolledwindow import ScrolledWindow
+from fabric.widgets.image import Image as FabricImage  # Alias to avoid clash
+from fabric.widgets.stack import Stack
+from fabric.widgets.scale import Scale
+from fabric.utils.helpers import exec_shell_command, exec_shell_command_async
+
+# Assuming data.py exists in the same directory or is accessible via sys.path
+# If data.py is in ./config/data.py relative to this script's original location:
+try:
+    # Adjust path relative to the *original* location if needed
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "../config"))
+    from data import (
+        APP_NAME,
+        APP_NAME_CAP,
+        CONFIG_DIR,
+        HOME_DIR,
+        WALLPAPERS_DIR_DEFAULT,
+    )
+except ImportError as e:
+    print(f"Error importing data constants: {e}")
+    # Provide fallback defaults if import fails
+    APP_NAME = "ax-shell"
+    APP_NAME_CAP = "Ax-Shell"
+    CONFIG_DIR = "~/.config/Ax-Shell"
+    HOME_DIR = "~"
+    WALLPAPERS_DIR_DEFAULT = "~/Pictures/Wallpapers"
+
 
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
 source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
 """
 
-# Initialize bind_vars with default values
 DEFAULTS = {
     "prefix_restart": "SUPER ALT",
     "suffix_restart": "B",
@@ -41,6 +72,8 @@ DEFAULTS = {
     "suffix_launcher": "R",
     "prefix_tmux": "SUPER",
     "suffix_tmux": "T",
+    "prefix_cliphist": "SUPER",
+    "suffix_cliphist": "V",
     "prefix_toolbox": "SUPER",
     "suffix_toolbox": "S",
     "prefix_overview": "SUPER",
@@ -55,18 +88,41 @@ DEFAULTS = {
     "suffix_toggle": "B",
     "prefix_css": "SUPER SHIFT",
     "suffix_css": "B",
+    "prefix_config": "SUPER",
+    "suffix_config": "I",
     "wallpapers_dir": WALLPAPERS_DIR_DEFAULT,
     "prefix_restart_inspector": "SUPER CTRL ALT",
     "suffix_restart_inspector": "B",
-    "vertical": False,  # New default for vertical layout
-    "centered_bar": False,  # New default for centered bar option
-    "terminal_command": "kitty -e",  # Default terminal command for tmux
-    "dock_enabled": True,  # Default value for dock visibility
-    "dock_icon_size": 28,  # Default dock icon size
-    "prefix_config": "SUPER",
-    "suffix_config": "I",
-    "prefix_cliphist": "SUPER",
-    "suffix_cliphist": "V",
+    "vertical": False,
+    "centered_bar": False,
+    "terminal_command": "ghostty -e",
+    "dock_enabled": True,
+    "dock_icon_size": 28,
+    "dock_always_occluded": False,  # Added default
+    # Defaults for bar components (assuming True initially)
+    "bar_button_apps_visible": True,
+    "bar_systray_visible": True,
+    "bar_control_visible": True,
+    "bar_network_visible": True,
+    "bar_button_tools_visible": True,
+    "bar_button_overview_visible": True,
+    "bar_ws_container_visible": True,
+    "bar_weather_visible": True,
+    "bar_battery_visible": True,
+    "bar_metrics_visible": True,
+    "bar_language_visible": True,
+    "bar_date_time_visible": True,
+    "bar_button_power_visible": True,
+    "corners_visible": True,  # Added default for corners visibility
+    "widgets_displaytype_visible": False,
+    "widgets_activation_visible": True,
+    "widgets_date_visible": True,
+    "widgets_clock_visible": True,
+    "widgets_quote_visible": True,
+    "widgets_weather_visible": True,
+    "widgets_sysinfo_visible": True,
+    "misc_updater_visible": True,
+    "misc_otherplayers_visible": False,
 }
 
 bind_vars = DEFAULTS.copy()
@@ -201,13 +257,33 @@ def load_bind_vars():
     Load saved key binding variables from JSON, if available.
     """
     config_json = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
-    try:
-        with open(config_json, "r") as f:
-            saved_vars = json.load(f)
-            bind_vars.update(saved_vars)
-    except FileNotFoundError:
-        # Use default values if no saved config exists
-        pass
+    if os.path.exists(config_json):
+        try:
+            with open(config_json, "r") as f:
+                saved_vars = json.load(f)
+                # Update defaults with saved values, ensuring all keys exist
+                for key in DEFAULTS:
+                    if key in saved_vars:
+                        bind_vars[key] = saved_vars[key]
+                    else:
+                        bind_vars[key] = DEFAULTS[
+                            key
+                        ]  # Use default if missing in saved
+                # Add any new keys from DEFAULTS not present in saved_vars
+                for key in saved_vars:
+                    if key not in bind_vars:
+                        bind_vars[key] = saved_vars[
+                            key
+                        ]  # Keep saved if it's not in new defaults (less likely)
+        except json.JSONDecodeError:
+            print(f"Warning: Could not decode JSON from {config_json}. Using defaults.")
+            bind_vars.update(DEFAULTS)  # Ensure defaults on error
+        except Exception as e:
+            print(f"Error loading config from {config_json}: {e}. Using defaults.")
+            bind_vars.update(DEFAULTS)  # Ensure defaults on error
+    else:
+        # Ensure defaults are set if file doesn't exist
+        bind_vars.update(DEFAULTS)
 
 
 def generate_hyprconf() -> str:
@@ -222,7 +298,7 @@ exec-once =  wl-paste --type text --watch cliphist store
 exec-once =  wl-paste --type image --watch cliphist store
 
 $fabricSend = fabric-cli exec {APP_NAME}
-$axMessage = notify-send "tr1x_em" "What are you doing?" -i f"{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
+$axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
 bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {APP_NAME}; uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py) # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
@@ -232,8 +308,8 @@ bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend
 bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban | Default: SUPER + N
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
 bind = {bind_vars['prefix_tmux']}, {bind_vars['suffix_tmux']}, exec, $fabricSend 'notch.open_notch("tmux")' # App Launcher | Default: SUPER + T
-bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_cliphist']}, {bind_vars['suffix_cliphist']}, exec, $fabricSend 'notch.open_notch("cliphist")' # App Launcher | Default: SUPER + V
+bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
 bind = {bind_vars['prefix_emoji']}, {bind_vars['suffix_emoji']}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji | Default: SUPER + PERIOD
@@ -241,9 +317,10 @@ bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSe
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
-bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector | Default: SUPER CTRL ALT + B
 bind = {bind_vars["prefix_config"]}, {bind_vars["suffix_config"]}, exec,uwsm app -- python {home}/.config/{APP_NAME_CAP}/config/config.py
-# Wallpapers directory: {bind_vars["wallpapers_dir"]}
+bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector | Default: SUPER CTRL ALT + B
+
+# Wallpapers directory: {bind_vars['wallpapers_dir']}
 
 source = {home}/.config/{APP_NAME_CAP}/config/hypr/colors.conf
 
@@ -267,7 +344,7 @@ cursor {{
 decoration {{
     blur {{
         enabled = yes
-        size = 8
+        size = 5
         passes = 3
         new_optimizations = yes
         contrast = 1
@@ -302,83 +379,152 @@ def ensure_face_icon():
         f"~/.config/{APP_NAME_CAP}/assets/default.png"
     )
     if not os.path.exists(face_icon_path) and os.path.exists(default_icon_path):
-        shutil.copy(default_icon_path, face_icon_path)
+        try:
+            shutil.copy(default_icon_path, face_icon_path)
+        except Exception as e:
+            print(f"Error copying default face icon: {e}")
 
 
 def backup_and_replace(src: str, dest: str, config_name: str):
     """
     Backup the existing configuration file and replace it with a new one.
     """
-    if os.path.exists(dest):
-        backup_path = dest + ".bak"
-        shutil.copy(dest, backup_path)
-        print(f"{config_name} config backed up to {backup_path}")
-    shutil.copy(src, dest)
-    print(f"{config_name} config replaced from {src}")
+    try:
+        if os.path.exists(dest):
+            backup_path = dest + ".bak"
+            shutil.copy(dest, backup_path)
+            print(f"{config_name} config backed up to {backup_path}")
+        shutil.copy(src, dest)
+        print(f"{config_name} config replaced from {src}")
+    except Exception as e:
+        print(f"Error backing up/replacing {config_name} config: {e}")
 
 
-class HyprConfGUI(Gtk.Window):
-    def __init__(self, show_lock_checkbox: bool, show_idle_checkbox: bool):
-        super().__init__(title="Configure Key Binds")
-        self.set_border_width(20)
-        self.set_default_size(500, 450)
+# --- Fabric GUI Class ---
+
+
+class HyprConfGUI(Window):
+    def __init__(self, show_lock_checkbox: bool, show_idle_checkbox: bool, **kwargs):
+        super().__init__(
+            title="Hyprfabricated Settings",
+            name="hyprfabricated-settings-window",
+            size=(650, 550),  # Adjusted size for vertical tabs
+            **kwargs,
+        )
+
         self.set_resizable(False)
 
         self.selected_face_icon = None
+        self.show_lock_checkbox = show_lock_checkbox
+        self.show_idle_checkbox = show_idle_checkbox
 
-        # Create a vertical box to hold the dropdown and the content area
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        self.add(vbox)
+        # Overall vertical box to hold the main content and bottom buttons
+        root_box = Box(orientation="v", spacing=10, style="margin: 10px;")
+        self.add(root_box)
 
-        # Dropdown menu for selecting config type
-        self.config_selector = Gtk.ComboBoxText()
-        self.config_selector.append_text("Keybinds Config")
-        self.config_selector.append_text("General Config")
-        self.config_selector.set_active(0)
-        self.config_selector.connect("changed", self.on_config_selected)
-        vbox.pack_start(self.config_selector, False, False, 0)
+        # Main horizontal box for switcher and stack
+        main_content_box = Box(orientation="h", spacing=6, v_expand=True, h_expand=True)
+        root_box.add(main_content_box)
 
-        # Stack to switch between different config views
-        self.stack = Gtk.Stack()
-        vbox.pack_start(self.stack, True, True, 0)
-
-        # Keybinds Config UI
-        self.keybinds_grid = self.create_keybinds_grid(
-            show_lock_checkbox, show_idle_checkbox
+        # --- Tab Control ---
+        self.tab_stack = Stack(
+            transition_type="slide-up-down",  # Change transition for vertical feel
+            transition_duration=250,
+            v_expand=True,
+            h_expand=True,
         )
-        self.stack.add_titled(self.keybinds_grid, "keybinds", "Keybinds Config")
 
-        # General Config UI
-        self.general_grid = self.create_general_grid()
-        self.stack.add_titled(self.general_grid, "general", "General Config")
+        # Create tabs and add to stack
+        self.key_bindings_tab_content = self.create_key_bindings_tab()
+        self.appearance_tab_content = self.create_appearance_tab()
+        self.system_tab_content = self.create_system_tab()
+        self.widgets_tab_content = self.create_widgets_tab()
+        self.misc_tab_content = self.create_misc_tab()
 
-        # Apply and Close buttons
-        button_box = Gtk.Box(spacing=10)
-        vbox.pack_start(button_box, False, False, 0)
+        self.tab_stack.add_titled(
+            self.key_bindings_tab_content, "key_bindings", "Key Bindings"
+        )
+        self.tab_stack.add_titled(
+            self.appearance_tab_content, "appearance", "Appearance"
+        )
+        self.tab_stack.add_titled(self.system_tab_content, "system", "System")
+        self.tab_stack.add_titled(self.widgets_tab_content, "widgets", "Widgets")
+        self.tab_stack.add_titled(self.misc_tab_content, "misc", "Miscellaneous")
 
-        apply_btn = Gtk.Button(label="Apply")
-        apply_btn.connect("clicked", self.on_apply)
-        button_box.pack_start(apply_btn, True, True, 0)
+        # Use Gtk.StackSwitcher vertically on the left
+        tab_switcher = Gtk.StackSwitcher()
+        tab_switcher.set_stack(self.tab_stack)
+        tab_switcher.set_orientation(
+            Gtk.Orientation.VERTICAL
+        )  # Set vertical orientation
+        # Optional: Adjust alignment if needed
+        # tab_switcher.set_valign(Gtk.Align.START)
 
-        reset_btn = Gtk.Button(label="Reset to Defaults")
-        reset_btn.connect("clicked", self.on_reset)
-        button_box.pack_start(reset_btn, True, True, 0)
+        # Add switcher to the left of the main content box
+        main_content_box.add(tab_switcher)
 
-        close_btn = Gtk.Button(label="Close")
-        close_btn.connect("clicked", self.on_close)
-        button_box.pack_start(close_btn, True, True, 0)
+        # Add stack to the right of the main content box
+        main_content_box.add(self.tab_stack)
 
-    def create_keybinds_grid(self, show_lock_checkbox, show_idle_checkbox):
-        grid = Gtk.Grid(column_spacing=10, row_spacing=10)
-        grid.set_margin_top(10)
-        grid.set_margin_bottom(10)
-        grid.set_margin_start(10)
-        grid.set_margin_end(10)
+        # --- Bottom Buttons ---
+        button_box = Box(orientation="h", spacing=10, h_align="end")
 
-        # Header label spanning across columns
-        header = Gtk.Label(label="Configure Key Bindings")
-        header.set_halign(Gtk.Align.CENTER)
-        grid.attach(header, 0, 0, 4, 1)
+        reset_btn = Button(label="Reset to Defaults", on_clicked=self.on_reset)
+        button_box.add(reset_btn)
+
+        # Add Close button back
+        close_btn = Button(label="Close", on_clicked=self.on_close)
+        button_box.add(close_btn)
+
+        accept_btn = Button(label="Apply & Reload", on_clicked=self.on_accept)
+        button_box.add(accept_btn)
+
+        # Add button box to the bottom of the root box
+        root_box.add(button_box)
+
+    def create_key_bindings_tab(self):
+        """Create tab for key bindings configuration using Fabric widgets and Gtk.Grid."""
+        scrolled_window = ScrolledWindow(
+            h_scrollbar_policy="never",
+            v_scrollbar_policy="automatic",
+            h_expand=True,
+            v_expand=True,
+        )
+        # Remove fixed height constraints to allow stack to fill space
+        scrolled_window.set_min_content_height(300)
+        scrolled_window.set_max_content_height(300)
+
+        # Main container with padding
+        main_vbox = Box(orientation="v", spacing=10, style="margin: 15px;")
+        scrolled_window.add(main_vbox)
+
+        # Create a grid for key bindings
+        keybind_grid = Gtk.Grid()
+        keybind_grid.set_column_spacing(10)
+        keybind_grid.set_row_spacing(8)
+        keybind_grid.set_margin_start(5)
+        keybind_grid.set_margin_end(5)
+        keybind_grid.set_margin_top(5)
+        keybind_grid.set_margin_bottom(5)
+
+        # Header Row
+        action_label = Label(
+            markup="<b>Action</b>", h_align="start", style="margin-bottom: 5px;"
+        )
+        modifier_label = Label(
+            markup="<b>Modifier</b>", h_align="start", style="margin-bottom: 5px;"
+        )
+        separator_label = Label(
+            label="+", h_align="center", style="margin-bottom: 5px;"
+        )
+        key_label = Label(
+            markup="<b>Key</b>", h_align="start", style="margin-bottom: 5px;"
+        )
+
+        keybind_grid.attach(action_label, 0, 0, 1, 1)
+        keybind_grid.attach(modifier_label, 1, 0, 1, 1)
+        keybind_grid.attach(separator_label, 2, 0, 1, 1)
+        keybind_grid.attach(key_label, 3, 0, 1, 1)
 
         self.entries = []
         bindings = [
@@ -390,14 +536,15 @@ class HyprConfGUI(Gtk.Window):
             ("Kanban", "prefix_kanban", "suffix_kanban"),
             ("App Launcher", "prefix_launcher", "suffix_launcher"),
             ("Tmux", "prefix_tmux", "suffix_tmux"),
-            ("Toolbox", "prefix_toolbox", "suffix_toolbox"),
             ("Clipboard History", "prefix_cliphist", "suffix_cliphist"),
+            ("Toolbox", "prefix_toolbox", "suffix_toolbox"),
             ("Overview", "prefix_overview", "suffix_overview"),
             ("Wallpapers", "prefix_wallpapers", "suffix_wallpapers"),
             ("Emoji Picker", "prefix_emoji", "suffix_emoji"),
             ("Power Menu", "prefix_power", "suffix_power"),
             ("Toggle Bar and Notch", "prefix_toggle", "suffix_toggle"),
             ("Reload CSS", "prefix_css", "suffix_css"),
+            ("Open config", "prefix_config", "suffix_config"),
             (
                 "Restart with inspector",
                 "prefix_restart_inspector",
@@ -405,242 +552,585 @@ class HyprConfGUI(Gtk.Window):
             ),
         ]
 
-        # Populate grid with key binding rows, starting at row 1
-        row = 1
-        for label_text, prefix_key, suffix_key in bindings:
-            # Binding description
-            binding_label = Gtk.Label(label=label_text)
-            binding_label.set_halign(Gtk.Align.START)
-            grid.attach(binding_label, 0, row, 1, 1)
+        # Populate the grid with entries
+        for i, (label_text, prefix_key, suffix_key) in enumerate(bindings):
+            row = i + 1  # Start at row 1 after headers
+
+            # Action label
+            binding_label = Label(label=label_text, h_align="start")
+            keybind_grid.attach(binding_label, 0, row, 1, 1)
 
             # Prefix entry
-            prefix_entry = Gtk.Entry()
-            prefix_entry.set_text(bind_vars[prefix_key])
-            grid.attach(prefix_entry, 1, row, 1, 1)
+            prefix_entry = Entry(text=bind_vars[prefix_key])
+            keybind_grid.attach(prefix_entry, 1, row, 1, 1)
 
-            # Plus label between entries
-            plus_label = Gtk.Label(label=" + ")
-            grid.attach(plus_label, 2, row, 1, 1)
+            # Plus separator
+            plus_label = Label(label="+", h_align="center")
+            keybind_grid.attach(plus_label, 2, row, 1, 1)
 
             # Suffix entry
-            suffix_entry = Gtk.Entry()
-            suffix_entry.set_text(bind_vars[suffix_key])
-            grid.attach(suffix_entry, 3, row, 1, 1)
+            suffix_entry = Entry(text=bind_vars[suffix_key])
+            keybind_grid.attach(suffix_entry, 3, row, 1, 1)
 
             self.entries.append((prefix_key, suffix_key, prefix_entry, suffix_entry))
-            row += 1
 
-        # Row for Wallpapers Directory chooser
-        wall_label = Gtk.Label(label="Wallpapers Directory")
-        wall_label.set_halign(Gtk.Align.START)
-        grid.attach(wall_label, 0, row, 1, 1)
+        main_vbox.add(keybind_grid)
+        return scrolled_window
+
+    def create_appearance_tab(self):
+        """Create tab for appearance settings using Fabric widgets and Gtk.Grid."""
+        scrolled_window = ScrolledWindow(
+            h_scrollbar_policy="never",
+            v_scrollbar_policy="automatic",
+            h_expand=True,
+            v_expand=True,
+        )
+        # Remove fixed height constraints
+        scrolled_window.set_min_content_height(300)
+        scrolled_window.set_max_content_height(300)
+
+        # Main container with padding
+        vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
+        scrolled_window.add(vbox)
+
+        # --- Top Row: Wallpapers & Profile Icon ---
+        top_grid = Gtk.Grid()
+        top_grid.set_column_spacing(20)
+        top_grid.set_row_spacing(5)
+        top_grid.set_margin_bottom(10)
+        vbox.add(top_grid)
+
+        # === WALLPAPERS SECTION ===
+        wall_header = Label(markup="<b>Wallpapers</b>", h_align="start")
+        top_grid.attach(wall_header, 0, 0, 1, 1)
+
+        wall_label = Label(label="Directory:", h_align="start", v_align="center")
+        top_grid.attach(wall_label, 0, 1, 1, 1)
+
+        # Create a container for the file chooser to prevent stretching
+        chooser_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        chooser_container.set_halign(Gtk.Align.START)
+        chooser_container.set_valign(Gtk.Align.CENTER)
+
         self.wall_dir_chooser = Gtk.FileChooserButton(
             title="Select a folder", action=Gtk.FileChooserAction.SELECT_FOLDER
         )
+        self.wall_dir_chooser.set_tooltip_text(
+            "Select the directory containing your wallpaper images"
+        )
         self.wall_dir_chooser.set_filename(bind_vars["wallpapers_dir"])
-        grid.attach(self.wall_dir_chooser, 1, row, 3, 1)
-        row += 1
+        # Set a minimum width for the file chooser to have adequate space
+        self.wall_dir_chooser.set_size_request(180, -1)
 
-        # Row for Profile Icon selection
-        face_label = Gtk.Label(label="Profile Icon")
-        face_label.set_halign(Gtk.Align.START)
-        grid.attach(face_label, 0, row, 1, 1)
-        face_btn = Gtk.Button(label="Select Image")
-        face_btn.connect("clicked", self.on_select_face_icon)
-        grid.attach(face_btn, 1, row, 3, 1)
-        row += 1
+        chooser_container.add(self.wall_dir_chooser)
+        top_grid.attach(chooser_container, 1, 1, 1, 1)
 
-        # Row for optional checkboxes
-        if show_lock_checkbox:
-            self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
-            self.lock_checkbox.set_active(False)
-            grid.attach(self.lock_checkbox, 0, row, 2, 1)
-        if show_idle_checkbox:
-            self.idle_checkbox = Gtk.CheckButton(label="Replace Hypridle config")
-            self.idle_checkbox.set_active(False)
-            grid.attach(self.idle_checkbox, 2, row, 2, 1)
-        row += 1
-        return grid
+        # === PROFILE ICON SECTION ===
+        face_header = Label(markup="<b>Profile Icon</b>", h_align="start")
+        top_grid.attach(face_header, 2, 0, 2, 1)
 
-    def create_general_grid(self):
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        grid = Gtk.Grid(column_spacing=10, row_spacing=10)
-        grid.set_margin_top(10)
-        grid.set_margin_bottom(10)
-        grid.set_margin_start(10)
-        grid.set_margin_end(10)
-        scrolled_window.add(grid)
+        # Current icon display
+        current_face = os.path.expanduser("~/.face.icon")
+        face_image_container = Box(
+            style_classes=["image-frame"], h_align="center", v_align="center"
+        )
+        self.face_image = FabricImage(size=64)
+        try:
+            if os.path.exists(current_face):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(current_face, 64, 64)
+                self.face_image.set_from_pixbuf(pixbuf)
+            else:
+                self.face_image.set_from_icon_name("user-info", 64)
+        except Exception as e:
+            print(f"Error loading face icon: {e}")
+            self.face_image.set_from_icon_name("image-missing", 64)
 
-        self.general_entries = []
+        face_image_container.add(self.face_image)
+        top_grid.attach(face_image_container, 2, 1, 1, 1)
 
-        # Load general config from JSON
-        config_json = get_relative_path("../config.json")
-        with open(config_json, "r") as f:
-            self.general_config = json.load(f)
+        # Container for button to prevent stretching
+        browse_btn_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        browse_btn_container.set_halign(Gtk.Align.START)
+        browse_btn_container.set_valign(Gtk.Align.CENTER)
 
-        self.add_config_to_grid(grid, self.general_config, 0)
+        face_btn = Button(
+            label="Browse...",
+            tooltip_text="Select a square image for your profile icon",
+            on_clicked=self.on_select_face_icon,
+        )
+
+        browse_btn_container.add(face_btn)
+        top_grid.attach(browse_btn_container, 3, 1, 1, 1)
+
+        self.face_status_label = Label(label="", h_align="start")
+        top_grid.attach(self.face_status_label, 2, 2, 2, 1)
+
+        # --- Separator ---
+        separator1 = Box(
+            style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
+            h_expand=True,
+        )
+        vbox.add(separator1)
+
+        # --- Layout Options ---
+        layout_header = Label(markup="<b>Layout Options</b>", h_align="start")
+        vbox.add(layout_header)
+
+        layout_grid = Gtk.Grid()
+        layout_grid.set_column_spacing(20)
+        layout_grid.set_row_spacing(10)
+        layout_grid.set_margin_start(10)
+        layout_grid.set_margin_top(5)
+        vbox.add(layout_grid)
+
+        # Vertical Layout
+        vertical_label = Label(
+            label="Vertical Layout", h_align="start", v_align="center"
+        )
+        layout_grid.attach(vertical_label, 0, 0, 1, 1)
+
+        # Container for switch to prevent stretching
+        vertical_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        vertical_switch_container.set_halign(Gtk.Align.START)
+        vertical_switch_container.set_valign(Gtk.Align.CENTER)
+
+        self.vertical_switch = Gtk.Switch()
+        self.vertical_switch.set_active(bind_vars.get("vertical", False))
+        self.vertical_switch.connect("notify::active", self.on_vertical_changed)
+        vertical_switch_container.add(self.vertical_switch)
+
+        layout_grid.attach(vertical_switch_container, 1, 0, 1, 1)
+
+        # Centered Bar
+        centered_label = Label(
+            label="Centered Bar (Vertical Only)", h_align="start", v_align="center"
+        )
+        layout_grid.attach(centered_label, 2, 0, 1, 1)
+
+        # Container for switch to prevent stretching
+        centered_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        centered_switch_container.set_halign(Gtk.Align.START)
+        centered_switch_container.set_valign(Gtk.Align.CENTER)
+
+        self.centered_switch = Gtk.Switch()
+        self.centered_switch.set_active(bind_vars.get("centered_bar", False))
+        self.centered_switch.set_sensitive(self.vertical_switch.get_active())
+        centered_switch_container.add(self.centered_switch)
+
+        layout_grid.attach(centered_switch_container, 3, 0, 1, 1)
+
+        # Dock Options
+        dock_label = Label(label="Show Dock", h_align="start", v_align="center")
+        layout_grid.attach(dock_label, 0, 1, 1, 1)
+
+        # Container for switch to prevent stretching
+        dock_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        dock_switch_container.set_halign(Gtk.Align.START)
+        dock_switch_container.set_valign(Gtk.Align.CENTER)
+
+        self.dock_switch = Gtk.Switch()
+        self.dock_switch.set_active(bind_vars.get("dock_enabled", True))
+        self.dock_switch.connect("notify::active", self.on_dock_enabled_changed)
+        dock_switch_container.add(self.dock_switch)
+
+        layout_grid.attach(dock_switch_container, 1, 1, 1, 1)
+
+        # Dock Hover
+        dock_hover_label = Label(
+            label="Show Dock Only on Hover", h_align="start", v_align="center"
+        )
+        layout_grid.attach(dock_hover_label, 2, 1, 1, 1)
+
+        # Container for switch to prevent stretching
+        dock_hover_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        dock_hover_switch_container.set_halign(Gtk.Align.START)
+        dock_hover_switch_container.set_valign(Gtk.Align.CENTER)
+
+        self.dock_hover_switch = Gtk.Switch()
+        self.dock_hover_switch.set_active(bind_vars.get("dock_always_occluded", False))
+        self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
+        dock_hover_switch_container.add(self.dock_hover_switch)
+
+        layout_grid.attach(dock_hover_switch_container, 3, 1, 1, 1)
+
+        # Dock Icon Size
+        dock_size_label = Label(
+            label="Dock Icon Size", h_align="start", v_align="center"
+        )
+        layout_grid.attach(dock_size_label, 0, 2, 1, 1)
+
+        self.dock_size_scale = Scale(
+            min_value=16,
+            max_value=48,
+            value=bind_vars.get("dock_icon_size", 28),
+            increments=(2, 4),
+            draw_value=True,
+            value_position="right",
+            digits=0,
+            h_expand=True,
+        )
+        layout_grid.attach(self.dock_size_scale, 1, 2, 3, 1)
+
+        # --- Separator ---
+        separator2 = Box(
+            style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
+            h_expand=True,
+        )
+        vbox.add(separator2)
+
+        # --- Modules (renamed from Bar Components) ---
+        components_header = Label(markup="<b>Modules</b>", h_align="start")
+        vbox.add(components_header)
+
+        # Create a grid for bar components and other modules
+        components_grid = Gtk.Grid()
+        components_grid.set_column_spacing(15)
+        components_grid.set_row_spacing(8)
+        components_grid.set_margin_start(10)
+        components_grid.set_margin_top(5)
+        vbox.add(components_grid)
+
+        self.component_switches = {}
+        component_display_names = {
+            "button_apps": "App Launcher Button",
+            "systray": "System Tray",
+            "control": "Control Panel",
+            "network": "Network Applet",
+            "button_tools": "Toolbox Button",
+            "button_overview": "Overview Button",
+            "ws_container": "Workspaces",
+            "weather": "Weather Widget",
+            "battery": "Battery Indicator",
+            "metrics": "System Metrics",
+            "language": "Language Indicator",
+            "date_time": "Date & Time",
+            "button_power": "Power Button",
+            "desktop_widgets": "Desktop Widgets",
+        }
+
+        # Add corners visibility switch
+        self.corners_switch = Gtk.Switch()
+        self.corners_switch.set_active(bind_vars.get("corners_visible", True))
+
+        # Calculate number of rows needed (we'll use 2 columns)
+        num_components = len(component_display_names) + 1  # +1 for corners
+        rows_per_column = (num_components + 1) // 2  # Ceiling division
+
+        # First add corners to the top of first column
+        corners_label = Label(
+            label="Rounded Corners", h_align="start", v_align="center"
+        )
+        components_grid.attach(corners_label, 0, 0, 1, 1)
+
+        switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        switch_container.set_halign(Gtk.Align.START)
+        switch_container.set_valign(Gtk.Align.CENTER)
+        switch_container.add(self.corners_switch)
+        components_grid.attach(switch_container, 1, 0, 1, 1)
+
+        # Add components to grid in two columns
+        for i, (component_name, display_name) in enumerate(
+            component_display_names.items()
+        ):
+            # Determine position: first half in column 0, second half in column 2
+            # Start at row 1 to account for corners at row 0
+            row = (i + 1) % rows_per_column  # +1 to start after corners
+            col = 0 if i < (rows_per_column - 1) else 2  # Adjust column calculation
+
+            component_label = Label(
+                label=display_name, h_align="start", v_align="center"
+            )
+            components_grid.attach(component_label, col, row, 1, 1)
+
+            # Container for switch to prevent stretching
+            switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            switch_container.set_halign(Gtk.Align.START)
+            switch_container.set_valign(Gtk.Align.CENTER)
+
+            component_switch = Gtk.Switch()
+            config_key = f"bar_{component_name}_visible"
+            component_switch.set_active(bind_vars.get(config_key, True))
+            switch_container.add(component_switch)
+
+            components_grid.attach(switch_container, col + 1, row, 1, 1)
+
+            self.component_switches[component_name] = component_switch
+
+        # --- Separator ---
+        separator1 = Box(
+            style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
+            h_expand=True,
+        )
+        vbox.add(separator1)
+        return scrolled_window
+
+    def create_widgets_tab(self):
+        """Create tab for widgets configurations using Fabric widgets and Gtk.Grid."""
+        scrolled_window = ScrolledWindow(
+            h_scrollbar_policy="never",
+            v_scrollbar_policy="automatic",
+            h_expand=True,
+            v_expand=True,
+        )
+        scrolled_window.set_min_content_height(300)
+        scrolled_window.set_max_content_height(300)
+        vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
+        scrolled_window.add(vbox)
+        components_header = Label(
+            markup="<b>Desktop widgets Modules</b>", h_align="start"
+        )
+        vbox.add(components_header)
+
+        components_grid = Gtk.Grid()
+        components_grid.set_column_spacing(30)
+        components_grid.set_row_spacing(8)
+        components_grid.set_margin_start(10)
+        components_grid.set_margin_top(0)
+        vbox.add(components_grid)
+
+        self.widgets_switches = {}
+        component_display_names = {
+            "displaytype": "Widget Display Type (on for full)",
+            "activation": "Activate Linux",
+            "date": "Date",
+            "clock": "Clock",
+            "quote": "Quote",
+            "weather": "Weather",
+            "sysinfo": "System Info",
+        }
+        num_components = len(component_display_names)
+        rows_per_column = (num_components + 2) // 2  # Ceiling division
+
+        for i, (component_name, display_name) in enumerate(
+            component_display_names.items()
+        ):
+            # fuck comments here just understand whats going on : ) sciencerly tr1x_em
+            row = (i) % rows_per_column
+            col = 0 if i < (rows_per_column) else 2
+
+            component_label = Label(
+                label=display_name, h_align="start", v_align="center"
+            )
+            components_grid.attach(component_label, col, row, 1, 1)
+
+            # Container for switch to prevent stretching
+            switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            switch_container.set_halign(Gtk.Align.START)
+            switch_container.set_valign(Gtk.Align.CENTER)
+
+            component_switch = Gtk.Switch()
+            config_key = f"widget_{component_name}_visible"
+            component_switch.set_active(bind_vars.get(config_key, True))
+            switch_container.add(component_switch)
+
+            components_grid.attach(switch_container, col + 1, row, 1, 1)
+
+            self.widgets_switches[component_name] = component_switch
+        return scrolled_window
+
+    def create_misc_tab(self):
+        """Create tab for widgets configurations using Fabric widgets and Gtk.Grid."""
+        scrolled_window = ScrolledWindow(
+            h_scrollbar_policy="never",
+            v_scrollbar_policy="automatic",
+            h_expand=True,
+            v_expand=True,
+        )
+        scrolled_window.set_min_content_height(300)
+        scrolled_window.set_max_content_height(300)
+        vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
+        scrolled_window.add(vbox)
+        components_header = Label(markup="<b>Miscellaneous</b>", h_align="start")
+        vbox.add(components_header)
+
+        components_grid = Gtk.Grid()
+        components_grid.set_column_spacing(30)
+        components_grid.set_row_spacing(8)
+        components_grid.set_margin_start(10)
+        components_grid.set_margin_top(0)
+        vbox.add(components_grid)
+
+        self.misc_switches = {}
+        component_display_names = {
+            "updater": "Hyprfabricated Updater",
+            "otherplayers": "Other Players (turn on if your player not showing up)",
+        }
+        num_components = len(component_display_names)
+        rows_per_column = (num_components + 2) // 2  # Ceiling division
+
+        for i, (component_name, display_name) in enumerate(
+            component_display_names.items()
+        ):
+            # fuck comments here just understand whats going on : ) sciencerly tr1x_em
+            row = (i) % rows_per_column
+            col = 0 if i < (rows_per_column) else 2
+
+            component_label = Label(
+                label=display_name, h_align="start", v_align="center"
+            )
+            components_grid.attach(component_label, col, row, 1, 1)
+
+            # Container for switch to prevent stretching
+            switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            switch_container.set_halign(Gtk.Align.START)
+            switch_container.set_valign(Gtk.Align.CENTER)
+
+            component_switch = Gtk.Switch()
+            config_key = f"misc_{component_name}"
+            component_switch.set_active(bind_vars.get(config_key, True))
+            switch_container.add(component_switch)
+
+            components_grid.attach(switch_container, col + 1, row, 1, 1)
+
+            self.misc_switches[component_name] = component_switch
+        return scrolled_window
+
+    def create_system_tab(self):
+        """Create tab for system configurations using Fabric widgets and Gtk.Grid."""
+        scrolled_window = ScrolledWindow(
+            h_scrollbar_policy="never",
+            v_scrollbar_policy="automatic",
+            h_expand=True,
+            v_expand=True,
+        )
+        # Remove fixed height constraints
+        scrolled_window.set_min_content_height(300)
+        scrolled_window.set_max_content_height(300)
+
+        # Main container with padding
+        vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
+        scrolled_window.add(vbox)
+
+        # Create a grid for system settings
+        system_grid = Gtk.Grid()
+        system_grid.set_column_spacing(20)
+        system_grid.set_row_spacing(10)
+        system_grid.set_margin_bottom(15)
+        vbox.add(system_grid)
+
+        # === TERMINAL SETTINGS ===
+        terminal_header = Label(markup="<b>Terminal Settings</b>", h_align="start")
+        system_grid.attach(terminal_header, 0, 0, 2, 1)
+
+        terminal_label = Label(label="Command:", h_align="start", v_align="center")
+        system_grid.attach(terminal_label, 0, 1, 1, 1)
+
+        self.terminal_entry = Entry(
+            text=bind_vars["terminal_command"],
+            tooltip_text="Command used to launch terminal apps (e.g., 'kitty -e')",
+            h_expand=True,
+        )
+        system_grid.attach(self.terminal_entry, 1, 1, 1, 1)
+
+        hint_label = Label(
+            markup="<small>Examples: 'kitty -e', 'ghostty -e', 'foot -e'</small>",
+            h_align="start",
+        )
+        system_grid.attach(hint_label, 0, 2, 2, 1)
+
+        # === HYPRLAND INTEGRATION ===
+        hypr_header = Label(markup="<b>Hyprland Integration</b>", h_align="start")
+        system_grid.attach(hypr_header, 2, 0, 2, 1)
+
+        row = 1
+
+        # Hyprland locks and idle settings
+        self.lock_switch = None
+        if self.show_lock_checkbox:
+            lock_label = Label(
+                label="Replace Hyprlock config", h_align="start", v_align="center"
+            )
+            system_grid.attach(lock_label, 2, row, 1, 1)
+
+            # Container for switch to prevent stretching
+            lock_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            lock_switch_container.set_halign(Gtk.Align.START)
+            lock_switch_container.set_valign(Gtk.Align.CENTER)
+
+            self.lock_switch = Gtk.Switch()
+            self.lock_switch.set_tooltip_text(
+                "Replace Hyprlock configuration with Ax-Shell's custom config"
+            )
+            lock_switch_container.add(self.lock_switch)
+
+            system_grid.attach(lock_switch_container, 3, row, 1, 1)
+            row += 1
+
+        self.idle_switch = None
+        if self.show_idle_checkbox:
+            idle_label = Label(
+                label="Replace Hypridle config", h_align="start", v_align="center"
+            )
+            system_grid.attach(idle_label, 2, row, 1, 1)
+
+            # Container for switch to prevent stretching
+            idle_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            idle_switch_container.set_halign(Gtk.Align.START)
+            idle_switch_container.set_valign(Gtk.Align.CENTER)
+
+            self.idle_switch = Gtk.Switch()
+            self.idle_switch.set_tooltip_text(
+                "Replace Hypridle configuration with Ax-Shell's custom config"
+            )
+            idle_switch_container.add(self.idle_switch)
+
+            system_grid.attach(idle_switch_container, 3, row, 1, 1)
+            row += 1
+
+        if self.show_lock_checkbox or self.show_idle_checkbox:
+            note_label = Label(
+                markup="<small>Existing configs will be backed up</small>",
+                h_align="start",
+            )
+            system_grid.attach(note_label, 2, row, 2, 1)
+
+        # === SUPPORT INFO ===
+        support_box = Box(
+            orientation="h", spacing=10, style="margin-top: 15px;", h_align="start"
+        )
+        support_icon = FabricImage(
+            icon_name="help-about-symbolic", icon_size=Gtk.IconSize.MENU
+        )
+        support_label = Label(
+            markup="<small>For help or to report issues, visit the <a href='https://github.com/tr1xem/hyprfabricated'>GitHub repository</a> or join the support <a href ='https://discord.gg/tRFxkbQ3Zq'>server</a></small>"
+        )
+        support_box.add(support_icon)
+        support_box.add(support_label)
+        vbox.add(support_box)
 
         return scrolled_window
 
-    def add_config_to_grid(self, grid, config, row, parent_key="", tooltips=None):
-        if tooltips is None:
-            tooltips = config.get("tooltip", {})
+    def on_vertical_changed(self, switch, gparam):
+        """Callback for vertical switch."""
+        is_active = switch.get_active()
+        self.centered_switch.set_sensitive(is_active)
+        if not is_active:
+            self.centered_switch.set_active(False)
 
-        for key, value in config.items():
-            if key == "tooltip":
-                continue  # Skip the tooltip section
-
-            full_key = f"{parent_key}.{key}" if parent_key else key
-            if isinstance(value, dict):
-                section_label = Gtk.Label()
-                section_label.set_markup(f"<b>{key.replace("_"," ").upper()}</b>")
-                section_label.set_halign(Gtk.Align.START)
-                section_label.set_margin_top(10)
-                section_label.set_margin_bottom(5)
-                grid.attach(section_label, 0, row, 2, 1)
-                row += 1
-                row = self.add_config_to_grid(grid, value, row, full_key, tooltips)
-            else:
-                # Check for a tooltip in the tooltips section
-                comment = tooltips.get(f"{key}_tooltip", "")
-
-                option_label = Gtk.Label(label=key.replace("_", " ").capitalize())
-                option_label.set_halign(Gtk.Align.START)
-                if comment:
-                    option_label.set_tooltip_text(comment)
-                grid.attach(option_label, 0, row, 1, 1)
-
-                if isinstance(value, bool):
-                    option_widget = Gtk.Switch()
-                    option_widget.set_active(value)
-                    option_widget.set_size_request(
-                        60, 20
-                    )  # Set width request to a smaller value
-                else:
-                    option_widget = Gtk.Entry()
-                    option_widget.set_text(str(value))
-                    option_widget.set_width_chars(20)  # Set a fixed width for the entry
-
-                if comment:
-                    option_widget.set_tooltip_text(comment)
-
-                # Use a Gtk.Box to contain the widget and control its expansion
-                box = Gtk.Box()
-                box.pack_start(option_widget, False, False, 0)
-                grid.attach(box, 1, row, 1, 1)
-
-                self.general_entries.append((full_key, option_widget))
-                row += 1
-        return row
-
-    def on_config_selected(self, widget):
-        active_text = widget.get_active_text()
-        if active_text == "Keybinds Config":
-            self.stack.set_visible_child(self.keybinds_grid)
-        elif active_text == "General Config":
-            self.stack.set_visible_child(self.general_grid)
-
-    def on_apply(self, widget):
-        active_text = self.config_selector.get_active_text()
-        print(f"Applying configuration for: {active_text}")
-        if active_text == "Keybinds Config":
-            self.save_keybinds_config()
-        elif active_text == "General Config":
-            self.save_general_config()
-
-    def save_keybinds_config(self):
-        print("Saving keybinds configuration...")
-        for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
-            bind_vars[prefix_key] = prefix_entry.get_text()
-            bind_vars[suffix_key] = suffix_entry.get_text()
-            print(
-                f"Updated {prefix_key}: {bind_vars[prefix_key]}, {suffix_key}: {bind_vars[suffix_key]}"
-            )
-
-        # Update wallpaper directory
-        bind_vars["wallpapers_dir"] = self.wall_dir_chooser.get_filename()
-
-        config_json = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
-        os.makedirs(os.path.dirname(config_json), exist_ok=True)
-        try:
-            with open(config_json, "w") as f:
-                json.dump(bind_vars, f, indent=4)
-            print(f"Keybinds configuration saved to {config_json}")
-        except Exception as e:
-            print(f"Error saving keybinds configuration: {e}")
-
-        # Update the Hyprland configuration file
-        hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
-        try:
-            with open(hyprland_config_path, "r") as f:
-                content = f.read()
-            if SOURCE_STRING not in content:
-                with open(hyprland_config_path, "a") as f:
-                    f.write(SOURCE_STRING)
-            print(f"Hyprland configuration updated at {hyprland_config_path}")
-        except Exception as e:
-            print(f"Error updating Hyprland configuration: {e}")
-        start_config()
-
-        try:
-            subprocess.Popen(
-                f"killall {APP_NAME}; uwsm app -- python {HOME_DIR}/.config/{APP_NAME_CAP}/main.py",
-                shell=True,
-                start_new_session=True,
-            )
-            print("Hyprfabricated process restarted.")
-        except Exception as e:
-            print(f"Error restarting Hyprfabricated process: {e}")
-
-    def save_general_config(self):
-        print("Saving general configuration...")
-        for full_key, widget in self.general_entries:
-            keys = full_key.split(".")
-            config_section = self.general_config
-            for key in keys[:-1]:
-                config_section = config_section[key]
-            if isinstance(widget, Gtk.Switch):
-                config_section[keys[-1]] = widget.get_active()
-            else:
-                config_section[keys[-1]] = widget.get_text()
-            print(f"Updated {full_key}: {config_section[keys[-1]]}")
-
-        config_json = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config.json")
-        try:
-            with open(config_json, "w") as f:
-                json.dump(self.general_config, f, indent=4)
-            print(f"General configuration saved to {config_json}")
-        except Exception as e:
-            print(f"Error saving general configuration: {e}")
-
-        try:
-            subprocess.Popen(
-                f"killall {APP_NAME}; uwsm app -- python {HOME_DIR}/.config/{APP_NAME_CAP}/main.py",
-                shell=True,
-                start_new_session=True,
-            )
-            print("Hyprfabricated process restarted.")
-        except Exception as e:
-            print(f"Error restarting Hyprfabricated process: {e}")
+    def on_dock_enabled_changed(self, switch, gparam):
+        """Callback for dock enabled switch."""
+        is_active = switch.get_active()
+        self.dock_hover_switch.set_sensitive(is_active)
+        if not is_active:
+            self.dock_hover_switch.set_active(False)
 
     def on_select_face_icon(self, widget):
         """
         Open a file chooser dialog for selecting a new face icon image.
+        Uses Gtk.FileChooserDialog as Fabric doesn't provide one.
         """
         dialog = Gtk.FileChooserDialog(
             title="Select Face Icon",
-            parent=self,
+            transient_for=self.get_toplevel(),  # Get parent window
             action=Gtk.FileChooserAction.OPEN,
-            buttons=(
-                Gtk.STOCK_CANCEL,
-                Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN,
-                Gtk.ResponseType.OK,
-            ),
+        )
+        dialog.add_buttons(
+            Gtk.STOCK_CANCEL,
+            Gtk.ResponseType.CANCEL,
+            Gtk.STOCK_OPEN,
+            Gtk.ResponseType.OK,
         )
 
-        # Filter to allow image files only
         image_filter = Gtk.FileFilter()
         image_filter.set_name("Image files")
         image_filter.add_mime_type("image/png")
@@ -650,145 +1140,215 @@ class HyprConfGUI(Gtk.Window):
         image_filter.add_pattern("*.jpeg")
         dialog.add_filter(image_filter)
 
-        if dialog.run() == Gtk.ResponseType.OK:
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
             self.selected_face_icon = dialog.get_filename()
-            print(f"Face icon selected: {self.selected_face_icon}")
+            self.face_status_label.label = (
+                f"Selected: {os.path.basename(self.selected_face_icon)}"
+            )
+            try:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(
+                    self.selected_face_icon, 64, 64
+                )
+                self.face_image.set_from_pixbuf(pixbuf)
+            except Exception as e:
+                print(f"Error loading selected face icon preview: {e}")
+                self.face_image.set_from_icon_name("image-missing", 64)
+
         dialog.destroy()
 
     def on_accept(self, widget):
         """
         Save the configuration and update the necessary files without closing the window.
         """
-        # Update bind_vars from user inputs
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
             bind_vars[prefix_key] = prefix_entry.get_text()
             bind_vars[suffix_key] = suffix_entry.get_text()
 
-        # Update wallpaper directory
         bind_vars["wallpapers_dir"] = self.wall_dir_chooser.get_filename()
+        bind_vars["vertical"] = self.vertical_switch.get_active()
+        bind_vars["centered_bar"] = self.centered_switch.get_active()
+        bind_vars["dock_enabled"] = self.dock_switch.get_active()
+        bind_vars["dock_always_occluded"] = self.dock_hover_switch.get_active()
+        bind_vars["dock_icon_size"] = int(self.dock_size_scale.value)
+        bind_vars["terminal_command"] = self.terminal_entry.get_text()
+        bind_vars["corners_visible"] = self.corners_switch.get_active()
 
-        # Save the updated bind_vars to a JSON file
+        for component_name, switch in self.component_switches.items():
+            config_key = f"bar_{component_name}_visible"
+            bind_vars[config_key] = switch.get_active()
+
+        for component_name, switch in self.widgets_switches.items():
+            config_key = f"widgets_{component_name}_visible"
+            bind_vars[config_key] = switch.get_active()
+        for component_name, switch in self.misc_switches.items():
+            config_key = f"misc_{component_name}_visible"
+            bind_vars[config_key] = switch.get_active()
+        # for debugging purposes
+        # for component_name, switch in self.widgets_switches.items():
+        #     config_key = f"wid_{component_name}_visible"
+        #     print(config_key, switch.get_active())
+        # for component_name, switch in self.component_switches.items():
+        #     config_key = f"bar_{component_name}_visible"
+        #     print(config_key, switch.get_active())
+        # for component_name, switch in self.misc_switches.items():
+        #     config_key = f"misc_{component_name}_visible"
+        #     print(config_key, switch.get_active())
         config_json = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
-        with open(config_json, "w") as f:
-            json.dump(bind_vars, f)
+        try:
+            with open(config_json, "w") as f:
+                json.dump(bind_vars, f, indent=4)
+        except Exception as e:
+            print(f"Error saving config.json: {e}")
 
-        # Process face icon if one was selected
         if self.selected_face_icon:
             try:
                 img = Image.open(self.selected_face_icon)
                 side = min(img.size)
-                left = (img.width - side) / 2
-                top = (img.height - side) / 2
-                cropped_img = img.crop((left, top, left + side, top + side))
-                cropped_img.save(os.path.expanduser("~/.face.icon"), format="PNG")
-                print("Face icon saved.")
-            except Exception as e:
-                print("Error processing face icon:", e)
+                left = (img.width - side) // 2
+                top = (img.height - side) // 2
+                right = left + side
+                bottom = top + side
+                cropped_img = img.crop((left, top, right, bottom))
+                face_icon_dest = os.path.expanduser("~/.face.icon")
+                cropped_img.save(face_icon_dest, format="PNG")
+                print(f"Face icon saved to {face_icon_dest}")
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(face_icon_dest, 64, 64)
+                self.face_image.set_from_pixbuf(pixbuf)
 
-        # Replace hyprlock config if requested
-        if hasattr(self, "lock_checkbox") and self.lock_checkbox.get_active():
+            except Exception as e:
+                print(f"Error processing face icon: {e}")
+            finally:
+                self.selected_face_icon = None
+                self.face_status_label.label = ""
+
+        if self.lock_switch and self.lock_switch.get_active():
             src_lock = os.path.expanduser(
                 f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf"
             )
             dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
-            backup_and_replace(src_lock, dest_lock, "Hyprlock")
+            if os.path.exists(src_lock):
+                backup_and_replace(src_lock, dest_lock, "Hyprlock")
+            else:
+                print(f"Warning: Source hyprlock config not found at {src_lock}")
 
-        # Replace hypridle config if requested
-        if hasattr(self, "idle_checkbox") and self.idle_checkbox.get_active():
+        if self.idle_switch and self.idle_switch.get_active():
             src_idle = os.path.expanduser(
                 f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf"
             )
             dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
-            backup_and_replace(src_idle, dest_idle, "Hypridle")
+            if os.path.exists(src_idle):
+                backup_and_replace(src_idle, dest_idle, "Hypridle")
+            else:
+                print(f"Warning: Source hypridle config not found at {src_idle}")
 
-        # Append the source string to the Hyprland config if not present
         hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
-        with open(hyprland_config_path, "r") as f:
-            content = f.read()
-        if SOURCE_STRING not in content:
-            with open(hyprland_config_path, "a") as f:
-                f.write(SOURCE_STRING)
+        try:
+            needs_append = True
+            if os.path.exists(hyprland_config_path):
+                with open(hyprland_config_path, "r") as f:
+                    content = f.read()
+                    if SOURCE_STRING.strip() in content:
+                        needs_append = False
+            else:
+                os.makedirs(os.path.dirname(hyprland_config_path), exist_ok=True)
 
-        # Update configuration
+            if needs_append:
+                with open(hyprland_config_path, "a") as f:
+                    f.write("\n" + SOURCE_STRING)
+                print(f"Appended source string to {hyprland_config_path}")
+
+        except Exception as e:
+            print(f"Error updating {hyprland_config_path}: {e}")
+
         start_config()
 
-        # First prepare the restart command to be executed in background
-        restart_script = f"""#!/bin/bash
-killall {APP_NAME} 2>/dev/null
-python_output=$(python {os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")})
-uwsm-app "$python_output" &
-"""
+        # Restart Hyprfabricated using fabric's async command executor
+        main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
+        kill_cmd = f"killall {APP_NAME}"
+        start_cmd = f"uwsm app -- python {main_script_path}"
 
-        # Create a temporary script file
-        restart_path = "/tmp/hyprfabricated_restart.sh"
-        with open(restart_path, "w") as f:
-            f.write(restart_script)
-        os.chmod(restart_path, 0o755)
+        try:
+            # Use fabric's helper to run the command asynchronously
+            exec_shell_command(kill_cmd)
+            exec_shell_command_async(start_cmd)
+            print(f"{APP_NAME_CAP} restart initiated.")
+        except Exception as e:
+            print(f"Error restarting {APP_NAME_CAP}: {e}")
 
-        # Start the script in the background
-        subprocess.Popen(
-            ["/bin/bash", restart_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-
-        # Removed confirmation dialog to make the interface cleaner
-
-        # The window remains open - don't call Gtk.main_quit()
+        print("Configuration applied and reload initiated.")
 
     def on_reset(self, widget):
         """
-        Reset all settings to default values.
+        Reset all settings to default values. Uses Gtk.MessageDialog.
         """
-        # Ask for confirmation
         dialog = Gtk.MessageDialog(
-            transient_for=self,
+            transient_for=self.get_toplevel(),
             flags=0,
             message_type=Gtk.MessageType.QUESTION,
             buttons=Gtk.ButtonsType.YES_NO,
             text="Reset all settings to defaults?",
         )
         dialog.format_secondary_text(
-            "This will reset all keybindings and other settings to their default values."
+            "This will reset all keybindings and appearance settings to their default values."
         )
         response = dialog.run()
         dialog.destroy()
 
-        FILE_URL = "https://raw.githubusercontent.com/tr1xem/hyprfabricated/refs/heads/main/config.json"
-        DESTINATION_FILE = get_relative_path("../config.json")
-        TEMP_FILE = "/tmp/temp_config.json"
-
         if response == Gtk.ResponseType.YES:
-            # Reset bind_vars to default values
-            try:
-                urllib.request.urlretrieve(FILE_URL, TEMP_FILE)
-                print("Download successful!")
-
-                if os.path.exists(DESTINATION_FILE):
-                    os.remove(DESTINATION_FILE)
-                shutil.move(TEMP_FILE, DESTINATION_FILE)
-
-            except Exception as e:
-                print(f"Error downloading or replacing the file: {e}")
             global bind_vars
             bind_vars = DEFAULTS.copy()
 
-            # Update UI elements
-            # Update key binding entries
             for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
                 prefix_entry.set_text(bind_vars[prefix_key])
                 suffix_entry.set_text(bind_vars[suffix_key])
 
-            # Update wallpaper directory chooser
             self.wall_dir_chooser.set_filename(bind_vars["wallpapers_dir"])
+            self.vertical_switch.set_active(bind_vars.get("vertical", False))
+            self.centered_switch.set_active(bind_vars.get("centered_bar", False))
+            self.centered_switch.set_sensitive(self.vertical_switch.get_active())
+            self.dock_switch.set_active(bind_vars.get("dock_enabled", True))
+            self.dock_hover_switch.set_active(
+                bind_vars.get("dock_always_occluded", False)
+            )
+            self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
+            self.dock_size_scale.value = bind_vars.get("dock_icon_size", 28)
+            self.terminal_entry.set_text(bind_vars["terminal_command"])
 
-            # Clear face icon selection status
+            for component_name, switch in self.component_switches.items():
+                config_key = f"bar_{component_name}_visible"
+                switch.set_active(bind_vars.get(config_key, True))
+
+            self.corners_switch.set_active(bind_vars.get("corners_visible", True))
+
             self.selected_face_icon = None
+            self.face_status_label.label = ""
+            current_face = os.path.expanduser("~/.face.icon")
+            try:
+                if os.path.exists(current_face):
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(
+                        current_face, 64, 64
+                    )
+                    self.face_image.set_from_pixbuf(pixbuf)
+                else:
+                    self.face_image.set_from_icon_name("user-info", 64)
+            except Exception:
+                self.face_image.set_from_icon_name("image-missing", 64)
+
+            if self.lock_switch:
+                self.lock_switch.set_active(False)
+            if self.idle_switch:
+                self.idle_switch.set_active(False)
+
+            print("Settings reset to defaults.")
 
     def on_close(self, widget):
-        self.destroy()
+        """Close the settings window."""
+        if self.application:
+            self.application.quit()
+        else:
+            self.destroy()
 
 
 def start_config():
@@ -798,45 +1358,70 @@ def start_config():
     ensure_matugen_config()
     ensure_face_icon()
 
-    # Write the generated hypr configuration to file
     hypr_config_dir = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/")
     os.makedirs(hypr_config_dir, exist_ok=True)
     hypr_conf_path = os.path.join(hypr_config_dir, f"{APP_NAME}.conf")
-    with open(hypr_conf_path, "w") as f:
-        f.write(generate_hyprconf())
+    try:
+        with open(hypr_conf_path, "w") as f:
+            f.write(generate_hyprconf())
+        print(f"Generated Hyprland config at {hypr_conf_path}")
+    except Exception as e:
+        print(f"Error writing Hyprland config: {e}")
 
-    # Reload Hyprland configuration using subprocess.run instead of os.system
-    subprocess.run(["hyprctl", "reload"])
+    try:
+        subprocess.run(["hyprctl", "reload"], check=True, capture_output=True)
+        print("Hyprland configuration reloaded.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error reloading Hyprland: {e}\nstderr: {e.stderr.decode()}")
+    except FileNotFoundError:
+        print("Error: hyprctl command not found. Cannot reload Hyprland.")
+    except Exception as e:
+        print(f"An unexpected error occurred during hyprctl reload: {e}")
 
 
 def open_config():
     """
-    Entry point for opening the configuration GUI.
+    Entry point for opening the configuration GUI using Fabric Application.
     """
     load_bind_vars()
 
-    # Check and copy hyprlock config if needed
     dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
     src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
-    os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
     show_lock_checkbox = True
-    if not os.path.exists(dest_lock):
-        shutil.copy(src_lock, dest_lock)
-        show_lock_checkbox = False
+    if not os.path.exists(dest_lock) and os.path.exists(src_lock):
+        try:
+            os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
+            shutil.copy(src_lock, dest_lock)
+            show_lock_checkbox = False
+            print(f"Copied default hyprlock config to {dest_lock}")
+        except Exception as e:
+            print(f"Error copying default hyprlock config: {e}")
+            show_lock_checkbox = os.path.exists(src_lock)
 
-    # Check and copy hypridle config if needed
     dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
     src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
     show_idle_checkbox = True
-    if not os.path.exists(dest_idle):
-        shutil.copy(src_idle, dest_idle)
-        show_idle_checkbox = False
+    if not os.path.exists(dest_idle) and os.path.exists(src_idle):
+        try:
+            os.makedirs(os.path.dirname(dest_idle), exist_ok=True)
+            shutil.copy(src_idle, dest_idle)
+            show_idle_checkbox = False
+            print(f"Copied default hypridle config to {dest_idle}")
+        except Exception as e:
+            print(f"Error copying default hypridle config: {e}")
+            show_idle_checkbox = os.path.exists(src_idle)
 
-    # Create and run the GUI
-    window = HyprConfGUI(show_lock_checkbox, show_idle_checkbox)
-    window.connect("destroy", Gtk.main_quit)
+    app = Application(f"{APP_NAME}-settings")
+    window = HyprConfGUI(
+        show_lock_checkbox=show_lock_checkbox,
+        show_idle_checkbox=show_idle_checkbox,
+        application=app,
+        on_destroy=lambda *_: app.quit(),
+    )
+    app.add_window(window)
+
     window.show_all()
-    Gtk.main()
+    app.run()
 
 
 if __name__ == "__main__":
