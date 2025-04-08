@@ -106,7 +106,6 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
 - [x] OCR
 - [x] Full Gui Config
 - [x] Better Desktop Widgets
-- [x] Customizable Widgets and Bar
 - [x] Gui Updater and update notifier
 - [x] Pins
 - [x] Power Manager
