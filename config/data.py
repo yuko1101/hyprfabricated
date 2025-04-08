@@ -27,7 +27,7 @@ CURRENT_HEIGHT = screen.get_height()
 
 # Rename to match what's being imported in config.py
 WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
-CONFIG_FILE = get_relative_path("../config.json")
+CONFIG_FILE = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
 
 
 def load_config():
@@ -45,8 +45,10 @@ def load_config():
     return config
 
 
+print(f"Config file path: {CONFIG_FILE}")
 if os.path.exists(CONFIG_FILE):
-    config = load_config()
+    with open(CONFIG_FILE, "r") as f:
+        config = json.load(f)
     WALLPAPERS_DIR = config.get("wallpapers_dir", WALLPAPERS_DIR_DEFAULT)
     VERTICAL = config.get("vertical", False)  # Use saved value or False as default
     CENTERED_BAR = config.get("centered_bar", False)  # Load centered bar setting
