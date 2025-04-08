@@ -455,112 +455,105 @@ def create_widgets(config, widget_type):
     return widgets
 
 
-if config.get("widgets_displaytype_visible", True):
+if data.DESKTOP_WIDGETS:
 
-    class Deskwidgets(Window):
-        def __init__(self, **kwargs):
-            config = load_config()
-            super().__init__(
-                name="desktop",
-                layer="bottom",
-                exclusivity="none",
-                child=Box(
-                    orientation="v",
-                    v_expand=True,
-                    v_align="center",
-                    h_align="center",
-                    children=create_widgets(config, "full"),
-                ),
-                all_visible=False,
-                **kwargs,
-            )
-            if config.get("widgets_sysinfo_visible", True):
-                sys_widget = Window(
+    if config.get("widgets_displaytype_visible", True):
+
+        class Deskwidgets(Window):
+            def __init__(self, **kwargs):
+                config = load_config()
+                super().__init__(
+                    name="desktop",
                     layer="bottom",
-                    anchor="bottom center",
-                    margin=f"0 0 {margin()}px 0",
+                    exclusivity="none",
                     child=Box(
                         orientation="v",
-                        children=[
-                            Sysinfo(),
-                        ],
+                        v_expand=True,
+                        v_align="center",
+                        h_align="center",
+                        children=create_widgets(config, "full"),
                     ),
                     all_visible=False,
+                    **kwargs,
                 )
-            else:
-                sys_widget = None
-            if config.get("widgets_activation_visible", True):
-                activationnag = Window(
-                    name="activation",
-                    anchor="bottom right",
-                    layer="top",
-                    justification="left",
-                    v_align="start",
-                    h_align="start",
-                    h_expand=True,
-                    v_expand=True,
+                if config.get("widgets_sysinfo_visible", True):
+                    sys_widget = Window(
+                        layer="bottom",
+                        anchor="bottom center",
+                        margin=f"0 0 {margin()}px 0",
+                        child=Box(
+                            orientation="v",
+                            children=[
+                                Sysinfo(),
+                            ],
+                        ),
+                        all_visible=False,
+                    )
+                else:
+                    sys_widget = None
+                if config.get("widgets_activation_visible", True):
+                    activationnag = Window(
+                        name="activation",
+                        anchor="bottom right",
+                        layer="top",
+                        justification="left",
+                        v_align="start",
+                        h_align="start",
+                        h_expand=True,
+                        v_expand=True,
+                        child=Box(
+                            orientation="v",
+                            children=[
+                                activation(),
+                                activationbot(),
+                            ],
+                        ),
+                        all_visible=True,
+                    )
+                else:
+                    activationnag = None
+
+    else:
+
+        class Deskwidgets(Window):
+            def __init__(self, **kwargs):
+                config = load_config()
+                super().__init__(name="desktop", **kwargs)
+                desktop_widget = Window(
+                    layer="bottom",
+                    anchor="bottom left",
+                    exclusivity="none",
                     child=Box(
                         orientation="v",
-                        children=[
-                            activation(),
-                            activationbot(),
-                        ],
+                        children=create_widgets(config, "basic"),
                     ),
                     all_visible=True,
                 )
-            else:
-                activationnag = None
+                if config.get("widgets_activation_visible", True):
+                    activationnag = Window(
+                        name="activation",
+                        anchor="bottom right",
+                        layer="top",
+                        justification="left",
+                        v_align="start",
+                        h_align="start",
+                        h_expand=True,
+                        v_expand=True,
+                        child=Box(
+                            orientation="v",
+                            children=[
+                                activation(),
+                                activationbot(),
+                            ],
+                        ),
+                        all_visible=True,
+                    )
+                else:
+                    activationnag = None
 
 else:
 
     class Deskwidgets(Window):
         def __init__(self, **kwargs):
-            config = load_config()
             super().__init__(name="desktop", **kwargs)
-            desktop_widget = Window(
-                layer="bottom",
-                anchor="bottom left",
-                exclusivity="none",
-                child=Box(
-                    orientation="v",
-                    children=create_widgets(config, "basic"),
-                ),
-                all_visible=True,
-            )
-            if config.get("widgets_activation_visible", True):
-                activationnag = Window(
-                    name="activation",
-                    anchor="bottom right",
-                    layer="top",
-                    justification="left",
-                    v_align="start",
-                    h_align="start",
-                    h_expand=True,
-                    v_expand=True,
-                    child=Box(
-                        orientation="v",
-                        children=[
-                            activation(),
-                            activationbot(),
-                        ],
-                    ),
-                    all_visible=True,
-                )
-            else:
-                activationnag = None
-            if config.get("widgets_sysinfo_visible", True):
-                sys_widget = Window(
-                    layer="bottom",
-                    anchor="bottom center",
-                    margin=f"0 0 {margin()}px 0",
-                    exclusivity="none",
-                    child=Box(
-                        orientation="v",
-                        children=[
-                            Sysinfo(),
-                        ],
-                    ),
-                    all_visible=False,
-                )
-            else:
-                sys_widget = None
+            self.set_visible(False)

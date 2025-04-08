@@ -804,7 +804,7 @@ class HyprConfGUI(Window):
         component_display_names = {
             "button_apps": "App Launcher Button",
             "systray": "System Tray",
-            "sysprofiles": "Performance mode Switcher",
+            "sysprofiles": "Powerprofiles Switcher",
             "control": "Control Panel",
             "network": "Network Applet",
             "button_tools": "Toolbox Button",
