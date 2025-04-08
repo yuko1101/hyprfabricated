@@ -9,37 +9,47 @@ from fabric.widgets.button import Button
 gi.require_version("Gtk", "3.0")
 import modules.icons as icons
 import config.data as data
+from config.data import load_config
+
+config = load_config()
+
 
 class Weather(Button):
     def __init__(self, **kwargs) -> None:
         super().__init__(name="weather", orientation="h", spacing=8, **kwargs)
         self.label = Label(name="weather-label", markup=icons.loader)
         self.add(self.label)
-        self.show_all()
         self.enabled = True  # Add a flag to track if the component should be shown
         self.session = requests.Session()  # Reuse HTTP connection
         # Update every 10 minutes
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
+
     def get_location(self):
         """Fetch user's city using IP geolocation."""
         try:
-            response = self.session.get("https://ipinfo.io/json", timeout=5, stream=True)
+            response = self.session.get(
+                "https://ipinfo.io/json", timeout=5, stream=True
+            )
             if response.ok:
                 return response.json().get("city", "")
         except requests.RequestException:
             pass
         return ""
 
-
     def set_visible(self, visible):
         """Override to track external visibility setting"""
         self.enabled = visible
         # Only update actual visibility if weather data is available
-        if visible and hasattr(self, 'has_weather_data') and self.has_weather_data:
+        if (
+            visible
+            and hasattr(self, "has_weather_data")
+            and self.has_weather_data
+            and config.get("bar_weather_visible", False)
+        ):
             super().set_visible(True)
         else:
-            super().set_visible(visible)
+            super().set_visible(False)
 
     def fetch_weather(self):
         GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
@@ -51,9 +61,15 @@ class Weather(Button):
         locsafe = urllib.parse.quote(location)
         if not location:
             return self._update_ui(error=True)
-        url = f"https://wttr.in/{locsafe}?format=%c+%t" if not data.VERTICAL else f"https://wttr.in/{locsafe}?format=%c"
+        url = (
+            f"https://wttr.in/{locsafe}?format=%c+%t"
+            if not data.VERTICAL
+            else f"https://wttr.in/{locsafe}?format=%c"
+        )
         # Get detailed info for tooltip
-        tooltip_url = f"https://wttr.in/{locsafe}?format=%l:+%C,+%t+(%f),+Humidity:+%h,+Wind:+%w"
+        tooltip_url = (
+            f"https://wttr.in/{locsafe}?format=%l:+%C,+%t+(%f),+Humidity:+%h,+Wind:+%w"
+        )
 
         try:
             response = self.session.get(url, timeout=5)
@@ -87,5 +103,7 @@ class Weather(Button):
             if error:
                 text = f"{icons.cloud_off} Unavailable"
                 visible = False
-            GLib.idle_add(self.label.set_markup if error else self.label.set_label, text)
+            GLib.idle_add(
+                self.label.set_markup if error else self.label.set_label, text
+            )
             GLib.idle_add(self.set_visible, visible)

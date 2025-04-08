@@ -9,12 +9,6 @@ import toml
 from PIL import Image
 import gi
 
-gi.require_version("Gtk", "3.0")
-from gi.repository import (
-    Gtk,
-    GdkPixbuf,
-)  # Keep Gtk for Switch, FileChooserButton, Expander, Grid
-
 # Fabric Imports
 from fabric import Application
 from fabric.widgets.window import Window
@@ -26,6 +20,18 @@ from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.image import Image as FabricImage  # Alias to avoid clash
 from fabric.widgets.stack import Stack
 from fabric.widgets.scale import Scale
+from fabric.utils.helpers import (
+    exec_shell_command,
+    exec_shell_command_async,
+    get_relative_path,
+)
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import (  # noqa: E402
+    Gtk,
+    GdkPixbuf,
+)  # Keep Gtk for Switch, FileChooserButton, Expander, Grid
+
 
 # Assuming data.py exists in the same directory or is accessible via sys.path
 # If data.py is in ./config/data.py relative to this script's original location:
@@ -42,11 +48,11 @@ try:
 except ImportError as e:
     print(f"Error importing data constants: {e}")
     # Provide fallback defaults if import fails
-    APP_NAME = "ax-shell"
-    APP_NAME_CAP = "Ax-Shell"
-    CONFIG_DIR = "~/.config/Ax-Shell"
+    APP_NAME = "hyprfabricated"
+    APP_NAME_CAP = "hyprfabricated"
+    CONFIG_DIR = "~/.config/hyprfabricated"
     HOME_DIR = "~"
-    WALLPAPERS_DIR_DEFAULT = "~/Pictures/Wallpapers"
+    WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
 
 
 SOURCE_STRING = f"""
@@ -123,8 +129,9 @@ DEFAULTS = {
     "widgets_weather_format": "C",
     "widgets_weather_location": "",
     "widgets_sysinfo_visible": True,
-    "misc_updater_visible": True,
-    "misc_otherplayers_visible": False,
+    "misc_updater": True,
+    "misc_otherplayers": False,
+    "widgets_qoutetype": "stoic",
 }
 
 bind_vars = DEFAULTS.copy()
@@ -948,11 +955,11 @@ class HyprConfGUI(Window):
         )
         options_grid.attach(weather_format_label, 0, 1, 1, 1)
 
-        self.terminal_entry = Entry(
+        self.weather_entry = Entry(
             text=bind_vars["widgets_weather_format"],
             h_expand=True,
         )
-        options_grid.attach(self.terminal_entry, 1, 1, 1, 1)
+        options_grid.attach(self.weather_entry, 1, 1, 1, 1)
         hint_label = Label(
             markup="<small>Accepts: F for fahrenheit or C for celsius</small>",
             h_align="start",
@@ -968,16 +975,35 @@ class HyprConfGUI(Window):
         )
         options2_grid.attach(weather_city_label, 0, 1, 1, 1)
 
-        self.terminal_entry = Entry(
+        self.weather2_entry = Entry(
             text=bind_vars["widgets_weather_location"],
             h_expand=True,
         )
-        options2_grid.attach(self.terminal_entry, 1, 1, 1, 1)
+        options2_grid.attach(self.weather2_entry, 1, 1, 1, 1)
         hint_label = Label(
             markup="<small>Leave Blank for automatic fetching</small>",
             h_align="start",
         )
         options2_grid.attach(hint_label, 0, 2, 2, 1)
+
+        options3_grid = Gtk.Grid()
+        options3_grid.set_column_spacing(30)
+        options3_grid.set_row_spacing(8)
+        options3_grid.set_margin_start(10)
+        vbox.add(options3_grid)
+        quote_label = Label(label="Qoute Type:", h_align="start", v_align="center")
+        options3_grid.attach(quote_label, 0, 1, 1, 1)
+
+        self.quote_entry = Entry(
+            text=bind_vars["widgets_qoutetype"],
+            h_expand=True,
+        )
+        options3_grid.attach(self.quote_entry, 1, 1, 1, 1)
+        hint_label = Label(
+            markup="<small>Accepts: zen or stoic</small>",
+            h_align="start",
+        )
+        options3_grid.attach(hint_label, 0, 2, 2, 1)
 
         return scrolled_window
 
@@ -1234,7 +1260,7 @@ class HyprConfGUI(Window):
             config_key = f"widgets_{component_name}_visible"
             bind_vars[config_key] = switch.get_active()
         for component_name, switch in self.misc_switches.items():
-            config_key = f"misc_{component_name}_visible"
+            config_key = f"misc_{component_name}"
             bind_vars[config_key] = switch.get_active()
         # for debugging purposes
         # for component_name, switch in self.widgets_switches.items():
@@ -1295,40 +1321,40 @@ class HyprConfGUI(Window):
             else:
                 print(f"Warning: Source hypridle config not found at {src_idle}")
 
-        # hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
-        # try:
-        #     needs_append = True
-        #     if os.path.exists(hyprland_config_path):
-        #         with open(hyprland_config_path, "r") as f:
-        #             content = f.read()
-        #             if SOURCE_STRING.strip() in content:
-        #                 needs_append = False
-        #     else:
-        #         os.makedirs(os.path.dirname(hyprland_config_path), exist_ok=True)
-        #
-        #     if needs_append:
-        #         with open(hyprland_config_path, "a") as f:
-        #             f.write("\n" + SOURCE_STRING)
-        #         print(f"Appended source string to {hyprland_config_path}")
-        #
-        # except Exception as e:
-        #     print(f"Error updating {hyprland_config_path}: {e}")
-        #
-        # start_config()
-        #
-        # # Restart Hyprfabricated using fabric's async command executor
-        # main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
-        # kill_cmd = f"killall {APP_NAME}"
-        # start_cmd = f"uwsm app -- python {main_script_path}"
-        #
-        # try:
-        #     # Use fabric's helper to run the command asynchronously
-        #     exec_shell_command(kill_cmd)
-        #     exec_shell_command_async(start_cmd)
-        #     print(f"{APP_NAME_CAP} restart initiated.")
-        # except Exception as e:
-        #     print(f"Error restarting {APP_NAME_CAP}: {e}")
-        #
+        hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
+        try:
+            needs_append = True
+            if os.path.exists(hyprland_config_path):
+                with open(hyprland_config_path, "r") as f:
+                    content = f.read()
+                    if SOURCE_STRING.strip() in content:
+                        needs_append = False
+            else:
+                os.makedirs(os.path.dirname(hyprland_config_path), exist_ok=True)
+
+            if needs_append:
+                with open(hyprland_config_path, "a") as f:
+                    f.write("\n" + SOURCE_STRING)
+                print(f"Appended source string to {hyprland_config_path}")
+
+        except Exception as e:
+            print(f"Error updating {hyprland_config_path}: {e}")
+
+        start_config()
+
+        # Restart Hyprfabricated using fabric's async command executor
+        main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
+        kill_cmd = f"killall {APP_NAME}"
+        start_cmd = f"uwsm app -- python {main_script_path}"
+
+        try:
+            # Use fabric's helper to run the command asynchronously
+            exec_shell_command(kill_cmd)
+            exec_shell_command_async(start_cmd)
+            print(f"{APP_NAME_CAP} restart initiated.")
+        except Exception as e:
+            print(f"Error restarting {APP_NAME_CAP}: {e}")
+
         print("Configuration applied and reload initiated.")
 
     def on_reset(self, widget):

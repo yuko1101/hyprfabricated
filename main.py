@@ -1,4 +1,3 @@
-import json
 import os
 import subprocess
 import setproctitle
@@ -12,15 +11,18 @@ from config.data import (
     DOCK_ICON_SIZE,
     HOME_DIR,
     VERTICAL,
+    UPDATER,
+    DESKTOP_WIDGETS,
 )
+
+from modules.bar import Bar
+from modules.corners import Corners
+from modules.dock import Dock
+from modules.notch import Notch
+from modules.deskwidgets import Deskwidgets
 
 fonts_updated_file = f"{CACHE_DIR}/fonts_updated"
 hyprconf = get_relative_path("config.json")
-
-
-def load_config():
-    with open(hyprconf, "r") as f:
-        return json.load(f)
 
 
 def run_updater():
@@ -47,47 +49,31 @@ if __name__ == "__main__":
             f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg"
         )
         os.symlink(example_wallpaper, current_wallpaper)
+
+    from config.data import load_config
+
     config = load_config()
 
-    if config.get("check_for_updates", False):
+    if UPDATER:
         run_updater()
 
-    assets = []
-    if config["Basic"]["corners"]:
-        from modules.corners import Corners
+    corners = Corners()
+    bar = Bar()
+    notch = Notch()
+    dock = Dock()
+    bar.notch = notch
+    notch.bar = bar
+    widgets = Deskwidgets()
+    # Set corners visibility based on config
 
-        corners = Corners()
-        assets.append(corners)
-    if config["Basic"]["bar"]:
-        from modules.bar import Bar
-        from modules.notch import Notch
+    widgetsvisible = DESKTOP_WIDGETS
+    widgets.set_visible(widgetsvisible)
+    corners_visible = config.get("corners_visible", True)
+    corners.set_visible(corners_visible)
 
-        bar = Bar()
-        assets.append(bar)
-        notch = Notch()
-        bar.notch = notch
-        notch.bar = bar
-        assets.append(notch)
-
-    if config["Basic"]["widgets"]:
-        if config["widgetstyle"] == "full":
-            from modules.deskwidgets import Deskwidgetsfull
-
-            widgets = Deskwidgetsfull()
-            assets.append(widgets)
-            pass
-        elif config["widgetstyle"] == "basic":
-            from modules.deskwidgets import Deskwidgetsbasic
-
-            widgets = Deskwidgetsbasic()
-            assets.append(widgets)
-            pass
-    if config["Basic"]["dock"]:
-        from modules.dock import Dock
-
-        dock = Dock()
-        assets.append(dock)
-    app = Application(f"{APP_NAME}", *assets)
+    app = Application(
+        f"{APP_NAME}", bar, notch, dock, corners, widgets
+    )  # Make sure corners is added to the app
 
     def set_css():
         from config.data import CURRENT_HEIGHT, CURRENT_WIDTH

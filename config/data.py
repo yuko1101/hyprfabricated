@@ -39,7 +39,6 @@ def load_config():
         try:
             with open(config_path, "r") as f:
                 config = json.load(f)
-                print(config)
         except Exception as e:
             print(f"Error loading config: {e}")
 
@@ -59,7 +58,13 @@ if os.path.exists(CONFIG_FILE):
         "dock_always_occluded", False
     )  # Load dock hover-only setting
     DOCK_ICON_SIZE = config.get("dock_icon_size", 28)  # Load dock icon size setting
+    UPDATER = config.get("misc_updater", True)
+    OTHERPLAYERS = config.get("misc_otherplayers_visible", False)
 
+    DESKTOP_WIDGETS = config.get("bar_desktop_widgets_visible", True)
+    WEATHER_FORMAT = config.get("widgets_weather_format", "C")
+    WEATHER_LOCATION = config.get("widgets_weather_location", "")
+    QUOTE_TYPE = config.get("widgets_quotetype", "stoic")
     # Load bar component visibility settings
     BAR_COMPONENTS_VISIBILITY = {
         "button_apps": config.get("bar_button_apps_visible", True),
@@ -75,18 +80,13 @@ if os.path.exists(CONFIG_FILE):
         "language": config.get("bar_language_visible", False),
         "date_time": config.get("bar_date_time_visible", True),
         "button_power": config.get("bar_button_power_visible", True),
-        "desktop_widgets": config.get("bar_desktop_widgets_visible", True),
         "displaytype": config.get("widgets_displaytype_visible", True),
         "activation": config.get("widgets_activation_visible", False),
         "date": config.get("widgets_date_visible", True),
         "clock": config.get("widgets_clock_visible", True),
         "quote": config.get("widgets_quote_visible", True),
         "weatherwid": config.get("widgets_weather_visible", True),
-        "weather_format": config.get("widgets_weather_format", "C"),
-        "weather_location": config.get("widgets_weather_location", ""),
         "sysinfo": config.get("widgets_sysinfo_visible", True),
-        "updater": config.get("misc_updater_visible", True),
-        "otherplayers": config.get("misc_otherplayers_visible", False),
     }
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
@@ -96,7 +96,13 @@ else:
     DOCK_ALWAYS_OCCLUDED = False  # Default value for dock hover-only mode
     TERMINAL_COMMAND = "ghostty -e"  # Default terminal command when no config
     DOCK_ICON_SIZE = 28  # Default dock icon size when no config
+    UPDATER = True
+    OTHERPLAYERS = False
+    DESKTOP_WIDGETS = config.get("bar_desktop_widgets_visible", True)
+    WEATHER_FORMAT = "C"
+    WEATHER_LOCATION = ""
 
+    QUOTE_TYPE = "stoic"
     # Default values for component visibility (all visible)
     BAR_COMPONENTS_VISIBILITY = {
         "button_apps": True,
@@ -112,16 +118,11 @@ else:
         "language": False,
         "date_time": True,
         "button_power": True,
-        "desktop_widgets": True,
         "displaytype": True,
         "activation": False,
         "date": True,
         "clock": True,
         "quote": True,
         "weatherwid": True,
-        "weather_format": "C",
-        "weather_location": "",
         "sysinfo": True,
-        "updater": True,
-        "otherplayers": False,
     }

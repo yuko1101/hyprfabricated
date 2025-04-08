@@ -5,38 +5,35 @@ from fabric.widgets.overlay import Overlay
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.wayland import WaylandWindow as Window
-from fabric.utils import invoke_repeater, get_relative_path
+from fabric.utils import invoke_repeater
 import requests
 import urllib.parse
 import datetime
-import json
 from gi.repository import GLib
 from concurrent.futures import ThreadPoolExecutor
 import time
+from config.data import load_config
+import config.data as data
+import subprocess
 
 executor = ThreadPoolExecutor(max_workers=4)
 
-CONFIG_CACHE = None
+
+config = load_config()
 
 
-def load_config():
-    """Load and cache config file to reduce file I/O latency."""
-    global CONFIG_CACHE
-    if CONFIG_CACHE is None:
-        try:
-            with open(get_relative_path("../config.json"), "r") as file:
-                CONFIG_CACHE = json.load(file)
-        except Exception as e:
-            print(f"Error reading config: {e}")
-            CONFIG_CACHE = {}
-    return CONFIG_CACHE
+def margin():
+    return (
+        config.get("dock_icon_size") + 10
+        if not config.get("dock_always_occluded")
+        else 0
+    )
 
 
 def get_location():
     """Fetch location from config file or IP API asynchronously."""
-    config = load_config()
-    if city := config.get("city"):
-        return city
+    if data.WEATHER_LOCATION:
+        return data.WEATHER_LOCATION.replace(" ", "")
     for attempt in range(5):
         try:
             response = requests.get("https://ipinfo.io/json", timeout=3)
@@ -73,8 +70,7 @@ def get_weather(callback):
                 responseinfo = requests.get(url, timeout=3).json()
 
                 if response.status_code == 200:
-                    config = load_config()
-                    temp_unit = config.get("Temprature_Unit", "C")
+                    temp_unit = data.WEATHER_FORMAT
                     temp = (
                         responseinfo["current_condition"][0][f"temp_{temp_unit}"] + "°"
                     )
@@ -142,6 +138,7 @@ class Sysinfo(Box):
             layer="bottom",
             title="sysinfo",
             name="sysinfo",
+            margin="0 0 100px 0",
             visible=False,
             all_visible=False,
             **kwargs,
@@ -323,14 +320,11 @@ class weather(Box):
         header_right[0].set_label(emoji)
 
 
-import subprocess
-
 def fetch_quote(callback):
     """Fetch quotes asynchronously."""
 
     def fetch():
-        config = load_config()
-        quotes_type = config.get("quotetype", "zen")
+        quotes_type = data.QUOTE_TYPE
 
         url = (
             "https://stoic-quotes.com/api/quote"
@@ -342,11 +336,11 @@ def fetch_quote(callback):
             try:
                 response = requests.get(url, timeout=3)
                 response.raise_for_status()
-                data = response.json()
+                respdata = response.json()
                 quote = (
-                    f"{data[0]['q']} - {data[0]['a']}"
+                    f"{respdata[0]['q']} - {respdata[0]['a']}"
                     if quotes_type == "zen"
-                    else f"{data['text']} - {data['author']}"
+                    else f"{respdata['text']} - {respdata['author']}"
                 )
                 break
             except requests.RequestException as e:
@@ -359,14 +353,12 @@ def fetch_quote(callback):
                             ["hyprctl", "splash"],
                             capture_output=True,
                             text=True,
-                            check=True
+                            check=True,
                         )
                         quote = result.stdout.strip() + " - Team Hyprland"
                     except subprocess.CalledProcessError as e:
                         print(f"Error fetching quote from hyprctl: {e}")
-                        quote = (
-                            "I learn from the mistakes of people who take my advice - Trix"
-                        )
+                        quote = "I learn from the mistakes of people who take my advice - Trix"
 
         GLib.idle_add(callback, quote)
 
@@ -423,6 +415,7 @@ class activation(Label):
         )
         self.set_label("Activate Linux")
 
+
 class activationbot(Label):
     def __init__(self, **kwargs):
         super().__init__(
@@ -437,131 +430,137 @@ class activationbot(Label):
             visible=False,
         )
         self.set_label("Go to Settings to activate Linux")
+
+
 def create_widgets(config, widget_type):
     widgets = []
-    if widget_type == "full":
-        if config.get("desktopwidgets", {}).get("date", False):
+    if config.get("widgets_displaytype_visible", True):
+        if config.get("widgets_clock_visible", True):
             widgets.append(
                 DateTime(formatters=["%A, %d %B"], interval=10000, name="date")
             )
-        if config.get("desktopwidgets", {}).get("clock", False):
+        if config.get("widgets_date_visible", True):
             widgets.append(DateTime(formatters=["%I:%M"], name="clock"))
-        if config.get("desktopwidgets", {}).get("quote", False):
+        if config.get("widgets_quote_visible", True):
             widgets.append(qoute())
-        if config.get("desktopwidgets", {}).get("weather", False):
+        if config.get("widgets_weatherwid_visible", True):
             widgets.append(weather())
-    elif widget_type == "basic":
-        if config.get("desktopwidgets", {}).get("date", False):
+    else:
+        if config.get("widgets_date_visible", True):
             widgets.append(
                 DateTime(formatters=["%A. %d %B"], interval=10000, name="date")
             )
-        if config.get("desktopwidgets", {}).get("clock", False):
+        if config.get("widgets_clock_visible", True):
             widgets.append(DateTime(formatters=["%I:%M"], name="clock"))
     return widgets
 
 
+if config.get("widgets_displaytype_visible", True):
 
-class Deskwidgetsfull(Window):
-    def __init__(self, **kwargs):
-        config = load_config()
-        super().__init__(
-            name="desktop",
-            layer="bottom",
-            exclusivity="none",
-            child=Box(
-                orientation="v",
-                v_expand=True,
-                v_align="center",
-                h_align="center",
-                children=create_widgets(config, "full"),
-            ),
-            all_visible=False,
-            **kwargs,
-        )
-        if config.get("desktopwidgets", {}).get("systeminfo", False):
-            sys_widget = Window(
+    class Deskwidgets(Window):
+        def __init__(self, **kwargs):
+            config = load_config()
+            super().__init__(
+                name="desktop",
                 layer="bottom",
-                anchor="bottom center",
                 exclusivity="none",
                 child=Box(
                     orientation="v",
-                    children=[
-                        Sysinfo(),
-                    ],
+                    v_expand=True,
+                    v_align="center",
+                    h_align="center",
+                    children=create_widgets(config, "full"),
                 ),
                 all_visible=False,
+                **kwargs,
             )
-        else:
-            sys_widget = None
-        if config.get("desktopwidgets", {}).get("activation", False):
-                activationnag= Window(
+            if config.get("widgets_sysinfo_visible", True):
+                sys_widget = Window(
+                    layer="bottom",
+                    anchor="bottom center",
+                    margin=f"0 0 {margin()}px 0",
+                    child=Box(
+                        orientation="v",
+                        children=[
+                            Sysinfo(),
+                        ],
+                    ),
+                    all_visible=False,
+                )
+            else:
+                sys_widget = None
+            if config.get("widgets_activation_visible", True):
+                activationnag = Window(
                     name="activation",
-                anchor="bottom right",
-                layer="top",
-                justification="left",
-                v_align="start",
-                h_align="start",
-                h_expand=True,
-                v_expand=True,
-                child=Box(
-                    orientation="v",
-                    children=[
-                        activation(),
-                        activationbot(),
-                    ],
-                ),
-                all_visible=True,
-            )
-        else:
-           activationnag = None
+                    anchor="bottom right",
+                    layer="top",
+                    justification="left",
+                    v_align="start",
+                    h_align="start",
+                    h_expand=True,
+                    v_expand=True,
+                    child=Box(
+                        orientation="v",
+                        children=[
+                            activation(),
+                            activationbot(),
+                        ],
+                    ),
+                    all_visible=True,
+                )
+            else:
+                activationnag = None
 
-class Deskwidgetsbasic(Window):
-    def __init__(self, **kwargs):
-        config = load_config()
-        super().__init__(name="desktop", **kwargs)
-        desktop_widget = Window(
-            layer="bottom",
-            anchor="bottom left",
-            exclusivity="none",
-            child=Box(
-                orientation="v",
-                children=create_widgets(config, "basic"),
-            ),
-            all_visible=True,
-        )
-        if config.get("desktopwidgets", {}).get("activation", False):
-                activationnag= Window(
-                    name="activation",
-                anchor="bottom right",
-                layer="top",
-                justification="left",
-                v_align="start",
-                h_align="start",
-                h_expand=True,
-                v_expand=True,
-                child=Box(
-                    orientation="v",
-                    children=[
-                        activation(),
-                        activationbot(),
-                    ],
-                ),
-                all_visible=True,
-            )
-        else:
-           activationnag = None
-        if config.get("desktopwidgets", {}).get("systeminfo", False):
-            sys_widget = Window(
+else:
+
+    class Deskwidgets(Window):
+        def __init__(self, **kwargs):
+            config = load_config()
+            super().__init__(name="desktop", **kwargs)
+            desktop_widget = Window(
                 layer="bottom",
-                anchor="bottom center",
+                anchor="bottom left",
                 exclusivity="none",
                 child=Box(
                     orientation="v",
-                    children=[
-                        Sysinfo(),
-                    ],
+                    children=create_widgets(config, "basic"),
                 ),
-                all_visible=False,
+                all_visible=True,
             )
-        else:
-            sys_widget = None
+            if config.get("widgets_activation_visible", True):
+                activationnag = Window(
+                    name="activation",
+                    anchor="bottom right",
+                    layer="top",
+                    justification="left",
+                    v_align="start",
+                    h_align="start",
+                    h_expand=True,
+                    v_expand=True,
+                    child=Box(
+                        orientation="v",
+                        children=[
+                            activation(),
+                            activationbot(),
+                        ],
+                    ),
+                    all_visible=True,
+                )
+            else:
+                activationnag = None
+            if config.get("widgets_sysinfo_visible", True):
+                sys_widget = Window(
+                    layer="bottom",
+                    anchor="bottom center",
+                    margin=f"0 0 {margin()}px 0",
+                    exclusivity="none",
+                    child=Box(
+                        orientation="v",
+                        children=[
+                            Sysinfo(),
+                        ],
+                    ),
+                    all_visible=False,
+                )
+            else:
+                sys_widget = None
