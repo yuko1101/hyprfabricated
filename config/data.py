@@ -45,7 +45,6 @@ def load_config():
     return config
 
 
-print(f"Config file path: {CONFIG_FILE}")
 if os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, "r") as f:
         config = json.load(f)
