@@ -25,7 +25,7 @@ config = load_config()
 def margin():
     return (
         config.get("dock_icon_size") + 10
-        if not config.get("dock_always_occluded")
+        if not data.DOCK_ALWAYS_OCCLUDED and data.DOCK_ENABLED
         else 0
     )
 
@@ -138,7 +138,6 @@ class Sysinfo(Box):
             layer="bottom",
             title="sysinfo",
             name="sysinfo",
-            margin="0 0 100px 0",
             visible=False,
             all_visible=False,
             **kwargs,
