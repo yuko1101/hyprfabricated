@@ -19,7 +19,9 @@ class Weather(Button):
         super().__init__(name="weather", orientation="h", spacing=8, **kwargs)
         self.label = Label(name="weather-label", markup=icons.loader)
         self.add(self.label)
-        self.enabled = True  # Add a flag to track if the component should be shown
+        self.enabled = config.get(
+            "bar_weather_visible", False
+        )  # Add a flag to track if the component should be shown
         self.session = requests.Session()  # Reuse HTTP connection
         # Update every 10 minutes
         GLib.timeout_add_seconds(600, self.fetch_weather)
@@ -39,15 +41,9 @@ class Weather(Button):
 
     def set_visible(self, visible):
         """Override to track external visibility setting"""
-        self.enabled = visible
         # Only update actual visibility if weather data is available
-        if (
-            visible
-            and hasattr(self, "has_weather_data")
-            and self.has_weather_data
-            and config.get("bar_weather_visible", False)
-        ):
-            super().set_visible(True)
+        if visible and hasattr(self, "has_weather_data") and self.has_weather_data:
+            super().set_visible(self.enabled)
         else:
             super().set_visible(False)
 
