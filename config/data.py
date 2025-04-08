@@ -79,6 +79,7 @@ if os.path.exists(CONFIG_FILE):
         "metrics": config.get("bar_metrics_visible", False),
         "language": config.get("bar_language_visible", False),
         "date_time": config.get("bar_date_time_visible", True),
+        "sysprofiles": config.get("bar_sysprofiles_visible", False),
         "button_power": config.get("bar_button_power_visible", True),
         "displaytype": config.get("widgets_displaytype_visible", True),
         "activation": config.get("widgets_activation_visible", False),
@@ -125,4 +126,5 @@ else:
         "quote": True,
         "weatherwid": True,
         "sysinfo": True,
+        "sysprofiles": False,
     }

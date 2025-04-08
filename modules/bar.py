@@ -20,6 +20,8 @@ import config.data as data
 from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
 from modules.weather import Weather
+from modules.systemprofiles import Systemprofiles
+import json
 import os
 
 
@@ -69,6 +71,7 @@ class Bar(Window):
         self.weather = Weather()
         self.network = NetworkApplet()
 
+        self.sysprofiles = Systemprofiles()
         self.lang_label = Label(name="lang-label")
         self.language = Button(
             name="language", h_align="center", v_align="center", child=self.lang_label
@@ -119,6 +122,7 @@ class Bar(Window):
         self.rev_right = [
             self.metrics,
             self.control,
+            self.sysprofiles,
         ]
 
         self.revealer_right = Revealer(
@@ -281,6 +285,7 @@ class Bar(Window):
             "metrics": self.metrics,
             "language": self.language,
             "date_time": self.date_time,
+            "sysprofiles": self.sysprofiles,
             "button_power": self.button_power,
         }
 
@@ -302,6 +307,7 @@ class Bar(Window):
             "battery": self.battery,
             "metrics": self.metrics,
             "language": self.language,
+            "sysprofiles": self.sysprofiles,
             "date_time": self.date_time,
             "button_power": self.button_power,
         }

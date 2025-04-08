@@ -116,6 +116,7 @@ DEFAULTS = {
     "bar_battery_visible": True,
     "bar_metrics_visible": False,
     "bar_language_visible": False,
+    "bar_sysprofiles_visible": False,
     "bar_date_time_visible": True,
     "bar_button_power_visible": True,
     "corners_visible": True,  # Added default for corners visibility
@@ -803,6 +804,7 @@ class HyprConfGUI(Window):
         component_display_names = {
             "button_apps": "App Launcher Button",
             "systray": "System Tray",
+            "sysprofiles": "Performance mode Switcher",
             "control": "Control Panel",
             "network": "Network Applet",
             "button_tools": "Toolbox Button",
