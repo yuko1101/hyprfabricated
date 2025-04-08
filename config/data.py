@@ -99,7 +99,7 @@ else:
     DOCK_ICON_SIZE = 28  # Default dock icon size when no config
     UPDATER = True
     OTHERPLAYERS = False
-    DESKTOP_WIDGETS = config.get("bar_desktop_widgets_visible", True)
+    DESKTOP_WIDGETS = True
     WEATHER_FORMAT = "C"
     WEATHER_LOCATION = ""
 
