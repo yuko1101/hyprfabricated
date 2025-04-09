@@ -943,69 +943,70 @@ class HyprConfGUI(Window):
             h_expand=True,
         )
         vbox.add(separator1)
-
         options_grid = Gtk.Grid()
         options_grid.set_column_spacing(30)
         options_grid.set_row_spacing(8)
         options_grid.set_margin_start(10)
+        options_grid.set_margin_end(10)
+        options_grid.set_margin_top(10)
         vbox.add(options_grid)
-        options_header = Label(markup="<b>Widget Settings</b>", h_align="start")
-        options_grid.attach(options_header, 0, 0, 2, 1)
 
+        row = 0
+
+        # Header
+        options_header = Label(markup="<b>Widget Settings</b>", h_align="start")
+        options_grid.attach(options_header, 0, row, 2, 1)
+        row += 1
+
+        # Weather format
         weather_format_label = Label(
             label="Weather format:", h_align="start", v_align="center"
         )
-        options_grid.attach(weather_format_label, 0, 1, 1, 1)
+        options_grid.attach(weather_format_label, 0, row, 1, 1)
 
         self.weather_entry = Entry(
-            text=bind_vars["widgets_weather_format"],
-            h_expand=True,
+            text=bind_vars["widgets_weather_format"], h_expand=True
         )
-        options_grid.attach(self.weather_entry, 1, 1, 1, 1)
+        options_grid.attach(self.weather_entry, 1, row, 1, 1)
+        row += 1
+
         hint_label = Label(
             markup="<small>Accepts: F for fahrenheit or C for celsius</small>",
             h_align="start",
         )
-        options_grid.attach(hint_label, 0, 2, 2, 1)
-        options2_grid = Gtk.Grid()
-        options2_grid.set_column_spacing(30)
-        options2_grid.set_row_spacing(8)
-        options2_grid.set_margin_start(10)
-        vbox.add(options2_grid)
+        options_grid.attach(hint_label, 1, row, 1, 1)
+        row += 1
+
+        # Weather city
         weather_city_label = Label(
             label="Weather City:", h_align="start", v_align="center"
         )
-        options2_grid.attach(weather_city_label, 0, 1, 1, 1)
+        options_grid.attach(weather_city_label, 0, row, 1, 1)
 
         self.weather2_entry = Entry(
-            text=bind_vars["widgets_weather_location"],
-            h_expand=True,
+            text=bind_vars["widgets_weather_location"], h_expand=True
         )
-        options2_grid.attach(self.weather2_entry, 1, 1, 1, 1)
-        hint_label = Label(
-            markup="<small>Leave Blank for automatic fetching</small>",
-            h_align="start",
-        )
-        options2_grid.attach(hint_label, 0, 2, 2, 1)
+        options_grid.attach(self.weather2_entry, 1, row, 1, 1)
+        row += 1
 
-        options3_grid = Gtk.Grid()
-        options3_grid.set_column_spacing(30)
-        options3_grid.set_row_spacing(8)
-        options3_grid.set_margin_start(10)
-        vbox.add(options3_grid)
-        quote_label = Label(label="Qoute Type:", h_align="start", v_align="center")
-        options3_grid.attach(quote_label, 0, 1, 1, 1)
-
-        self.quote_entry = Entry(
-            text=bind_vars["widgets_qoutetype"],
-            h_expand=True,
-        )
-        options3_grid.attach(self.quote_entry, 1, 1, 1, 1)
         hint_label = Label(
-            markup="<small>Accepts: zen or stoic</small>",
-            h_align="start",
+            markup="<small>Leave Blank for automatic fetching</small>", h_align="start"
         )
-        options3_grid.attach(hint_label, 0, 2, 2, 1)
+        options_grid.attach(hint_label, 1, row, 1, 1)
+        row += 1
+
+        # Quote type
+        quote_label = Label(label="Quote Type:", h_align="start", v_align="center")
+        options_grid.attach(quote_label, 0, row, 1, 1)
+
+        self.quote_entry = Entry(text=bind_vars["widgets_qoutetype"], h_expand=True)
+        options_grid.attach(self.quote_entry, 1, row, 1, 1)
+        row += 1
+
+        hint_label = Label(
+            markup="<small>Accepts: zen or stoic</small>", h_align="start"
+        )
+        options_grid.attach(hint_label, 1, row, 1, 1)
 
         return scrolled_window
 
