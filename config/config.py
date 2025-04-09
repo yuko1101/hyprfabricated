@@ -63,8 +63,8 @@ source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
 DEFAULTS = {
     "prefix_restart": "SUPER ALT",
     "suffix_restart": "B",
-    "prefix_axmsg": "SUPER",
-    "suffix_axmsg": "A",
+    "prefix_hyfdmsg": "SUPER",
+    "suffix_hyfdmsg": "A",
     "prefix_dash": "SUPER",
     "suffix_dash": "D",
     "prefix_bluetooth": "SUPER",
@@ -308,10 +308,10 @@ exec-once =  wl-paste --type text --watch cliphist store
 exec-once =  wl-paste --type image --watch cliphist store
 
 $fabricSend = fabric-cli exec {APP_NAME}
-$axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
+$hyfbMessage = notify-send "tr1x_em" "What are you doing?" -i "{home}/.config/{APP_NAME_CAP}/assets/av.png" -a "Source Code" -A "Be patient. 🍙"
 
 bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {APP_NAME}; uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py) # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
-bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
+bind = {bind_vars['prefix_hyfdmsg']}, {bind_vars['suffix_hyfdmsg']}, exec, $hyfbMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
 bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend 'notch.open_notch("pins")' # Pins | Default: SUPER + Q
@@ -539,7 +539,7 @@ class HyprConfGUI(Window):
         self.entries = []
         bindings = [
             (f"Reload {APP_NAME_CAP}", "prefix_restart", "suffix_restart"),
-            ("Message", "prefix_axmsg", "suffix_axmsg"),
+            ("Message", "prefix_hyfdmsg", "suffix_hyfdmsg"),
             ("Dashboard", "prefix_dash", "suffix_dash"),
             ("Bluetooth", "prefix_bluetooth", "suffix_bluetooth"),
             ("Pins", "prefix_pins", "suffix_pins"),
