@@ -105,6 +105,7 @@ DEFAULTS = {
     'bar_date_time_visible': True,
     'bar_button_power_visible': True,
     'corners_visible': True, # Added default for corners visibility
+    'bar_metrics_disks': ["/"],
 }
 
 bind_vars = DEFAULTS.copy()
@@ -784,6 +785,44 @@ class HyprConfGUI(Window):
             
             self.component_switches[component_name] = component_switch
 
+        # --- Separator ---
+        separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
+                         h_expand=True)
+        vbox.add(separator2)
+
+        # --- System Metrics Options ---
+        components_header = Label(markup="<b>System Metrics Options</b>", h_align="start")
+        vbox.add(components_header)
+
+        # Options for disk locations
+        disks_label = Label(label="Disk directories", h_align="start", v_align="center")
+        vbox.add(disks_label)
+
+        self.disk_entries = Box(orientation="v", spacing=8, h_align="start")
+
+        def create_disk_edit(path):
+            bar = Box(orientation="h", spacing=10, h_align="start")
+
+            entry = Entry(text=path, h_expand=True)
+            bar.add(entry)
+
+            x = Button(label="X", on_clicked=lambda _: self.disk_entries.remove(bar))
+            bar.add(x)
+
+            self.disk_entries.add(bar)
+
+        vbox.add(self.disk_entries)
+
+        for path in bind_vars.get('bar_metrics_disks'):
+            create_disk_edit(path)
+
+        add_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        add_container.set_halign(Gtk.Align.START)
+        add_container.set_valign(Gtk.Align.CENTER)
+        add = Button(label="Add new disk", on_clicked=lambda _: create_disk_edit("/"))
+        add_container.add(add)
+        vbox.add(add_container)
+
         return scrolled_window
 
     def create_system_tab(self):
@@ -955,6 +994,10 @@ class HyprConfGUI(Window):
             config_key = f'bar_{component_name}_visible'
             bind_vars[config_key] = switch.get_active()
 
+        bind_vars['bar_metrics_disks'] = []
+        for entry in self.disk_entries.children:
+            bind_vars['bar_metrics_disks'].append(entry.children[0].get_text())
+
         config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
         try:
@@ -1072,8 +1115,22 @@ class HyprConfGUI(Window):
             for component_name, switch in self.component_switches.items():
                  config_key = f'bar_{component_name}_visible'
                  switch.set_active(bind_vars.get(config_key, True))
-            
+
             self.corners_switch.set_active(bind_vars.get('corners_visible', True))
+
+            if True: # clear disk entries and add just root
+                for i in self.disk_entries.children:
+                    self.disk_entries.remove(i)
+
+                bar = Box(orientation="h", spacing=10, h_align="start")
+
+                entry = Entry(text="/", h_expand=True)
+                bar.add(entry)
+
+                x = Button(label="X", on_clicked=lambda _: self.disk_entries.remove(bar))
+                bar.add(x)
+
+                self.disk_entries.add(bar)
 
             self.selected_face_icon = None
             self.face_status_label.label = ""

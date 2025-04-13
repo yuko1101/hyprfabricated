@@ -67,6 +67,8 @@ if os.path.exists(CONFIG_FILE):
         'date_time': config.get('bar_date_time_visible', True),
         'button_power': config.get('bar_button_power_visible', True),
     }
+    
+    BAR_METRICS_DISKS = config.get('bar_metrics_disks', ["/"])
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
     VERTICAL = False  # Default value when no config exists
@@ -92,3 +94,5 @@ else:
         'date_time': True,
         'button_power': True,
     }
+    
+    BAR_METRICS_DISKS = ["/"]
