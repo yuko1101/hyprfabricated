@@ -1,5 +1,6 @@
 import re
 import subprocess
+import json
 
 import psutil
 from gi.repository import GLib
@@ -27,6 +28,7 @@ class MetricsProvider:
     It updates periodically so that all widgets querying it display the same values.
     """
     def __init__(self):
+        self.gpu = []
         self.cpu = 0.0
         self.mem = 0.0
         self.disk = 0.0
@@ -43,6 +45,8 @@ class MetricsProvider:
         self.cpu = psutil.cpu_percent(interval=0)
         self.mem = psutil.virtual_memory().percent
         self.disk = psutil.disk_usage("/").percent
+        info = self.get_gpu_info()
+        self.gpu = [int(v["gpu_util"][:-1]) for v in info]
 
         battery = psutil.sensors_battery()
         if battery is None:
@@ -55,13 +59,47 @@ class MetricsProvider:
         return True
 
     def get_metrics(self):
-        return (self.cpu, self.mem, self.disk)
+        return (self.cpu, self.mem, self.disk, self.gpu)
 
     def get_battery(self):
         return (self.bat_percent, self.bat_charging)
 
+    def get_gpu_info(self):
+        try:
+            return json.loads(subprocess.check_output(["nvtop", "-s"]))
+        except:
+            return []
+
 # Global instance to share data between both widgets.
 shared_provider = MetricsProvider()
+
+class SingularMetric:
+    def __init__(self, id, name, icon):
+        self.usage = Scale(
+            name=f"{id}-usage",
+            value=0.25,
+            orientation='v',
+            inverted=True,
+            v_align='fill',
+            v_expand=True,
+        )
+
+        self.label = Label(
+            name=f"{id}-label",
+            markup=icon,
+        )
+
+        self.box = Box(
+            name=f"{id}-box",
+            orientation='v',
+            spacing=8,
+            children=[
+                self.usage,
+                self.label,
+            ]
+        )
+
+        self.box.set_tooltip_markup(f"{icon} {name}")
 
 class Metrics(Box):
     def __init__(self, **kwargs):
@@ -74,87 +112,25 @@ class Metrics(Box):
             all_visible=True,
         )
 
-        self.cpu_usage = Scale(
-            name="cpu-usage",
-            value=0.25,
-            orientation='v',
-            inverted=True,
-            v_align='fill',
-            v_expand=True,
-        )
+        self.cpu = SingularMetric("cpu", "CPU", icons.cpu)
+        self.ram = SingularMetric("ram", "RAM", icons.memory)
+        self.disk = SingularMetric("disk", "DISK", icons.disk)
 
-        self.cpu_label = Label(
-            name="cpu-label",
-            markup=icons.cpu,
-        )
-
-        self.cpu = Box(
-            name="cpu-box",
-            orientation='v',
-            spacing=8,
-            children=[
-                self.cpu_usage,
-                self.cpu_label,
-            ]
-        )
-
-        self.ram_usage = Scale(
-            name="ram-usage",
-            value=0.5,
-            orientation='v',
-            inverted=True,
-            v_align='fill',
-            v_expand=True,
-        )
-
-        self.ram_label = Label(
-            name="ram-label",
-            markup=icons.memory,
-        )
-
-        self.ram = Box(
-            name="ram-box",
-            orientation='v',
-            spacing=8,
-            children=[
-                self.ram_usage,
-                self.ram_label,
-            ]
-        )
-
-        self.disk_usage = Scale(
-            name="disk-usage",
-            value=0.75,
-            orientation='v',
-            inverted=True,
-            v_align='fill',
-            v_expand=True,
-        )
-
-        self.disk_label = Label(
-            name="disk-label",
-            markup=icons.disk,
-        )
-
-        self.disk = Box(
-            name="disk-box",
-            orientation='v',
-            spacing=8,
-            children=[
-                self.disk_usage,
-                self.disk_label,
-            ]
-        )
+        gpu_info = shared_provider.get_gpu_info()
+        self.gpu = [SingularMetric(f"gpu", f"GPU ({v["device_name"]})" if len(gpu_info) != 1 else "GPU", icons.gpu) for v in gpu_info]
 
         self.scales = [
-            self.disk,
-            self.ram,
-            self.cpu,
+            self.disk.box,
+            self.ram.box,
+            self.cpu.box,
+            *[v.box for v in self.gpu]
         ]
 
-        self.cpu_usage.set_sensitive(False)
-        self.ram_usage.set_sensitive(False)
-        self.disk_usage.set_sensitive(False)
+        self.cpu.usage.set_sensitive(False)
+        self.ram.usage.set_sensitive(False)
+        self.disk.usage.set_sensitive(False)
+        for gpu in self.gpu:
+            gpu.usage.set_sensitive(False)
 
         for x in self.scales:
             self.add(x)
@@ -164,19 +140,57 @@ class Metrics(Box):
 
     def update_status(self):
         # Retrieve centralized data
-        cpu, mem, disk = shared_provider.get_metrics()
+        cpu, mem, disk, gpus = shared_provider.get_metrics()
 
         # Normalize to 0.0 - 1.0
-        self.cpu_usage.value = cpu / 100.0
-        self.ram_usage.value = mem / 100.0
-        self.disk_usage.value = disk / 100.0
+        self.cpu.usage.value = cpu / 100.0
+        self.ram.usage.value = mem / 100.0
+        self.disk.usage.value = disk / 100.0
+        for i, gpu in enumerate(self.gpu):
+            gpu.usage.value = gpus[i] / 100.0
 
         return True  # Continue calling this function.
+
+class SingularMetricSmall:
+    def __init__(self, id, name, icon):
+        self.name_markup = name
+        self.icon_markup = icon
+
+        self.icon = Label(name="metrics-icon", markup=icon)
+        self.circle = CircularProgressBar(
+            name="metrics-circle",
+            value=0,
+            size=28,
+            line_width=2,
+            start_angle=150,
+            end_angle=390,
+            style_classes=id,
+            child=self.icon,
+        )
+
+        self.level = Label(name="metrics-level", style_classes=id, label="0%")
+        self.revealer = Revealer(
+            name=f"metrics-{id}-revealer",
+            transition_duration=250,
+            transition_type="slide-left",
+            child=self.level,
+            child_revealed=False,
+        )
+
+        self.box = Box(
+            name=f"metrics-{id}-box",
+            orientation="h",
+            spacing=0,
+            children=[self.circle, self.revealer],
+        )
+
+    def markup(self):
+        return f"{self.icon_markup} {self.name_markup}" if not data.VERTICAL else f"{self.icon_markup} {self.name_markup}: {self.level.get_label()}"
 
 class MetricsSmall(Button):
     def __init__(self, **kwargs):
         super().__init__(name="metrics-small", **kwargs)
-        
+
         # Create the main box for metrics widgets
         main_box = Box(
             name="metrics-small",
@@ -186,97 +200,26 @@ class MetricsSmall(Button):
             all_visible=True,
         )
 
-        # ------------------ CPU ------------------
-        self.cpu_icon = Label(name="metrics-icon", markup=icons.cpu)
-        self.cpu_circle = CircularProgressBar(
-            name="metrics-circle",
-            value=0,
-            size=28,
-            line_width=2,
-            start_angle=150,
-            end_angle=390,
-            style_classes="cpu",
-            child=self.cpu_icon,
-        )
-        self.cpu_level = Label(name="metrics-level", style_classes="cpu", label="0%")
-        self.cpu_revealer = Revealer(
-            name="metrics-cpu-revealer",
-            transition_duration=250,
-            transition_type="slide-left",
-            child=self.cpu_level,
-            child_revealed=False,
-        )
-        self.cpu_box = Box(
-            name="metrics-cpu-box",
-            orientation="h",
-            spacing=0,
-            children=[self.cpu_circle, self.cpu_revealer],
-        )
+        self.cpu = SingularMetricSmall("cpu", "CPU", icons.cpu)
+        self.ram = SingularMetricSmall("ram", "RAM", icons.memory)
+        self.disk = SingularMetricSmall("disk", "DISK", icons.disk)
 
-        # ------------------ RAM ------------------
-        self.ram_icon = Label(name="metrics-icon", markup=icons.memory)
-        self.ram_circle = CircularProgressBar(
-            name="metrics-circle",
-            value=0,
-            size=28,
-            line_width=2,
-            start_angle=150,
-            end_angle=390,
-            style_classes="ram",
-            child=self.ram_icon,
-        )
-        self.ram_level = Label(name="metrics-level", style_classes="ram", label="0%")
-        self.ram_revealer = Revealer(
-            name="metrics-ram-revealer",
-            transition_duration=250,
-            transition_type="slide-left",
-            child=self.ram_level,
-            child_revealed=False,
-        )
-        self.ram_box = Box(
-            name="metrics-ram-box",
-            orientation="h",
-            spacing=0,
-            children=[self.ram_circle, self.ram_revealer],
-        )
-
-        # ------------------ Disk ------------------
-        self.disk_icon = Label(name="metrics-icon", markup=icons.disk)
-        self.disk_circle = CircularProgressBar(
-            name="metrics-circle",
-            value=0,
-            size=28,
-            line_width=2,
-            start_angle=150,
-            end_angle=390,
-            style_classes="disk",
-            child=self.disk_icon,
-        )
-        self.disk_level = Label(name="metrics-level", style_classes="disk", label="0%")
-        self.disk_revealer = Revealer(
-            name="metrics-disk-revealer",
-            transition_duration=250,
-            transition_type="slide-left",
-            child=self.disk_level,
-            child_revealed=False,
-        )
-        self.disk_box = Box(
-            name="metrics-disk-box",
-            orientation="h",
-            spacing=0,
-            children=[self.disk_circle, self.disk_revealer],
-        )
+        gpu_info = shared_provider.get_gpu_info()
+        self.gpu = [SingularMetricSmall(f"gpu", f"GPU ({v["device_name"]})" if len(gpu_info) != 1 else "GPU", icons.gpu) for v in gpu_info]
 
         # Agregamos cada widget métrico al contenedor principal
-        main_box.add(self.disk_box)
+        main_box.add(self.disk.box)
         main_box.add(Box(name="metrics-sep"))
-        main_box.add(self.ram_box)
+        main_box.add(self.ram.box)
         main_box.add(Box(name="metrics-sep"))
-        main_box.add(self.cpu_box)
+        main_box.add(self.cpu.box)
+        for gpu in self.gpu:
+            main_box.add(Box(name="metrics-sep"))
+            main_box.add(gpu.box)
 
         # Set the main box as the button's child
         self.add(main_box)
-        
+
         # Connect events directly to the button
         self.connect("enter-notify-event", self.on_mouse_enter)
         self.connect("leave-notify-event", self.on_mouse_leave)
@@ -299,9 +242,11 @@ class MetricsSmall(Button):
                 GLib.source_remove(self.hide_timer)
                 self.hide_timer = None
             # Revelar niveles en hover para todas las métricas
-            self.cpu_revealer.set_reveal_child(True)
-            self.ram_revealer.set_reveal_child(True)
-            self.disk_revealer.set_reveal_child(True)
+            self.cpu.revealer.set_reveal_child(True)
+            self.ram.revealer.set_reveal_child(True)
+            self.disk.revealer.set_reveal_child(True)
+            for gpu in self.gpu:
+                gpu.revealer.set_reveal_child(True)
             return False
 
     def on_mouse_leave(self, widget, event):
@@ -316,25 +261,29 @@ class MetricsSmall(Button):
 
     def hide_revealer(self):
         if not data.VERTICAL:
-            self.cpu_revealer.set_reveal_child(False)
-            self.ram_revealer.set_reveal_child(False)
-            self.disk_revealer.set_reveal_child(False)
+            self.cpu.revealer.set_reveal_child(False)
+            self.ram.revealer.set_reveal_child(False)
+            self.disk.revealer.set_reveal_child(False)
+            for gpu in self.gpu:
+                gpu.revealer.set_reveal_child(False)
             self.hide_timer = None
             return False
 
     def update_metrics(self):
         # Recuperar datos centralizados
-        cpu, mem, disk = shared_provider.get_metrics()
-        self.cpu_circle.set_value(cpu / 100.0)
-        self.ram_circle.set_value(mem / 100.0)
-        self.disk_circle.set_value(disk / 100.0)
+        cpu, mem, disk, gpus = shared_provider.get_metrics()
+        self.cpu.circle.set_value(cpu / 100.0)
+        self.ram.circle.set_value(mem / 100.0)
+        self.disk.circle.set_value(disk / 100.0)
         # Actualizar etiquetas con el porcentaje formateado
-        self.cpu_level.set_label(self._format_percentage(int(cpu)))
-        self.ram_level.set_label(self._format_percentage(int(mem)))
-        self.disk_level.set_label(self._format_percentage(int(disk)))
-        self.set_tooltip_markup(f"{icons.disk} DISK - {icons.memory} RAM - {icons.cpu} CPU" if not data.VERTICAL else f"{icons.disk} DISK: {self.disk_level.get_label()}\n{icons.memory} RAM: {self.ram_level.get_label()}\n{icons.cpu} CPU: {self.cpu_level.get_label()}")
+        self.cpu.level.set_label(self._format_percentage(int(cpu)))
+        self.ram.level.set_label(self._format_percentage(int(mem)))
+        self.disk.level.set_label(self._format_percentage(int(disk)))
+        for i, gpu in enumerate(self.gpu):
+            gpu.circle.set_value(gpus[i] / 100.0)
+            gpu.level.set_label(self._format_percentage(int(gpus[i])))
+        self.set_tooltip_markup((" - " if not data.VERTICAL else "\n").join([v.markup() for v in [self.cpu, self.ram, self.disk, *self.gpu]]))
         return True
-
 
 class Battery(Button):
     def __init__(self, **kwargs):
@@ -469,7 +418,6 @@ class Battery(Button):
         # Set a descriptive tooltip with battery percentage
         self.set_tooltip_markup(f"{charging_status}" if not data.VERTICAL else f"{charging_status}: {percentage}%")
 
-                
 class NetworkApplet(Button):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar", **kwargs)

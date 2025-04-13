@@ -65,6 +65,32 @@
   padding: 8px;
 }
 
+#gpu-usage {
+  background-color: var(--surface);
+}
+
+#gpu-usage trough {
+  min-height: 16px;
+}
+
+#gpu-usage trough highlight {
+  border-radius: 20px;
+  min-height: 16px;
+  background-color: var(--primary);
+}
+
+#gpu-usage slider {
+  border-radius: 100%;
+  min-width: 16px;
+  min-height: 16px;
+  background-color: transparent;
+}
+
+#gpu-label {
+  color: var(--primary);
+  font-size: 20px;
+}
+
 #cpu-usage {
   background-color: var(--surface);
 }

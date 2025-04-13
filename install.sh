@@ -41,6 +41,7 @@ PACKAGES=(
   uwsm
   wl-clipboard
   wlinhibit
+  nvtop
 )
 
 # Prevent running as root
