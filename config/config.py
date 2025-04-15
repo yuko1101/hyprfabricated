@@ -429,10 +429,12 @@ class HyprConfGUI(Window):
         self.key_bindings_tab_content = self.create_key_bindings_tab()
         self.appearance_tab_content = self.create_appearance_tab()
         self.system_tab_content = self.create_system_tab()
+        self.about_tab_content = self.create_about_tab()  # Add About tab
 
         self.tab_stack.add_titled(self.key_bindings_tab_content, "key_bindings", "Key Bindings")
         self.tab_stack.add_titled(self.appearance_tab_content, "appearance", "Appearance")
         self.tab_stack.add_titled(self.system_tab_content, "system", "System")
+        self.tab_stack.add_titled(self.about_tab_content, "about", "About")  # Add About tab to stack
 
         # Use Gtk.StackSwitcher vertically on the left
         tab_switcher = Gtk.StackSwitcher()
@@ -965,6 +967,32 @@ class HyprConfGUI(Window):
         vbox.add(add_container)
 
         return scrolled_window
+
+    def create_about_tab(self):
+        """Create an About tab with project info, repo link, and Ko-Fi button."""
+        vbox = Box(orientation="v", spacing=18, style="margin: 30px;")
+        # Project title
+        vbox.add(Label(markup=f"<b>{APP_NAME_CAP}</b>", h_align="start", style="font-size: 1.5em; margin-bottom: 8px;"))
+        # Description
+        vbox.add(Label(label="A hackable shell for Hyprland, powered by Fabric.", h_align="start", style="margin-bottom: 12px;"))
+        # Repo link
+        repo_box = Box(orientation="h", spacing=6, h_align="start")
+        repo_label = Label(label="GitHub:", h_align="start")
+        repo_link = Label()
+        repo_link.set_markup(f'<a href="https://github.com/Axenide/Ax-Shell">https://github.com/Axenide/Ax-Shell</a>')
+        repo_box.add(repo_label)
+        repo_box.add(repo_link)
+        vbox.add(repo_box)
+        # Ko-Fi button
+        def on_kofi_clicked(_):
+            import webbrowser
+            webbrowser.open("https://ko-fi.com/Axenide")
+        kofi_btn = Button(label="Support on Ko-Fi ❤️", on_clicked=on_kofi_clicked, tooltip_text="Support Axenide on Ko-Fi")
+        kofi_btn.set_style("margin-top: 18px; min-width: 160px;")
+        vbox.add(kofi_btn)
+        # Spacer
+        vbox.add(Box(v_expand=True))
+        return vbox
 
     def on_vertical_changed(self, switch, gparam):
         """Callback for vertical switch."""
