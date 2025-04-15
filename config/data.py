@@ -69,6 +69,8 @@ if os.path.exists(CONFIG_FILE):
     }
     
     BAR_METRICS_DISKS = config.get('bar_metrics_disks', ["/"])
+    METRICS_VISIBLE = config.get('metrics_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
+    METRICS_SMALL_VISIBLE = config.get('metrics_small_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
     VERTICAL = False  # Default value when no config exists
@@ -96,3 +98,5 @@ else:
     }
     
     BAR_METRICS_DISKS = ["/"]
+    METRICS_VISIBLE = {'cpu': True, 'ram': True, 'disk': True, 'gpu': True}
+    METRICS_SMALL_VISIBLE = {'cpu': True, 'ram': True, 'disk': True, 'gpu': True}

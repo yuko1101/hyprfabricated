@@ -106,6 +106,19 @@ DEFAULTS = {
     'bar_button_power_visible': True,
     'corners_visible': True, # Added default for corners visibility
     'bar_metrics_disks': ["/"],
+    # Add metric visibility defaults
+    'metrics_visible': {
+        'cpu': True,
+        'ram': True,
+        'disk': True,
+        'gpu': True,
+    },
+    'metrics_small_visible': {
+        'cpu': True,
+        'ram': True,
+        'disk': True,
+        'gpu': True,
+    },
 }
 
 bind_vars = DEFAULTS.copy()
@@ -241,20 +254,6 @@ def load_bind_vars():
     Load saved key binding variables from JSON, if available.
     """
     config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
-    try:
-        with open(config_json, 'r') as f:
-            saved_vars = json.load(f)
-            bind_vars.update(saved_vars)
-    except FileNotFoundError:
-        # Use default values if no saved config exists
-        pass
-
-
-def load_bind_vars():
-    """
-    Load saved key binding variables from JSON, if available.
-    """
-    config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
     if os.path.exists(config_json):
         try:
             with open(config_json, 'r') as f:
@@ -264,11 +263,16 @@ def load_bind_vars():
                     if key in saved_vars:
                         bind_vars[key] = saved_vars[key]
                     else:
-                        bind_vars[key] = DEFAULTS[key] # Use default if missing in saved
-                # Add any new keys from DEFAULTS not present in saved_vars
-                for key in saved_vars:
-                    if key not in bind_vars:
-                         bind_vars[key] = saved_vars[key] # Keep saved if it's not in new defaults (less likely)
+                        bind_vars[key] = DEFAULTS[key]
+                # Ensure nested dicts for metric visibility
+                for vis_key in ['metrics_visible', 'metrics_small_visible']:
+                    if vis_key in DEFAULTS:
+                        if vis_key not in bind_vars or not isinstance(bind_vars[vis_key], dict):
+                            bind_vars[vis_key] = DEFAULTS[vis_key].copy()
+                        else:
+                            for m in DEFAULTS[vis_key]:
+                                if m not in bind_vars[vis_key]:
+                                    bind_vars[vis_key][m] = DEFAULTS[vis_key][m]
         except json.JSONDecodeError:
             print(f"Warning: Could not decode JSON from {config_json}. Using defaults.")
             bind_vars.update(DEFAULTS) # Ensure defaults on error
@@ -785,44 +789,6 @@ class HyprConfGUI(Window):
             
             self.component_switches[component_name] = component_switch
 
-        # --- Separator ---
-        separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
-                         h_expand=True)
-        vbox.add(separator2)
-
-        # --- System Metrics Options ---
-        components_header = Label(markup="<b>System Metrics Options</b>", h_align="start")
-        vbox.add(components_header)
-
-        # Options for disk locations
-        disks_label = Label(label="Disk directories", h_align="start", v_align="center")
-        vbox.add(disks_label)
-
-        self.disk_entries = Box(orientation="v", spacing=8, h_align="start")
-
-        def create_disk_edit(path):
-            bar = Box(orientation="h", spacing=10, h_align="start")
-
-            entry = Entry(text=path, h_expand=True)
-            bar.add(entry)
-
-            x = Button(label="X", on_clicked=lambda _: self.disk_entries.remove(bar))
-            bar.add(x)
-
-            self.disk_entries.add(bar)
-
-        vbox.add(self.disk_entries)
-
-        for path in bind_vars.get('bar_metrics_disks'):
-            create_disk_edit(path)
-
-        add_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        add_container.set_halign(Gtk.Align.START)
-        add_container.set_valign(Gtk.Align.CENTER)
-        add = Button(label="Add new disk", on_clicked=lambda _: create_disk_edit("/"))
-        add_container.add(add)
-        vbox.add(add_container)
-
         return scrolled_window
 
     def create_system_tab(self):
@@ -912,13 +878,91 @@ class HyprConfGUI(Window):
                                h_align="start")
             system_grid.attach(note_label, 2, row, 2, 1)
 
-        # === SUPPORT INFO ===
-        support_box = Box(orientation="h", spacing=10, style="margin-top: 15px;", h_align="start")
-        support_icon = FabricImage(icon_name="help-about-symbolic", icon_size=Gtk.IconSize.MENU)
-        support_label = Label(markup="<small>For help or to report issues, visit the <a href='https://github.com/Axenide/Ax-Shell'>GitHub repository</a></small>")
-        support_box.add(support_icon)
-        support_box.add(support_label)
-        vbox.add(support_box)
+        # --- System Metrics Options (moved from appearance tab) ---
+        metrics_header = Label(markup="<b>System Metrics Options</b>", h_align="start")
+        vbox.add(metrics_header)
+
+        # Metrics visibility toggles
+        metrics_grid = Gtk.Grid()
+        metrics_grid.set_column_spacing(15)
+        metrics_grid.set_row_spacing(8)
+        metrics_grid.set_margin_start(10)
+        metrics_grid.set_margin_top(5)
+        vbox.add(metrics_grid)
+
+        self.metrics_switches = {}
+        self.metrics_small_switches = {}
+
+        metric_names = {
+            'cpu': "CPU",
+            'ram': "RAM",
+            'disk': "Disk",
+            'gpu': "GPU",
+        }
+
+        # Normal metrics toggles
+        metrics_grid.attach(Label(label="Show in Metrics", h_align="start"), 0, 0, 1, 1)
+        for i, (key, label) in enumerate(metric_names.items()):
+            switch = Gtk.Switch()
+            switch.set_active(bind_vars.get('metrics_visible', {}).get(key, True))
+            self.metrics_switches[key] = switch
+            metrics_grid.attach(Label(label=label, h_align="start"), 0, i+1, 1, 1)
+            metrics_grid.attach(switch, 1, i+1, 1, 1)
+
+        # Small metrics toggles
+        metrics_grid.attach(Label(label="Show in Small Metrics", h_align="start"), 2, 0, 1, 1)
+        for i, (key, label) in enumerate(metric_names.items()):
+            switch = Gtk.Switch()
+            switch.set_active(bind_vars.get('metrics_small_visible', {}).get(key, True))
+            self.metrics_small_switches[key] = switch
+            metrics_grid.attach(Label(label=label, h_align="start"), 2, i+1, 1, 1)
+            metrics_grid.attach(switch, 3, i+1, 1, 1)
+
+        # Enforce minimum 3 enabled metrics
+        def enforce_minimum_metrics(switch_dict):
+            enabled = [k for k, s in switch_dict.items() if s.get_active()]
+            for k, s in switch_dict.items():
+                if len(enabled) <= 3 and s.get_active():
+                    s.set_sensitive(False)
+                else:
+                    s.set_sensitive(True)
+
+        def on_metric_toggle(switch, gparam, which):
+            enforce_minimum_metrics(self.metrics_switches)
+
+        def on_metric_small_toggle(switch, gparam, which):
+            enforce_minimum_metrics(self.metrics_small_switches)
+
+        for k, s in self.metrics_switches.items():
+            s.connect("notify::active", on_metric_toggle, k)
+        for k, s in self.metrics_small_switches.items():
+            s.connect("notify::active", on_metric_small_toggle, k)
+        enforce_minimum_metrics(self.metrics_switches)
+        enforce_minimum_metrics(self.metrics_small_switches)
+
+        # Disk directories
+        disks_label = Label(label="Disk directories", h_align="start", v_align="center")
+        vbox.add(disks_label)
+
+        self.disk_entries = Box(orientation="v", spacing=8, h_align="start")
+
+        def create_disk_edit(path):
+            bar = Box(orientation="h", spacing=10, h_align="start")
+            entry = Entry(text=path, h_expand=True)
+            bar.add(entry)
+            x = Button(label="X", on_clicked=lambda _: self.disk_entries.remove(bar))
+            bar.add(x)
+            self.disk_entries.add(bar)
+
+        vbox.add(self.disk_entries)
+        for path in bind_vars.get('bar_metrics_disks'):
+            create_disk_edit(path)
+        add_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        add_container.set_halign(Gtk.Align.START)
+        add_container.set_valign(Gtk.Align.CENTER)
+        add = Button(label="Add new disk", on_clicked=lambda _: create_disk_edit("/"))
+        add_container.add(add)
+        vbox.add(add_container)
 
         return scrolled_window
 
@@ -993,6 +1037,10 @@ class HyprConfGUI(Window):
         for component_name, switch in self.component_switches.items():
             config_key = f'bar_{component_name}_visible'
             bind_vars[config_key] = switch.get_active()
+
+        # Save metrics visibility
+        bind_vars['metrics_visible'] = {k: s.get_active() for k, s in self.metrics_switches.items()}
+        bind_vars['metrics_small_visible'] = {k: s.get_active() for k, s in self.metrics_small_switches.items()}
 
         bind_vars['bar_metrics_disks'] = []
         for entry in self.disk_entries.children:
@@ -1118,18 +1166,21 @@ class HyprConfGUI(Window):
 
             self.corners_switch.set_active(bind_vars.get('corners_visible', True))
 
-            if True: # clear disk entries and add just root
+            # Reset metrics visibility
+            for k, s in self.metrics_switches.items():
+                s.set_active(DEFAULTS['metrics_visible'][k])
+            for k, s in self.metrics_small_switches.items():
+                s.set_active(DEFAULTS['metrics_small_visible'][k])
+
+            # Reset disk entries
+            if True:
                 for i in self.disk_entries.children:
                     self.disk_entries.remove(i)
-
                 bar = Box(orientation="h", spacing=10, h_align="start")
-
                 entry = Entry(text="/", h_expand=True)
                 bar.add(entry)
-
                 x = Button(label="X", on_clicked=lambda _: self.disk_entries.remove(bar))
                 bar.add(x)
-
                 self.disk_entries.add(bar)
 
             self.selected_face_icon = None
