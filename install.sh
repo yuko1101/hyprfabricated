@@ -23,6 +23,7 @@ PACKAGES=(
     matugen-bin
     noto-fonts-emoji
     playerctl
+    python-numpy
     python-fabric-git
     python-ijson
     python-pillow
