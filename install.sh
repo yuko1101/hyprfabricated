@@ -7,6 +7,7 @@ set -o pipefail  # Prevent errors in a pipeline from being masked
 REPO_URL="https://github.com/tr1xem/hyprfabricated.git"
 INSTALL_DIR="$HOME/.config/hyprfabricated"
 PACKAGES=(
+<<<<<<< HEAD
     brightnessctl
     cava
     fabric-cli-git
@@ -44,6 +45,7 @@ PACKAGES=(
     unzip
     tmux
     cliphist
+    webp-pixbuf-loader
 )
 
 # Prevent running as root
