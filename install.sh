@@ -46,6 +46,7 @@ PACKAGES=(
     tmux
     cliphist
     webp-pixbuf-loader
+    nvtop
 )
 
 # Prevent running as root
