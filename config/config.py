@@ -1282,7 +1282,7 @@ class HyprConfGUI(Window):
         # Project title
         vbox.add(
             Label(
-                markup=f"<b>{APP_NAME_CAP}</b>",
+                markup="<b>Hyprfabricated</b>",
                 h_align="start",
                 style="font-size: 1.5em; margin-bottom: 8px;",
             )
@@ -1300,7 +1300,7 @@ class HyprConfGUI(Window):
         repo_label = Label(label="GitHub:", h_align="start")
         repo_link = Label()
         repo_link.set_markup(
-            '<a href="https://github.com/Axenide/Ax-Shell">https://github.com/Axenide/Ax-Shell</a>'
+            '<a href="https://github.com/tr1xem/hyprfabricated">https://github.com/tr1xem/hyprfabricated</a>'
         )
         repo_box.add(repo_label)
         repo_box.add(repo_link)
@@ -1310,12 +1310,12 @@ class HyprConfGUI(Window):
         def on_kofi_clicked(_):
             import webbrowser
 
-            webbrowser.open("https://ko-fi.com/Axenide")
+            webbrowser.open("https://discord.gg/EMWUTgegDm")
 
         kofi_btn = Button(
-            label="Support on Ko-Fi ❤️",
+            label="Join Us on Discord",
             on_clicked=on_kofi_clicked,
-            tooltip_text="Support Axenide on Ko-Fi",
+            tooltip_text="Support Server",
         )
         kofi_btn.set_style("margin-top: 18px; min-width: 160px;")
         vbox.add(kofi_btn)
