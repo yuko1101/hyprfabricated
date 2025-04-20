@@ -44,7 +44,10 @@ class MetricsProvider:
         self.mem = psutil.virtual_memory().percent
         self.disk = [psutil.disk_usage(path).percent for path in data.BAR_METRICS_DISKS]
         info = self.get_gpu_info()
-        self.gpu = [int(v["gpu_util"][:-1]) for v in info]
+        self.gpu = [
+            int(v["gpu_util"].strip("%")) if v["gpu_util"] is not None else 0
+            for v in info
+        ]
 
         battery = psutil.sensors_battery()
         if battery is None:
