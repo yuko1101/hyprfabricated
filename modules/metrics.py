@@ -43,11 +43,16 @@ class MetricsProvider:
         self.cpu = psutil.cpu_percent(interval=0)
         self.mem = psutil.virtual_memory().percent
         self.disk = [psutil.disk_usage(path).percent for path in data.BAR_METRICS_DISKS]
-        info = self.get_gpu_info()
-        self.gpu = [
-            int(v["gpu_util"].strip("%")) if v["gpu_util"] is not None else 0
-            for v in info
-        ]
+        self.gpubig = data.METRICS_VISIBLE["gpu"]
+        self.gpusmall = data.METRICS_SMALL_VISIBLE["gpu"]
+
+        # Only get GPU info if the user has enabled it (fixes gpu wont going to sleep issue)
+        if self.gpubig or self.gpusmall:
+            info = self.get_gpu_info()
+            self.gpu = [
+                int(v["gpu_util"].strip("%")) if v["gpu_util"] is not None else 0
+                for v in info
+            ]
 
         battery = psutil.sensors_battery()
         if battery is None:
