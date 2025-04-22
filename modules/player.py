@@ -5,6 +5,7 @@ import tempfile
 from gi.repository import Gtk, GLib, Gio, Gdk
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
+import config.data as data
 from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
@@ -50,9 +51,10 @@ class PlayerBox(Box):
         self.mpris_player = mpris_player
         self._progress_timer_id = None  # Initialize timer ID
 
-        image_file = get_relative_path("../assets/icons/player.png")
-        # if not os.path.exists(image_file):
-        #     image_file = f"{data.HOME_DIR}/.config/hyprfabricated/assets/wallpapers_example/example-1.jpg"
+        image_file = f"{data.HOME_DIR}/.current.wall"
+        if not os.path.exists(image_file):
+            print(image_file)
+            image_file = get_relative_path("../assets/icons/player.png")
         self.cover = CircleImage(
             name="player-cover",
             image_file=image_file,
