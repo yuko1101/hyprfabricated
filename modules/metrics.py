@@ -1,7 +1,5 @@
-import re
 import subprocess
 import json
-import os
 import logging
 import threading # Added for running blocking commands in a thread
 import time
