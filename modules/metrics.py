@@ -85,8 +85,8 @@ class MetricsProvider:
         flags = (
             GLib.SpawnFlags.DO_NOT_REAP_CHILD |
             GLib.SpawnFlags.SEARCH_PATH |
-            GLib.SpawnFlags.STDOUT_PIPE | # Corrected flag name
-            GLib.SpawnFlags.STDERR_PIPE # Corrected flag name
+            GLib.SPAWN_STDOUT_PIPE | # Changed from GLib.SpawnFlags.STDOUT_PIPE
+            GLib.SPAWN_STDERR_PIPE # Changed from GLib.SpawnFlags.STDERR_PIPE
         )
 
         try:
