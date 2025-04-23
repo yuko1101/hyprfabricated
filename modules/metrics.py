@@ -80,7 +80,7 @@ class MetricsProvider:
             # stderr_fd is not captured, stdin_fd is not used
             pid, stdin_fd, stdout_fd, stderr_fd = GLib.spawn_async(
                 argv=["nvtop", "-s"],
-                working_directory=None,
+                working_directory="", # Use empty string for current directory
                 envp=None,
                 flags=GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                 child_setup=None,
