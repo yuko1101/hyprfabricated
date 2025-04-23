@@ -81,11 +81,10 @@ class MetricsProvider:
             pid, stdin_fd, stdout_fd, stderr_fd = GLib.spawn_async(
                 argv=["nvtop", "-s"],
                 working_directory="", # Use empty string for current directory
-                envp=None,
-                flags=GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                envp=None, # Keep envp=None
+                flags=GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD | GLib.SpawnFlags.STDOUT_PIPE, # Add STDOUT_PIPE flag
                 child_setup=None,
-                user_data=None,
-                stdout_fd=True # Pass stdout_fd=True to get the pipe
+                user_data=None # Keep user_data=None
             )
 
             # Add a child watch to be notified when the process exits
