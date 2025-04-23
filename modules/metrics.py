@@ -74,7 +74,7 @@ class MetricsProvider:
         self._gpu_update_running = True
         try:
             # Spawn the nvtop process asynchronously
-            # We need stdout_pipe to capture the output
+            # We need stdout_fd=True to capture the output
             # We need do_not_reap_child to add a child watch
             # We need search_path to find nvtop in PATH
             # stderr_fd is not captured, stdin_fd is not used
@@ -82,9 +82,10 @@ class MetricsProvider:
                 argv=["nvtop", "-s"],
                 working_directory=None,
                 envp=None,
-                flags=GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_PIPE | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                flags=GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                 child_setup=None,
-                user_data=None
+                user_data=None,
+                stdout_fd=True # Pass stdout_fd=True to get the pipe
             )
 
             # Add a child watch to be notified when the process exits
@@ -92,7 +93,8 @@ class MetricsProvider:
             GLib.child_watch_add(GLib.PRIORITY_DEFAULT, pid, self._on_gpu_info_ready, stdout_fd)
 
             # Close unused fds in parent immediately
-            if stdin_fd != -1: GLib.close(stdin_fd)
+            if stdin_fd != -1:
+                GLib.close(stdin_fd)
             if stderr_fd != -1: GLib.close(stderr_fd)
 
         except GLib.Error as e:
@@ -714,7 +716,7 @@ class NetworkApplet(Button):
             self.download_revealer.set_reveal_child(True)
             self.upload_revealer.set_reveal_child(True)
         return
-    
+
     def on_mouse_leave(self, *_):
         self.is_mouse_over = False
         if not data.VERTICAL:
