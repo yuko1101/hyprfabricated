@@ -1,11 +1,16 @@
 import subprocess
 import json
 import logging
-import threading # Added for running blocking commands in a thread
+# import threading # Removed threading
 import time
+import gi # Added gi
+gi.require_version('GLib', '2.0') # Added GLib requirement
+from gi.repository import GLib # Ensure GLib is imported
+import os # Added os
+import signal # Added signal
 
 import psutil
-from gi.repository import GLib
+# from gi.repository import GLib # Already imported above
 
 from fabric.core.fabricator import Fabricator
 from fabric.widgets.box import Box
@@ -41,7 +46,11 @@ class MetricsProvider:
         self.bat_percent = 0.0
         self.bat_charging = None
 
-        self._gpu_update_running = False # Flag for async GPU update
+        # GLib process management for GPU update
+        self._gpu_process_pid = None
+        self._gpu_stdout_fd = -1
+        self._gpu_stderr_fd = -1
+        self._gpu_timeout_id = None # To track the timeout source
 
         # Updates every 1 second (1000 milliseconds)
         GLib.timeout_add_seconds(1, self._update)
@@ -53,9 +62,9 @@ class MetricsProvider:
         self.mem = psutil.virtual_memory().percent
         self.disk = [psutil.disk_usage(path).percent for path in data.BAR_METRICS_DISKS]
 
-        # Initiate async GPU update if not already running
-        if not self._gpu_update_running:
-            self._start_gpu_update_async()
+        # Spawn async GPU update only if one is not already running
+        if self._gpu_process_pid is None:
+            self._spawn_gpu_update()
 
         battery = psutil.sensors_battery()
         if battery is None:
@@ -67,58 +76,168 @@ class MetricsProvider:
 
         return True # Keep the GLib timeout running
 
-    def _start_gpu_update_async(self):
-        """Starts a thread to run nvtop and get GPU info."""
-        self._gpu_update_running = True
-        # Create and start a new thread to run the blocking subprocess call
-        thread = threading.Thread(target=self._run_nvtop_in_thread)
-        thread.start()
+    # Removed _start_gpu_update_async
+    # Removed _run_nvtop_in_thread
 
-    def _run_nvtop_in_thread(self):
-        """Runs the nvtop command in a separate thread."""
+    def _spawn_gpu_update(self):
+        """Spawns the nvtop process asynchronously using GLib."""
+        command = ["nvtop", "-s"]
+        flags = (
+            GLib.SpawnFlags.DO_NOT_REAP_CHILD |
+            GLib.SpawnFlags.SEARCH_PATH |
+            GLib.SpawnFlags.STDOUT_P |
+            GLib.SpawnFlags.STDERR_P
+        )
+
         try:
-            # Use subprocess.run to execute the command and capture output
-            # text=True decodes stdout/stderr as text
-            # capture_output=True captures stdout and stderr
-            # timeout prevents the thread from blocking indefinitely
-            result = subprocess.run(
-                ["nvtop", "-s"],
-                capture_output=True,
-                text=True,
-                timeout=10, # Add a timeout
-                check=True # Raise CalledProcessError if command returns non-zero exit code
+            # Spawn the process and get PID and pipe file descriptors
+            (pid, stdin_fd, stdout_fd, stderr_fd) = GLib.spawn_async_with_pipes(
+                working_directory=None,
+                argv=command,
+                envp=None,
+                flags=flags,
+                child_setup_func=None,
             )
-            # Schedule processing of the output on the main GLib thread
-            GLib.idle_add(self._process_gpu_output, result.stdout, None)
 
-        except FileNotFoundError:
-            logger.warning("nvtop command not found. GPU metrics may not be available.")
-            GLib.idle_add(self._process_gpu_output, None, "nvtop command not found")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"nvtop command failed with exit code {e.returncode}: {e.stderr.strip()}")
-            GLib.idle_add(self._process_gpu_output, None, f"nvtop failed: {e.stderr.strip()}")
-        except subprocess.TimeoutExpired:
-             logger.error("nvtop command timed out.")
-             GLib.idle_add(self._process_gpu_output, None, "nvtop timed out")
+            # Store PID and FDs
+            self._gpu_process_pid = pid
+            self._gpu_stdout_fd = stdout_fd
+            self._gpu_stderr_fd = stderr_fd
+
+            # Close stdin_fd as we don't need it
+            os.close(stdin_fd)
+
+            # Add a watch for when the child process exits
+            # Pass stdout_fd and stderr_fd as user data to the watch function
+            GLib.child_watch_add(pid, self._on_gpu_process_exit, (stdout_fd, stderr_fd))
+
+            # Add a timeout source to kill the process if it takes too long
+            self._gpu_timeout_id = GLib.timeout_add_seconds(10, self._on_gpu_timeout, pid) # 10 second timeout
+
+        except GLib.Error as e:
+            logger.error(f"Failed to spawn nvtop process: {e.message}")
+            self._gpu_process_pid = None
+            # Ensure FDs are closed even if spawn failed after opening pipes
+            if self._gpu_stdout_fd != -1: os.close(self._gpu_stdout_fd)
+            if self._gpu_stderr_fd != -1: os.close(self._gpu_stderr_fd)
+            self._gpu_stdout_fd = -1
+            self._gpu_stderr_fd = -1
+            if self._gpu_timeout_id:
+                 GLib.source_remove(self._gpu_timeout_id)
+                 self._gpu_timeout_id = None
         except Exception as e:
             logger.error(f"Unexpected error spawning nvtop: {e}")
-            GLib.idle_add(self._process_gpu_output, None, f"Unexpected error: {e}")
+            self._gpu_process_pid = None
+            if self._gpu_stdout_fd != -1: os.close(self._gpu_stdout_fd)
+            if self._gpu_stderr_fd != -1: os.close(self._gpu_stderr_fd)
+            self._gpu_stdout_fd = -1
+            self._gpu_stderr_fd = -1
+            if self._gpu_timeout_id:
+                 GLib.source_remove(self._gpu_timeout_id)
+                 self._gpu_timeout_id = None
+
+    def _on_gpu_process_exit(self, pid, condition, data):
+        """Callback executed on the main thread when the nvtop process exits."""
+        stdout_fd, stderr_fd = data
+        output = ""
+        error_output = ""
+        error_message = None
+
+        # Remove the timeout source if it's still active
+        if self._gpu_timeout_id:
+            GLib.source_remove(self._gpu_timeout_id)
+            self._gpu_timeout_id = None
+
+        # Read output from pipes
+        try:
+            output = self._read_pipe(stdout_fd)
+            error_output = self._read_pipe(stderr_fd)
+        finally:
+            # Always close the file descriptors
+            if stdout_fd != -1: os.close(stdout_fd)
+            if stderr_fd != -1: os.close(stderr_fd)
+            self._gpu_stdout_fd = -1
+            self._gpu_stderr_fd = -1
+
+        # Check process exit condition and status
+        if condition == GLib.ChildWatchFlags.EXITED:
+            exit_status = GLib.ProcessTools.get_exit_status(condition)
+            if exit_status != 0:
+                error_message = f"nvtop command failed with exit code {exit_status}: {error_output.strip()}"
+                logger.error(error_message)
+        elif condition == GLib.ChildWatchFlags.SIGNALED:
+             term_signal = GLib.ProcessTools.get_signal_number(condition)
+             error_message = f"nvtop process terminated by signal {term_signal}"
+             logger.error(error_message)
+        else:
+             error_message = f"nvtop process exited with unexpected condition: {condition}"
+             logger.error(error_message)
+
+
+        # Process the output or handle the error
+        self._process_gpu_output(output if not error_message else None, error_message)
+
+        # Reset PID to allow spawning a new process in the next update cycle
+        self._gpu_process_pid = None
+
+        # GLib.child_watch_add automatically reaps the child process, no need for GLib.spawn_close_pid
+
+    def _on_gpu_timeout(self, pid):
+        """Callback executed if the nvtop process times out."""
+        logger.error("nvtop command timed out. Attempting to kill process.")
+        try:
+            # Send SIGTERM to the process
+            os.kill(pid, signal.SIGTERM)
+        except OSError as e:
+            logger.error(f"Failed to kill timed-out nvtop process {pid}: {e}")
+
+        # The child_watch will handle cleanup when the process exits after being signaled
+        self._gpu_timeout_id = None
+        return GLib.SOURCE_REMOVE # Remove the timeout source
+
+    def _read_pipe(self, fd):
+        """Reads all data from a file descriptor until EOF."""
+        output = b""
+        if fd == -1:
+            return ""
+        try:
+            # Read in chunks until EOF
+            while True:
+                chunk = os.read(fd, 4096) # Read up to 4096 bytes at a time
+                if not chunk:
+                    break # EOF reached
+                output += chunk
+        except BlockingIOError:
+            # This shouldn't happen with spawn_async_with_pipes after exit, but handle defensively
+            logger.warning(f"BlockingIOError while reading pipe {fd}")
+        except OSError as e:
+            logger.error(f"Error reading pipe {fd}: {e}")
+            return "" # Return empty string on read error
+
+        return output.decode('utf-8', errors='replace') # Decode bytes to string
+
 
     def _process_gpu_output(self, output, error_message):
         """Callback executed on the main thread to process nvtop output."""
         try:
             if error_message:
-                # An error occurred in the thread
+                # An error occurred in the process or watch
                 logger.error(f"GPU update failed: {error_message}")
                 self.gpu = [] # Clear GPU data on error
             elif output:
-                # Decode bytes to string and parse JSON
+                # Parse JSON output
                 info = json.loads(output)
                 # Update the shared GPU data
                 # Ensure the data format matches what the widgets expect (list of ints)
-                self.gpu = [int(v["gpu_util"][:-1]) for v in info]
+                # Handle potential errors during parsing or data extraction
+                try:
+                    self.gpu = [int(v["gpu_util"][:-1]) for v in info]
+                except (KeyError, ValueError, TypeError) as e:
+                    logger.error(f"Failed to parse nvtop data structure: {e}")
+                    self.gpu = []
             else:
-                 # No output and no specific error message (shouldn't happen with check=True)
+                 # No output and no specific error message (shouldn't happen with check=True in subprocess,
+                 # but possible with GLib spawn if process exits without output)
                  logger.warning("nvtop returned no output.")
                  self.gpu = []
 
@@ -129,8 +248,9 @@ class MetricsProvider:
             logger.error(f"Error processing nvtop output: {e}")
             self.gpu = []
 
-        # Mark update as finished so the next _update cycle can start a new one
-        self._gpu_update_running = False
+        # The process PID is reset in _on_gpu_process_exit, allowing the next spawn.
+        # No need for _gpu_update_running flag here.
+
 
     def get_metrics(self):
         """Returns the current state of metrics. GPU might be slightly stale until async update finishes."""
@@ -145,6 +265,7 @@ class MetricsProvider:
         try:
             # This is blocking, used only during initialization of widgets
             # Use text=True for string output
+            # Using subprocess.check_output here is acceptable for a blocking init call
             result = subprocess.check_output(["nvtop", "-s"], text=True, timeout=5) # Added timeout
             return json.loads(result)
         except FileNotFoundError:
