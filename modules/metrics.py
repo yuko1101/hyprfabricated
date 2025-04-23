@@ -1,6 +1,9 @@
 import re
 import subprocess
 import json
+import os # Added for reading from pipe
+import logging # Added for logging errors
+import time
 
 import psutil
 from gi.repository import GLib
@@ -13,14 +16,18 @@ from fabric.widgets.eventbox import EventBox
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
-from fabric.core.fabricator import Fabricator
-from fabric.utils.helpers import exec_shell_command_async, invoke_repeater
+# Removed duplicate import: from fabric.core.fabricator import Fabricator
+from fabric.utils.helpers import invoke_repeater # Removed exec_shell_command_async
 from fabric.widgets.scale import Scale
 
 import modules.icons as icons
 import config.data as data
-from services.network import NetworkClient
-import time
+from services.network import NetworkClient # Kept for NetworkApplet
+
+# Setup logger
+logger = logging.getLogger(__name__)
+# Basic config if not handled elsewhere.
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s') # Example basic config
 
 class MetricsProvider:
     """
@@ -36,7 +43,9 @@ class MetricsProvider:
         self.bat_percent = 0.0
         self.bat_charging = None
 
-        # Updates every 1 second
+        self._gpu_update_running = False # Flag for async GPU update
+
+        # Updates every 1 second (1000 milliseconds)
         GLib.timeout_add_seconds(1, self._update)
 
     def _update(self):
@@ -45,8 +54,10 @@ class MetricsProvider:
         self.cpu = psutil.cpu_percent(interval=0)
         self.mem = psutil.virtual_memory().percent
         self.disk = [psutil.disk_usage(path).percent for path in data.BAR_METRICS_DISKS]
-        info = self.get_gpu_info()
-        self.gpu = [int(v["gpu_util"][:-1]) for v in info]
+
+        # Initiate async GPU update if not already running
+        if not self._gpu_update_running:
+            self._start_gpu_update_async()
 
         battery = psutil.sensors_battery()
         if battery is None:
@@ -56,18 +67,119 @@ class MetricsProvider:
             self.bat_percent = battery.percent
             self.bat_charging = battery.power_plugged
 
-        return True
+        return True # Keep the GLib timeout running
+
+    def _start_gpu_update_async(self):
+        """Spawns the nvtop process asynchronously to get GPU info."""
+        self._gpu_update_running = True
+        try:
+            # Spawn the nvtop process asynchronously
+            # We need stdout_pipe to capture the output
+            # We need do_not_reap_child to add a child watch
+            # We need search_path to find nvtop in PATH
+            # stderr_fd is not captured, stdin_fd is not used
+            pid, stdin_fd, stdout_fd, stderr_fd = GLib.spawn_async(
+                argv=["nvtop", "-s"],
+                working_directory=None,
+                envp=None,
+                flags=GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.STDOUT_PIPE | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                child_setup=None,
+                user_data=None
+            )
+
+            # Add a child watch to be notified when the process exits
+            # The callback will receive the pid, exit_status, and the stdout_fd we passed
+            GLib.child_watch_add(GLib.PRIORITY_DEFAULT, pid, self._on_gpu_info_ready, stdout_fd)
+
+            # Close unused fds in parent immediately
+            if stdin_fd != -1: GLib.close(stdin_fd)
+            if stderr_fd != -1: GLib.close(stderr_fd)
+
+        except GLib.Error as e:
+            logger.error(f"Failed to spawn nvtop: {e}")
+            self.gpu = [] # Reset GPU data on spawn error
+            self._gpu_update_running = False # Allow next update to try again
+        except Exception as e:
+            logger.error(f"Unexpected error spawning nvtop: {e}")
+            self.gpu = []
+            self._gpu_update_running = False
+
+    def _on_gpu_info_ready(self, pid, exit_status, stdout_fd):
+        """Callback executed when the nvtop process finishes."""
+        output = b""
+        try:
+            # Read all data from the pipe. This read is blocking but the child has exited.
+            # Use os.read directly on the file descriptor
+            while True:
+                data = os.read(stdout_fd, 4096)
+                if not data:
+                    break
+                output += data
+        except OSError as e:
+            logger.error(f"Error reading nvtop output: {e}")
+            output = b""
+        finally:
+            # Always close the file descriptor
+            GLib.close(stdout_fd)
+
+        # Reaping the child process
+        GLib.spawn_close_pid(pid)
+
+        if exit_status != 0:
+            logger.error(f"nvtop process exited with status {exit_status}")
+            # Decide whether to clear GPU data or keep old data on error
+            # Keeping old data might be better if the error is transient
+            # For now, let's clear it to indicate a problem
+            self.gpu = []
+        else:
+            try:
+                # Decode bytes to string and parse JSON
+                info = json.loads(output.decode('utf-8'))
+                # Update the shared GPU data
+                # Ensure the data format matches what the widgets expect (list of ints)
+                self.gpu = [int(v["gpu_util"][:-1]) for v in info]
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse nvtop JSON output: {e}")
+                self.gpu = []
+            except Exception as e:
+                logger.error(f"Error processing nvtop output: {e}")
+                self.gpu = []
+
+        # Mark update as finished so the next _update cycle can start a new one
+        self._gpu_update_running = False
+
+        # Return False to remove the child watch source
+        return False
 
     def get_metrics(self):
+        """Returns the current state of metrics. GPU might be slightly stale until async update finishes."""
         return (self.cpu, self.mem, self.disk, self.gpu)
 
     def get_battery(self):
         return (self.bat_percent, self.bat_charging)
 
     def get_gpu_info(self):
+        """Synchronously gets GPU info for initial setup (e.g., counting GPUs).
+           Includes a timeout to prevent indefinite blocking."""
         try:
-            return json.loads(subprocess.check_output(["nvtop", "-s"]))
-        except:
+            # This is blocking, used only during initialization of widgets
+            # Use text=True for string output
+            result = subprocess.check_output(["nvtop", "-s"], text=True, timeout=5) # Added timeout
+            return json.loads(result)
+        except FileNotFoundError:
+            logger.warning("nvtop command not found. GPU metrics may not be available.")
+            return []
+        except subprocess.CalledProcessError as e:
+            logger.error(f"nvtop command failed: {e}")
+            return []
+        except subprocess.TimeoutExpired:
+             logger.error("nvtop command timed out during initial sync call.")
+             return []
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse nvtop JSON output: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error getting GPU info: {e}")
             return []
 
 # Global instance to share data between both widgets.
@@ -116,6 +228,7 @@ class Metrics(Box):
         visible = getattr(data, "METRICS_VISIBLE", {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
         disks = [SingularMetric("disk", f"DISK ({path})" if len(data.BAR_METRICS_DISKS) != 1 else "DISK", icons.disk)
                  for path in data.BAR_METRICS_DISKS] if visible.get('disk', True) else []
+        # Use the synchronous get_gpu_info here for initial count
         gpu_info = shared_provider.get_gpu_info()
         gpus = [SingularMetric(f"gpu", f"GPU ({v['device_name']})" if len(gpu_info) != 1 else "GPU", icons.gpu)
                 for v in gpu_info] if visible.get('gpu', True) else []
@@ -141,19 +254,24 @@ class Metrics(Box):
         for x in self.scales:
             self.add(x)
 
+        # Update status periodically
         GLib.timeout_add_seconds(1, self.update_status)
 
     def update_status(self):
         cpu, mem, disks, gpus = shared_provider.get_metrics()
-        idx = 0
+        # idx = 0 # This variable is not used
         if self.cpu:
             self.cpu.usage.value = cpu / 100.0
         if self.ram:
             self.ram.usage.value = mem / 100.0
         for i, disk in enumerate(self.disk):
-            disk.usage.value = disks[i] / 100.0
+            # Ensure index is within bounds for disks list
+            if i < len(disks):
+                disk.usage.value = disks[i] / 100.0
         for i, gpu in enumerate(self.gpu):
-            gpu.usage.value = gpus[i] / 100.0
+             # Ensure index is within bounds for gpus list
+            if i < len(gpus):
+                gpu.usage.value = gpus[i] / 100.0
         return True
 
 class SingularMetricSmall:
@@ -208,6 +326,7 @@ class MetricsSmall(Button):
         visible = getattr(data, "METRICS_SMALL_VISIBLE", {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
         disks = [SingularMetricSmall("disk", f"DISK ({path})" if len(data.BAR_METRICS_DISKS) != 1 else "DISK", icons.disk)
                  for path in data.BAR_METRICS_DISKS] if visible.get('disk', True) else []
+        # Use the synchronous get_gpu_info here for initial count
         gpu_info = shared_provider.get_gpu_info()
         gpus = [SingularMetricSmall(f"gpu", f"GPU ({v['device_name']})" if len(gpu_info) != 1 else "GPU", icons.gpu)
                 for v in gpu_info] if visible.get('gpu', True) else []
@@ -236,8 +355,8 @@ class MetricsSmall(Button):
         self.connect("enter-notify-event", self.on_mouse_enter)
         self.connect("leave-notify-event", self.on_mouse_leave)
 
-        GLib.timeout_add_seconds(1, self.update_metrics)
         # Actualización de métricas cada segundo
+        GLib.timeout_add_seconds(1, self.update_metrics)
 
         # Estado inicial de los revealers y variables para la gestión del hover
         self.hide_timer = None
@@ -285,7 +404,7 @@ class MetricsSmall(Button):
 
     def update_metrics(self):
         cpu, mem, disks, gpus = shared_provider.get_metrics()
-        idx = 0
+        # idx = 0 # This variable is not used
         if self.cpu:
             self.cpu.circle.set_value(cpu / 100.0)
             self.cpu.level.set_label(self._format_percentage(int(cpu)))
@@ -293,11 +412,15 @@ class MetricsSmall(Button):
             self.ram.circle.set_value(mem / 100.0)
             self.ram.level.set_label(self._format_percentage(int(mem)))
         for i, disk in enumerate(self.disk):
-            disk.circle.set_value(disks[i] / 100.0)
-            disk.level.set_label(self._format_percentage(int(disks[i])))
+            # Ensure index is within bounds for disks list
+            if i < len(disks):
+                disk.circle.set_value(disks[i] / 100.0)
+                disk.level.set_label(self._format_percentage(int(disks[i])))
         for i, gpu in enumerate(self.gpu):
-            gpu.circle.set_value(gpus[i] / 100.0)
-            gpu.level.set_label(self._format_percentage(int(gpus[i])))
+            # Ensure index is within bounds for gpus list
+            if i < len(gpus):
+                gpu.circle.set_value(gpus[i] / 100.0)
+                gpu.level.set_label(self._format_percentage(int(gpus[i])))
 
         # Tooltip: only show enabled metrics
         tooltip_metrics = []
@@ -312,7 +435,7 @@ class MetricsSmall(Button):
 class Battery(Button):
     def __init__(self, **kwargs):
         super().__init__(name="metrics-small", **kwargs)
-        
+
         # Create the main box for metrics widgets
         main_box = Box(
             name="metrics-small",
@@ -354,7 +477,7 @@ class Battery(Button):
 
         # Set the main box as the button's child
         self.add(main_box)
-        
+
         # Connect events directly to the button
         self.connect("enter-notify-event", self.on_mouse_enter)
         self.connect("leave-notify-event", self.on_mouse_leave)
@@ -413,7 +536,7 @@ class Battery(Button):
             self.bat_circle.set_value(value / 100)
         percentage = int(value)
         self.bat_level.set_label(self._format_percentage(percentage))
-        
+
         # Apply alert styling if battery is low, regardless of charging status
         if percentage <= 15:
             self.bat_icon.add_style_class("alert")
@@ -421,7 +544,7 @@ class Battery(Button):
         else:
             self.bat_icon.remove_style_class("alert")
             self.bat_circle.remove_style_class("alert")
-        
+
         # Choose the icon based on charging state first, then battery level
         if percentage == 100:
             self.bat_icon.set_markup(icons.battery)
@@ -438,7 +561,7 @@ class Battery(Button):
         else:
             self.bat_icon.set_markup(icons.battery)
             charging_status = "Battery"
-            
+
         # Set a descriptive tooltip with battery percentage
         self.set_tooltip_markup(f"{charging_status}" if not data.VERTICAL else f"{charging_status}: {percentage}%")
 
@@ -467,13 +590,13 @@ class NetworkApplet(Button):
 
         self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-right" if not data.VERTICAL else "slide-down", child_revealed=False)
         self.upload_revealer = Revealer(child=self.upload_box, transition_type="slide-left" if not data.VERTICAL else "slide-up",child_revealed=False)
-        
+
 
         self.children = Box(
             orientation="h" if not data.VERTICAL else "v",
             children=[self.upload_revealer, self.wifi_label, self.download_revealer],
         )
-        
+
         if data.VERTICAL:
             self.download_label.set_visible(False)
             self.upload_label.set_visible(False)
@@ -536,15 +659,15 @@ class NetworkApplet(Button):
                 self.wifi_label.set_markup(icons.world)
             else:
                 self.wifi_label.set_markup(icons.world_off)
-            
+
             tooltip_base = "Ethernet Connection"
             tooltip_vertical = f"SSID: Ethernet\nUpload: {upload_str}\nDownload: {download_str}"
-                
+
         # Handle WiFi connection
         elif self.network_client and self.network_client.wifi_device:
             if self.network_client.wifi_device.ssid != "Disconnected":
                 strength = self.network_client.wifi_device.strength
-                
+
                 # Only horizontal mode wifi icons based on signal strength
                 if strength >= 75:
                     self.wifi_label.set_markup(icons.wifi_3)
@@ -583,7 +706,7 @@ class NetworkApplet(Button):
             return f"{speed / 1024:.1f} KB/s"
         else:
             return f"{speed / (1024 * 1024):.1f} MB/s"
-        
+
     def on_mouse_enter(self, *_):
         self.is_mouse_over = True
         if not data.VERTICAL:
@@ -598,7 +721,7 @@ class NetworkApplet(Button):
             # When mouse leaves, only hide revealers if there's no active download/upload
             self.download_revealer.set_reveal_child(self.downloading)
             self.upload_revealer.set_reveal_child(self.uploading)
-            
+
             # Restore urgency styling based on current network activity
             if self.downloading:
                 self.download_urgent()
@@ -618,7 +741,7 @@ class NetworkApplet(Button):
         self.upload_revealer.set_reveal_child(True)
         self.download_revealer.set_reveal_child(self.downloading)
         return
-    
+
     def download_urgent(self):
         self.add_style_class("download")
         self.wifi_label.add_style_class("urgent")
@@ -629,7 +752,7 @@ class NetworkApplet(Button):
         self.download_revealer.set_reveal_child(True)
         self.upload_revealer.set_reveal_child(self.uploading)
         return
-    
+
     def remove_urgent(self):
         self.remove_style_class("download")
         self.remove_style_class("upload")
