@@ -3,11 +3,7 @@ import json
 import logging
 import threading # Re-added threading
 import time
-import gi
-gi.require_version('GLib', '2.0')
 from gi.repository import GLib
-import os
-import signal
 
 import psutil
 
