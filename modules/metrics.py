@@ -1,7 +1,6 @@
 import subprocess
 import json
 import logging
-import threading # Re-added threading
 import time
 from gi.repository import GLib
 
@@ -24,8 +23,7 @@ from services.network import NetworkClient
 
 # Setup logger
 logger = logging.getLogger(__name__)
-# Basic config if not handled elsewhere.
-# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s') # Example basic config
+# logging.basicConfig(...) if needed
 
 class MetricsProvider:
     """
@@ -41,20 +39,16 @@ class MetricsProvider:
         self.bat_percent = 0.0
         self.bat_charging = None
 
-        # Re-add threading flag
         self._gpu_update_running = False
 
         # Updates every 1 second (1000 milliseconds)
         GLib.timeout_add_seconds(1, self._update)
 
     def _update(self):
-        # Get non-blocking usage percentages (interval=0)
-        # The first call may return 0, but subsequent calls will provide consistent values.
         self.cpu = psutil.cpu_percent(interval=0)
         self.mem = psutil.virtual_memory().percent
         self.disk = [psutil.disk_usage(path).percent for path in data.BAR_METRICS_DISKS]
 
-        # Start GPU update in a new thread if one is not already running
         if not self._gpu_update_running:
             self._start_gpu_update_async()
 
@@ -66,31 +60,26 @@ class MetricsProvider:
             self.bat_percent = battery.percent
             self.bat_charging = battery.power_plugged
 
-        return True # Keep the GLib timeout running
+        return True  # keep the timeout
 
-    # Re-add _start_gpu_update_async
     def _start_gpu_update_async(self):
-        """Starts a new thread to run the nvtop command."""
+        """Starts a new GLib thread to run nvtop in the background."""
         self._gpu_update_running = True
-        thread = threading.Thread(target=self._run_nvtop_in_thread)
-        thread.daemon = True # Allow the main program to exit even if this thread is running
-        thread.start()
+        # GLib.Thread.new(name, func, data) starts the thread immediately
+        GLib.Thread.new("nvtop-thread", lambda _: self._run_nvtop_in_thread(), None)
 
-    # Re-add _run_nvtop_in_thread
     def _run_nvtop_in_thread(self):
-        """Runs the nvtop command in a separate thread and processes output on the main thread."""
+        """Runs nvtop via subprocess in a separate GLib thread."""
         output = None
         error_message = None
         try:
-            # Run the command and capture output. Added timeout to prevent indefinite blocking.
-            # text=True decodes stdout/stderr as text.
-            result = subprocess.check_output(["nvtop", "-s"], text=True, timeout=10) # 10 second timeout
+            result = subprocess.check_output(["nvtop", "-s"], text=True, timeout=10)
             output = result
         except FileNotFoundError:
             error_message = "nvtop command not found."
             logger.warning(error_message)
         except subprocess.CalledProcessError as e:
-            error_message = f"nvtop command failed with exit code {e.returncode}: {e.stderr.strip()}"
+            error_message = f"nvtop failed with exit code {e.returncode}: {e.stderr.strip()}"
             logger.error(error_message)
         except subprocess.TimeoutExpired:
             error_message = "nvtop command timed out."
@@ -99,91 +88,62 @@ class MetricsProvider:
             error_message = f"Unexpected error running nvtop: {e}"
             logger.error(error_message)
 
-        # Schedule the processing of the output on the main GLib thread
-        # Pass the captured output and error message
         GLib.idle_add(self._process_gpu_output, output, error_message)
-
-        # Reset the flag *after* scheduling the idle_add, but before the thread finishes
-        # This allows a new thread to be spawned in the next _update cycle
-        # once the current one has completed its work and scheduled the result.
-        # The flag is reset here because the blocking call is done.
         self._gpu_update_running = False
 
-
-    # Modified _process_gpu_output to accept args and return False
     def _process_gpu_output(self, output, error_message):
-        """Callback executed on the main thread to process nvtop output."""
+        """Process nvtop JSON output on the main loop."""
         try:
             if error_message:
-                # An error occurred in the process
                 logger.error(f"GPU update failed: {error_message}")
-                self.gpu = [] # Clear GPU data on error
+                self.gpu = []
             elif output:
-                # Parse JSON output
                 info = json.loads(output)
-                # Update the shared GPU data
-                # Ensure the data format matches what the widgets expect (list of ints)
-                # Handle potential errors during parsing or data extraction
                 try:
                     self.gpu = [int(v["gpu_util"][:-1]) for v in info]
                 except (KeyError, ValueError, TypeError) as e:
-                    logger.error(f"Failed to parse nvtop data structure: {e}")
+                    logger.error(f"Failed parsing nvtop JSON: {e}")
                     self.gpu = []
             else:
-                 # No output and no specific error message (shouldn't happen with check=True in subprocess,
-                 # but possible if process exits without output)
-                 logger.warning("nvtop returned no output.")
-                 self.gpu = []
-
+                logger.warning("nvtop returned no output.")
+                self.gpu = []
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse nvtop JSON output: {e}")
+            logger.error(f"JSON decode error: {e}")
             self.gpu = []
         except Exception as e:
             logger.error(f"Error processing nvtop output: {e}")
             self.gpu = []
 
-        # Return False to remove the idle source after it runs once
-        return False
-
-    # Removed _spawn_gpu_update
-    # Removed _on_gpu_process_exit
-    # Removed _on_gpu_timeout
-    # Removed _read_pipe
+        return False  # remove idle source
 
     def get_metrics(self):
-        """Returns the current state of metrics. GPU might be slightly stale until async update finishes."""
         return (self.cpu, self.mem, self.disk, self.gpu)
 
     def get_battery(self):
         return (self.bat_percent, self.bat_charging)
 
     def get_gpu_info(self):
-        """Synchronously gets GPU info for initial setup (e.g., counting GPUs).
-           Includes a timeout to prevent indefinite blocking."""
         try:
-            # This is blocking, used only during initialization of widgets
-            # Use text=True for string output
-            # Using subprocess.check_output here is acceptable for a blocking init call
-            result = subprocess.check_output(["nvtop", "-s"], text=True, timeout=5) # Added timeout
+            result = subprocess.check_output(["nvtop", "-s"], text=True, timeout=5)
             return json.loads(result)
         except FileNotFoundError:
-            logger.warning("nvtop command not found. GPU metrics may not be available.")
+            logger.warning("nvtop not found; GPU info unavailable.")
             return []
         except subprocess.CalledProcessError as e:
-            logger.error(f"nvtop command failed: {e}")
+            logger.error(f"nvtop init sync failed: {e}")
             return []
         except subprocess.TimeoutExpired:
-             logger.error("nvtop command timed out during initial sync call.")
-             return []
+            logger.error("nvtop init call timed out.")
+            return []
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse nvtop JSON output: {e}")
+            logger.error(f"Init JSON parse error: {e}")
             return []
         except Exception as e:
-            logger.error(f"Unexpected error getting GPU info: {e}")
+            logger.error(f"Unexpected error during GPU init: {e}")
             return []
 
-# Global instance to share data between both widgets.
 shared_provider = MetricsProvider()
+
 
 class SingularMetric:
     def __init__(self, id, name, icon):
