@@ -73,6 +73,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `hypridle`
     - `hyprlock`
     - `hyprpicker`
+    - `hyprshot`
     - `hyprsunset`
     - `imagemagick`
     - `libnotify`
