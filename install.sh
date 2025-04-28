@@ -20,6 +20,7 @@ PACKAGES=(
     hyprsunset
     imagemagick
     libnotify
+    hyprshot
     matugen-bin
     noto-fonts-emoji
     playerctl

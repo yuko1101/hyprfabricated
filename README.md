@@ -76,6 +76,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
   - [`playerctl`](https://github.com/altdesktop/playerctl)
   - [`swappy`](https://github.com/jtheoof/swappy)
   - [`swww`](https://github.com/LGFae/swww)
+  - [`hyprshot`]()
   - [`tesseract`](https://github.com/tesseract-ocr/tesseract)
   - [`uwsm`](https://github.com/Vladimir-csp/uwsm)
   - [`cantarell-fonts-0.100`](https://fonts.google.com/specimen/Cantarell)
