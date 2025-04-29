@@ -78,6 +78,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `imagemagick`
     - `libnotify`
     - `noto-fonts-emoji`
+    - `nvtop`
     - `playerctl`
     - `swappy`
     - `swww`

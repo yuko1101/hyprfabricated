@@ -23,6 +23,7 @@ PACKAGES=(
   libnotify
   matugen-bin
   noto-fonts-emoji
+  nvtop
   playerctl
   python-fabric-git
   python-ijson
@@ -42,7 +43,6 @@ PACKAGES=(
   webp-pixbuf-loader
   wl-clipboard
   wlinhibit
-  nvtop
 )
 
 # Prevent running as root
