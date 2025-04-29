@@ -245,27 +245,35 @@ class WallpaperSelector(Box):
 
         # --- Determine Column Count ---
         columns = self.viewport.get_columns()
-        # If get_columns returns 0 or -1 (auto), try to estimate based on width
-        if columns <= 0:
-            item_width = self.viewport.get_item_width() # This is 0 in our case, so not useful directly
-            allocation = self.viewport.get_allocation()
-            viewport_width = allocation.width
 
-            # Since item_width is 0, we need another way.
-            # Get the cell rect of the first item (if available) to estimate width.
-            first_item_path = Gtk.TreePath.new_from_indices([0])
+        # If get_columns returns 0 or -1 (auto), try to estimate by checking item rows
+        if columns <= 0 and total_items > 0:
+            estimated_cols = 0
             try:
-                 cell_rect = self.viewport.get_cell_rect(first_item_path, None)
-                 if cell_rect and cell_rect.width > 0 and viewport_width > 0:
-                     # Estimate columns based on the first item's cell width + spacing
-                     effective_item_width = cell_rect.width + self.viewport.get_column_spacing()
-                     columns = max(1, viewport_width // effective_item_width)
-                 else:
-                     columns = 1 # Fallback if cell rect not available or zero width
-            except Exception: # Handle potential errors if path is invalid (e.g., empty model)
-                 columns = 1 # Fallback on error
+                # Check the row of the first item (should be 0)
+                first_item_path = Gtk.TreePath.new_from_indices([0])
+                base_row = self.viewport.get_item_row(first_item_path)
 
-        # Ensure columns is at least 1
+                # Find the index of the first item in the *next* row
+                for i in range(1, total_items):
+                    path = Gtk.TreePath.new_from_indices([i])
+                    row = self.viewport.get_item_row(path)
+                    if row > base_row:
+                        estimated_cols = i # The number of items in the first row
+                        break
+
+                # If loop finished without finding a new row, all items are in one row
+                if estimated_cols == 0:
+                    estimated_cols = total_items
+
+                columns = max(1, estimated_cols)
+            except Exception:
+                # Fallback if get_item_row fails (e.g., widget not realized)
+                columns = 1
+        elif columns <= 0 and total_items == 0:
+             columns = 1 # Should not happen due to early return, but safe
+
+        # Ensure columns is at least 1 after all checks
         columns = max(1, columns)
 
         # --- Navigation Logic ---
@@ -278,46 +286,35 @@ class WallpaperSelector(Box):
                 new_index = 0
             elif keyval in (Gdk.KEY_Up, Gdk.KEY_Left):
                 new_index = total_items - 1
-            # Ensure the index is valid if total_items is 0 (shouldn't happen due to early return, but safe)
-            if total_items == 0:
-                new_index = -1
+            if total_items == 0: new_index = -1 # Handle edge case
 
         else:
-            # Calculate current row and column based on the determined column count
-            current_row, current_col = divmod(current_index, columns)
-
-            # Calculate new index based on key press
+            # Calculate potential new index based on key press
             if keyval == Gdk.KEY_Up:
-                # Check if already in the first row
-                if current_row > 0:
-                    new_index -= columns
-                # else: stay in place (already handled by new_index = current_index initially)
+                potential_new_index = current_index - columns
+                # Only update if the new index is valid (>= 0)
+                if potential_new_index >= 0:
+                    new_index = potential_new_index
             elif keyval == Gdk.KEY_Down:
                 potential_new_index = current_index + columns
-                # Check if the new index goes beyond the last item
+                # Only update if the new index is valid (< total_items)
                 if potential_new_index < total_items:
-                     new_index = potential_new_index
-                # else: stay in place (don't move down if it goes past the end)
+                    new_index = potential_new_index
             elif keyval == Gdk.KEY_Left:
-                # Check if not already in the first column
-                if current_col > 0:
-                    new_index -= 1
-                # else: stay in place
+                # Only update if not already in the first column (index % columns != 0)
+                # and the index is greater than 0
+                if current_index > 0 and current_index % columns != 0:
+                    new_index = current_index - 1
             elif keyval == Gdk.KEY_Right:
-                # Check if not already in the last column of the current row
-                # AND check if not the very last item in the list
-                if current_col < columns - 1 and current_index < total_items - 1:
-                    new_index += 1
-                # else: stay in place
-
-            # Clamp the index just in case (although boundary checks should handle most cases)
-            # This is mainly important if the initial calculation somehow went out of bounds
-            new_index = max(0, min(new_index, total_items - 1))
+                # Only update if not in the last column ((index + 1) % columns != 0)
+                # and not the very last item (index < total_items - 1)
+                if current_index < total_items - 1 and (current_index + 1) % columns != 0:
+                    new_index = current_index + 1
 
         # Only update if the index actually changed and is valid
-        if new_index != self.selected_index and new_index >= 0:
+        if new_index != self.selected_index and 0 <= new_index < total_items:
              self.update_selection(new_index)
-        elif total_items > 0 and self.selected_index == -1 and new_index >= 0:
+        elif total_items > 0 and self.selected_index == -1 and 0 <= new_index < total_items:
              # Handle selecting the first item when starting from -1
              self.update_selection(new_index)
 
