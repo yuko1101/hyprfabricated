@@ -240,27 +240,41 @@ class WallpaperSelector(Box):
         if total_items == 0:
             return
 
-        if self.selected_index == -1:
-            new_index = 0 if keyval in (Gdk.KEY_Down, Gdk.KEY_Right) else total_items - 1
-        else:
-            current_index = self.selected_index
-            allocation = self.viewport.get_allocation()
-            item_width = 108  # Approximate item width including margins
-            columns = max(1, allocation.width // item_width)
-            if keyval == Gdk.KEY_Right:
-                new_index = current_index + 1
-            elif keyval == Gdk.KEY_Left:
-                new_index = current_index - 1
-            elif keyval == Gdk.KEY_Down:
-                new_index = current_index + columns
-            elif keyval == Gdk.KEY_Up:
-                new_index = current_index - columns
-            if new_index < 0:
-                new_index = 0
-            if new_index >= total_items:
-                new_index = total_items - 1
+        # Map GDK keys to Gtk movement steps
+        step = None
+        count = 0
+        if keyval == Gdk.KEY_Up:
+            step = Gtk.MovementStep.DISPLAY_LINES
+            count = -1
+        elif keyval == Gdk.KEY_Down:
+            step = Gtk.MovementStep.DISPLAY_LINES
+            count = 1
+        elif keyval == Gdk.KEY_Left:
+            step = Gtk.MovementStep.VISUAL_POSITIONS
+            count = -1
+        elif keyval == Gdk.KEY_Right:
+            step = Gtk.MovementStep.VISUAL_POSITIONS
+            count = 1
 
-        self.update_selection(new_index)
+        if step is not None:
+            # If nothing is selected, select the first or last item based on direction
+            if self.selected_index == -1:
+                new_index = 0 if count > 0 else total_items - 1
+                self.update_selection(new_index)
+            else:
+                # Move the cursor using Gtk.IconView's internal logic
+                self.viewport.move_cursor(step, count, False, False)
+
+                # Get the newly selected item's path and update the index
+                selected_paths = self.viewport.get_selected_items()
+                if selected_paths:
+                    new_path = selected_paths[0]
+                    self.selected_index = new_path.get_indices()[0]
+                    # Ensure the item is scrolled into view (move_cursor might handle this, but being explicit is safer)
+                    self.viewport.scroll_to_path(new_path, False, 0.5, 0.5)
+                else:
+                    # If somehow nothing is selected after moving, reset index
+                    self.selected_index = -1
 
     def update_selection(self, new_index: int):
         self.viewport.unselect_all()
