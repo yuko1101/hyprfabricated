@@ -60,6 +60,7 @@ class WallpaperSelector(Box):
         self.viewport.set_text_column(-1)
         self.viewport.set_item_width(0)
         self.viewport.connect("item-activated", self.on_wallpaper_selected)
+        self.viewport.connect("selection-changed", self._on_selection_changed)
 
         self.scrolled_window = ScrolledWindow(
             name="scrolled-window",
@@ -234,6 +235,16 @@ class WallpaperSelector(Box):
             return True
         return False
 
+    def _on_selection_changed(self, iconview):
+        selected_paths = iconview.get_selected_items()
+        if selected_paths:
+            new_path = selected_paths[0]
+            self.selected_index = new_path.get_indices()[0]
+            # Optional: Ensure scrolled into view, though move_cursor might handle this
+            # self.viewport.scroll_to_path(new_path, False, 0.5, 0.5)
+        else:
+            self.selected_index = -1
+
     def move_selection_2d(self, keyval):
         model = self.viewport.get_model()
         total_items = len(model)
@@ -243,6 +254,9 @@ class WallpaperSelector(Box):
         # Map GDK keys to Gtk movement steps
         step = None
         count = 0
+        extend_selection = False # Typically False for arrow keys
+        modify_selection = False # Typically False for arrow keys
+
         if keyval == Gdk.KEY_Up:
             step = Gtk.MovementStep.DISPLAY_LINES
             count = -1
@@ -258,23 +272,17 @@ class WallpaperSelector(Box):
 
         if step is not None:
             # If nothing is selected, select the first or last item based on direction
+            # before attempting to move the cursor.
             if self.selected_index == -1:
-                new_index = 0 if count > 0 else total_items - 1
-                self.update_selection(new_index)
+                initial_index = 0 if count > 0 else total_items - 1
+                # Use update_selection to set the initial selection visually
+                self.update_selection(initial_index)
+                # We don't need to move further in this key press event
+                # The selection is now set for the *next* arrow press.
             else:
-                # Move the cursor using Gtk.IconView's internal logic
-                self.viewport.move_cursor(step, count, False, False)
-
-                # Get the newly selected item's path and update the index
-                selected_paths = self.viewport.get_selected_items()
-                if selected_paths:
-                    new_path = selected_paths[0]
-                    self.selected_index = new_path.get_indices()[0]
-                    # Ensure the item is scrolled into view (move_cursor might handle this, but being explicit is safer)
-                    self.viewport.scroll_to_path(new_path, False, 0.5, 0.5)
-                else:
-                    # If somehow nothing is selected after moving, reset index
-                    self.selected_index = -1
+                # Move the cursor using Gtk.IconView's internal logic.
+                # This should trigger the "selection-changed" signal if successful.
+                self.viewport.move_cursor(step, count, extend_selection, modify_selection)
 
     def update_selection(self, new_index: int):
         self.viewport.unselect_all()
