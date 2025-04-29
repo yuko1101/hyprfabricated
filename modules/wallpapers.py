@@ -60,7 +60,7 @@ class WallpaperSelector(Box):
         self.viewport.set_text_column(-1)
         self.viewport.set_item_width(0)
         self.viewport.connect("item-activated", self.on_wallpaper_selected)
-        self.viewport.connect("selection-changed", self._on_selection_changed)
+        # self.viewport.connect("selection-changed", self._on_selection_changed) # Removed connection
 
         self.scrolled_window = ScrolledWindow(
             name="scrolled-window",
@@ -235,15 +235,7 @@ class WallpaperSelector(Box):
             return True
         return False
 
-    def _on_selection_changed(self, iconview):
-        selected_paths = iconview.get_selected_items()
-        if selected_paths:
-            new_path = selected_paths[0]
-            self.selected_index = new_path.get_indices()[0]
-            # Optional: Ensure scrolled into view, though move_cursor might handle this
-            # self.viewport.scroll_to_path(new_path, False, 0.5, 0.5)
-        else:
-            self.selected_index = -1
+    # Removed _on_selection_changed method
 
     def move_selection_2d(self, keyval):
         model = self.viewport.get_model()
@@ -251,38 +243,41 @@ class WallpaperSelector(Box):
         if total_items == 0:
             return
 
-        # Map GDK keys to Gtk movement steps
-        step = None
-        count = 0
-        extend_selection = False # Typically False for arrow keys
-        modify_selection = False # Typically False for arrow keys
+        # Get the number of columns currently displayed by the IconView
+        columns = self.viewport.get_columns()
+        if columns <= 0: # Avoid division by zero if layout hasn't happened yet
+             columns = 1 # Assume at least one column
 
-        if keyval == Gdk.KEY_Up:
-            step = Gtk.MovementStep.DISPLAY_LINES
-            count = -1
-        elif keyval == Gdk.KEY_Down:
-            step = Gtk.MovementStep.DISPLAY_LINES
-            count = 1
-        elif keyval == Gdk.KEY_Left:
-            step = Gtk.MovementStep.VISUAL_POSITIONS
-            count = -1
-        elif keyval == Gdk.KEY_Right:
-            step = Gtk.MovementStep.VISUAL_POSITIONS
-            count = 1
+        current_index = self.selected_index
+        new_index = current_index
 
-        if step is not None:
+        if current_index == -1:
             # If nothing is selected, select the first or last item based on direction
-            # before attempting to move the cursor.
-            if self.selected_index == -1:
-                initial_index = 0 if count > 0 else total_items - 1
-                # Use update_selection to set the initial selection visually
-                self.update_selection(initial_index)
-                # We don't need to move further in this key press event
-                # The selection is now set for the *next* arrow press.
-            else:
-                # Move the cursor using Gtk.IconView's internal logic.
-                # This should trigger the "selection-changed" signal if successful.
-                self.viewport.move_cursor(step, count, extend_selection, modify_selection)
+            if keyval in (Gdk.KEY_Down, Gdk.KEY_Right):
+                new_index = 0
+            elif keyval in (Gdk.KEY_Up, Gdk.KEY_Left):
+                new_index = total_items - 1
+        else:
+            # Calculate new index based on key press
+            if keyval == Gdk.KEY_Up:
+                new_index -= columns
+            elif keyval == Gdk.KEY_Down:
+                new_index += columns
+            elif keyval == Gdk.KEY_Left:
+                # Prevent moving left from the first item of a row
+                if current_index % columns != 0:
+                    new_index -= 1
+            elif keyval == Gdk.KEY_Right:
+                # Prevent moving right from the last item of a row (or the last item overall)
+                if (current_index + 1) % columns != 0 and current_index < total_items - 1:
+                    new_index += 1
+
+            # Clamp the index within valid bounds [0, total_items - 1]
+            new_index = max(0, min(new_index, total_items - 1))
+
+        # Only update if the index actually changed
+        if new_index != self.selected_index:
+            self.update_selection(new_index)
 
     def update_selection(self, new_index: int):
         self.viewport.unselect_all()
