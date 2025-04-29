@@ -243,11 +243,32 @@ class WallpaperSelector(Box):
         if total_items == 0:
             return
 
-        # Get the number of columns currently displayed by the IconView
+        # --- Determine Column Count ---
         columns = self.viewport.get_columns()
-        if columns <= 0: # Avoid division by zero if layout hasn't happened yet
-             columns = 1 # Assume at least one column
+        # If get_columns returns 0 or -1 (auto), try to estimate based on width
+        if columns <= 0:
+            item_width = self.viewport.get_item_width() # This is 0 in our case, so not useful directly
+            allocation = self.viewport.get_allocation()
+            viewport_width = allocation.width
 
+            # Since item_width is 0, we need another way.
+            # Get the cell rect of the first item (if available) to estimate width.
+            first_item_path = Gtk.TreePath.new_from_indices([0])
+            try:
+                 cell_rect = self.viewport.get_cell_rect(first_item_path, None)
+                 if cell_rect and cell_rect.width > 0 and viewport_width > 0:
+                     # Estimate columns based on the first item's cell width + spacing
+                     effective_item_width = cell_rect.width + self.viewport.get_column_spacing()
+                     columns = max(1, viewport_width // effective_item_width)
+                 else:
+                     columns = 1 # Fallback if cell rect not available or zero width
+            except Exception: # Handle potential errors if path is invalid (e.g., empty model)
+                 columns = 1 # Fallback on error
+
+        # Ensure columns is at least 1
+        columns = max(1, columns)
+
+        # --- Navigation Logic ---
         current_index = self.selected_index
         new_index = current_index
 
@@ -257,27 +278,48 @@ class WallpaperSelector(Box):
                 new_index = 0
             elif keyval in (Gdk.KEY_Up, Gdk.KEY_Left):
                 new_index = total_items - 1
+            # Ensure the index is valid if total_items is 0 (shouldn't happen due to early return, but safe)
+            if total_items == 0:
+                new_index = -1
+
         else:
+            # Calculate current row and column based on the determined column count
+            current_row, current_col = divmod(current_index, columns)
+
             # Calculate new index based on key press
             if keyval == Gdk.KEY_Up:
-                new_index -= columns
+                # Check if already in the first row
+                if current_row > 0:
+                    new_index -= columns
+                # else: stay in place (already handled by new_index = current_index initially)
             elif keyval == Gdk.KEY_Down:
-                new_index += columns
+                potential_new_index = current_index + columns
+                # Check if the new index goes beyond the last item
+                if potential_new_index < total_items:
+                     new_index = potential_new_index
+                # else: stay in place (don't move down if it goes past the end)
             elif keyval == Gdk.KEY_Left:
-                # Prevent moving left from the first item of a row
-                if current_index % columns != 0:
+                # Check if not already in the first column
+                if current_col > 0:
                     new_index -= 1
+                # else: stay in place
             elif keyval == Gdk.KEY_Right:
-                # Prevent moving right from the last item of a row (or the last item overall)
-                if (current_index + 1) % columns != 0 and current_index < total_items - 1:
+                # Check if not already in the last column of the current row
+                # AND check if not the very last item in the list
+                if current_col < columns - 1 and current_index < total_items - 1:
                     new_index += 1
+                # else: stay in place
 
-            # Clamp the index within valid bounds [0, total_items - 1]
+            # Clamp the index just in case (although boundary checks should handle most cases)
+            # This is mainly important if the initial calculation somehow went out of bounds
             new_index = max(0, min(new_index, total_items - 1))
 
-        # Only update if the index actually changed
-        if new_index != self.selected_index:
-            self.update_selection(new_index)
+        # Only update if the index actually changed and is valid
+        if new_index != self.selected_index and new_index >= 0:
+             self.update_selection(new_index)
+        elif total_items > 0 and self.selected_index == -1 and new_index >= 0:
+             # Handle selecting the first item when starting from -1
+             self.update_selection(new_index)
 
     def update_selection(self, new_index: int):
         self.viewport.unselect_all()
