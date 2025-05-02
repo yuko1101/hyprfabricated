@@ -41,7 +41,7 @@
 #notification-stack-box {
   border-radius: 32px;
   padding: 16px;
-  /* background-color: var(--shadow); */
+  background-color: var(--shadow);
   margin: 8px;
   min-width: 330px;
 }
