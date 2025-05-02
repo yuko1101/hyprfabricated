@@ -50,7 +50,8 @@ if os.path.exists(CONFIG_FILE):
     DOCK_ENABLED = config.get('dock_enabled', True)  # Load dock visibility setting
     DOCK_ALWAYS_OCCLUDED = config.get('dock_always_occluded', False)  # Load dock hover-only setting
     DOCK_ICON_SIZE = config.get('dock_icon_size', 28)  # Load dock icon size setting
-    
+    BAR_WORKSPACE_SHOW_NUMBER = config.get('bar_workspace_show_number', False) # Load workspace number visibility
+
     # Load bar component visibility settings
     BAR_COMPONENTS_VISIBILITY = {
         'button_apps': config.get('bar_button_apps_visible', True),
@@ -79,7 +80,8 @@ else:
     DOCK_ALWAYS_OCCLUDED = False  # Default value for dock hover-only mode
     TERMINAL_COMMAND = "kitty -e"  # Default terminal command when no config
     DOCK_ICON_SIZE = 28  # Default dock icon size when no config
-    
+    BAR_WORKSPACE_SHOW_NUMBER = False # Default workspace number visibility
+
     # Default values for component visibility (all visible)
     BAR_COMPONENTS_VISIBILITY = {
         'button_apps': True,
