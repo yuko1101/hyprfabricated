@@ -7,8 +7,6 @@ from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
 from fabric.hyprland.service import HyprlandEvent
-import os
-import json
 from fabric.utils.helpers import exec_shell_command_async
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
@@ -40,7 +38,8 @@ class Bar(Window):
             v_align="fill",
             orientation="h" if not data.VERTICAL else "v",
             spacing=8,
-            buttons=[WorkspaceButton(id=i, label=str(i)) for i in range(1, 11)],
+            # Add a switch in the appeareance tab from config.py to switch the buttons label from None to str(i), AI!
+            buttons=[WorkspaceButton(id=i, label=None) for i in range(1, 11)],
         )
         
         self.ws_container = Box(
