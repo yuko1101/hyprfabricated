@@ -90,6 +90,7 @@ DEFAULTS = {
     'dock_enabled': True,
     'dock_icon_size': 28,
     'dock_always_occluded': False, # Added default
+    'bar_workspace_show_number': False, # Added default for workspace number visibility
     # Defaults for bar components (assuming True initially)
     'bar_button_apps_visible': True,
     'bar_systray_visible': True,
@@ -723,6 +724,21 @@ class HyprConfGUI(Window):
         )
         layout_grid.attach(self.dock_size_scale, 1, 2, 3, 1)
 
+        # Workspace Number (Row 3)
+        ws_num_label = Label(label="Show Workspace Numbers", h_align="start", v_align="center")
+        layout_grid.attach(ws_num_label, 0, 3, 1, 1) # Attach to row 3, col 0
+
+        # Container for switch to prevent stretching
+        ws_num_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        ws_num_switch_container.set_halign(Gtk.Align.START)
+        ws_num_switch_container.set_valign(Gtk.Align.CENTER)
+
+        self.ws_num_switch = Gtk.Switch()
+        self.ws_num_switch.set_active(bind_vars.get('bar_workspace_show_number', False))
+        ws_num_switch_container.add(self.ws_num_switch)
+
+        layout_grid.attach(ws_num_switch_container, 1, 3, 1, 1) # Attach to row 3, col 1
+
         # --- Separator ---
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
                          h_expand=True)
@@ -1061,6 +1077,7 @@ class HyprConfGUI(Window):
         bind_vars['dock_icon_size'] = int(self.dock_size_scale.value)
         bind_vars['terminal_command'] = self.terminal_entry.get_text()
         bind_vars['corners_visible'] = self.corners_switch.get_active()
+        bind_vars['bar_workspace_show_number'] = self.ws_num_switch.get_active() # Save the new setting
 
         for component_name, switch in self.component_switches.items():
             config_key = f'bar_{component_name}_visible'
@@ -1187,6 +1204,7 @@ class HyprConfGUI(Window):
             self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
             self.dock_size_scale.value = bind_vars.get('dock_icon_size', 28)
             self.terminal_entry.set_text(bind_vars['terminal_command'])
+            self.ws_num_switch.set_active(bind_vars.get('bar_workspace_show_number', False)) # Reset the new switch
 
             for component_name, switch in self.component_switches.items():
                  config_key = f'bar_{component_name}_visible'

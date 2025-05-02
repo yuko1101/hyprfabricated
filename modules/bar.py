@@ -12,6 +12,7 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import config.data as data
+from config.config import bind_vars # Import bind_vars
 from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
 from modules.weather import Weather
@@ -38,10 +39,13 @@ class Bar(Window):
             v_align="fill",
             orientation="h" if not data.VERTICAL else "v",
             spacing=8,
-            # Add a switch in the appeareance tab from config.py to switch the buttons label from None to str(i), AI!
-            buttons=[WorkspaceButton(id=i, label=None) for i in range(1, 11)],
+            # Use bind_vars to determine the label
+            buttons=[
+                WorkspaceButton(id=i, label=str(i) if bind_vars.get('bar_workspace_show_number', False) else None)
+                for i in range(1, 11)
+            ],
         )
-        
+
         self.ws_container = Box(
             name="workspaces-container",
             children=self.workspaces,
