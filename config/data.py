@@ -26,6 +26,9 @@ CURRENT_HEIGHT = screen.get_height()
 WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
 CONFIG_FILE = get_relative_path('../config/config.json')
 
+# Default value for the new setting
+BAR_WORKSPACE_USE_CHINESE_NUMERALS = False
+
 def load_config():
     """Load the configuration from config.json"""
     config_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
@@ -51,6 +54,7 @@ if os.path.exists(CONFIG_FILE):
     DOCK_ALWAYS_OCCLUDED = config.get('dock_always_occluded', False)  # Load dock hover-only setting
     DOCK_ICON_SIZE = config.get('dock_icon_size', 28)  # Load dock icon size setting
     BAR_WORKSPACE_SHOW_NUMBER = config.get('bar_workspace_show_number', False) # Load workspace number visibility
+    BAR_WORKSPACE_USE_CHINESE_NUMERALS = config.get('bar_workspace_use_chinese_numerals', False) # Load Chinese numeral setting
 
     # Load bar component visibility settings
     BAR_COMPONENTS_VISIBILITY = {
@@ -81,6 +85,7 @@ else:
     TERMINAL_COMMAND = "kitty -e"  # Default terminal command when no config
     DOCK_ICON_SIZE = 28  # Default dock icon size when no config
     BAR_WORKSPACE_SHOW_NUMBER = False # Default workspace number visibility
+    BAR_WORKSPACE_USE_CHINESE_NUMERALS = False # Default Chinese numeral setting
 
     # Default values for component visibility (all visible)
     BAR_COMPONENTS_VISIBILITY = {

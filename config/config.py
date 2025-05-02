@@ -91,6 +91,7 @@ DEFAULTS = {
     'dock_icon_size': 28,
     'dock_always_occluded': False, # Added default
     'bar_workspace_show_number': False, # Added default for workspace number visibility
+    'bar_workspace_use_chinese_numerals': False, # Added default for Chinese numerals
     # Defaults for bar components (assuming True initially)
     'bar_button_apps_visible': True,
     'bar_systray_visible': True,
@@ -735,9 +736,26 @@ class HyprConfGUI(Window):
 
         self.ws_num_switch = Gtk.Switch()
         self.ws_num_switch.set_active(bind_vars.get('bar_workspace_show_number', False))
+        self.ws_num_switch.connect("notify::active", self.on_ws_num_changed) # Connect signal
         ws_num_switch_container.add(self.ws_num_switch)
 
         layout_grid.attach(ws_num_switch_container, 1, 3, 1, 1) # Attach to row 3, col 1
+
+        # Chinese Numerals (Row 4)
+        ws_chinese_label = Label(label="Use Chinese Numerals", h_align="start", v_align="center")
+        layout_grid.attach(ws_chinese_label, 0, 4, 1, 1) # Attach to row 4, col 0
+
+        # Container for switch
+        ws_chinese_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        ws_chinese_switch_container.set_halign(Gtk.Align.START)
+        ws_chinese_switch_container.set_valign(Gtk.Align.CENTER)
+
+        self.ws_chinese_switch = Gtk.Switch()
+        self.ws_chinese_switch.set_active(bind_vars.get('bar_workspace_use_chinese_numerals', False))
+        self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active()) # Initially sensitive based on number switch
+        ws_chinese_switch_container.add(self.ws_chinese_switch)
+
+        layout_grid.attach(ws_chinese_switch_container, 1, 4, 1, 1) # Attach to row 4, col 1
 
         # --- Separator ---
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
@@ -1010,6 +1028,13 @@ class HyprConfGUI(Window):
         vbox.add(Box(v_expand=True))
         return vbox
 
+    def on_ws_num_changed(self, switch, gparam):
+        """Callback when 'Show Workspace Numbers' switch changes."""
+        is_active = switch.get_active()
+        self.ws_chinese_switch.set_sensitive(is_active)
+        if not is_active:
+            self.ws_chinese_switch.set_active(False) # Turn off Chinese if numbers are off
+
     def on_vertical_changed(self, switch, gparam):
         """Callback for vertical switch."""
         is_active = switch.get_active()
@@ -1077,7 +1102,8 @@ class HyprConfGUI(Window):
         bind_vars['dock_icon_size'] = int(self.dock_size_scale.value)
         bind_vars['terminal_command'] = self.terminal_entry.get_text()
         bind_vars['corners_visible'] = self.corners_switch.get_active()
-        bind_vars['bar_workspace_show_number'] = self.ws_num_switch.get_active() # Save the new setting
+        bind_vars['bar_workspace_show_number'] = self.ws_num_switch.get_active()
+        bind_vars['bar_workspace_use_chinese_numerals'] = self.ws_chinese_switch.get_active() # Save Chinese numeral setting
 
         for component_name, switch in self.component_switches.items():
             config_key = f'bar_{component_name}_visible'
@@ -1204,7 +1230,9 @@ class HyprConfGUI(Window):
             self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
             self.dock_size_scale.value = bind_vars.get('dock_icon_size', 28)
             self.terminal_entry.set_text(bind_vars['terminal_command'])
-            self.ws_num_switch.set_active(bind_vars.get('bar_workspace_show_number', False)) # Reset the new switch
+            self.ws_num_switch.set_active(bind_vars.get('bar_workspace_show_number', False))
+            self.ws_chinese_switch.set_active(bind_vars.get('bar_workspace_use_chinese_numerals', False)) # Reset Chinese switch
+            self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active()) # Reset sensitivity
 
             for component_name, switch in self.component_switches.items():
                  config_key = f'bar_{component_name}_visible'

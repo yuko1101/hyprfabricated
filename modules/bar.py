@@ -14,10 +14,11 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import config.data as data
-# from config.config import bind_vars # No longer needed here for workspace numbers
 from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
 from modules.weather import Weather
+
+CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -55,12 +56,11 @@ class Bar(Window):
             v_align="fill",
             orientation="h" if not data.VERTICAL else "v",
             spacing=0,
-            # Add a switch in the config to change the label from just numbers to these:
-            # 一 二 三 四 五 六 七 八 九 十
-            # Only enable the switch when the numbers workspaces are enabled.
-            # Please, AI!
             buttons=[
-                WorkspaceButton(id=i, label=str(i))
+                WorkspaceButton(
+                    id=i,
+                    label=CHINESE_NUMERALS[i-1] if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS and 1 <= i <= len(CHINESE_NUMERALS) else str(i)
+                )
                 for i in range(1, 11)
             ],
         )
