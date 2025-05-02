@@ -1216,11 +1216,15 @@ class HyprConfGUI(Window):
                     print(f"Appended source string to {hyprland_config_path}")
             except Exception as e:
                  print(f"Error updating {hyprland_config_path}: {e}")
+            print(f"{time.time():.4f}: Finished checking/appending hyprland.conf source string.")
 
             # Run final config steps (includes async matugen/hyprctl reload)
+            print(f"{time.time():.4f}: Running start_config()...")
             start_config()
+            print(f"{time.time():.4f}: Finished start_config().")
 
             # Restart Ax-Shell asynchronously
+            print(f"{time.time():.4f}: Initiating Ax-Shell restart...")
             main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
             kill_cmd = f"killall {APP_NAME}"
             start_cmd = f"uwsm app -- python {main_script_path}"
