@@ -122,7 +122,7 @@ class PlayerBox(Box):
         self.player_box = Box(
             name="player-box",
             orientation="v",
-            spacing=4,
+            spacing=8,
             children=[
                 self.overlay_container,
                 self.title,
