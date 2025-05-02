@@ -741,9 +741,9 @@ class HyprConfGUI(Window):
 
         layout_grid.attach(ws_num_switch_container, 1, 3, 1, 1) # Attach to row 3, col 1
 
-        # Chinese Numerals (Row 4)
+        # Chinese Numerals (Row 3, Col 2-3) - Change attachment row and columns
         ws_chinese_label = Label(label="Use Chinese Numerals", h_align="start", v_align="center")
-        layout_grid.attach(ws_chinese_label, 0, 4, 1, 1) # Attach to row 4, col 0
+        layout_grid.attach(ws_chinese_label, 2, 3, 1, 1) # Attach to Row 3, Col 2
 
         # Container for switch
         ws_chinese_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -755,7 +755,7 @@ class HyprConfGUI(Window):
         self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active()) # Initially sensitive based on number switch
         ws_chinese_switch_container.add(self.ws_chinese_switch)
 
-        layout_grid.attach(ws_chinese_switch_container, 1, 4, 1, 1) # Attach to row 4, col 1
+        layout_grid.attach(ws_chinese_switch_container, 3, 3, 1, 1) # Attach to Row 3, Col 3
 
         # --- Separator ---
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
