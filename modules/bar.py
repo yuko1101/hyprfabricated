@@ -38,7 +38,8 @@ class Bar(Window):
             v_align="fill",
             orientation="h" if not data.VERTICAL else "v",
             spacing=8,
-            buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
+            # Make workspace label be the workspace number, AI!
+            buttons=[WorkspaceButton(id=i, label=None) for i in range(1, 11)],
         )
         
         self.ws_container = Box(
