@@ -6,6 +6,8 @@ from fabric.widgets.button import Button
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
+import os
+import json
 from fabric.hyprland.service import HyprlandEvent
 from fabric.utils.helpers import exec_shell_command_async
 from gi.repository import Gdk
