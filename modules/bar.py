@@ -55,9 +55,13 @@ class Bar(Window):
             empty_scroll=True,
             v_align="fill",
             orientation="h" if not data.VERTICAL else "v",
-            spacing=0,
+            spacing=0 if not data.BAR_WORKSPACE_USE_CHINESE_NUMERALS else 4,
             buttons=[
                 WorkspaceButton(
+                    h_expand=False,
+                    v_expand=False,
+                    h_align="center",
+                    v_align="center",
                     id=i,
                     label=CHINESE_NUMERALS[i-1] if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS and 1 <= i <= len(CHINESE_NUMERALS) else str(i)
                 )
@@ -259,6 +263,7 @@ class Bar(Window):
 
         # self.show_all()
         self.systray._update_visibility()
+        self.chinese_numbers()
 
     def apply_component_visibility(self):
         """Apply saved visibility settings to all components"""
@@ -362,3 +367,9 @@ class Bar(Window):
             self.bar_inner.add_style_class("hidden")
         else:
             self.bar_inner.remove_style_class("hidden")
+
+    def chinese_numbers(self):
+        if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS:
+            self.workspaces_num.add_style_class("chinese")
+        else:
+            self.workspaces_num.remove_style_class("chinese")
