@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 import subprocess
 import threading # Add threading
+import time # Add time for logging
 
 import toml
 from PIL import Image
@@ -1137,6 +1138,8 @@ class HyprConfGUI(Window):
 
         # --- Step 2: Define the background task ---
         def _apply_and_reload_task_thread():
+            start_time = time.time()
+            print(f"{start_time:.4f}: Background task started.")
             global bind_vars
             # Update global bind_vars (used by generate_hyprconf in start_config)
             # This assumes bind_vars is primarily written here and read elsewhere.
@@ -1149,11 +1152,13 @@ class HyprConfGUI(Window):
             try:
                 with open(config_json, 'w') as f:
                     json.dump(bind_vars, f, indent=4)
+                print(f"{time.time():.4f}: Saved config.json.")
             except Exception as e:
                 print(f"Error saving config.json: {e}")
 
             # Process face icon if selected
             if selected_icon_path:
+                print(f"{time.time():.4f}: Processing face icon...")
                 try:
                     img = Image.open(selected_icon_path)
                     side = min(img.size)
@@ -1164,30 +1169,36 @@ class HyprConfGUI(Window):
                     cropped_img = img.crop((left, top, right, bottom))
                     face_icon_dest = os.path.expanduser("~/.face.icon")
                     cropped_img.save(face_icon_dest, format='PNG')
-                    print(f"Face icon saved to {face_icon_dest}")
+                    print(f"{time.time():.4f}: Face icon saved to {face_icon_dest}")
                     # Schedule GUI update for the image widget back on the main thread
                     GLib.idle_add(self._update_face_image_widget, face_icon_dest)
                 except Exception as e:
                     print(f"Error processing face icon: {e}")
+                print(f"{time.time():.4f}: Finished processing face icon.")
 
             # Replace hyprlock/hypridle configs if requested (sync file I/O)
             if replace_lock:
+                print(f"{time.time():.4f}: Replacing hyprlock config...")
                 src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
                 dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
                 if os.path.exists(src_lock):
                     backup_and_replace(src_lock, dest_lock, "Hyprlock")
                 else:
                     print(f"Warning: Source hyprlock config not found at {src_lock}")
+                print(f"{time.time():.4f}: Finished replacing hyprlock config.")
 
             if replace_idle:
+                print(f"{time.time():.4f}: Replacing hypridle config...")
                 src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
                 dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
                 if os.path.exists(src_idle):
                      backup_and_replace(src_idle, dest_idle, "Hypridle")
                 else:
                     print(f"Warning: Source hypridle config not found at {src_idle}")
+                print(f"{time.time():.4f}: Finished replacing hypridle config.")
 
             # Append source string to hyprland.conf if needed (sync file I/O)
+            print(f"{time.time():.4f}: Checking/Appending hyprland.conf source string...")
             hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
             try:
                 needs_append = True
@@ -1222,8 +1233,10 @@ class HyprConfGUI(Window):
                 print(f"{APP_NAME_CAP} restart initiated.")
             except Exception as e:
                 print(f"Error restarting {APP_NAME_CAP}: {e}")
+            print(f"{time.time():.4f}: Ax-Shell restart commands issued.")
 
-            print("Background configuration and reload task finished.")
+            end_time = time.time()
+            print(f"{end_time:.4f}: Background configuration and reload task finished (Total time: {end_time - start_time:.4f}s).")
 
         # --- Step 3: Start the thread ---
         thread = threading.Thread(target=_apply_and_reload_task_thread)
@@ -1333,8 +1346,11 @@ def start_config():
     """
     Run final configuration steps: ensure necessary configs, write the hyprconf, and reload.
     """
+    print(f"{time.time():.4f}: start_config: Ensuring matugen config...")
     ensure_matugen_config()
+    print(f"{time.time():.4f}: start_config: Ensuring face icon...")
     ensure_face_icon()
+    print(f"{time.time():.4f}: start_config: Generating hypr conf...")
 
     hypr_config_dir = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/")
     os.makedirs(hypr_config_dir, exist_ok=True)
@@ -1345,16 +1361,19 @@ def start_config():
         print(f"Generated Hyprland config at {hypr_conf_path}")
     except Exception as e:
         print(f"Error writing Hyprland config: {e}")
+    print(f"{time.time():.4f}: start_config: Finished generating hypr conf.")
 
     # Use async reload
+    print(f"{time.time():.4f}: start_config: Initiating hyprctl reload...")
     try:
         exec_shell_command_async("hyprctl reload")
-        print("Hyprland configuration reload initiated.")
+        print(f"{time.time():.4f}: start_config: Hyprland configuration reload initiated.")
     except FileNotFoundError:
          print("Error: hyprctl command not found. Cannot reload Hyprland.")
     except Exception as e:
          # Catch potential errors during command initiation
          print(f"An error occurred initiating hyprctl reload: {e}")
+    print(f"{time.time():.4f}: start_config: Finished initiating hyprctl reload.")
 
 
 def open_config():
