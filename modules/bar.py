@@ -43,14 +43,31 @@ class Bar(Window):
             spacing=8,
             # Use data module to determine the label
             buttons=[
-                WorkspaceButton(id=i, label=str(i) if data.BAR_WORKSPACE_SHOW_NUMBER else None)
+                WorkspaceButton(id=i, label=None)
+                for i in range(1, 11)
+            ],
+        )
+
+        self.workspaces_num = Workspaces(
+            name="workspaces-num",
+            invert_scroll=True,
+            empty_scroll=True,
+            v_align="fill",
+            orientation="h" if not data.VERTICAL else "v",
+            spacing=0,
+            # Add a switch in the config to change the label from just numbers to these:
+            # 一 二 三 四 五 六 七 八 九 十
+            # Only enable the switch when the numbers workspaces are enabled.
+            # Please, AI!
+            buttons=[
+                WorkspaceButton(id=i, label=str(i))
                 for i in range(1, 11)
             ],
         )
 
         self.ws_container = Box(
             name="workspaces-container",
-            children=self.workspaces,
+            children=self.workspaces if not data.BAR_WORKSPACE_SHOW_NUMBER else self.workspaces_num,
         )
 
         self.button_tools = Button(
