@@ -3,7 +3,7 @@ import shutil
 import json
 import sys
 from pathlib import Path
-import subprocess
+import subprocess # Add subprocess
 import threading # Add threading
 import time # Add time for logging
 
@@ -1223,21 +1223,37 @@ class HyprConfGUI(Window):
             start_config()
             print(f"{time.time():.4f}: Finished start_config().")
 
-            # Restart Ax-Shell asynchronously
-            print(f"{time.time():.4f}: Initiating Ax-Shell restart...")
+            # Restart Ax-Shell using subprocess.Popen for better detachment
+            print(f"{time.time():.4f}: Initiating Ax-Shell restart using Popen...")
             main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
             kill_cmd = f"killall {APP_NAME}"
-            start_cmd = f"uwsm app -- python {main_script_path}"
+            # Use shell=True carefully, but it's often needed for commands like killall
+            # Redirect output to prevent blocking
+            start_cmd_list = ["uwsm", "app", "--", "python", main_script_path] # Use list form for Popen
+
             try:
-                # Run kill asynchronously, then start asynchronously
-                exec_shell_command_async(kill_cmd)
-                # A small delay might be needed if kill is slow, but often not required
-                # import time; time.sleep(0.1) # Optional small delay
-                exec_shell_command_async(start_cmd)
-                print(f"{APP_NAME_CAP} restart initiated.")
+                # Kill existing process (wait briefly for it to finish)
+                print(f"{time.time():.4f}: Executing kill: {kill_cmd}")
+                kill_proc = subprocess.Popen(kill_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                kill_proc.wait(timeout=2) # Wait max 2 seconds for killall
+                print(f"{time.time():.4f}: killall process finished (or timed out).")
+
+                # Start the new process, detached
+                print(f"{time.time():.4f}: Executing start: {' '.join(start_cmd_list)}")
+                subprocess.Popen(
+                    start_cmd_list,
+                    stdout=subprocess.DEVNULL, # Redirect stdout
+                    stderr=subprocess.DEVNULL, # Redirect stderr
+                    start_new_session=True    # Crucial for detaching
+                )
+                print(f"{APP_NAME_CAP} restart initiated via Popen.")
+            except subprocess.TimeoutExpired:
+                print(f"Warning: killall command timed out.")
+            except FileNotFoundError as e:
+                 print(f"Error restarting {APP_NAME_CAP}: Command not found ({e})")
             except Exception as e:
-                print(f"Error restarting {APP_NAME_CAP}: {e}")
-            print(f"{time.time():.4f}: Ax-Shell restart commands issued.")
+                print(f"Error restarting {APP_NAME_CAP} via Popen: {e}")
+            print(f"{time.time():.4f}: Ax-Shell restart commands issued via Popen.")
 
             end_time = time.time()
             print(f"{end_time:.4f}: Background configuration and reload task finished (Total time: {end_time - start_time:.4f}s).")
