@@ -84,6 +84,7 @@ curl -fsSL https://raw.githubusercontent.com/tr1xem/hyprfabricated/main/install.
   - [`wlinhibit`](https://github.com/0x5a4/wlinhibit)
   - [`grimblast-git`](https://github.com/hyprwm/contrib/blob/main/grimblast/grimblast)
   - [`tmux`](https://github.com/tmux/tmux/wiki)
+  - `nvtop`
   - [`webp-pixbuf-loader`]()
 - Python dependencies:
   - [ijson](https://pypi.org/project/ijson/)
