@@ -56,11 +56,11 @@
 }
 
 #workspaces-num > button.active {
-  background-color: var(--surface-bright);
+  background-color: var(--primary);
 }
 
 #workspaces-num > button.active > label {
-  color: var(--primary);
+  color: var(--shadow);
 }
 
 #workspaces-num > button.empty > label {
