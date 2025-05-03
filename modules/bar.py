@@ -63,7 +63,7 @@ class Bar(Window):
                     h_align="center",
                     v_align="center",
                     id=i,
-                    label= "X" if i < 0 else CHINESE_NUMERALS[i-1] if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS and 1 <= i <= len(CHINESE_NUMERALS) else str(i)
+                    label= CHINESE_NUMERALS[i-1] if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS and 1 <= i <= len(CHINESE_NUMERALS) else str(i)
                 )
                 for i in range(1, 11)
             ],
