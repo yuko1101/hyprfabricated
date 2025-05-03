@@ -49,6 +49,7 @@ class Bar(Window):
             ],
         )
 
+        # Make it so workspaces with a negative id have the label "SECRET", AI!
         self.workspaces_num = Workspaces(
             name="workspaces-num",
             invert_scroll=True,
