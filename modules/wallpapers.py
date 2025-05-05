@@ -449,8 +449,9 @@ class WallpaperSelector(Box):
         self.matugen_enabled = is_active
         self.scheme_dropdown.set_sensitive(is_active)
         self.custom_color_selector_box.set_visible(not is_active) # Toggle visibility
-        # Save the state to config. The actual saving to disk happens in config.py's on_accept.
-        config.config.bind_vars["matugen_enabled"] = is_active
+        # Save the state to config.
+        config.config.bind_vars["matugen_enabled"] = is_active # Update in-memory state
+        config.config.save_config() # Save the updated state to disk
 
     def on_apply_color_clicked(self, button):
         """Applies the color selected by the hue slider via matugen."""
