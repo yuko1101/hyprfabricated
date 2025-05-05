@@ -1,6 +1,7 @@
 import os
 import hashlib
 import shutil
+import colorsys
 from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk, Pango
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
@@ -127,14 +128,26 @@ class WallpaperSelector(Box):
 
         self.add(self.header_box)
 
-        # Create the ColorChooserWidget
-        self.color_chooser_widget = Gtk.ColorChooserWidget(
-            name="wallpaper-color-chooser",
-            show_editor=True, # Show the HEX entry etc.
-            use_alpha=False, # We only need RGB
-            visible=not self.matugen_enabled # Initially visible only if matugen is off
+        # Create the custom color selector components
+        self.hue_slider = Gtk.Scale(
+            orientation=Gtk.Orientation.VERTICAL,
+            adjustment=Gtk.Adjustment(value=0, lower=0, upper=360, step_increment=1, page_increment=10),
+            draw_value=False, # Hide the default value text
+            digits=0,
+            inverted=True, # Make 0 (red) at the bottom
+            name="hue-slider", # For CSS styling
+            v_expand=True,
+            v_align=Gtk.Align.FILL,
         )
-        self.color_chooser_widget.connect("color-activated", self.on_color_activated)
+
+        self.apply_color_button = Gtk.Button(label="Apply Color")
+        self.apply_color_button.connect("clicked", self.on_apply_color_clicked)
+
+        self.custom_color_selector_box = Box(
+            orientation="v", spacing=5, visible=not self.matugen_enabled
+        )
+        self.custom_color_selector_box.add(self.hue_slider)
+        self.custom_color_selector_box.add(self.apply_color_button)
 
         # Create a main horizontal box to hold the chooser and the grid
         self.main_content_box = Box(
@@ -143,7 +156,7 @@ class WallpaperSelector(Box):
             h_expand=True,
             v_expand=True,
         )
-        self.main_content_box.pack_start(self.color_chooser_widget, False, False, 0) # Add chooser, don't expand
+        self.main_content_box.pack_start(self.custom_color_selector_box, False, False, 0) # Add custom selector, don't expand
         self.main_content_box.pack_start(self.scrolled_window, True, True, 0) # Add grid, expand
 
         self.add(self.main_content_box) # Add the main content box
@@ -411,6 +424,14 @@ class WallpaperSelector(Box):
             widget.grab_focus()
         return False
 
+    def hsl_to_rgb_hex(self, h: float, s: float = 1.0, l: float = 0.5) -> str:
+        """Converts HSL color value to RGB HEX string."""
+        # colorsys uses HLS, not HSL, and expects values between 0.0 and 1.0
+        hue = h / 360.0
+        r, g, b = colorsys.hls_to_rgb(hue, l, s) # Note the order: H, L, S
+        r_int, g_int, b_int = int(r * 255), int(g * 255), int(b * 255)
+        return f"#{r_int:02X}{g_int:02X}{b_int:02X}"
+
     def rgba_to_hex(self, rgba: Gdk.RGBA) -> str:
         """Converts Gdk.RGBA to a HEX color string."""
         r = int(rgba.red * 255)
@@ -423,16 +444,16 @@ class WallpaperSelector(Box):
         is_active = switch.get_active()
         self.matugen_enabled = is_active
         self.scheme_dropdown.set_sensitive(is_active)
-        self.color_chooser_widget.set_visible(not is_active) # Toggle visibility
+        self.custom_color_selector_box.set_visible(not is_active) # Toggle visibility
         # Save the state to config
         config.config.bind_vars["matugen_enabled"] = is_active
         # config.config.save_config() # Removed as save_config doesn't exist
 
-    def on_color_activated(self, widget, color):
-        """Handles the color-activated signal from the ColorChooserWidget."""
-        rgba = widget.get_rgba() # Get the Gdk.RGBA color
-        hex_color = self.rgba_to_hex(rgba)
-        print(f"Applying color from widget: {hex_color}")
+    def on_apply_color_clicked(self, button):
+        """Applies the color selected by the hue slider via matugen."""
+        hue_value = self.hue_slider.get_value() # Get value from 0-360
+        hex_color = self.hsl_to_rgb_hex(hue_value) # Convert HSL(hue, 1.0, 0.5) to HEX
+        print(f"Applying color from slider: H={hue_value}, HEX={hex_color}")
         # Run matugen with the chosen hex color
         exec_shell_command_async(f'matugen color hex "{hex_color}"')
         # Optionally save the chosen color to config if needed later
