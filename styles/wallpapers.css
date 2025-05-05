@@ -71,26 +71,28 @@
 }
 
 #hue-slider {
+  margin-left: 8px;
 }
 
 #hue-slider trough {
-    background-image: linear-gradient(to top,
-        hsl(0, 100%, 50%),
-        hsl(60, 100%, 50%),
-        hsl(120, 100%, 50%),
-        hsl(180, 100%, 50%),
-        hsl(240, 100%, 50%),
-        hsl(300, 100%, 50%),
-        hsl(360, 100%, 50%)
-    );
-    border-radius: 8px;
-    min-width: 16px;
+  background-image: linear-gradient(
+    to top,
+    #ff0000,
+    #ffff00,
+    #00ff00,
+    #00ffff,
+    #0000ff,
+    #ff00ff,
+    #ff0000
+  );
+  border-radius: 8px;
+  min-width: 8px;
 }
 
 #hue-slider slider {
-    min-height: 10px;
-    min-width: 20px;
-    background-color: alpha(white, 0.7);
-    border: 1px solid alpha(black, 0.5);
-    border-radius: 5px;
+  min-height: 8px;
+  min-width: 16px;
+  margin: 0px -10px;
+  background-color: alpha(white, 0.7);
+  border: 1px solid alpha(black, 0.5);
 }
