@@ -387,7 +387,7 @@ class WallpaperSelector(Box):
                 with Image.open(full_path) as img:
                     width, height = img.size
                     side = min(width, height)
-                    left = (width - side) // 2
+                    left = (img.width - side) // 2
                     top = (height - side) // 2
                     right = left + side
                     bottom = top + side
@@ -456,7 +456,6 @@ class WallpaperSelector(Box):
         # Save the state to config.
         config.config.bind_vars["matugen_enabled"] = is_active # Update in-memory state
         # config.config.save_config() # Removed as save_config doesn't exist
-        # Note: The save_config call was commented out in the original code snippet.
         # If persistence is needed, this line should be uncommented and save_config
         # should be implemented in config/config.py or called from there.
         # However, the main config saving happens in HyprConfGUI.on_accept.
@@ -466,8 +465,9 @@ class WallpaperSelector(Box):
         hue_value = self.hue_slider.get_value() # Get value from 0-360
         hex_color = self.hsl_to_rgb_hex(hue_value) # Convert HSL(hue, 1.0, 0.5) to HEX
         print(f"Applying color from slider: H={hue_value}, HEX={hex_color}")
-        # Run matugen with the chosen hex color
-        exec_shell_command_async(f'matugen color hex "{hex_color}"')
+        selected_scheme = self.scheme_dropdown.get_active_id()
+        # Run matugen with the chosen hex color and selected scheme
+        exec_shell_command_async(f'matugen color hex "{hex_color}" -t {selected_scheme}')
         # Optionally save the chosen color to config if needed later
         # config.config.bind_vars["matugen_hex_color"] = hex_color
         # config.config.save_config() # Removed as save_config doesn't exist
