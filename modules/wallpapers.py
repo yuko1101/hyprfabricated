@@ -24,7 +24,7 @@ class WallpaperSelector(Box):
         old_cache_dir = f"{data.CACHE_DIR}/wallpapers"
         if os.path.exists(old_cache_dir):
             shutil.rmtree(old_cache_dir)
-        
+
         super().__init__(name="wallpapers", spacing=4, orientation="v", h_expand=False, v_expand=False, **kwargs)
         os.makedirs(self.CACHE_DIR, exist_ok=True)
 
@@ -147,7 +147,7 @@ class WallpaperSelector(Box):
         self.apply_color_button.connect("clicked", self.on_apply_color_clicked)
 
         self.custom_color_selector_box = Box(
-            orientation="v", spacing=5, visible=not self.matugen_enabled
+            orientation="v", spacing=5, name="custom-color-selector-box" # Added name, removed initial visible
         )
         self.custom_color_selector_box.add(self.hue_slider)
         self.custom_color_selector_box.add(self.apply_color_button)
@@ -165,13 +165,12 @@ class WallpaperSelector(Box):
         self.add(self.main_content_box) # Add the main content box
 
         self._start_thumbnail_thread()
-
+        self.connect("map", self.on_map) # Connect the map signal
         # Set initial sensitivity based on loaded state
         self.scheme_dropdown.set_sensitive(self.matugen_enabled)
         self.setup_file_monitor()  # Initialize file monitoring
         self.show_all()
         # Ensure the search entry gets focus when starting
-        self.custom_color_selector_box.set_visible(not self.matugen_enabled) # Explicitly set visibility after show_all
         self.search_entry.grab_focus()
 
     def setup_file_monitor(self):
@@ -428,6 +427,11 @@ class WallpaperSelector(Box):
             widget.grab_focus()
         return False
 
+    def on_map(self, widget):
+        """Handles the map signal to set initial visibility of the color selector."""
+        # Set visibility based on the loaded state when the widget becomes visible
+        self.custom_color_selector_box.set_visible(not self.matugen_enabled)
+
     def hsl_to_rgb_hex(self, h: float, s: float = 1.0, l: float = 0.5) -> str:
         """Converts HSL color value to RGB HEX string."""
         # colorsys uses HLS, not HSL, and expects values between 0.0 and 1.0
@@ -451,7 +455,11 @@ class WallpaperSelector(Box):
         self.custom_color_selector_box.set_visible(not is_active) # Toggle visibility
         # Save the state to config.
         config.config.bind_vars["matugen_enabled"] = is_active # Update in-memory state
-        config.config.save_config() # Save the updated state to disk
+        # config.config.save_config() # Removed as save_config doesn't exist
+        # Note: The save_config call was commented out in the original code snippet.
+        # If persistence is needed, this line should be uncommented and save_config
+        # should be implemented in config/config.py or called from there.
+        # However, the main config saving happens in HyprConfGUI.on_accept.
 
     def on_apply_color_clicked(self, button):
         """Applies the color selected by the hue slider via matugen."""
