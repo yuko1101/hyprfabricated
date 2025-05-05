@@ -171,6 +171,7 @@ class WallpaperSelector(Box):
         self.setup_file_monitor()  # Initialize file monitoring
         self.show_all()
         # Ensure the search entry gets focus when starting
+        self.custom_color_selector_box.set_visible(not self.matugen_enabled) # Explicitly set visibility after show_all
         self.search_entry.grab_focus()
 
     def setup_file_monitor(self):
@@ -201,7 +202,7 @@ class WallpaperSelector(Box):
                     try:
                         os.rename(full_path, new_full_path)
                         file_name = new_name
-                        print(f"Renamed file '{full_path}' to '{new_full_path}'")
+                        print(f"Renamed file '{full_path}' to '{new_full_path}')")
                     except Exception as e:
                         print(f"Error renaming file {full_path}: {e}")
                 if file_name not in self.files:
@@ -448,9 +449,8 @@ class WallpaperSelector(Box):
         self.matugen_enabled = is_active
         self.scheme_dropdown.set_sensitive(is_active)
         self.custom_color_selector_box.set_visible(not is_active) # Toggle visibility
-        # Save the state to config
+        # Save the state to config. The actual saving to disk happens in config.py's on_accept.
         config.config.bind_vars["matugen_enabled"] = is_active
-        # config.config.save_config() # Removed as save_config doesn't exist
 
     def on_apply_color_clicked(self, button):
         """Applies the color selected by the hue slider via matugen."""
