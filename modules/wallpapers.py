@@ -466,7 +466,7 @@ class WallpaperSelector(Box):
         """Handles the toggling of the Matugen switch."""
         is_active = switch.get_active()
         self.matugen_enabled = is_active
-        self.scheme_dropdown.set_sensitive(is_active)
+        # self.scheme_dropdown.set_sensitive(is_active)
         self.custom_color_selector_box.set_visible(not is_active) # Toggle visibility
 
         # Save the state to the dedicated file
