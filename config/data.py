@@ -25,6 +25,7 @@ CURRENT_HEIGHT = screen.get_height()
 # Rename to match what's being imported in config.py
 WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
 CONFIG_FILE = get_relative_path('../config/config.json')
+MATUGEN_STATE_FILE = os.path.join(CONFIG_DIR, "matugen")
 
 # Default value for the new setting
 BAR_WORKSPACE_USE_CHINESE_NUMERALS = False

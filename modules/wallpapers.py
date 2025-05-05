@@ -182,7 +182,7 @@ class WallpaperSelector(Box):
         self._start_thumbnail_thread()
         self.connect("map", self.on_map) # Connect the map signal
         # Set initial sensitivity based on loaded state
-        self.scheme_dropdown.set_sensitive(self.matugen_enabled) # Ensure sensitivity is set correctly on load
+        # self.scheme_dropdown.set_sensitive(self.matugen_enabled) # Ensure sensitivity is set correctly on load
         self.setup_file_monitor()  # Initialize file monitoring
         self.show_all()
         # Ensure the search entry gets focus when starting

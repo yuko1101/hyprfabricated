@@ -70,13 +70,19 @@
   margin-left: 4px;
 }
 
+#custom-color-selector-box {
+  background-color: var(--surface);
+  border-radius: 20px;
+  padding: 8px;
+}
+
 #hue-slider {
-  margin-left: 8px;
+  margin: 0 24px;
 }
 
 #hue-slider trough {
   background-image: linear-gradient(
-    to top,
+    to right,
     #ff0000,
     #ffff00,
     #00ff00,
@@ -86,13 +92,38 @@
     #ff0000
   );
   border-radius: 8px;
-  min-width: 8px;
+  min-height: 8px;
 }
 
 #hue-slider slider {
-  min-height: 8px;
-  min-width: 16px;
-  margin: 0px -10px;
-  background-color: alpha(white, 0.7);
-  border: 1px solid alpha(black, 0.5);
+  min-height: 16px;
+  min-width: 8px;
+  margin: -10px 0;
+  background-color: var(--primary);
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+}
+
+#apply-color-button {
+  background-color: var(--primary);
+  color: var(--shadow);
+  border-radius: 20px;
+  padding: 8px;
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+}
+
+#apply-color-button:hover {
+  background-color: var(--foreground);
+}
+
+#apply-color-button:active {
+  background-color: var(--shadow);
+}
+
+#apply-color-label {
+  font-size: 16px;
+  color: var(--shadow);
+}
+
+#apply-color-button:active #apply-color-label {
+  color: var(--foreground);
 }
