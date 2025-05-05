@@ -102,8 +102,22 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.set_active_id("scheme-tonal-spot")
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
-        # Load matugen state from config, default to True if not found
-        self.matugen_enabled = config.config.bind_vars.get("matugen_enabled", True)
+        # Load matugen state from the dedicated file
+        self.matugen_enabled = True # Default to True
+        try:
+            with open(data.MATUGEN_STATE_FILE, 'r') as f:
+                content = f.read().strip().lower()
+                if content == "false":
+                    self.matugen_enabled = False
+                elif content == "true":
+                    self.matugen_enabled = True
+                # Any other content defaults to True
+        except FileNotFoundError:
+            # File doesn't exist, keep default True and create it on first toggle
+            pass
+        except Exception as e:
+            print(f"Error reading matugen state file: {e}")
+            # Keep default True on error
 
         # Create a switcher to enable/disable Matugen (enabled by default)
         self.matugen_switcher = Gtk.Switch(name="matugen-switcher")
@@ -168,7 +182,7 @@ class WallpaperSelector(Box):
         self._start_thumbnail_thread()
         self.connect("map", self.on_map) # Connect the map signal
         # Set initial sensitivity based on loaded state
-        # self.scheme_dropdown.set_sensitive(self.matugen_enabled)
+        self.scheme_dropdown.set_sensitive(self.matugen_enabled) # Ensure sensitivity is set correctly on load
         self.setup_file_monitor()  # Initialize file monitoring
         self.show_all()
         # Ensure the search entry gets focus when starting
@@ -454,12 +468,13 @@ class WallpaperSelector(Box):
         self.matugen_enabled = is_active
         self.scheme_dropdown.set_sensitive(is_active)
         self.custom_color_selector_box.set_visible(not is_active) # Toggle visibility
-        # Save the state to config.
-        config.config.bind_vars["matugen_enabled"] = is_active # Update in-memory state
-        # config.config.save_config() # Removed as save_config doesn't exist
-        # If persistence is needed, this line should be uncommented and save_config
-        # should be implemented in config/config.py or called from there.
-        # However, the main config saving happens in HyprConfGUI.on_accept.
+
+        # Save the state to the dedicated file
+        try:
+            with open(data.MATUGEN_STATE_FILE, 'w') as f:
+                f.write(str(is_active))
+        except Exception as e:
+            print(f"Error writing matugen state file: {e}")
 
     def on_apply_color_clicked(self, button):
         """Applies the color selected by the hue slider via matugen."""
