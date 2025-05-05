@@ -130,39 +130,38 @@ class WallpaperSelector(Box):
 
         # Create the custom color selector components
         self.hue_slider = Gtk.Scale(
-            orientation=Gtk.Orientation.VERTICAL,
+            orientation=Gtk.Orientation.HORIZONTAL, # Changed from VERTICAL
             adjustment=Gtk.Adjustment(value=0, lower=0, upper=360, step_increment=1, page_increment=10),
             draw_value=False, # Hide the default value text
             digits=0,
-            inverted=True, # Make 0 (red) at the bottom
+            # inverted=True, # Removed inverted for horizontal
             name="hue-slider", # For CSS styling
-            # v_expand=True,
-            # v_align=Gtk.Align.FILL,
         )
 
-        self.hue_slider.set_vexpand(True)
-        self.hue_slider.set_valign(Gtk.Align.FILL)
+        # Changed expand/align for horizontal orientation
+        self.hue_slider.set_hexpand(True)
+        self.hue_slider.set_halign(Gtk.Align.FILL)
+        self.hue_slider.set_vexpand(False) # Ensure it doesn't expand vertically
+        self.hue_slider.set_valign(Gtk.Align.CENTER) # Center vertically within its box
 
         self.apply_color_button = Gtk.Button(label="v")
         self.apply_color_button.connect("clicked", self.on_apply_color_clicked)
+        self.apply_color_button.set_vexpand(False) # Ensure button doesn't expand vertically
+        self.apply_color_button.set_valign(Gtk.Align.CENTER) # Center button vertically
 
         self.custom_color_selector_box = Box(
-            orientation="v", spacing=5, name="custom-color-selector-box" # Added name, removed initial visible
+            orientation="h", spacing=5, name="custom-color-selector-box", # Changed orientation to horizontal
+            h_align="center" # Center the horizontal box
         )
         self.custom_color_selector_box.add(self.hue_slider)
         self.custom_color_selector_box.add(self.apply_color_button)
 
-        # Create a main horizontal box to hold the chooser and the grid
-        self.main_content_box = Box(
-            orientation="h",
-            spacing=10,
-            h_expand=True,
-            v_expand=True,
-        )
-        self.main_content_box.pack_start(self.custom_color_selector_box, False, False, 0) # Add custom selector, don't expand
-        self.main_content_box.pack_start(self.scrolled_window, True, True, 0) # Add grid, expand
+        # Add the scrolled window (grid) and the custom color selector box directly
+        # to the main WallpaperSelector box (which is already vertical)
+        self.pack_start(self.scrolled_window, True, True, 0) # Add grid, expand
+        self.pack_start(self.custom_color_selector_box, False, False, 0) # Add custom selector, don't expand
 
-        self.add(self.main_content_box) # Add the main content box
+        # Removed the old main_content_box and its add
 
         self._start_thumbnail_thread()
         self.connect("map", self.on_map) # Connect the map signal
