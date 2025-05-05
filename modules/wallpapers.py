@@ -136,11 +136,14 @@ class WallpaperSelector(Box):
             digits=0,
             inverted=True, # Make 0 (red) at the bottom
             name="hue-slider", # For CSS styling
-            v_expand=True,
-            v_align=Gtk.Align.FILL,
+            # v_expand=True,
+            # v_align=Gtk.Align.FILL,
         )
 
-        self.apply_color_button = Gtk.Button(label="Apply Color")
+        self.hue_slider.set_vexpand(True)
+        self.hue_slider.set_valign(Gtk.Align.FILL)
+
+        self.apply_color_button = Gtk.Button(label="v")
         self.apply_color_button.connect("clicked", self.on_apply_color_clicked)
 
         self.custom_color_selector_box = Box(
