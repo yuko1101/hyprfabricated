@@ -101,7 +101,7 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
         # Load matugen state from config, default to True if not found
-        self.matugen_enabled = data.CONFIG.get("matugen_enabled", True)
+        self.matugen_enabled = config.config.bind_vars.get("matugen_enabled", True)
 
         # Create a switcher to enable/disable Matugen (enabled by default)
         self.matugen_switcher = Gtk.Switch(name="matugen-switcher")
@@ -415,7 +415,7 @@ class WallpaperSelector(Box):
         self.color_button.set_sensitive(not is_active)
         self.scheme_dropdown.set_sensitive(is_active)
         # Save the state to config
-        data.CONFIG["matugen_enabled"] = is_active
+        config.config.bind_vars["matugen_enabled"] = is_active
         config.config.save_config()
 
     def on_color_button_clicked(self, button):
