@@ -4,6 +4,7 @@ import shutil
 import colorsys
 from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk, Pango
 from fabric.widgets.box import Box
+from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
 from fabric.widgets.scrolledwindow import ScrolledWindow
@@ -144,7 +145,7 @@ class WallpaperSelector(Box):
         self.hue_slider.set_vexpand(False) # Ensure it doesn't expand vertically
         self.hue_slider.set_valign(Gtk.Align.CENTER) # Center vertically within its box
 
-        self.apply_color_button = Gtk.Button(label="v")
+        self.apply_color_button = Button(name="apply-color-button", child=Label(name="apply-color-label", markup=icons.accept))
         self.apply_color_button.connect("clicked", self.on_apply_color_clicked)
         self.apply_color_button.set_vexpand(False) # Ensure button doesn't expand vertically
         self.apply_color_button.set_valign(Gtk.Align.CENTER) # Center button vertically
@@ -155,6 +156,7 @@ class WallpaperSelector(Box):
         )
         self.custom_color_selector_box.add(self.hue_slider)
         self.custom_color_selector_box.add(self.apply_color_button)
+        self.custom_color_selector_box.set_halign(Gtk.Align.FILL)
 
         # Add the scrolled window (grid) and the custom color selector box directly
         # to the main WallpaperSelector box (which is already vertical)
@@ -166,7 +168,7 @@ class WallpaperSelector(Box):
         self._start_thumbnail_thread()
         self.connect("map", self.on_map) # Connect the map signal
         # Set initial sensitivity based on loaded state
-        self.scheme_dropdown.set_sensitive(self.matugen_enabled)
+        # self.scheme_dropdown.set_sensitive(self.matugen_enabled)
         self.setup_file_monitor()  # Initialize file monitoring
         self.show_all()
         # Ensure the search entry gets focus when starting
