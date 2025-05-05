@@ -1,7 +1,7 @@
 import os
 import hashlib
 import shutil
-from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk
+from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk, Pango
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
@@ -10,6 +10,7 @@ from fabric.widgets.label import Label
 from fabric.utils.helpers import exec_shell_command_async
 import modules.icons as icons
 import config.data as data
+import config.config
 from PIL import Image
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
@@ -99,22 +100,37 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.set_active_id("scheme-tonal-spot")
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
+        # Load matugen state from config, default to True if not found
+        self.matugen_enabled = data.CONFIG.get("matugen_enabled", True)
+
         # Create a switcher to enable/disable Matugen (enabled by default)
         self.matugen_switcher = Gtk.Switch(name="matugen-switcher")
         self.matugen_switcher.set_vexpand(False)
         self.matugen_switcher.set_hexpand(False)
         self.matugen_switcher.set_valign(Gtk.Align.CENTER)
         self.matugen_switcher.set_halign(Gtk.Align.CENTER)
-        self.matugen_switcher.set_active(True)
+        self.matugen_switcher.set_active(self.matugen_enabled)
+        self.matugen_switcher.connect("notify::active", self.on_switch_toggled)
 
         self.mat_icon = Label(name="mat-label", markup=icons.palette)
+
+        # Button to open color chooser
+        self.color_button = Gtk.Button.new_with_label("🎨") # Using emoji as placeholder
+        self.color_button.set_name("color-chooser-button")
+        self.color_button.set_tooltip_text("Choose custom color (only when Matugen is disabled)")
+        self.color_button.connect("clicked", self.on_color_button_clicked)
+
+        # Label to display the chosen hex color
+        self.color_label = Label(name="color-hex-label", label="")
+        self.color_label.set_ellipsize(Pango.EllipsizeMode.END) # Ellipsize if too long
+        self.color_label.set_max_width_chars(10) # Limit width
 
         # Add the switcher to the header_box's start_children
         self.header_box = CenterBox(
             name="header-box",
             spacing=8,
             orientation="h",
-            start_children=[self.matugen_switcher, self.mat_icon],
+            start_children=[self.matugen_switcher, self.mat_icon, self.color_button, self.color_label],
             center_children=[self.search_entry],
             end_children=[self.scheme_dropdown],
         )
@@ -122,6 +138,10 @@ class WallpaperSelector(Box):
         self.add(self.header_box)
         self.add(self.scrolled_window)
         self._start_thumbnail_thread()
+
+        # Set initial sensitivity based on loaded state
+        self.color_button.set_sensitive(not self.matugen_enabled)
+        self.scheme_dropdown.set_sensitive(self.matugen_enabled)
         self.setup_file_monitor()  # Initialize file monitoring
         self.show_all()
         # Ensure the search entry gets focus when starting
@@ -380,3 +400,40 @@ class WallpaperSelector(Box):
         if self.get_mapped():
             widget.grab_focus()
         return False
+
+    def rgba_to_hex(self, rgba: Gdk.RGBA) -> str:
+        """Converts Gdk.RGBA to a HEX color string."""
+        r = int(rgba.red * 255)
+        g = int(rgba.green * 255)
+        b = int(rgba.blue * 255)
+        return f"#{r:02X}{g:02X}{b:02X}"
+
+    def on_switch_toggled(self, switch, gparam):
+        """Handles the toggling of the Matugen switch."""
+        is_active = switch.get_active()
+        self.matugen_enabled = is_active
+        self.color_button.set_sensitive(not is_active)
+        self.scheme_dropdown.set_sensitive(is_active)
+        # Save the state to config
+        data.CONFIG["matugen_enabled"] = is_active
+        config.config.save_config()
+
+    def on_color_button_clicked(self, button):
+        """Opens a color chooser dialog and applies the selected color via matugen."""
+        dialog = Gtk.ColorChooserDialog(title="Choose a Color", parent=self.get_toplevel())
+        dialog.set_use_alpha(False) # We only need HEX RGB
+
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            rgba = dialog.get_rgba()
+            hex_color = self.rgba_to_hex(rgba)
+            self.color_label.set_text(hex_color)
+            print(f"Applying color: {hex_color}")
+            # Run matugen with the chosen hex color
+            exec_shell_command_async(f'matugen color hex "{hex_color}"')
+            # Optionally save the chosen color to config if needed later
+            # data.CONFIG["matugen_hex_color"] = hex_color
+            # config.config.save_config()
+
+        dialog.destroy()
