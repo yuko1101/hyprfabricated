@@ -18,14 +18,19 @@ from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
 from modules.weather import Weather
 
-CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
+CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "〇"]
 
 class Bar(Window):
     def __init__(self, **kwargs):
         super().__init__(
             name="bar",
             layer="top",
-            anchor="left top right" if not data.VERTICAL else "top left bottom",
+            anchor = (
+                "left top right"
+                if not data.VERTICAL
+                else "left" if data.CENTERED_BAR
+                else "top left bottom"
+            ),
             margin="-4px -4px -8px -4px" if not data.VERTICAL else "-4px -8px -4px -4px",
             exclusivity="auto",
             visible=True,
