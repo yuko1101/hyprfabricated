@@ -1,40 +1,39 @@
+import json
 import os
 import shutil
-import json
+import subprocess  # Add subprocess
 import sys
+import threading  # Add threading
+import time  # Add time for logging
 from pathlib import Path
-import subprocess # Add subprocess
-import threading # Add threading
-import time # Add time for logging
 
+import gi
 import toml
 from PIL import Image
-import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GdkPixbuf, GLib # Add GLib
-
 # Fabric Imports
 from fabric import Application
-from fabric.widgets.window import Window
+from fabric.utils.helpers import (  # Ensure async helper is imported
+    exec_shell_command, exec_shell_command_async)
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
-from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.widgets.image import Image as FabricImage # Alias to avoid clash
-from fabric.widgets.stack import Stack
+from fabric.widgets.image import Image as FabricImage  # Alias to avoid clash
+from fabric.widgets.label import Label
 from fabric.widgets.scale import Scale
-from fabric.utils.helpers import exec_shell_command, exec_shell_command_async # Ensure async helper is imported
+from fabric.widgets.scrolledwindow import ScrolledWindow
+from fabric.widgets.stack import Stack
+from fabric.widgets.window import Window
+from gi.repository import GdkPixbuf, GLib, Gtk  # Add GLib
 
 # Assuming data.py exists in the same directory or is accessible via sys.path
 # If data.py is in ./config/data.py relative to this script's original location:
 try:
     # Adjust path relative to the *original* location if needed
     sys.path.insert(0, str(Path(__file__).resolve().parent / '../config'))
-    from data import (
-        APP_NAME, APP_NAME_CAP, CONFIG_DIR, HOME_DIR, WALLPAPERS_DIR_DEFAULT
-    )
+    from data import (APP_NAME, APP_NAME_CAP, CONFIG_DIR, HOME_DIR,
+                      WALLPAPERS_DIR_DEFAULT)
 except ImportError as e:
     print(f"Error importing data constants: {e}")
     # Provide fallback defaults if import fails

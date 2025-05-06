@@ -1,21 +1,24 @@
+import json
+import os
+
+from fabric.hyprland.service import HyprlandEvent
+from fabric.hyprland.widgets import (Language, WorkspaceButton, Workspaces,
+                                     get_hyprland_connection)
+from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.datetime import DateTime
-from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
+from fabric.widgets.centerbox import CenterBox
+from fabric.widgets.datetime import DateTime
+from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
-from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
-import os
-import json
-from fabric.hyprland.service import HyprlandEvent
-from fabric.utils.helpers import exec_shell_command_async
 from gi.repository import Gdk
-from modules.systemtray import SystemTray
-import modules.icons as icons
+
 import config.data as data
-from modules.metrics import MetricsSmall, Battery, NetworkApplet
+import modules.icons as icons
 from modules.controls import ControlSmall
+from modules.metrics import Battery, MetricsSmall, NetworkApplet
+from modules.systemtray import SystemTray
 from modules.weather import Weather
 
 CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "〇"]
