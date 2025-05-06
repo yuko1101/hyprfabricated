@@ -93,6 +93,7 @@ DEFAULTS = {
     'dock_always_occluded': False, # Added default
     'bar_workspace_show_number': False, # Added default for workspace number visibility
     'bar_workspace_use_chinese_numerals': False, # Added default for Chinese numerals
+    'bar_theme': "Pills", # Added default for bar theme
     # Defaults for bar components (assuming True initially)
     'bar_button_apps_visible': True,
     'bar_systray_visible': True,
@@ -764,6 +765,30 @@ class HyprConfGUI(Window):
 
         layout_grid.attach(ws_chinese_switch_container, 3, 3, 1, 1) # Attach to Row 3, Col 3
 
+        # Bar Theme (Row 4)
+        bar_theme_label = Label(label="Bar Theme", h_align="start", v_align="center")
+        layout_grid.attach(bar_theme_label, 0, 4, 1, 1)
+
+        bar_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        bar_theme_combo_container.set_halign(Gtk.Align.START)
+        bar_theme_combo_container.set_valign(Gtk.Align.CENTER)
+        
+        self.bar_theme_combo = Gtk.ComboBoxText()
+        self.bar_theme_combo.set_tooltip_text("Select the visual theme for the bar")
+        themes = ["Pills", "Dense", "Edge"]
+        for theme in themes:
+            self.bar_theme_combo.append_text(theme)
+        
+        current_theme = bind_vars.get('bar_theme', "Pills")
+        if current_theme in themes:
+            self.bar_theme_combo.set_active(themes.index(current_theme))
+        else:
+            self.bar_theme_combo.set_active(0) # Default to Pills if invalid
+
+        bar_theme_combo_container.add(self.bar_theme_combo)
+        layout_grid.attach(bar_theme_combo_container, 1, 4, 3, 1)
+
+
         # --- Separator ---
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
                          h_expand=True)
@@ -1113,6 +1138,7 @@ class HyprConfGUI(Window):
         current_bind_vars['corners_visible'] = self.corners_switch.get_active()
         current_bind_vars['bar_workspace_show_number'] = self.ws_num_switch.get_active()
         current_bind_vars['bar_workspace_use_chinese_numerals'] = self.ws_chinese_switch.get_active()
+        current_bind_vars['bar_theme'] = self.bar_theme_combo.get_active_text()
 
         for component_name, switch in self.component_switches.items():
             config_key = f'bar_{component_name}_visible'
@@ -1313,6 +1339,14 @@ class HyprConfGUI(Window):
             self.ws_num_switch.set_active(bind_vars.get('bar_workspace_show_number', False))
             self.ws_chinese_switch.set_active(bind_vars.get('bar_workspace_use_chinese_numerals', False)) # Reset Chinese switch
             self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active()) # Reset sensitivity
+            
+            default_theme = DEFAULTS.get('bar_theme', "Pills")
+            themes = ["Pills", "Dense", "Edge"]
+            if default_theme in themes:
+                self.bar_theme_combo.set_active(themes.index(default_theme))
+            else:
+                self.bar_theme_combo.set_active(0)
+
 
             for component_name, switch in self.component_switches.items():
                  config_key = f'bar_{component_name}_visible'

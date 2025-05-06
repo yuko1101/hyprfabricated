@@ -269,6 +269,22 @@ class Bar(Window):
 
         self.hidden = False
 
+        # Apply bar theme style class
+        current_theme = data.BAR_THEME
+        theme_classes = ["bar-theme-pills", "bar-theme-dense", "bar-theme-edge"]
+        for tc in theme_classes:
+            self.bar_inner.remove_style_class(tc)
+        
+        if current_theme == "Pills":
+            self.bar_inner.add_style_class("bar-theme-pills")
+        elif current_theme == "Dense":
+            self.bar_inner.add_style_class("bar-theme-dense")
+        elif current_theme == "Edge":
+            self.bar_inner.add_style_class("bar-theme-edge")
+        else: # Default to Pills if somehow invalid
+            self.bar_inner.add_style_class("bar-theme-pills")
+
+
         # self.show_all()
         self.systray._update_visibility()
         self.chinese_numbers()
