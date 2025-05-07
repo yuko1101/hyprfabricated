@@ -184,6 +184,8 @@ class Notch(Window):
             ]
         )
 
+        self.stack.set_interpolate_size(True)
+
         self.corner_left = Box(
             name="notch-corner-left",
             orientation="v",
