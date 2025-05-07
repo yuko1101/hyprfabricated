@@ -1,8 +1,7 @@
 from os import truncate
 
 from fabric.hyprland.widgets import ActiveWindow
-from fabric.utils.helpers import (FormattedString, get_desktop_applications,
-                                  truncate)
+from fabric.utils.helpers import (FormattedString, get_desktop_applications)
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.image import Image
@@ -105,8 +104,7 @@ class Notch(Window):
             h_expand=True,
             h_align="fill",
             formatter=FormattedString(
-                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 64)}}",
-                truncate=truncate,
+                f"{{'Desktop' if not win_title or win_title == 'unknown' else win_title}}",
             ),
         )
         
