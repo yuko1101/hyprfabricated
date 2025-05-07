@@ -1,14 +1,15 @@
-import gi
 import urllib.parse
+
+import gi
 import requests
+from fabric.widgets.button import Button
+from fabric.widgets.label import Label
 from gi.repository import GLib
 
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
-
 gi.require_version("Gtk", "3.0")
-import modules.icons as icons
 import config.data as data
+import modules.icons as icons
+
 
 class Weather(Button):
     def __init__(self, **kwargs) -> None:

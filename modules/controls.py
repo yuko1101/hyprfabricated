@@ -1,18 +1,17 @@
-from gi.repository import GLib, Gdk
-
+from fabric.audio.service import Audio
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
-
-import modules.icons as icons
-import config.data as data
-
-from fabric.audio.service import Audio
 from fabric.widgets.scale import Scale
+from gi.repository import Gdk, GLib
+
+import config.data as data
+import modules.icons as icons
 from services.brightness import Brightness
+
 
 class VolumeSlider(Scale):
     def __init__(self, **kwargs):

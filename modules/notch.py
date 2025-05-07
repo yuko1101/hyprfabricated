@@ -1,29 +1,31 @@
 from os import truncate
+
+from fabric.hyprland.widgets import ActiveWindow
+from fabric.utils.helpers import (FormattedString, get_desktop_applications,
+                                  truncate)
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
-from fabric.widgets.stack import Stack
+from fabric.widgets.image import Image
+from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
+from fabric.widgets.stack import Stack
 from fabric.widgets.wayland import WaylandWindow as Window
-from fabric.hyprland.widgets import ActiveWindow
-from fabric.utils.helpers import FormattedString, truncate
-from gi.repository import GLib, Gdk, Gtk, Pango
-from modules.launcher import AppLauncher
-from modules.dashboard import Dashboard
-from modules.notifications import NotificationContainer
-from modules.power import PowerMenu
-from modules.overview import Overview
-from modules.emoji import EmojiPicker
-from modules.corners import MyCorner
-from modules.tmux import TmuxManager  # Import the new TmuxManager
-from modules.cliphist import ClipHistory  # Import the ClipHistory module
+from gi.repository import Gdk, GLib, Gtk, Pango
+
 import config.data as data
+from modules.cliphist import ClipHistory  # Import the ClipHistory module
+from modules.corners import MyCorner
+from modules.dashboard import Dashboard
+from modules.emoji import EmojiPicker
+from modules.launcher import AppLauncher
+from modules.notifications import NotificationContainer
+from modules.overview import Overview
 from modules.player import PlayerSmall
+from modules.power import PowerMenu
+from modules.tmux import TmuxManager  # Import the new TmuxManager
 from modules.tools import Toolbox
 from utils.icon_resolver import IconResolver
-from fabric.utils.helpers import get_desktop_applications
-from fabric.widgets.image import Image
 from utils.occlusion import check_occlusion
 
 
@@ -33,13 +35,29 @@ class Notch(Window):
             name="notch",
             layer="top",
             anchor="top",
-            margin="-40px 0px 0px 0px" if not data.VERTICAL else "0px 0px 0px 0px",
+            margin="-40px 8px 8px 8px" if not data.VERTICAL else "0px 0px 0px 0px",
             
             keyboard_mode="none",
             exclusivity="none",
             visible=True,
             all_visible=True,
         )
+
+        # Margins
+        self.margin = ""
+
+        if not data.VERTICAL:
+            match data.BAR_THEME:
+                case "Pills":
+                    self.margin = "-40px 0px 0px 0px"
+                case "Dense":
+                    self.margin = "-46px 0px 0px 0px"
+                case "Edge":
+                    self.margin = "-46px 0px 0px 0px"
+                case _:
+                    self.margin = "0px 0px 0px 0px"
+
+        self.set_margin(self.margin)
 
         # Add character buffer for launcher transition
         self._typed_chars_buffer = ""
@@ -150,6 +168,7 @@ class Notch(Window):
             name="notch-content",
             v_expand=True,
             h_expand=True,
+            style_classes = ["invert"] if (not data.VERTICAL and data.BAR_THEME in ["Dense", "Edge"]) else [],
             transition_type="crossfade",
             transition_duration=100,
             children=[
@@ -160,8 +179,8 @@ class Notch(Window):
                 self.emoji,
                 self.power,
                 self.tools,
-                self.tmux,  # Add tmux to the stack
-                self.cliphist,  # Add cliphist to the stack
+                self.tmux,
+                self.cliphist,
             ]
         )
 
@@ -235,6 +254,9 @@ class Notch(Window):
         self.notch_complete = Box(
             name="notch-complete",
             orientation="v",
+            spacing = (
+                6 if data.BAR_THEME in ["Dense", "Edge"] else 0
+            ),
             children=[
                 self.notch_overlay_eventbox,  # Use the eventbox instead of the direct overlay
                 self.boxed_notification_revealer,
@@ -244,13 +266,36 @@ class Notch(Window):
         self.hidden = False
         self._is_notch_open = False
         self._scrolling = False
+
+        self.vert_comp = Box(
+            name="vert-comp",
+        )
+
+        match data.BAR_THEME:
+            case "Pills":
+                self.vert_comp.add_style_class("pills")
+            case "Dense":
+                self.vert_comp.add_style_class("dense")
+            case "Edge":
+                self.vert_comp.add_style_class("edge")
+            case _:
+                self.vert_comp.add_style_class("pills")
+
+        self.notch_children = []
+
+        if data.VERTICAL:
+            self.notch_children = [
+                self.notch_complete,
+                self.vert_comp,
+            ]
+        else:
+            self.notch_children = [
+                self.notch_complete,
+            ]
         
         self.notch_wrap = Box(
             name="notch-wrap",
-            children=[
-                self.notch_complete,
-                Box(name="vert-comp" if data.VERTICAL else None),
-            ]
+            children=self.notch_children,
         )
 
         self.add(self.notch_wrap)
@@ -317,6 +362,7 @@ class Notch(Window):
     def close_notch(self):
         self.set_keyboard_mode("none")
         self.notch_box.remove_style_class("open")
+        self.stack.remove_style_class("open")
 
         GLib.idle_add(self._show_overview_children, False)
 
@@ -339,6 +385,7 @@ class Notch(Window):
     def open_notch(self, widget):
         self.notch_wrap.remove_style_class("occluded")
         self.notch_box.add_style_class("open")
+        self.stack.add_style_class("open")
         
         # Handle tmux manager
         if widget == "tmux":

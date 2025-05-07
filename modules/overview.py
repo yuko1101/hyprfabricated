@@ -3,19 +3,19 @@ import json
 
 import cairo
 import gi
-from loguru import logger
 from fabric.hyprland.service import Hyprland
+from fabric.utils.helpers import get_desktop_applications
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
-import modules.icons as icons
+from loguru import logger
 
+import modules.icons as icons
 # WIP icon resolver (app_id to guessing the icon name)
 from utils.icon_resolver import IconResolver
-from fabric.utils.helpers import get_desktop_applications
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk

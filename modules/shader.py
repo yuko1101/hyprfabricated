@@ -1,15 +1,15 @@
-import gi
-from enum import Enum
-import OpenGL.GL as GL
 from collections.abc import Iterable
-from typing import cast, overload, Literal
-from OpenGL.GL.shaders import compileShader, compileProgram
+from enum import Enum
+from typing import Literal, cast, overload
 
-from fabric import Signal, Property
+import gi
+import OpenGL.GL as GL
+from fabric import Property, Signal
 from fabric.widgets.widget import Widget
+from OpenGL.GL.shaders import compileProgram, compileShader
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
 
 
 class ShadertoyUniformType(Enum):

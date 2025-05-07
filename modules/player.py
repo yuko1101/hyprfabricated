@@ -1,21 +1,23 @@
 import os
+import tempfile
 import urllib.parse
 import urllib.request
-import tempfile
-from gi.repository import Gtk, GLib, Gio, Gdk
+
 from fabric.widgets.box import Box
-from fabric.widgets.centerbox import CenterBox
-from fabric.widgets.label import Label
 from fabric.widgets.button import Button
+from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.circularprogressbar import CircularProgressBar
+from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.stack import Stack
-from widgets.circle_image import CircleImage
-import modules.icons as icons
-import config.data as data
-from services.mpris import MprisPlayerManager, MprisPlayer
+from gi.repository import Gdk, Gio, GLib, Gtk
 
+import config.data as data
+import modules.icons as icons
 from modules.cavalcade import SpectrumRender
+from services.mpris import MprisPlayer, MprisPlayerManager
+from widgets.circle_image import CircleImage
+
 
 def get_player_icon_markup_by_name(player_name):
     if player_name:

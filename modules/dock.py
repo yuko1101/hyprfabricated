@@ -1,20 +1,22 @@
 import json
-from gi.repository import GLib, Gtk, Gdk
+import logging
+
 import cairo
-from utils.icon_resolver import IconResolver
-from utils.occlusion import check_occlusion
+from fabric.hyprland.widgets import get_hyprland_connection
+from fabric.utils import (exec_shell_command, exec_shell_command_async,
+                          get_relative_path, idle_add, remove_handler)
+from fabric.utils.helpers import get_desktop_applications
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
-from fabric.widgets.image import Image
 from fabric.widgets.eventbox import EventBox
+from fabric.widgets.image import Image
 from fabric.widgets.wayland import WaylandWindow as Window
-from fabric.hyprland.widgets import get_hyprland_connection
-from fabric.utils import exec_shell_command, exec_shell_command_async, idle_add, remove_handler, get_relative_path
-from fabric.utils.helpers import get_desktop_applications
-from modules.corners import MyCorner  # Add this import for corners
+from gi.repository import Gdk, GLib, Gtk
 
 import config.data as data
-import logging
+from modules.corners import MyCorner  # Add this import for corners
+from utils.icon_resolver import IconResolver
+from utils.occlusion import check_occlusion
 
 OCCLUSION = 36 + data.DOCK_ICON_SIZE
 

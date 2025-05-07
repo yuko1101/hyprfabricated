@@ -1,14 +1,16 @@
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
-from fabric.utils.helpers import exec_shell_command_async, get_relative_path
-import modules.icons as icons
-from gi.repository import Gdk, GLib
 import os
-import config.data as data
 import subprocess
-from loguru import logger
 import threading
+
+from fabric.utils.helpers import exec_shell_command_async, get_relative_path
+from fabric.widgets.box import Box
+from fabric.widgets.button import Button
+from fabric.widgets.label import Label
+from gi.repository import Gdk, GLib
+from loguru import logger
+
+import config.data as data
+import modules.icons as icons
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 POMODORO_SCRIPT = get_relative_path("../scripts/pomodoro.sh")

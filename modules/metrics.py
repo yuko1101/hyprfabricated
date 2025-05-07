@@ -1,12 +1,11 @@
-import subprocess
 import json
 import logging
+import subprocess
 import time
-from gi.repository import GLib
 
 import psutil
-
 from fabric.core.fabricator import Fabricator
+from fabric.utils.helpers import invoke_repeater
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
@@ -14,11 +13,11 @@ from fabric.widgets.eventbox import EventBox
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
-from fabric.utils.helpers import invoke_repeater
 from fabric.widgets.scale import Scale
+from gi.repository import GLib
 
-import modules.icons as icons
 import config.data as data
+import modules.icons as icons
 from services.network import NetworkClient
 
 # Setup logger

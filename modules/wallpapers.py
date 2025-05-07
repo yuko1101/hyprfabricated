@@ -1,21 +1,24 @@
-import os
-import hashlib
-import shutil
 import colorsys
-from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk, Pango
+import concurrent.futures
+import hashlib
+import os
+import shutil
+from concurrent.futures import ThreadPoolExecutor
+
+from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
-from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.label import Label
-from fabric.utils.helpers import exec_shell_command_async
-import modules.icons as icons
-import config.data as data
-import config.config
+from fabric.widgets.scrolledwindow import ScrolledWindow
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango
 from PIL import Image
-import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor
+
+import config.config
+import config.data as data
+import modules.icons as icons
+
 
 class WallpaperSelector(Box):
     CACHE_DIR = f"{data.CACHE_DIR}/thumbs"  # Changed from wallpapers to thumbs

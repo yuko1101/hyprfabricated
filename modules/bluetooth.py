@@ -1,11 +1,13 @@
+from fabric.bluetooth import BluetoothClient, BluetoothDevice
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.image import Image
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
+from fabric.widgets.image import Image
+from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.bluetooth import BluetoothClient, BluetoothDevice
+
 import modules.icons as icons
+
 
 class BluetoothDeviceSlot(CenterBox):
     def __init__(self, device: BluetoothDevice, **kwargs):

@@ -1,11 +1,13 @@
 import gi
 
 gi.require_version("Gray", "0.1")
-from gi.repository import Gray, Gtk, Gdk, GdkPixbuf, GLib
+from fabric.widgets.box import Box
+from gi.repository import Gdk, GdkPixbuf, GLib, Gray, Gtk
 
 import config.data as data
 
-class SystemTray(Gtk.Box):
+
+class SystemTray(Box):
     def __init__(self, pixel_size: int = 20, **kwargs) -> None:
         orientation = Gtk.Orientation.HORIZONTAL if not data.VERTICAL else Gtk.Orientation.VERTICAL
         super().__init__(

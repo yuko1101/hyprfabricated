@@ -1,13 +1,16 @@
 import gi
+
 gi.require_version('Gtk', '3.0')
 from fabric.widgets.box import Box
 from fabric.widgets.stack import Stack
+
+from modules.bluetooth import BluetoothConnections
 from modules.buttons import Buttons
 from modules.calendar import Calendar
-from modules.player import Player
-from modules.bluetooth import BluetoothConnections
-from modules.metrics import Metrics
 from modules.controls import ControlSliders
+from modules.metrics import Metrics
+from modules.player import Player
+
 
 class Widgets(Box):
     def __init__(self, **kwargs):

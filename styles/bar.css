@@ -1,7 +1,40 @@
-#bar-inner {
+#bar-inner,
+#bar-inner.pills {
   margin: 8px;
   opacity: 1;
   transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
+}
+
+#bar-inner.dense {
+  padding: 4px;
+  background-color: var(--shadow);
+  border: 2px solid var(--surface-bright);
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+}
+
+#bar-inner.edge {
+  padding: 4px;
+  background-color: var(--shadow);
+  border-bottom: 2px solid var(--surface-bright);
+  border-radius: 0;
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+}
+
+#bar-inner.edgevert {
+  padding: 4px;
+  background-color: var(--shadow);
+  border-right: 2px solid var(--surface-bright);
+  border-radius: 0;
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+}
+
+#bar-inner.edgevertcentered {
+  padding: 4px;
+  background-color: var(--shadow);
+  border: 2px solid var(--surface-bright);
+  border-left: 0;
+  border-radius: 0 16px 16px 0;
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
 }
 
 #bar-inner.hidden {
@@ -15,6 +48,11 @@
   padding: 8px;
 }
 
+#date-time.invert {
+  background-color: var(--surface);
+  border-radius: 12px;
+}
+
 menu > menuitem > label,
 #date-time > label {
   font-weight: bold;
@@ -23,6 +61,11 @@ menu > menuitem > label,
 #language {
   background-color: var(--shadow);
   padding: 8px;
+}
+
+#language.invert {
+  background-color: var(--surface);
+  border-radius: 12px;
 }
 
 #lang-label {
@@ -40,6 +83,11 @@ menu > menuitem > label,
   min-height: 36px;
 }
 
+#weather.invert {
+  background-color: var(--surface);
+  border-radius: 12px;
+}
+
 #weather-label {
   font-weight: bold;
 }
@@ -47,6 +95,11 @@ menu > menuitem > label,
 #systray {
   background-color: var(--shadow);
   padding: 8px;
+}
+
+#systray.invert {
+  background-color: var(--surface);
+  border-radius: 12px;
 }
 
 menu {
@@ -98,6 +151,11 @@ tooltip > * {
   min-height: 28px;
   background-color: var(--shadow);
   transition: all 0.1s ease;
+}
+
+#button-bar.invert {
+  background-color: var(--surface);
+  border-radius: 12px;
 }
 
 #button-bar-label {

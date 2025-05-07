@@ -33,6 +33,11 @@
   background-color: var(--shadow);
 }
 
+#control-small.invert {
+  background-color: var(--surface);
+  border-radius: 12px;
+}
+
 #button-volume,
 #button-mic,
 #button-brightness {

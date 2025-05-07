@@ -1,12 +1,18 @@
-#workspaces,
-#workspaces-num {
+#workspaces {
   padding: 14px;
-  background-color: var(--shadow);
-  margin: 8px;
+}
+
+#workspaces-num {
+  padding: 4px;
 }
 
 #workspaces-container {
-  margin: -8px;
+  background-color: var(--shadow);
+}
+
+#workspaces-container.invert {
+  background-color: var(--surface);
+  border-radius: 12px;
 }
 
 #workspaces > button {

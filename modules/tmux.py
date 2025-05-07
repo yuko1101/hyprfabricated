@@ -1,14 +1,17 @@
-import subprocess
 import os
+import subprocess
+
+from fabric.utils import exec_shell_command_async, idle_add, remove_handler
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
+from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import idle_add, remove_handler, exec_shell_command_async
-from gi.repository import GLib, Gdk, Gtk
-import modules.icons as icons
+from gi.repository import Gdk, GLib, Gtk
+
 import config.data as data
+import modules.icons as icons
+
 
 class TmuxManager(Box):
     def __init__(self, **kwargs):

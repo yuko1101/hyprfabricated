@@ -37,51 +37,63 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+#notch-content.open.invert {
+  padding: 2px;
+  padding-top: 0px;
+}
+
+#notch-content.invert {
+  background-color: var(--surface);
+  border-radius: 0 0 12px 12px;
+}
+
 #notch-content.launcher,
 #notch-content.tmux,
 #notch-content.cliphist {
-  padding: 16px;
   min-height: 220px;
   min-width: 480px;
   border-radius: 0 0 36px 36px;
 }
 
+/* #notch-content.launcher.invert, */
+/* #notch-content.tmux.invert, */
+/* #notch-content.cliphist.invert { */
+/*   background-color: var(--shadow); */
+/* } */
+
 #notch-content.dashboard {
-  padding: 16px;
+  padding-top: 0px;
   min-height: 432px;
-  min-width: 1065px;
+  min-width: 1093px;
   border-radius: 0 0 36px 36px;
 }
 
-#dashboard {
-  min-height: 400px;
-  min-width: 1033px;
-}
+/* #notch-content.dashboard.invert { */
+/*   background-color: var(--surface); */
+/* } */
 
 #notch-content.overview {
-  padding: 16px;
+  /* padding: 16px; */
   @apply overview_width();
   @apply overview_height();
   border-radius: 0 0 36px 36px;
 }
 
 #notch-content.tools {
-  min-height: 84px;
-  min-width: 688px;
-  /* Changed to include pomodoro btn */
+  min-height: 52px;
+  min-width: 656px;
   border-radius: 0 0 36px 36px;
 }
 
 #notch-content.emoji {
-  padding: 16px;
   min-height: 238px;
   min-width: 574px;
   border-radius: 0 0 36px 36px;
 }
 
 #notch-content.power {
-  min-height: 84px;
-  min-width: 308px;
+  min-height: 52px;
+  min-width: 276px;
   border-radius: 0 0 36px 36px;
 }
 
@@ -164,6 +176,15 @@
   margin: 10px;
 }
 
-#vert-comp {
-  min-width: 40px;
+#vert-comp,
+#vert-comp.pills {
+  min-width: 44px;
+}
+
+#vert-comp.dense {
+  min-width: 56px;
+}
+
+#vert-comp.edge {
+  min-width: 48px;
 }

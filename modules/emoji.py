@@ -1,15 +1,18 @@
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
-from fabric.widgets.entry import Entry
-from fabric.widgets.stack import Stack
-from fabric.utils import remove_handler
-from fabric.utils.helpers import get_relative_path
-from gi.repository import Gdk
-import modules.icons as icons
 import os
 import subprocess
+
 import ijson
+from fabric.utils import remove_handler
+from fabric.utils.helpers import get_relative_path
+from fabric.widgets.box import Box
+from fabric.widgets.button import Button
+from fabric.widgets.entry import Entry
+from fabric.widgets.label import Label
+from fabric.widgets.stack import Stack
+from gi.repository import Gdk
+
+import modules.icons as icons
+
 
 class EmojiPicker(Box):
     def __init__(self, **kwargs):

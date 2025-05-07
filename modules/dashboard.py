@@ -1,17 +1,21 @@
 import random
+
+import gi
 from fabric.utils import get_relative_path
 from fabric.widgets.box import Box
+from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.stack import Stack
-from fabric.widgets.image import Image
-import gi
+
 gi.require_version('Gtk', '3.0')
 gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import Gtk, GdkPixbuf, Gdk
-from modules.widgets import Widgets
+from gi.repository import Gdk, GdkPixbuf, Gtk
+
+from modules.kanban import Kanban
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
-from modules.kanban import Kanban
+from modules.widgets import Widgets
+
 
 class Dashboard(Box):
     def __init__(self, **kwargs):

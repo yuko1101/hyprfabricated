@@ -40,6 +40,32 @@ class Bar(Window):
             all_visible=True,
         )
 
+        # Margins
+        self.margin = ""
+
+        if data.VERTICAL:
+            match data.BAR_THEME:
+                case "Pills":
+                    self.margin = "-4px -8px -4px -4px"
+                case "Dense":
+                    self.margin = "-4px -8px -4px -4px"
+                case "Edge":
+                    self.margin = "-8px -8px -8px -8px" if data.CENTERED_BAR else "-8px -8px -8px -8px"
+                case _:
+                    self.margin = "-4px -8px -4px -4px"
+        else:
+            match data.BAR_THEME:
+                case "Pills":
+                    self.margin = "-4px -4px -8px -4px"
+                case "Dense":
+                    self.margin = "-4px -4px -8px -4px"
+                case "Edge":
+                    self.margin = "-8px -8px -8px -8px"
+                case _:
+                    self.margin = "-4px -4px -8px -4px"
+
+        self.set_margin(self.margin)
+
         self.notch = kwargs.get("notch", None)
         self.component_visibility = data.BAR_COMPONENTS_VISIBILITY
 
@@ -52,7 +78,14 @@ class Bar(Window):
             spacing=8,
             # Use data module to determine the label
             buttons=[
-                WorkspaceButton(id=i, label=None)
+                WorkspaceButton(
+                    h_expand=False,
+                    v_expand=False,
+                    h_align="center",
+                    v_align="center",
+                    id=i,
+                    label=None,
+                )
                 for i in range(1, 11)
             ],
         )
@@ -143,8 +176,8 @@ class Bar(Window):
         self.metrics = MetricsSmall()
         self.battery = Battery()
         
-        # Apply visibility settings to components
-        self.apply_component_visibility()
+        # Apply properties to components
+        self.apply_component_props()
         
         self.rev_right = [
             self.metrics,
@@ -269,27 +302,53 @@ class Bar(Window):
 
         self.hidden = False
 
+        self.themed_children = [
+            self.button_apps,
+            self.button_overview,
+            self.button_power,
+            self.button_tools,
+            self.language,
+            self.date_time,
+            self.ws_container,
+            self.weather,
+            self.network,
+            self.battery,
+            self.metrics,
+            self.systray,
+            self.control,
+        ]
+
+        if data.BAR_THEME == "Dense" or data.BAR_THEME == "Edge":
+            for child in self.themed_children:
+                child.add_style_class("invert")
+
         # Apply bar theme style class
         current_theme = data.BAR_THEME
-        theme_classes = ["bar-theme-pills", "bar-theme-dense", "bar-theme-edge"]
+        theme_classes = ["pills", "dense", "edge"]
         for tc in theme_classes:
             self.bar_inner.remove_style_class(tc)
         
         if current_theme == "Pills":
-            self.bar_inner.add_style_class("bar-theme-pills")
+            self.bar_inner.add_style_class("pills")
         elif current_theme == "Dense":
-            self.bar_inner.add_style_class("bar-theme-dense")
+            self.bar_inner.add_style_class("dense")
         elif current_theme == "Edge":
-            self.bar_inner.add_style_class("bar-theme-edge")
+            if data.VERTICAL:
+                if data.CENTERED_BAR:
+                    self.bar_inner.add_style_class("edgevertcentered")
+                else:
+                    self.bar_inner.add_style_class("edgevert")
+            else:
+                self.bar_inner.add_style_class("edge")
         else: # Default to Pills if somehow invalid
-            self.bar_inner.add_style_class("bar-theme-pills")
+            self.bar_inner.add_style_class("pills")
 
 
         # self.show_all()
         self.systray._update_visibility()
         self.chinese_numbers()
 
-    def apply_component_visibility(self):
+    def apply_component_props(self):
         """Apply saved visibility settings to all components"""
         components = {
             'button_apps': self.button_apps,

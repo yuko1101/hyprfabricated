@@ -1,9 +1,10 @@
 from fabric.widgets.box import Box
-from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
-from fabric.widgets.wayland import WaylandWindow as Window
+from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.shapes import Corner
+from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import GLib
+
 
 class MyCorner(Box):
     def __init__(self, corner):

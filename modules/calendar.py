@@ -1,13 +1,16 @@
 import calendar
 import subprocess
 from datetime import datetime, timedelta
+
 import gi
-import modules.icons as icons
-from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
+from fabric.widgets.label import Label
+
+import modules.icons as icons
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib
+from gi.repository import GLib, Gtk
+
 
 class Calendar(Gtk.Box):
     def __init__(self):

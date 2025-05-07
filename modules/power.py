@@ -1,8 +1,10 @@
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async
+from fabric.widgets.box import Box
+from fabric.widgets.button import Button
+from fabric.widgets.label import Label
+
 import modules.icons as icons
+
 
 class PowerMenu(Box):
     def __init__(self, **kwargs):

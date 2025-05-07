@@ -1,23 +1,27 @@
+import json
+import math
 import operator
+import os
+import re
+import subprocess
 from collections.abc import Iterator
+
+import numpy as np
+from fabric.utils import (DesktopApp, exec_shell_command_async,
+                          get_desktop_applications, idle_add, remove_handler)
+from fabric.utils.helpers import get_relative_path
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
 from fabric.widgets.image import Image
+from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async
-from fabric.utils.helpers import get_relative_path
-from gi.repository import GLib, Gdk
-import modules.icons as icons
+from gi.repository import Gdk, GLib
+
 import config.data as data
-import json
-import os
-import re
-import math
-import numpy as np
-import subprocess
+import modules.icons as icons
 from modules.dock import Dock  # Import the Dock class
+
 
 class AppLauncher(Box):
     def __init__(self, **kwargs):

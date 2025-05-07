@@ -1,16 +1,11 @@
-import os
 import json
-import uuid
 import locale
+import os
+import uuid
 from datetime import datetime, timedelta
-from gi.repository import GdkPixbuf, GLib, Gtk
-from loguru import logger
-from widgets.rounded_image import CustomImage
-from fabric.notifications.service import (
-    Notification,
-    NotificationAction,
-    Notifications,
-)
+
+from fabric.notifications.service import (Notification, NotificationAction,
+                                          Notifications)
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
@@ -18,9 +13,12 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.scrolledwindow import ScrolledWindow
-import modules.icons as icons
+from gi.repository import GdkPixbuf, GLib, Gtk
+from loguru import logger
 
 import config.data as data
+import modules.icons as icons
+from widgets.rounded_image import CustomImage
 
 # Persistence directory and file (history)
 PERSISTENT_DIR = f"/tmp/{data.APP_NAME}/notifications"

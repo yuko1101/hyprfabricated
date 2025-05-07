@@ -1,19 +1,21 @@
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
-from fabric.widgets.entry import Entry
-from fabric.widgets.image import Image
-from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import idle_add, remove_handler
-from fabric.utils.helpers import get_relative_path
-from gi.repository import GLib, Gdk, GdkPixbuf
-import subprocess
 import os
 import re
+import subprocess
 import sys
 import tempfile
 
+from fabric.utils import idle_add, remove_handler
+from fabric.utils.helpers import get_relative_path
+from fabric.widgets.box import Box
+from fabric.widgets.button import Button
+from fabric.widgets.entry import Entry
+from fabric.widgets.image import Image
+from fabric.widgets.label import Label
+from fabric.widgets.scrolledwindow import ScrolledWindow
+from gi.repository import Gdk, GdkPixbuf, GLib
+
 import modules.icons as icons
+
 
 class ClipHistory(Box):
     def __init__(self, **kwargs):

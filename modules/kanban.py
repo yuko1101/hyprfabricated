@@ -1,16 +1,18 @@
-import gi
 import json
 import os
 from pathlib import Path
-import cairo  # For rendering the drag preview
 
-from fabric.widgets.label import Label
+import cairo  # For rendering the drag preview
+import gi
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
+from fabric.widgets.label import Label
+
 import modules.icons as icons
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GObject, GLib
+from gi.repository import Gdk, GLib, GObject, Gtk
+
 
 def createSurfaceFromWidget(widget: Gtk.Widget) -> cairo.ImageSurface:
     alloc = widget.get_allocation()

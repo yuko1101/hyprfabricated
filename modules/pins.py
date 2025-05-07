@@ -1,21 +1,22 @@
 import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GdkPixbuf, GLib, Gio
-import os
-import subprocess
-import json
-import cairo
-import re
-import urllib.request
-import urllib.parse
-import tempfile
-from pathlib import Path
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 
+gi.require_version('Gtk', '3.0')
+import json
+import os
+import re
+import subprocess
+import tempfile
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+import cairo
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 import modules.icons as icons
 
