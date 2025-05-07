@@ -1,7 +1,7 @@
 from os import truncate
 
 from fabric.hyprland.widgets import ActiveWindow
-from fabric.utils.helpers import (FormattedString, get_desktop_applications)
+from fabric.utils.helpers import FormattedString, get_desktop_applications
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.image import Image
@@ -181,8 +181,6 @@ class Notch(Window):
                 self.cliphist,
             ]
         )
-
-        self.stack.set_interpolate_size(True)
 
         self.corner_left = Box(
             name="notch-corner-left",
