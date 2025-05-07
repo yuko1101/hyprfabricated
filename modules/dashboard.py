@@ -43,7 +43,13 @@ class Dashboard(Box):
             name="stack",
             transition_type="slide-left-right",
             transition_duration=500,
+            v_expand=True,
+            v_align="fill",
+            h_expand=True,
+            h_align="fill",
         )
+
+        self.stack.set_homogeneous(False)
 
         self.switcher = Gtk.StackSwitcher(
             name="switcher",

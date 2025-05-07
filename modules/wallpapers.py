@@ -73,8 +73,12 @@ class WallpaperSelector(Box):
             spacing=10,
             h_expand=True,
             v_expand=True,
+            h_align="fill",
+            v_align="fill",
             child=self.viewport,
         )
+
+        self.scrolled_window.set_propagate_natural_height(False)
 
         self.search_entry = Entry(
             name="search-entry-walls",

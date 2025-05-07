@@ -421,13 +421,15 @@ class NotificationHistory(Box):
         )
         self.scrolled_window = ScrolledWindow(
             name="notification-history-scrolled-window",
-            h_vexpand=True,
             orientation="v",
             h_expand=True,
             v_expand=True,
+            h_align="fill",
+            v_align="fill",
             min_content_size=(-1, -1),
             max_content_size=(-1, -1),
         )
+        self.scrolled_window.set_propagate_natural_height(False)
         self.scrolled_window_viewport_box = Box(orientation="v", children=[self.notifications_list, self.no_notifications_box])
         self.scrolled_window.add_with_viewport(self.scrolled_window_viewport_box)
         self.persistent_notifications = []

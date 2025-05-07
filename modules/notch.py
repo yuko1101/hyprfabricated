@@ -168,7 +168,7 @@ class Notch(Window):
             h_expand=True,
             style_classes = ["invert"] if (not data.VERTICAL and data.BAR_THEME in ["Dense", "Edge"]) else [],
             transition_type="crossfade",
-            transition_duration=100,
+            transition_duration=200,
             children=[
                 self.compact,
                 self.launcher,
@@ -181,6 +181,17 @@ class Notch(Window):
                 self.cliphist,
             ]
         )
+
+        self.compact.set_size_request(260, 40)
+        self.launcher.set_size_request(480, 220)
+        self.tmux.set_size_request(480, 220)
+        self.cliphist.set_size_request(480, 220)
+        self.dashboard.set_size_request(1093, 472)
+        self.overview.set_size_request(1093, 480)
+        self.emoji.set_size_request(574, 238)
+
+        self.stack.set_interpolate_size(True)
+        self.stack.set_homogeneous(False)
 
         self.corner_left = Box(
             name="notch-corner-left",
@@ -253,7 +264,7 @@ class Notch(Window):
             name="notch-complete",
             orientation="v",
             spacing = (
-                6 if data.BAR_THEME in ["Dense", "Edge"] else 0
+                6 if (data.BAR_THEME in ["Dense", "Edge"] and not data.VERTICAL) else 0
             ),
             children=[
                 self.notch_overlay_eventbox,  # Use the eventbox instead of the direct overlay
@@ -469,13 +480,12 @@ class Notch(Window):
 
                 self.stack.add_style_class("dashboard")
                 self.applet_stack.set_transition_duration(0)
-                self.stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("widgets")  # Ensure we're on widgets section
                 self.applet_stack.set_visible_child(self.btdevices)
                 self._is_notch_open = True
-                GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
+                GLib.timeout_add(10, lambda: [self.applet_stack.set_transition_duration(250)][-1] or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
@@ -508,14 +518,13 @@ class Notch(Window):
 
                 self.stack.add_style_class("dashboard")
                 self.applet_stack.set_transition_duration(0)
-                self.stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("widgets")  # Explicitly go to widgets section
                 self.applet_stack.set_visible_child(self.nhistory)
                 self._is_notch_open = True
                 # Reset the transition duration back to 250 after a short delay.
-                GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
+                GLib.timeout_add(10, lambda: [self.applet_stack.set_transition_duration(250)][-1] or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
@@ -541,12 +550,10 @@ class Notch(Window):
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
-                self.stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("pins")
                 self._is_notch_open = True
-                GLib.timeout_add(10, lambda: self.stack.set_transition_duration(100) or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
@@ -572,12 +579,10 @@ class Notch(Window):
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
-                self.stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("kanban")
                 self._is_notch_open = True
-                GLib.timeout_add(10, lambda: self.stack.set_transition_duration(100) or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
@@ -603,12 +608,10 @@ class Notch(Window):
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
-                self.stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("wallpapers")
                 self._is_notch_open = True
-                GLib.timeout_add(10, lambda: self.stack.set_transition_duration(100) or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)

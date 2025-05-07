@@ -26,11 +26,11 @@ EOF
 }
 
 case $1 in
-p) hyprshot -s -m output -o "$save_dir" -f "$save_file" ;;
-s) hyprshot -s -m region -o "$save_dir" -f "$save_file" ;;
-sf) hyprshot -s -z -m region -o "$save_dir" -f "$save_file" ;;
-m) hyprshot -s -m output -m active -o "$save_dir" -f "$save_file" ;;
-w) hyprshot -s -m window -o "$save_dir" -f "$save_file" ;; # Added window capture
+p) hyprshot -z -s -m output -o "$save_dir" -f "$save_file" ;;
+s) hyprshot -z -s -m region -o "$save_dir" -f "$save_file" ;;
+sf) hyprshot -z -s -z -m region -o "$save_dir" -f "$save_file" ;;
+m) hyprshot -z -s -m output -m active -o "$save_dir" -f "$save_file" ;;
+w) hyprshot -z -s -m window -o "$save_dir" -f "$save_file" ;; # Added window capture
 *)
     print_error
     exit 1

@@ -5,36 +5,35 @@
   transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
 }
 
-#bar-inner.dense {
-  padding: 4px;
-  background-color: var(--shadow);
-  border: 2px solid var(--surface-bright);
-  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
-}
-
-#bar-inner.edge {
-  padding: 4px;
-  background-color: var(--shadow);
-  border-bottom: 2px solid var(--surface-bright);
-  border-radius: 0;
-  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
-}
-
-#bar-inner.edgevert {
-  padding: 4px;
-  background-color: var(--shadow);
-  border-right: 2px solid var(--surface-bright);
-  border-radius: 0;
-  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
-}
-
+#bar-inner.dense,
+#bar-inner.edge,
+#bar-inner.edgevert,
 #bar-inner.edgevertcentered {
   padding: 4px;
   background-color: var(--shadow);
-  border: 2px solid var(--surface-bright);
-  border-left: 0;
-  border-radius: 0 16px 16px 0;
   box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+  border-style: solid;
+  border-color: var(--surface-bright);
+}
+
+#bar-inner.dense {
+  border-width: 2px;
+}
+
+#bar-inner.edge {
+  border-width: 0 0 2px 0;
+  border-radius: 0;
+}
+
+#bar-inner.edgevert {
+  border-width: 0 2px 0 0;
+  border-radius: 0;
+}
+
+#bar-inner.edgevertcentered {
+  border-width: 2px;
+  border-left-width: 0;
+  border-radius: 0 16px 16px 0;
 }
 
 #bar-inner.hidden {

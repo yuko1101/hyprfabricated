@@ -392,6 +392,11 @@ class Pins(Gtk.Box):
 
         # With the Fabric ScrolledWindow:
         scrolled_window = ScrolledWindow(child=grid, name="scrolled-window", style_classes="pins")
+        scrolled_window.set_hexpand(True)
+        scrolled_window.set_vexpand(True)
+        scrolled_window.set_halign(Gtk.Align.FILL)
+        scrolled_window.set_valign(Gtk.Align.FILL)
+        scrolled_window.set_propagate_natural_height(False)
         self.pack_start(scrolled_window, True, True, 0)
 
         # Create 30 cells (5x6)
