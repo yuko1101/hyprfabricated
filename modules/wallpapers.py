@@ -1,8 +1,10 @@
 import os
 import hashlib
 import shutil
-from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk
+import colorsys
+from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk, Pango
 from fabric.widgets.box import Box
+from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
 from fabric.widgets.scrolledwindow import ScrolledWindow
@@ -10,6 +12,7 @@ from fabric.widgets.label import Label
 from fabric.utils.helpers import exec_shell_command_async
 import modules.icons as icons
 import config.data as data
+import config.config
 from PIL import Image
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
@@ -99,13 +102,31 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.set_active_id("scheme-tonal-spot")
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
+        # Load matugen state from the dedicated file
+        self.matugen_enabled = True # Default to True
+        try:
+            with open(data.MATUGEN_STATE_FILE, 'r') as f:
+                content = f.read().strip().lower()
+                if content == "false":
+                    self.matugen_enabled = False
+                elif content == "true":
+                    self.matugen_enabled = True
+                # Any other content defaults to True
+        except FileNotFoundError:
+            # File doesn't exist, keep default True and create it on first toggle
+            pass
+        except Exception as e:
+            print(f"Error reading matugen state file: {e}")
+            # Keep default True on error
+
         # Create a switcher to enable/disable Matugen (enabled by default)
         self.matugen_switcher = Gtk.Switch(name="matugen-switcher")
         self.matugen_switcher.set_vexpand(False)
         self.matugen_switcher.set_hexpand(False)
         self.matugen_switcher.set_valign(Gtk.Align.CENTER)
         self.matugen_switcher.set_halign(Gtk.Align.CENTER)
-        self.matugen_switcher.set_active(True)
+        self.matugen_switcher.set_active(self.matugen_enabled)
+        self.matugen_switcher.connect("notify::active", self.on_switch_toggled)
 
         self.mat_icon = Label(name="mat-label", markup=icons.palette)
 
@@ -114,14 +135,54 @@ class WallpaperSelector(Box):
             name="header-box",
             spacing=8,
             orientation="h",
+            # Removed color button and label from here
             start_children=[self.matugen_switcher, self.mat_icon],
             center_children=[self.search_entry],
             end_children=[self.scheme_dropdown],
         )
 
         self.add(self.header_box)
-        self.add(self.scrolled_window)
+
+        # Create the custom color selector components
+        self.hue_slider = Gtk.Scale(
+            orientation=Gtk.Orientation.HORIZONTAL, # Changed from VERTICAL
+            adjustment=Gtk.Adjustment(value=0, lower=0, upper=360, step_increment=1, page_increment=10),
+            draw_value=False, # Hide the default value text
+            digits=0,
+            # inverted=True, # Removed inverted for horizontal
+            name="hue-slider", # For CSS styling
+        )
+
+        # Changed expand/align for horizontal orientation
+        self.hue_slider.set_hexpand(True)
+        self.hue_slider.set_halign(Gtk.Align.FILL)
+        self.hue_slider.set_vexpand(False) # Ensure it doesn't expand vertically
+        self.hue_slider.set_valign(Gtk.Align.CENTER) # Center vertically within its box
+
+        self.apply_color_button = Button(name="apply-color-button", child=Label(name="apply-color-label", markup=icons.accept))
+        self.apply_color_button.connect("clicked", self.on_apply_color_clicked)
+        self.apply_color_button.set_vexpand(False) # Ensure button doesn't expand vertically
+        self.apply_color_button.set_valign(Gtk.Align.CENTER) # Center button vertically
+
+        self.custom_color_selector_box = Box(
+            orientation="h", spacing=5, name="custom-color-selector-box", # Changed orientation to horizontal
+            h_align="center" # Center the horizontal box
+        )
+        self.custom_color_selector_box.add(self.hue_slider)
+        self.custom_color_selector_box.add(self.apply_color_button)
+        self.custom_color_selector_box.set_halign(Gtk.Align.FILL)
+
+        # Add the scrolled window (grid) and the custom color selector box directly
+        # to the main WallpaperSelector box (which is already vertical)
+        self.pack_start(self.scrolled_window, True, True, 0) # Add grid, expand
+        self.pack_start(self.custom_color_selector_box, False, False, 0) # Add custom selector, don't expand
+
+        # Removed the old main_content_box and its add
+
         self._start_thumbnail_thread()
+        self.connect("map", self.on_map) # Connect the map signal
+        # Set initial sensitivity based on loaded state
+        # self.scheme_dropdown.set_sensitive(self.matugen_enabled) # Ensure sensitivity is set correctly on load
         self.setup_file_monitor()  # Initialize file monitoring
         self.show_all()
         # Ensure the search entry gets focus when starting
@@ -155,7 +216,7 @@ class WallpaperSelector(Box):
                     try:
                         os.rename(full_path, new_full_path)
                         file_name = new_name
-                        print(f"Renamed file '{full_path}' to '{new_full_path}'")
+                        print(f"Renamed file '{full_path}' to '{new_full_path}')")
                     except Exception as e:
                         print(f"Error renaming file {full_path}: {e}")
                 if file_name not in self.files:
@@ -341,7 +402,7 @@ class WallpaperSelector(Box):
                 with Image.open(full_path) as img:
                     width, height = img.size
                     side = min(width, height)
-                    left = (width - side) // 2
+                    left = (img.width - side) // 2
                     top = (height - side) // 2
                     right = left + side
                     bottom = top + side
@@ -380,3 +441,49 @@ class WallpaperSelector(Box):
         if self.get_mapped():
             widget.grab_focus()
         return False
+
+    def on_map(self, widget):
+        """Handles the map signal to set initial visibility of the color selector."""
+        # Set visibility based on the loaded state when the widget becomes visible
+        self.custom_color_selector_box.set_visible(not self.matugen_enabled)
+
+    def hsl_to_rgb_hex(self, h: float, s: float = 1.0, l: float = 0.5) -> str:
+        """Converts HSL color value to RGB HEX string."""
+        # colorsys uses HLS, not HSL, and expects values between 0.0 and 1.0
+        hue = h / 360.0
+        r, g, b = colorsys.hls_to_rgb(hue, l, s) # Note the order: H, L, S
+        r_int, g_int, b_int = int(r * 255), int(g * 255), int(b * 255)
+        return f"#{r_int:02X}{g_int:02X}{b_int:02X}"
+
+    def rgba_to_hex(self, rgba: Gdk.RGBA) -> str:
+        """Converts Gdk.RGBA to a HEX color string."""
+        r = int(rgba.red * 255)
+        g = int(rgba.green * 255)
+        b = int(rgba.blue * 255)
+        return f"#{r:02X}{g:02X}{b:02X}"
+
+    def on_switch_toggled(self, switch, gparam):
+        """Handles the toggling of the Matugen switch."""
+        is_active = switch.get_active()
+        self.matugen_enabled = is_active
+        # self.scheme_dropdown.set_sensitive(is_active)
+        self.custom_color_selector_box.set_visible(not is_active) # Toggle visibility
+
+        # Save the state to the dedicated file
+        try:
+            with open(data.MATUGEN_STATE_FILE, 'w') as f:
+                f.write(str(is_active))
+        except Exception as e:
+            print(f"Error writing matugen state file: {e}")
+
+    def on_apply_color_clicked(self, button):
+        """Applies the color selected by the hue slider via matugen."""
+        hue_value = self.hue_slider.get_value() # Get value from 0-360
+        hex_color = self.hsl_to_rgb_hex(hue_value) # Convert HSL(hue, 1.0, 0.5) to HEX
+        print(f"Applying color from slider: H={hue_value}, HEX={hex_color}")
+        selected_scheme = self.scheme_dropdown.get_active_id()
+        # Run matugen with the chosen hex color and selected scheme
+        exec_shell_command_async(f'matugen color hex "{hex_color}" -t {selected_scheme}')
+        # Optionally save the chosen color to config if needed later
+        # config.config.bind_vars["matugen_hex_color"] = hex_color
+        # config.config.save_config() # Removed as save_config doesn't exist
