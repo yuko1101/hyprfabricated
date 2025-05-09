@@ -189,6 +189,7 @@ class Notch(Window):
         self.dashboard.set_size_request(1093, 472)
         self.overview.set_size_request(1093, 480)
         self.emoji.set_size_request(574, 238)
+        self.overview.set_size_request(-1, -1)
 
         self.stack.set_interpolate_size(True)
         self.stack.set_homogeneous(False)
@@ -310,7 +311,7 @@ class Notch(Window):
         self.add(self.notch_wrap)
         self.show_all()
 
-        self._show_overview_children(False)
+        # self._show_overview_children(False)
 
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
@@ -373,7 +374,7 @@ class Notch(Window):
         self.notch_box.remove_style_class("open")
         self.stack.remove_style_class("open")
 
-        GLib.idle_add(self._show_overview_children, False)
+        # GLib.idle_add(self._show_overview_children, False)
 
         self.bar.revealer_right.set_reveal_child(True)
         self.bar.revealer_left.set_reveal_child(True)
@@ -663,8 +664,8 @@ class Notch(Window):
                 self.emoji.search_entry.set_text("")
                 self.emoji.search_entry.grab_focus()
 
-            if widget == "overview":
-                GLib.timeout_add(300, self._show_overview_children, True)
+            # if widget == "overview":
+            #     GLib.timeout_add(300, self._show_overview_children, True)
         else:
             self.stack.set_visible_child(self.dashboard)
 
@@ -676,15 +677,15 @@ class Notch(Window):
             self.bar.revealer_left.set_reveal_child(True)
         self._is_notch_open = True # Set notch state to open
 
-    def _show_overview_children(self, show_children):
-        for child in self.overview.get_children():
-            if show_children:
-                child.set_visible(show_children)
-                self.overview.add_style_class("show")
-            else:
-                child.set_visible(show_children)
-                self.overview.remove_style_class("show")
-        return False  # Esto evita que el timeout se repita
+    # def _show_overview_children(self, show_children):
+    #     for child in self.overview.get_children():
+    #         if show_children:
+    #             child.set_visible(show_children)
+    #             self.overview.add_style_class("show")
+    #         else:
+    #             child.set_visible(show_children)
+    #             self.overview.remove_style_class("show")
+    #     return False  # Esto evita que el timeout se repita
 
     def toggle_hidden(self):
         self.hidden = not self.hidden

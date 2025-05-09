@@ -1,11 +1,6 @@
 #notch-box {
   margin: 0 60px 10px 60px;
-  /* border-radius: 0 0 20px 20px; */
 }
-
-/* #notch-box.open { */
-/*   border-radius: 0 0 36px 36px; */
-/* } */
 
 #notch-box.hidden {
   opacity: 0;
@@ -31,15 +26,18 @@
 
 #notch-content {
   background-color: var(--shadow);
-  /* min-height: 40px; */
-  /* min-width: 256px; */
   border-radius: 0 0 20px 20px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#notch-content.open {
+  border-radius: 0 0 36px 36px;
 }
 
 #notch-content.open.invert {
   padding: 2px;
   padding-top: 0px;
+  border-radius: 0 0 36px 36px;
 }
 
 #notch-content.invert {
@@ -47,88 +45,8 @@
   border-radius: 0 0 12px 12px;
 }
 
-#notch-content.launcher,
-#notch-content.tmux,
-#notch-content.cliphist {
-  /* min-height: 220px; */
-  /* min-width: 480px; */
-  border-radius: 0 0 36px 36px;
-}
-
-/* #notch-content.launcher.invert, */
-/* #notch-content.tmux.invert, */
-/* #notch-content.cliphist.invert { */
-/*   background-color: var(--shadow); */
-/* } */
-
-#notch-content.dashboard {
-  padding-top: 0px;
-  /* min-height: 432px; */
-  /* min-width: 1093px; */
-  border-radius: 0 0 36px 36px;
-}
-
-/* #notch-content.dashboard.invert { */
-/*   background-color: var(--surface); */
-/* } */
-
-#notch-content.overview {
-  /* padding: 16px; */
-  @apply overview_width();
-  @apply overview_height();
-  border-radius: 0 0 36px 36px;
-}
-
-#notch-content.tools {
-  /* min-height: 52px; */
-  /* min-width: 656px; */
-  border-radius: 0 0 36px 36px;
-}
-
-#notch-content.emoji {
-  /* min-height: 238px; */
-  /* min-width: 574px; */
-  border-radius: 0 0 36px 36px;
-}
-
-#notch-content.power {
-  /* min-height: 52px; */
-  /* min-width: 276px; */
-  border-radius: 0 0 36px 36px;
-}
-
-#app-launcher,
-#dashboard,
-#notification,
-#overview,
-#emoji,
-#power-menu,
-#toolbox,
-#tmux-manager,
-#clip-history {
-  opacity: 1;
-  /* margin: -800px; */
-  /* transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1); */
-}
-
-#app-launcher.open,
-#dashboard.open,
-#notification.open,
-#overview.open,
-#emoji.open,
-#power-menu.open,
-#toolbox.open,
-#bluetooth.open,
-#tmux-manager.open,
-#clip-history.open {
-  opacity: 1;
-  /* margin: 0px; */
-}
-
 #notch-compact {
   font-weight: bold;
-  /* transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1); */
-  /* padding: 10px; */
 }
 
 #notch-corner-left {
@@ -195,6 +113,7 @@
 #dashboard,
 #tmux-manager,
 #clip-history,
+#overview,
 #emoji {
   background-color: var(--shadow);
   padding: 14px;

@@ -78,6 +78,7 @@ class WallpaperSelector(Box):
             child=self.viewport,
         )
 
+        self.scrolled_window.set_propagate_natural_width(False)
         self.scrolled_window.set_propagate_natural_height(False)
 
         self.search_entry = Entry(
