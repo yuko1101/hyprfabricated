@@ -204,8 +204,6 @@ class Notch(Window):
             ]
         )
 
-        self.corner_left.set_margin_start(56)
-
         self.corner_right = Box(
             name="notch-corner-right",
             orientation="v",
@@ -216,35 +214,15 @@ class Notch(Window):
             ]
         )
 
-        self.corner_right.set_margin_end(56)
-
         self.notch_box = CenterBox(
             name="notch-box",
             orientation="h",
             h_align="center",
             v_align="center",
+            start_children=self.corner_left,
             center_children=self.stack,
+            end_children=self.corner_right,
         )
-
-        self.notch_overlay = Overlay(
-            name="notch-overlay",
-            h_expand=True,
-            h_align="fill",
-            child=self.notch_box,
-            overlays=[
-                self.corner_left,
-                self.corner_right,
-            ]
-        )
-
-        # Add event handling for hover detection to notch_overlay
-        self.notch_overlay_eventbox = Gtk.EventBox()
-        self.notch_overlay_eventbox.add(self.notch_overlay)
-        self.notch_overlay_eventbox.connect("enter-notify-event", self.on_notch_enter)
-        self.notch_overlay_eventbox.connect("leave-notify-event", self.on_notch_leave)
-
-        self.notch_overlay.set_overlay_pass_through(self.corner_left, True)
-        self.notch_overlay.set_overlay_pass_through(self.corner_right, True)
 
         self.notification_revealer = Revealer(
             name="notification-revealer",
@@ -260,6 +238,20 @@ class Notch(Window):
                 self.notification_revealer,
             ]
         )
+        
+        self.notch_revealer = Revealer(
+            name="notch-revealer",
+            transition_type="slide-down",
+            transition_duration=250,
+            child_revealed=True,
+            child=self.notch_box,
+        )
+
+        # Create an EventBox to handle hover events for the notch_revealer area
+        self.notch_hover_area_event_box = Gtk.EventBox()
+        self.notch_hover_area_event_box.add(self.notch_revealer)
+        self.notch_hover_area_event_box.connect("enter-notify-event", self.on_notch_hover_area_enter)
+        self.notch_hover_area_event_box.connect("leave-notify-event", self.on_notch_hover_area_leave)
 
         self.notch_complete = Box(
             name="notch-complete",
@@ -268,7 +260,8 @@ class Notch(Window):
                 6 if (data.BAR_THEME in ["Dense", "Edge"] and not data.VERTICAL) else 0
             ),
             children=[
-                self.notch_overlay_eventbox,  # Use the eventbox instead of the direct overlay
+                self.notch_hover_area_event_box,  # Use the event box instead of direct revealer
+                Box(style="min-height: 4px;"),
                 self.boxed_notification_revealer,
             ]
         )
@@ -311,8 +304,6 @@ class Notch(Window):
         self.add(self.notch_wrap)
         self.show_all()
 
-        # self._show_overview_children(False)
-
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
@@ -335,9 +326,6 @@ class Notch(Window):
         window = widget.get_window()
         if window:
             window.set_cursor(Gdk.Cursor(Gdk.CursorType.HAND2))
-        # Remove occluded style class when hovered, but only in vertical mode
-        if data.VERTICAL:
-            self.notch_wrap.remove_style_class("occluded")
         return True
 
     def on_button_leave(self, widget, event):
@@ -352,21 +340,22 @@ class Notch(Window):
         return True
 
     # Add new hover event handlers for the entire notch
-    def on_notch_enter(self, widget, event):
+    def on_notch_hover_area_enter(self, widget, event):
         """Handle hover enter for the entire notch area"""
         self.is_hovered = True
-        # Remove occluded class when hovered, but only in vertical mode
-        if data.VERTICAL:
-            self.notch_wrap.remove_style_class("occluded")
+        # If in vertical mode, notch is not open, and revealer is closed, reveal it
+        if data.VERTICAL and not self.notch_revealer.get_reveal_child() and not self._is_notch_open:
+            self.notch_revealer.set_reveal_child(True)
         return False  # Allow event propagation
 
-    def on_notch_leave(self, widget, event):
+    def on_notch_hover_area_leave(self, widget, event):
         """Handle hover leave for the entire notch area"""
         # Only mark as not hovered if actually leaving to outside
         if event.detail == Gdk.NotifyType.INFERIOR:
             return False  # Ignore child-to-child movements
             
         self.is_hovered = False
+        # _check_occlusion will handle hiding if necessary
         return False  # Allow event propagation
 
     def close_notch(self):
@@ -374,11 +363,8 @@ class Notch(Window):
         self.notch_box.remove_style_class("open")
         self.stack.remove_style_class("open")
 
-        # GLib.idle_add(self._show_overview_children, False)
-
         self.bar.revealer_right.set_reveal_child(True)
         self.bar.revealer_left.set_reveal_child(True)
-        self.applet_stack.set_transition_duration(0)
         self.applet_stack.set_visible_child(self.nhistory)
         self._is_notch_open = False
 
@@ -393,9 +379,9 @@ class Notch(Window):
         self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
-        self.notch_wrap.remove_style_class("occluded")
         self.notch_box.add_style_class("open")
         self.stack.add_style_class("open")
+        self.notch_revealer.set_reveal_child(True)
         
         # Handle tmux manager
         if widget == "tmux":
@@ -457,13 +443,11 @@ class Notch(Window):
                     return
                 # If we're in the widgets section but not on btdevices, switch to btdevices
                 elif self.dashboard.stack.get_visible_child() == self.dashboard.widgets:
-                    self.applet_stack.set_transition_duration(250)
                     self.applet_stack.set_visible_child(self.btdevices)
                     return
                 # If we're in another dashboard section, switch to widgets and btdevices
                 else:
                     self.dashboard.go_to_section("widgets")
-                    self.applet_stack.set_transition_duration(250)
                     self.applet_stack.set_visible_child(self.btdevices)
                     return
             else:
@@ -480,13 +464,11 @@ class Notch(Window):
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
-                self.applet_stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("widgets")  # Ensure we're on widgets section
                 self.applet_stack.set_visible_child(self.btdevices)
                 self._is_notch_open = True
-                GLib.timeout_add(10, lambda: [self.applet_stack.set_transition_duration(250)][-1] or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
@@ -501,7 +483,6 @@ class Notch(Window):
                     return
                 # Otherwise navigate to widgets and ensure nhistory is visible
                 else:
-                    self.applet_stack.set_transition_duration(250)
                     self.applet_stack.set_visible_child(self.nhistory)
                     self.dashboard.go_to_section("widgets")
                     return
@@ -518,14 +499,12 @@ class Notch(Window):
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
-                self.applet_stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("widgets")  # Explicitly go to widgets section
                 self.applet_stack.set_visible_child(self.nhistory)
                 self._is_notch_open = True
                 # Reset the transition duration back to 250 after a short delay.
-                GLib.timeout_add(10, lambda: [self.applet_stack.set_transition_duration(250)][-1] or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
@@ -664,8 +643,6 @@ class Notch(Window):
                 self.emoji.search_entry.set_text("")
                 self.emoji.search_entry.grab_focus()
 
-            # if widget == "overview":
-            #     GLib.timeout_add(300, self._show_overview_children, True)
         else:
             self.stack.set_visible_child(self.dashboard)
 
@@ -676,16 +653,6 @@ class Notch(Window):
             self.bar.revealer_right.set_reveal_child(True)
             self.bar.revealer_left.set_reveal_child(True)
         self._is_notch_open = True # Set notch state to open
-
-    # def _show_overview_children(self, show_children):
-    #     for child in self.overview.get_children():
-    #         if show_children:
-    #             child.set_visible(show_children)
-    #             self.overview.add_style_class("show")
-    #         else:
-    #             child.set_visible(show_children)
-    #             self.overview.remove_style_class("show")
-    #     return False  # Esto evita que el timeout se repita
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
@@ -886,23 +853,12 @@ class Notch(Window):
     def _check_occlusion(self):
         """
         Check if top 40px of the screen is occluded by any window
-        and update the notch_box style accordingly.
+        and update the notch_revealer accordingly.
         """
-        # If notch is open or hovered, remove occluded class and skip further checks
-        if self._is_notch_open or self.is_hovered or self._prevent_occlusion:
-            if data.VERTICAL:
-                self.notch_wrap.remove_style_class("occluded")
-            return True
-            
         # Only check occlusion if not hovered, not open, and in vertical mode
-        if data.VERTICAL:
+        if data.VERTICAL and not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
             is_occluded = check_occlusion(("top", 40))
-            
-            # Add or remove style class based on occlusion
-            if is_occluded:
-                self.notch_wrap.add_style_class("occluded")
-            else:
-                self.notch_wrap.remove_style_class("occluded")
+            self.notch_revealer.set_reveal_child(not is_occluded)
         
         return True  # Return True to keep the timeout active
 
@@ -924,7 +880,6 @@ class Notch(Window):
         Temporarily remove the 'occluded' class when active window class changes
         to make the notch visible momentarily.
         """
-        # Skip occlusion handling if not in vertical mode
         if not data.VERTICAL:
             return
             
@@ -941,11 +896,9 @@ class Notch(Window):
                 GLib.source_remove(self._occlusion_timer_id)
                 self._occlusion_timer_id = None
             
-            # Set flag to prevent occlusion
+            # Set flag to prevent occlusion and reveal the notch
             self._prevent_occlusion = True
-            
-            # Remove occluded class
-            self.notch_wrap.remove_style_class("occluded")
+            self.notch_revealer.set_reveal_child(True) # Explicitly show notch
             
             # Set up a new timeout to re-enable occlusion check after 500ms
             self._occlusion_timer_id = GLib.timeout_add(500, self._restore_occlusion_check)
@@ -981,7 +934,6 @@ class Notch(Window):
         
         # Otherwise similar to standard open_notch("launcher") but with text
         self.set_keyboard_mode("exclusive")
-        self.notch_wrap.remove_style_class("occluded")
         
         if self.hidden:
             self.notch_box.remove_style_class("hidden")
@@ -1043,7 +995,7 @@ class Notch(Window):
         self._launcher_transitioning = False
         self._launcher_transition_timeout = None
         
-        return False  # Don't repeat
+        return False
     
     def _ensure_no_text_selection(self):
         """Make absolutely sure no text is selected in the search entry"""

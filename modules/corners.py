@@ -13,6 +13,10 @@ class MyCorner(Box):
             children=Corner(
                 name="corner",
                 orientation=corner,
+                h_expand=False,
+                v_expand=False,
+                h_align="center",
+                v_align="center",
                 size=20,
             ),
         )
