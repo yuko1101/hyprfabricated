@@ -364,21 +364,11 @@ class Notch(Window):
         self.bar.revealer_left.set_reveal_child(True)
         self.applet_stack.set_visible_child(self.nhistory)
         self._is_notch_open = False
-
-        if self.hidden:
-            self.notch_box.remove_style_class("hideshow")
-            self.notch_box.add_style_class("hidden")
-
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools, self.tmux, self.cliphist]:
-            widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux", "cliphist"]:
-            self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
-        self.notch_box.add_style_class("open")
-        self.stack.add_style_class("open")
         self.notch_revealer.set_reveal_child(True)
+        self.set_keyboard_mode("exclusive")
         
         # Handle tmux manager
         if widget == "tmux":
@@ -388,18 +378,7 @@ class Notch(Window):
                 
             self.set_keyboard_mode("exclusive")
 
-            if self.hidden:
-                self.notch_box.remove_style_class("hidden")
-                self.notch_box.add_style_class("hideshow")
-
-            for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux", "cliphist"]:
-                self.stack.remove_style_class(style)
-            for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools, self.tmux, self.cliphist]:
-                w.remove_style_class("open")
-
-            self.stack.add_style_class("launcher")  # Reuse launcher styling
             self.stack.set_visible_child(self.tmux)
-            self.tmux.add_style_class("open")
             self.tmux.open_manager()
             self._is_notch_open = True
 
@@ -413,18 +392,7 @@ class Notch(Window):
                 
             self.set_keyboard_mode("exclusive")
 
-            if self.hidden:
-                self.notch_box.remove_style_class("hidden")
-                self.notch_box.add_style_class("hideshow")
-
-            for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux", "cliphist"]:
-                self.stack.remove_style_class(style)
-            for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools, self.tmux, self.cliphist]:
-                w.remove_style_class("open")
-
-            self.stack.add_style_class("launcher")  # Reuse launcher styling
             self.stack.set_visible_child(self.cliphist)
-            self.cliphist.add_style_class("open")
             GLib.idle_add(self.cliphist.open)
             self._is_notch_open = True
 
@@ -451,18 +419,7 @@ class Notch(Window):
                 # Open dashboard with btdevices visible
                 self.set_keyboard_mode("exclusive")
 
-                if self.hidden:
-                    self.notch_box.remove_style_class("hidden")
-                    self.notch_box.add_style_class("hideshow")
-
-                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
-                    self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
-                    w.remove_style_class("open")
-
-                self.stack.add_style_class("dashboard")
                 self.stack.set_visible_child(self.dashboard)
-                self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("widgets")  # Ensure we're on widgets section
                 self.applet_stack.set_visible_child(self.btdevices)
                 self._is_notch_open = True
@@ -486,18 +443,7 @@ class Notch(Window):
             else:
                 self.set_keyboard_mode("exclusive")
 
-                if self.hidden:
-                    self.notch_box.remove_style_class("hidden")
-                    self.notch_box.add_style_class("hideshow")
-
-                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
-                    self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
-                    w.remove_style_class("open")
-
-                self.stack.add_style_class("dashboard")
                 self.stack.set_visible_child(self.dashboard)
-                self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("widgets")  # Explicitly go to widgets section
                 self.applet_stack.set_visible_child(self.nhistory)
                 self._is_notch_open = True
@@ -517,18 +463,7 @@ class Notch(Window):
                 # Open dashboard and navigate to pins
                 self.set_keyboard_mode("exclusive")
 
-                if self.hidden:
-                    self.notch_box.remove_style_class("hidden")
-                    self.notch_box.add_style_class("hideshow")
-
-                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
-                    self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
-                    w.remove_style_class("open")
-
-                self.stack.add_style_class("dashboard")
                 self.stack.set_visible_child(self.dashboard)
-                self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("pins")
                 self._is_notch_open = True
 
@@ -546,18 +481,7 @@ class Notch(Window):
                 # Open dashboard and navigate to kanban
                 self.set_keyboard_mode("exclusive")
 
-                if self.hidden:
-                    self.notch_box.remove_style_class("hidden")
-                    self.notch_box.add_style_class("hideshow")
-
-                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
-                    self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
-                    w.remove_style_class("open")
-
-                self.stack.add_style_class("dashboard")
                 self.stack.set_visible_child(self.dashboard)
-                self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("kanban")
                 self._is_notch_open = True
 
@@ -575,18 +499,7 @@ class Notch(Window):
                 # Open dashboard and navigate to wallpapers
                 self.set_keyboard_mode("exclusive")
 
-                if self.hidden:
-                    self.notch_box.remove_style_class("hidden")
-                    self.notch_box.add_style_class("hideshow")
-
-                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
-                    self.stack.remove_style_class(style)
-                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
-                    w.remove_style_class("open")
-
-                self.stack.add_style_class("dashboard")
                 self.stack.set_visible_child(self.dashboard)
-                self.dashboard.add_style_class("open")
                 self.dashboard.go_to_section("wallpapers")
                 self._is_notch_open = True
 
@@ -613,23 +526,7 @@ class Notch(Window):
 
         self.set_keyboard_mode("exclusive")
 
-        if self.hidden:
-            self.notch_box.remove_style_class("hidden")
-            self.notch_box.add_style_class("hideshow")
-
-        # Clear previous style classes and states
-        for style in widgets.keys():
-            self.stack.remove_style_class(style)
-        for w in widgets.values():
-            w.remove_style_class("open")
-
-        # Configure according to the requested widget.
         if widget in widgets:
-            if widget != "dashboard": # Avoid adding dashboard class again if switching from bluetooth
-                self.stack.add_style_class(widget)
-            self.stack.set_visible_child(widgets[widget])
-            widgets[widget].add_style_class("open")
-
             if widget == "launcher":
                 self.launcher.open_launcher()
                 self.launcher.search_entry.set_text("")
@@ -653,10 +550,7 @@ class Notch(Window):
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
-        if self.hidden:
-            self.notch_box.add_style_class("hidden")
-        else:
-            self.notch_box.remove_style_class("hidden")
+        self.set_visible(not self.hidden)
 
     def _on_compact_scroll(self, widget, event):
         if self._scrolling:
