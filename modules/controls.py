@@ -616,7 +616,7 @@ class VolumeIcon(Box):
 
         except AttributeError:
             # Handle cases where port or type might not exist
-            self.vol_label.set_markup(icons.speaker) # Default if type is unknown
+            self.vol_label.set_markup(icons.headphones) # Default if type is unknown
             # Optional: print a warning
             # print("Warning: Could not determine audio device type.")
 
