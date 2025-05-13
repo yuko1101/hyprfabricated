@@ -486,31 +486,35 @@ class VolumeIcon(Box):
     def __init__(self, **kwargs):
         super().__init__(name="vol-icon", **kwargs)
         self.audio = Audio()
-        
-        self.vol_label = Label(name="vol-label-dash", markup=icons.vol_high, h_align="center", v_align="center", h_expand=True, v_expand=True)
+
+        # Initial markup is empty, will be set by update_device_icon or on_speaker_changed
+        self.vol_label = Label(name="vol-label-dash", markup="", h_align="center", v_align="center", h_expand=True, v_expand=True)
         self.vol_button = Button(on_clicked=self.toggle_mute, child=self.vol_label, h_align="center", v_align="center", h_expand=True, v_expand=True)
-        
+
         # Wrap the button in an EventBox for scroll events - add alignment properties here
         self.event_box = EventBox(
             events=["scroll", "smooth-scroll"],
             child=self.vol_button,
-            h_align="center", 
-            v_align="center", 
-            h_expand=True, 
+            h_align="center",
+            v_align="center",
+            h_expand=True,
             v_expand=True
         )
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
-        
+
         self._pending_value = None
         self._update_source_id = None
-        
+        self._periodic_update_source_id = None # New: for periodic icon updates
+
         self.audio.connect("notify::speaker", self.on_new_speaker)
         if self.audio.speaker:
             self.audio.speaker.connect("changed", self.on_speaker_changed)
-        self.on_speaker_changed()
+        # Initial call to on_speaker_changed will happen via on_new_speaker if speaker exists
+        # Or the periodic update will set the icon
+        self._periodic_update_source_id = GLib.timeout_add_seconds(1, self.update_device_icon) # New: periodic icon update
         self.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
-        
+
     def on_scroll(self, _, event):
         if not self.audio.speaker:
             return
@@ -555,39 +559,78 @@ class VolumeIcon(Box):
         current_stream = self.audio.speaker
         if current_stream:
             current_stream.muted = not current_stream.muted
-            if current_stream.muted:
-                self.vol_button.get_child().set_markup(icons.vol_off)
-                self.vol_label.add_style_class("muted")
-                self.vol_button.add_style_class("muted")
-            else:
-                self.on_speaker_changed()
-                self.vol_label.remove_style_class("muted")
-                self.vol_button.remove_style_class("muted")
-                
+            # Icon and style classes are handled by on_speaker_changed
+            self.on_speaker_changed() # Trigger update after mute state change
+
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
+            # Handle case with no speaker
+            self.vol_label.set_markup("") # Or a generic audio icon
+            self.remove_style_class("muted")
+            self.vol_label.remove_style_class("muted")
+            self.vol_button.remove_style_class("muted")
+            self.set_tooltip_text("No audio device")
             return
+
         if self.audio.speaker.muted:
-            self.vol_button.get_child().set_markup(icons.vol_off)
+            self.vol_label.set_markup(icons.vol_off) # Show mute icon when muted
             self.add_style_class("muted")
             self.vol_label.add_style_class("muted")
+            self.vol_button.add_style_class("muted")
             self.set_tooltip_text("Muted")
-            return
         else:
             self.remove_style_class("muted")
             self.vol_label.remove_style_class("muted")
-            
-        self.set_tooltip_text(f"{round(self.audio.speaker.volume)}%")
-        if self.audio.speaker.volume > 74:
-            self.vol_button.get_child().set_markup(icons.vol_high)
-        elif self.audio.speaker.volume > 0:
-            self.vol_button.get_child().set_markup(icons.vol_medium)
-        else:
-            self.vol_button.get_child().set_markup(icons.vol_mute)
-            
+            self.vol_button.remove_style_class("muted")
+            # Icon is handled by update_device_icon when not muted
+            self.update_device_icon() # Update icon based on device type
+            self.set_tooltip_text(f"{round(self.audio.speaker.volume)}%") # Tooltip shows volume percentage
+
+    def update_device_icon(self):
+        # This method is called periodically and when unmuting
+
+        if not self.audio.speaker:
+            # Set a default or empty icon if no speaker
+            self.vol_label.set_markup("") # Or a generic audio icon
+            # Tooltip is handled by on_speaker_changed
+            return True # Keep the timer running
+
+        # If muted, the icon is already set to icons.vol_off by on_speaker_changed.
+        # Don't override it here.
+        if self.audio.speaker.muted:
+             return True # Keep the timer running
+
+        try:
+            # Assuming speaker object has a port property with a type
+            # Common types might be 'headphones', 'speaker', 'hdmi', etc.
+            device_type = self.audio.speaker.port.type
+            if device_type == 'headphones':
+                self.vol_label.set_markup(icons.headphones)
+            elif device_type == 'speaker':
+                self.vol_label.set_markup(icons.speaker)
+            else:
+                 # Handle other types or default
+                 self.vol_label.set_markup(icons.speaker) # Default to speaker icon
+                 # Optional: print a warning for unknown type
+                 # print(f"Warning: Unknown audio device type: {device_type}")
+
+        except AttributeError:
+            # Handle cases where port or type might not exist
+            self.vol_label.set_markup(icons.speaker) # Default if type is unknown
+            # Optional: print a warning
+            # print("Warning: Could not determine audio device type.")
+
+        # Tooltip is updated by on_speaker_changed based on volume
+        # self.set_tooltip_text(f"{round(self.audio.speaker.volume)}%") # Handled by on_speaker_changed
+
+        return True # Keep the GLib timeout running
+
     def destroy(self):
         if self._update_source_id is not None:
             GLib.source_remove(self._update_source_id)
+        # New: Remove the periodic update source
+        if hasattr(self, '_periodic_update_source_id') and self._periodic_update_source_id is not None:
+            GLib.source_remove(self._periodic_update_source_id)
         super().destroy()
 
 class MicIcon(Box):
