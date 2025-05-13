@@ -366,187 +366,123 @@ class Notch(Window):
         self._is_notch_open = False
         self.stack.set_visible_child(self.compact)
 
-    def open_notch(self, widget):
+    def open_notch(self, widget_name: str):
         self.notch_revealer.set_reveal_child(True)
-        self.set_keyboard_mode("exclusive")
-        
-        # Handle tmux manager
-        if widget == "tmux":
-            if self.stack.get_visible_child() == self.tmux:
-                self.close_notch()
-                return
-                
-            self.set_keyboard_mode("exclusive")
+        current_stack_child = self.stack.get_visible_child()
+        is_dashboard_currently_visible = (current_stack_child == self.dashboard)
 
-            self.stack.set_visible_child(self.tmux)
-            self.tmux.open_manager()
-            self._is_notch_open = True
+        # --- Parte 1: Manejo de casos donde el Dashboard ya está visible ---
+        # Estos bloques pueden cerrar el notch o navegar dentro del dashboard y retornar.
 
-            return
-
-        # Handle clipboard history
-        if widget == "cliphist":
-            if self.stack.get_visible_child() == self.cliphist:
-                self.close_notch()
-                return
-                
-            self.set_keyboard_mode("exclusive")
-
-            self.stack.set_visible_child(self.cliphist)
-            GLib.idle_add(self.cliphist.open)
-            self._is_notch_open = True
-
-            return
-
-        # Handle special behavior for "bluetooth"
-        if widget == "bluetooth":
-            # If dashboard is already open
-            if self.stack.get_visible_child() == self.dashboard:
-                # If we're in the widgets section and btdevices is already visible, close the notch
-                if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and self.applet_stack.get_visible_child() == self.btdevices:
+        # Caso 1: Bluetooth
+        if widget_name == "bluetooth":
+            if is_dashboard_currently_visible:
+                # Si el dashboard está abierto y mostrando dispositivos BT, cerrar.
+                if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
+                   self.applet_stack.get_visible_child() == self.btdevices:
                     self.close_notch()
                     return
-                # If we're in the widgets section but not on btdevices, switch to btdevices
-                elif self.dashboard.stack.get_visible_child() == self.dashboard.widgets:
-                    self.applet_stack.set_visible_child(self.btdevices)
-                    return
-                # If we're in another dashboard section, switch to widgets and btdevices
-                else:
-                    self.dashboard.go_to_section("widgets")
-                    self.applet_stack.set_visible_child(self.btdevices)
-                    return
-            else:
-                # Open dashboard with btdevices visible
-                self.set_keyboard_mode("exclusive")
-
-                self.stack.set_visible_child(self.dashboard)
-                self.dashboard.go_to_section("widgets")  # Ensure we're on widgets section
+                # Si el dashboard está abierto (en cualquier sección), navegar a dispositivos BT.
+                self.set_keyboard_mode("exclusive") # Necesario si solo navegamos
+                self.dashboard.go_to_section("widgets")
                 self.applet_stack.set_visible_child(self.btdevices)
-                self._is_notch_open = True
-
-                self.bar.revealer_right.set_reveal_child(False)
-                self.bar.revealer_left.set_reveal_child(False)
+                # _is_notch_open ya es True, reveladores del bar ya están configurados para dashboard.
                 return
+            # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
 
-        # Handle the "dashboard" case
-        if widget == "dashboard":
-            if self.stack.get_visible_child() == self.dashboard:
-                # If dashboard is already open and showing widgets, close it
-                if self.applet_stack.get_visible_child() == self.nhistory and self.dashboard.stack.get_visible_child() == self.dashboard.widgets:
+        # Caso 2: Dashboard general (widgets/nhistory)
+        elif widget_name == "dashboard":
+            if is_dashboard_currently_visible:
+                # Si el dashboard está abierto y mostrando el historial de notificaciones, cerrar.
+                if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
+                   self.applet_stack.get_visible_child() == self.nhistory:
                     self.close_notch()
                     return
-                # Otherwise navigate to widgets and ensure nhistory is visible
-                else:
-                    self.applet_stack.set_visible_child(self.nhistory)
-                    self.dashboard.go_to_section("widgets")
-                    return
-            else:
+                # Si el dashboard está abierto (en cualquier sección), navegar al historial de notificaciones.
                 self.set_keyboard_mode("exclusive")
-
-                self.stack.set_visible_child(self.dashboard)
-                self.dashboard.go_to_section("widgets")  # Explicitly go to widgets section
+                self.dashboard.go_to_section("widgets")
                 self.applet_stack.set_visible_child(self.nhistory)
-                self._is_notch_open = True
-                # Reset the transition duration back to 250 after a short delay.
-
-                self.bar.revealer_right.set_reveal_child(False)
-                self.bar.revealer_left.set_reveal_child(False)
                 return
+            # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
 
-        # Handle pins section
-        if widget == "pins":
-            if self.stack.get_visible_child() == self.dashboard and self.dashboard.stack.get_visible_child() == self.dashboard.pins:
-                # If dashboard is already open and showing pins, close it
-                self.close_notch()
-                return
-            else:
-                # Open dashboard and navigate to pins
-                self.set_keyboard_mode("exclusive")
-
-                self.stack.set_visible_child(self.dashboard)
-                self.dashboard.go_to_section("pins")
-                self._is_notch_open = True
-
-                self.bar.revealer_right.set_reveal_child(False)
-                self.bar.revealer_left.set_reveal_child(False)
-                return
-                
-        # Handle kanban section
-        if widget == "kanban":
-            if self.stack.get_visible_child() == self.dashboard and self.dashboard.stack.get_visible_child() == self.dashboard.kanban:
-                # If dashboard is already open and showing kanban, close it
-                self.close_notch()
-                return
-            else:
-                # Open dashboard and navigate to kanban
-                self.set_keyboard_mode("exclusive")
-
-                self.stack.set_visible_child(self.dashboard)
-                self.dashboard.go_to_section("kanban")
-                self._is_notch_open = True
-
-                self.bar.revealer_right.set_reveal_child(False)
-                self.bar.revealer_left.set_reveal_child(False)
-                return
-                
-        # Handle wallpapers section
-        if widget == "wallpapers":
-            if self.stack.get_visible_child() == self.dashboard and self.dashboard.stack.get_visible_child() == self.dashboard.wallpapers:
-                # If dashboard is already open and showing wallpapers, close it
-                self.close_notch()
-                return
-            else:
-                # Open dashboard and navigate to wallpapers
-                self.set_keyboard_mode("exclusive")
-
-                self.stack.set_visible_child(self.dashboard)
-                self.dashboard.go_to_section("wallpapers")
-                self._is_notch_open = True
-
-                self.bar.revealer_right.set_reveal_child(False)
-                self.bar.revealer_left.set_reveal_child(False)
-                return
-
-        # Handle other widgets (launcher, overview, power, tools)
-        widgets = {
-            "launcher": self.launcher,
-            "overview": self.overview,
-            "emoji": self.emoji,
-            "power": self.power,
-            "tools": self.tools,
-            "dashboard": self.dashboard,
-            "tmux": self.tmux,  # Add tmux to widgets dictionary
-            "cliphist": self.cliphist,  # Add cliphist to widgets dictionary
+        # Caso 3: Secciones específicas del Dashboard (pins, kanban, wallpapers)
+        dashboard_sections_map = {
+            "pins": self.dashboard.pins,
+            "kanban": self.dashboard.kanban,
+            "wallpapers": self.dashboard.wallpapers,
         }
-        target_widget = widgets.get(widget, self.dashboard)
-        # If already showing the requested widget, close the notch.
-        if self.stack.get_visible_child() == target_widget:
-            self.close_notch()
-            return
+        if widget_name in dashboard_sections_map:
+            section_widget_instance = dashboard_sections_map[widget_name]
+            # Si el dashboard está abierto y mostrando la sección solicitada, cerrar.
+            if is_dashboard_currently_visible and self.dashboard.stack.get_visible_child() == section_widget_instance:
+                self.close_notch()
+                return
+            # Si el dashboard está visible pero en otra sección, o no está visible,
+            # se procederá a abrir/navegar en la Parte 2.
 
+        # --- Parte 2: Configuración para abrir un nuevo widget o el Dashboard ---
+        # Si no hemos retornado, significa que vamos a cambiar el widget principal en el stack
+        # o abrir el Dashboard a una sección específica.
+
+        target_widget_on_stack = None
+        action_on_open = None
+        focus_action = None
+        # Por defecto, los reveladores del bar son visibles, se ocultan para dashboard/overview.
+        hide_bar_revealers = False
+
+        # Mapeo para widgets "simples" (no el Dashboard directamente)
+        widget_configs = {
+            "tmux":     {"instance": self.tmux, "action": self.tmux.open_manager},
+            "cliphist": {"instance": self.cliphist, "action": lambda: GLib.idle_add(self.cliphist.open)},
+            "launcher": {"instance": self.launcher, "action": self.launcher.open_launcher, "focus": lambda: (self.launcher.search_entry.set_text(""), self.launcher.search_entry.grab_focus())},
+            "emoji":    {"instance": self.emoji, "action": self.emoji.open_picker, "focus": lambda: (self.emoji.search_entry.set_text(""), self.emoji.search_entry.grab_focus())},
+            "overview": {"instance": self.overview, "hide_revealers": True},
+            "power":    {"instance": self.power},
+            "tools":    {"instance": self.tools},
+        }
+
+        if widget_name in widget_configs:
+            config = widget_configs[widget_name]
+            target_widget_on_stack = config["instance"]
+            action_on_open = config.get("action")
+            focus_action = config.get("focus")
+            hide_bar_revealers = config.get("hide_revealers", False)
+
+            # Si el widget simple solicitado ya está visible, cerrar el notch.
+            if current_stack_child == target_widget_on_stack:
+                self.close_notch()
+                return
+        else:
+            # Si widget_name no es uno de los simples, debe ser para el Dashboard
+            # (ej: "dashboard", "bluetooth", "pins", "kanban", "wallpapers").
+            target_widget_on_stack = self.dashboard
+            hide_bar_revealers = True # Dashboard y sus vistas ocultan los reveladores del bar.
+
+        # --- Parte 3: Aplicar cambios y abrir el notch ---
         self.set_keyboard_mode("exclusive")
+        self.stack.set_visible_child(target_widget_on_stack)
 
-        if widget in widgets:
-            if widget == "launcher":
-                self.launcher.open_launcher()
-                self.launcher.search_entry.set_text("")
-                self.launcher.search_entry.grab_focus()
+        if action_on_open: # Para tmux, cliphist, launcher, emoji
+            action_on_open()
+        if focus_action: # Específico para launcher y emoji
+            focus_action()
 
-            if widget == "emoji":
-                self.emoji.open_picker()
-                self.emoji.search_entry.set_text("")
-                self.emoji.search_entry.grab_focus()
-
-        else:
-            self.stack.set_visible_child(self.dashboard)
-
-        if widget == "dashboard" or widget == "overview":
-            self.bar.revealer_right.set_reveal_child(False)
-            self.bar.revealer_left.set_reveal_child(False)
-        else:
-            self.bar.revealer_right.set_reveal_child(True)
-            self.bar.revealer_left.set_reveal_child(True)
-        self._is_notch_open = True # Set notch state to open
+        # Configuración de la sección interna si el target es el Dashboard
+        if target_widget_on_stack == self.dashboard:
+            if widget_name == "bluetooth":
+                self.dashboard.go_to_section("widgets")
+                self.applet_stack.set_visible_child(self.btdevices)
+            elif widget_name in dashboard_sections_map: # pins, kanban, wallpapers
+                self.dashboard.go_to_section(widget_name)
+            elif widget_name == "dashboard": # Caso general para "dashboard"
+                self.dashboard.go_to_section("widgets")
+                self.applet_stack.set_visible_child(self.nhistory)
+            # No se necesita 'else', widget_name debe ser uno de estos si target_widget_on_stack es dashboard.
+            
+        self.bar.revealer_right.set_reveal_child(not hide_bar_revealers)
+        self.bar.revealer_left.set_reveal_child(not hide_bar_revealers)
+        
+        self._is_notch_open = True
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
