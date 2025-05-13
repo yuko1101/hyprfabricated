@@ -638,7 +638,7 @@ class MicIcon(Box):
         super().__init__(name="mic-icon", **kwargs)
         self.audio = Audio()
         
-        self.mic_label = Label(name="mic-label-dash", markup=icons.mic, h_align="center", v_align="center", h_expand=True, v_expand=True)
+        self.mic_label = Label(name="mic-label-dash", markup=icons.mic_filled, h_align="center", v_align="center", h_expand=True, v_expand=True)
         self.mic_button = Button(on_clicked=self.toggle_mute, child=self.mic_label, h_align="center", v_align="center", h_expand=True, v_expand=True)
         
         # Wrap the button in an EventBox for scroll events - add alignment properties here
@@ -717,23 +717,26 @@ class MicIcon(Box):
                 
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
+            # Handle case with no microphone
+            self.mic_label.set_markup(icons.mic_filled) # Set default icon
+            self.remove_style_class("muted")
+            self.mic_label.remove_style_class("muted")
+            self.mic_button.remove_style_class("muted")
+            self.set_tooltip_text("No audio device")
             return
+
+        # Icon is now static (icons.mic_filled), only update style classes and tooltip
         if self.audio.microphone.muted:
-            self.mic_button.get_child().set_markup(icons.mic_mute)
             self.add_style_class("muted")
             self.mic_label.add_style_class("muted")
+            self.mic_button.add_style_class("muted")
             self.set_tooltip_text("Muted")
-            return
         else:
             self.remove_style_class("muted")
             self.mic_label.remove_style_class("muted")
-            
-        self.set_tooltip_text(f"{round(self.audio.microphone.volume)}%")
-        if self.audio.microphone.volume >= 1:
-            self.mic_button.get_child().set_markup(icons.mic)
-        else:
-            self.mic_button.get_child().set_markup(icons.mic_mute)
-            
+            self.mic_button.remove_style_class("muted")
+            self.set_tooltip_text(f"{round(self.audio.microphone.volume)}%") # Tooltip shows volume percentage
+
     def destroy(self):
         if self._update_source_id is not None:
             GLib.source_remove(self._update_source_id)
