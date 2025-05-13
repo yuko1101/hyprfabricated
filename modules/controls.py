@@ -709,17 +709,17 @@ class ControlSliders(Box):
         
         # Create all slider containers with icons
         if (brightness.screen_brightness != -1):
-            brightness_row = Box(orientation="h", spacing=4, h_expand=True, h_align="fill")
+            brightness_row = Box(orientation="h", spacing=0, h_expand=True, h_align="fill")
             brightness_row.add(BrightnessIcon())
             brightness_row.add(BrightnessSlider())  # Removed h_expand=True
             self.add(brightness_row)
             
-        volume_row = Box(orientation="h", spacing=4, h_expand=True, h_align="fill")
+        volume_row = Box(orientation="h", spacing=0, h_expand=True, h_align="fill")
         volume_row.add(VolumeIcon())
         volume_row.add(VolumeSlider())  # Removed h_expand=True
         self.add(volume_row)
         
-        mic_row = Box(orientation="h", spacing=4, h_expand=True, h_align="fill")
+        mic_row = Box(orientation="h", spacing=0, h_expand=True, h_align="fill")
         mic_row.add(MicIcon())
         mic_row.add(MicSlider())  # Removed h_expand=True
         self.add(mic_row)

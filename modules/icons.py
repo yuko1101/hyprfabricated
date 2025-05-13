@@ -121,6 +121,10 @@ vol_high: str = "&#xeb51;"
 mic: str = "&#xeaf0;"
 mic_mute: str = "&#xed16;"
 
+speaker: str = "&#x10045;"
+headphones: str = "&#xfa3c;"
+mic_filled: str = "&#xfe0f;"
+
 # Overview
 circle_plus: str = "&#xea69;"
 
