@@ -256,12 +256,9 @@ class Notch(Window):
         self.notch_complete = Box(
             name="notch-complete",
             orientation="v",
-            spacing = (
-                6 if (data.BAR_THEME in ["Dense", "Edge"] and not data.VERTICAL) else 0
-            ),
+            spacing=4,
             children=[
                 self.notch_hover_area_event_box,  # Use the event box instead of direct revealer
-                Box(style="min-height: 4px;"),
                 self.boxed_notification_revealer,
             ]
         )
