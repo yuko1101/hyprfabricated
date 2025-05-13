@@ -357,14 +357,16 @@ class MicSmall(Box):
         current_stream = self.audio.microphone
         if current_stream:
             current_stream.muted = not current_stream.muted
+            # Icon is now static, only update style classes and trigger change handler
             if current_stream.muted:
-                self.mic_button.get_child().set_markup(icons.mic_mute)
                 self.progress_bar.add_style_class("muted")
                 self.mic_label.add_style_class("muted")
+                self.mic_button.add_style_class("muted")
             else:
-                self.on_microphone_changed()
                 self.progress_bar.remove_style_class("muted")
                 self.mic_label.remove_style_class("muted")
+                self.mic_button.remove_style_class("muted")
+            self.on_microphone_changed() # Trigger update after mute state change
 
     def on_scroll(self, _, event):
         if not self.audio.microphone:
