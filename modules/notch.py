@@ -168,7 +168,7 @@ class Notch(Window):
             h_expand=True,
             style_classes = ["invert"] if (not data.VERTICAL and data.BAR_THEME in ["Dense", "Edge"]) else [],
             transition_type="crossfade",
-            transition_duration=200,
+            transition_duration=250,
             children=[
                 self.compact,
                 self.launcher,
@@ -368,6 +368,8 @@ class Notch(Window):
 
     def open_notch(self, widget_name: str):
         self.notch_revealer.set_reveal_child(True)
+        self.notch_box.add_style_class("open")
+        self.stack.add_style_class("open")
         current_stack_child = self.stack.get_visible_child()
         is_dashboard_currently_visible = (current_stack_child == self.dashboard)
 
