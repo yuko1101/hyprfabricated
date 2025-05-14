@@ -1,5 +1,5 @@
 # Parameters
-font_family: str = 'tabler-icons'
+font_family: str = 'Symbols Nerd Font Mono'
 font_weight: str = 'normal'
 
 span: str = f"<span font-family='{font_family}' font-weight='{font_weight}'>"

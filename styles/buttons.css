@@ -1,12 +1,9 @@
-#buttons-grid {
-  min-height: 52px;
-}
-
 /* === Botones Base === */
 #network-button,
 #bluetooth-button,
 #night-mode-button,
 #caffeine-button {
+  min-height: 52px;
   border-radius: 20px;
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -133,7 +130,7 @@
   color: var(--shadow);
   font-size: 14px;
   font-weight: bold;
-  margin-bottom: -4px;
+  /* margin-bottom: -4px; */
 }
 
 #network-label.disabled,

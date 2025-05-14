@@ -78,7 +78,7 @@ menu > menuitem > label,
 
 #weather {
   background-color: var(--shadow);
-  padding: 0 4px;
+  padding: 0 8px;
   min-height: 36px;
 }
 

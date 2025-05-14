@@ -357,16 +357,14 @@ class MicSmall(Box):
         current_stream = self.audio.microphone
         if current_stream:
             current_stream.muted = not current_stream.muted
-            # Icon is now static, only update style classes and trigger change handler
             if current_stream.muted:
+                self.mic_button.get_child().set_markup(icons.mic_mute)
                 self.progress_bar.add_style_class("muted")
                 self.mic_label.add_style_class("muted")
-                self.mic_button.add_style_class("muted")
             else:
+                self.on_microphone_changed()
                 self.progress_bar.remove_style_class("muted")
                 self.mic_label.remove_style_class("muted")
-                self.mic_button.remove_style_class("muted")
-            self.on_microphone_changed() # Trigger update after mute state change
 
     def on_scroll(self, _, event):
         if not self.audio.microphone:
@@ -471,11 +469,11 @@ class BrightnessIcon(Box):
         brightness_percentage = int(normalized * 100)
         
         if brightness_percentage >= 75:
-            self.brightness_label.set_markup(icons.brightness_high)
+            self.brightness_label.set_markup("󰃠")
         elif brightness_percentage >= 24:
-            self.brightness_label.set_markup(icons.brightness_medium)
+            self.brightness_label.set_markup("󰃠")
         else:
-            self.brightness_label.set_markup(icons.brightness_low)
+            self.brightness_label.set_markup("󰃠")
         self.set_tooltip_text(f"{brightness_percentage}%")
         self._updating_from_brightness = False
         
@@ -575,7 +573,7 @@ class VolumeIcon(Box):
             return
 
         if self.audio.speaker.muted:
-            self.vol_label.set_markup(icons.vol_off) # Show mute icon when muted
+            self.vol_label.set_markup(icons.headphones) # Show mute icon when muted
             self.add_style_class("muted")
             self.vol_label.add_style_class("muted")
             self.vol_button.add_style_class("muted")
@@ -609,10 +607,10 @@ class VolumeIcon(Box):
             if device_type == 'headphones':
                 self.vol_label.set_markup(icons.headphones)
             elif device_type == 'speaker':
-                self.vol_label.set_markup(icons.speaker)
+                self.vol_label.set_markup(icons.headphones)
             else:
                  # Handle other types or default
-                 self.vol_label.set_markup(icons.speaker) # Default to speaker icon
+                 self.vol_label.set_markup(icons.headphones) # Default to speaker icon
                  # Optional: print a warning for unknown type
                  # print(f"Warning: Unknown audio device type: {device_type}")
 
@@ -640,7 +638,7 @@ class MicIcon(Box):
         super().__init__(name="mic-icon", **kwargs)
         self.audio = Audio()
         
-        self.mic_label = Label(name="mic-label-dash", markup=icons.mic_filled, h_align="center", v_align="center", h_expand=True, v_expand=True)
+        self.mic_label = Label(name="mic-label-dash", markup=icons.mic, h_align="center", v_align="center", h_expand=True, v_expand=True)
         self.mic_button = Button(on_clicked=self.toggle_mute, child=self.mic_label, h_align="center", v_align="center", h_expand=True, v_expand=True)
         
         # Wrap the button in an EventBox for scroll events - add alignment properties here
@@ -709,7 +707,7 @@ class MicIcon(Box):
         if current_stream:
             current_stream.muted = not current_stream.muted
             if current_stream.muted:
-                self.mic_button.get_child().set_markup(icons.mic_mute)
+                self.mic_button.get_child().set_markup("")
                 self.mic_label.add_style_class("muted")
                 self.mic_button.add_style_class("muted")
             else:
@@ -719,26 +717,23 @@ class MicIcon(Box):
                 
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
-            # Handle case with no microphone
-            self.mic_label.set_markup(icons.mic_filled) # Set default icon
-            self.remove_style_class("muted")
-            self.mic_label.remove_style_class("muted")
-            self.mic_button.remove_style_class("muted")
-            self.set_tooltip_text("No audio device")
             return
-
-        # Icon is now static (icons.mic_filled), only update style classes and tooltip
         if self.audio.microphone.muted:
+            self.mic_button.get_child().set_markup("")
             self.add_style_class("muted")
             self.mic_label.add_style_class("muted")
-            self.mic_button.add_style_class("muted")
             self.set_tooltip_text("Muted")
+            return
         else:
             self.remove_style_class("muted")
             self.mic_label.remove_style_class("muted")
-            self.mic_button.remove_style_class("muted")
-            self.set_tooltip_text(f"{round(self.audio.microphone.volume)}%") # Tooltip shows volume percentage
-
+            
+        self.set_tooltip_text(f"{round(self.audio.microphone.volume)}%")
+        if self.audio.microphone.volume >= 1:
+            self.mic_button.get_child().set_markup("")
+        else:
+            self.mic_button.get_child().set_markup("")
+            
     def destroy(self):
         if self._update_source_id is not None:
             GLib.source_remove(self._update_source_id)
