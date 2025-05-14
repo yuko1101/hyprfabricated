@@ -3,7 +3,7 @@
   padding: 8px;
   margin: 8px 8px 7px 8px;
   border-radius: 20px 20px 0 0;
-  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1);
 }
 
 #dock.vertical {
@@ -12,7 +12,7 @@
 }
 
 #dock-full {
-  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1);
   opacity: 1;
 }
 

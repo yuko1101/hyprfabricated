@@ -7,7 +7,7 @@
 }
 
 #notch-wrap {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #notch-wrap.occluded {
@@ -16,7 +16,7 @@
 
 #notch-wrap.occluded #notch-box {
   opacity: 0;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #notch-box.hideshow {
@@ -27,7 +27,7 @@
 #notch-content {
   background-color: var(--shadow);
   border-radius: 0 0 20px 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #notch-content.open {

@@ -53,6 +53,11 @@
   padding: 8px;
 }
 
+#workspaces-num > button {
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 #workspaces-num > button > label {
   color: var(--foreground);
   font-weight: bold;
@@ -67,6 +72,7 @@
 
 #workspaces-num > button.active {
   background-color: var(--primary);
+  border-radius: 8px;
 }
 
 #workspaces-num > button.active > label {

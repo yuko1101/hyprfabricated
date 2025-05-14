@@ -2,7 +2,7 @@
 #bar-inner.pills {
   margin: 8px;
   opacity: 1;
-  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #bar-inner.dense,
@@ -149,7 +149,7 @@ tooltip > * {
   min-width: 28px;
   min-height: 28px;
   background-color: var(--shadow);
-  transition: all 0.1s ease;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #button-bar.invert {
@@ -161,15 +161,17 @@ tooltip > * {
   color: var(--primary);
   font-size: 20px;
   padding: 4px;
-  border-radius: 12px;
-  transition: all 0.1s ease;
+  border-radius: 40px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #button-bar:hover #button-bar-label {
+  border-radius: 12px;
   background-color: var(--surface_bright);
 }
 
 #button-bar:active #button-bar-label {
+  border-radius: 40px;
   color: var(--shadow);
   background-color: var(--primary);
 }

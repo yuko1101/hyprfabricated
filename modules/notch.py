@@ -434,13 +434,13 @@ class Notch(Window):
 
         # Mapeo para widgets "simples" (no el Dashboard directamente)
         widget_configs = {
-            "tmux":     {"instance": self.tmux, "action": self.tmux.open_manager},
-            "cliphist": {"instance": self.cliphist, "action": lambda: GLib.idle_add(self.cliphist.open)},
-            "launcher": {"instance": self.launcher, "action": self.launcher.open_launcher, "focus": lambda: (self.launcher.search_entry.set_text(""), self.launcher.search_entry.grab_focus())},
-            "emoji":    {"instance": self.emoji, "action": self.emoji.open_picker, "focus": lambda: (self.emoji.search_entry.set_text(""), self.emoji.search_entry.grab_focus())},
-            "overview": {"instance": self.overview, "hide_revealers": True},
-            "power":    {"instance": self.power},
-            "tools":    {"instance": self.tools},
+            "tmux":       {"instance": self.tmux, "action": self.tmux.open_manager},
+            "cliphist":   {"instance": self.cliphist, "action": lambda: GLib.idle_add(self.cliphist.open)},
+            "launcher":   {"instance": self.launcher, "action": self.launcher.open_launcher, "focus": lambda: (self.launcher.search_entry.set_text(""), self.launcher.search_entry.grab_focus())},
+            "emoji":      {"instance": self.emoji, "action": self.emoji.open_picker, "focus": lambda: (self.emoji.search_entry.set_text(""), self.emoji.search_entry.grab_focus())},
+            "overview":   {"instance": self.overview, "hide_revealers": True},
+            "power":      {"instance": self.power},
+            "tools":      {"instance": self.tools},
         }
 
         if widget_name in widget_configs:
