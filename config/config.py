@@ -1,6 +1,6 @@
 import os
-import sys # Asegúrate de que sys esté importado aquí
-from pathlib import Path # Asegúrate de que Path esté importado aquí
+import sys 
+from pathlib import Path 
 
 def _configure_sys_path_for_direct_execution():
     """
@@ -23,13 +23,24 @@ _configure_sys_path_for_direct_execution()
 import shutil
 from fabric import Application
 
-# Use relative imports now that 'config' is a package
-from .data import APP_NAME, APP_NAME_CAP
-from .settings_utils import load_bind_vars # bind_vars is managed within settings_utils
-from .settings_gui import HyprConfGUI
+# Importaciones condicionales para módulos del paquete 'config'
+if __name__ == "__main__" and (__package__ is None or __package__ == ''):
+    # Modo script: Ejecutado directamente (ej. python config/config.py)
+    # __package__ no está definido o es una cadena vacía.
+    # _configure_sys_path_for_direct_execution() ya ha añadido la raíz del proyecto a sys.path.
+    # Por lo tanto, podemos usar importaciones absolutas desde la raíz del proyecto.
+    from config.data import APP_NAME, APP_NAME_CAP
+    from config.settings_utils import load_bind_vars 
+    from config.settings_gui import HyprConfGUI
+else:
+    # Modo paquete: Importado como un módulo (ej. import config.config)
+    # o ejecutado con 'python -m config.config'.
+    # __package__ estará definido (ej. "config").
+    # Usamos importaciones relativas.
+    from .data import APP_NAME, APP_NAME_CAP
+    from .settings_utils import load_bind_vars 
+    from .settings_gui import HyprConfGUI
 
-# The sys.path.insert for data.py is no longer needed here
-# as direct relative imports like `from .data import ...` will work.
 
 def open_config():
     """
