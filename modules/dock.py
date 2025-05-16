@@ -497,7 +497,7 @@ class Dock(Window):
 
         children = pinned_buttons
         if pinned_buttons and open_buttons:
-            children += [Box(orientation="v" if not data.VERTICAL else "h", v_expand=not data.VERTICAL, h_expand=data.VERTICAL, name="dock-separator")]
+            children += [Box(orientation="v" if not data.VERTICAL else "h", v_expand=False, h_expand=False, h_align="center", v_align="center", name="dock-separator")]
         children += open_buttons
         
         self.view.children = children

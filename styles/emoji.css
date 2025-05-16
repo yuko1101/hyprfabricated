@@ -56,7 +56,6 @@
 #emoji #emoji-slot-button.selected {
   border-radius: 16px;
   background-color: var(--surface-bright);
-  text-shadow: 0 0 4px var(--shadow);
 }
 
 #emoji #emoji-slot-button:active {

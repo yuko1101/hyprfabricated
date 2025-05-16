@@ -17,22 +17,23 @@
 }
 
 #dock-separator {
-  padding: 1px;
-  @apply dock_sep();
+  padding: 2px;
   border-radius: 16px;
   background-color: var(--surface-bright);
 }
 
 #dock-app-button {
   padding: 4px;
-  border-radius: 12px;
+  border-radius: 24px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1);
 }
 
-#dock-app-button:hover,
-#dock-app-button:hover.instance {
+#dock-app-button:hover {
   background-color: var(--surface-bright);
-  border-top: 1px solid var(--primary);
-  padding-top: 3px;
+}
+
+#dock-app-button:hover.instance {
+  background-color: var(--outline);
 }
 
 #dock-app-button:active,
@@ -41,10 +42,8 @@
 }
 
 #dock-app-button.instance {
-  background: linear-gradient(to top, transparent, var(--surface-bright));
-  border-bottom: 1px solid var(--surface);
-  border-top: 1px solid var(--outline);
-  padding: 4px;
+  background: var(--surface-bright);
+  border-radius: 12px;
 }
 
 #dock-corner-left {
