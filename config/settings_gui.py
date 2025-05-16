@@ -87,6 +87,7 @@ class HyprConfGUI(Window):
             h_expand=True,
             v_expand=True
         )
+        scrolled_window.set_propagate_natural_height(False)  # <--- LÍNEA AÑADIDA
         scrolled_window.set_min_content_height(300) # Keep some min height
         # Max height will be determined by stack expansion
 
@@ -155,6 +156,7 @@ class HyprConfGUI(Window):
             h_expand=True,
             v_expand=True
         )
+        scrolled_window.set_propagate_natural_height(False)  # <--- LÍNEA AÑADIDA
         scrolled_window.set_min_content_height(300) # Keep some min height
 
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
@@ -360,6 +362,7 @@ class HyprConfGUI(Window):
             h_expand=True,
             v_expand=True
         )
+        scrolled_window.set_propagate_natural_height(False)  # <--- LÍNEA AÑADIDA
         scrolled_window.set_min_content_height(300)
 
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
