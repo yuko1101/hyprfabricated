@@ -10,9 +10,9 @@ from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.image import Image
+from fabric.widgets.revealer import Revealer  # Importar Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import Gdk, GLib, Gtk
-from fabric.widgets.revealer import Revealer # Importar Revealer
 
 import config.data as data
 from modules.corners import MyCorner
@@ -75,8 +75,8 @@ class Dock(Window):
         super().__init__(
             name="dock-window",
             layer="top",
-            anchor="bottom center" if not data.VERTICAL else "right center",
-            margin="-8px 0 -8px 0" if not data.VERTICAL else "0 -80px 0 -8px",
+            anchor="bottom" if not data.VERTICAL else "right",
+            margin="0px 0px 0px 0px",
             exclusivity="none",
             **kwargs,
         )
@@ -136,8 +136,8 @@ class Dock(Window):
         # Crear el Revealer para el dock
         self.dock_revealer = Revealer(
             name="dock-revealer",
-            transition_type="slide_up" if not data.VERTICAL else "slide_left",
-            transition_duration=300,
+            transition_type="slide-up" if not data.VERTICAL else "slide-left",
+            transition_duration=250,
             child_revealed=False, # Empezar oculto
             child=self.dock_full
         )
@@ -149,7 +149,8 @@ class Dock(Window):
 
         self.main_box = Box(
             orientation="v" if not data.VERTICAL else "h", 
-            children=[self.dock_revealer, self.hover_activator] # Usar dock_revealer
+            children=[self.hover_activator, self.dock_revealer],
+            h_align="center" if not data.VERTICAL else "end",
         )
         self.add(self.main_box)
 
@@ -366,7 +367,7 @@ class Dock(Window):
     def delay_hide(self):
         if self.hide_id:
             GLib.source_remove(self.hide_id)
-        self.hide_id = GLib.timeout_add(300, self.hide_dock_if_not_hovered) # Ajustado
+        self.hide_id = GLib.timeout_add(250, self.hide_dock_if_not_hovered) # Ajustado
 
     def hide_dock_if_not_hovered(self):
         self.hide_id = None 
