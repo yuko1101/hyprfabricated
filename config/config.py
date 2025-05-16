@@ -1,8 +1,26 @@
 import os
-import shutil
-import sys
-from pathlib import Path
+import sys # Asegúrate de que sys esté importado aquí
+from pathlib import Path # Asegúrate de que Path esté importado aquí
 
+def _configure_sys_path_for_direct_execution():
+    """
+    Ajusta sys.path si este script se ejecuta directamente,
+    para asegurar que las importaciones relativas dentro del paquete 'config' funcionen.
+    Esto permite ejecutar `python config/config.py` desde cualquier directorio.
+    """
+    if __name__ == "__main__":
+        # Obtener la ruta del directorio que contiene este archivo (config/)
+        current_file_dir = Path(__file__).resolve().parent
+        # Obtener la ruta del directorio padre (la raíz del proyecto, que contiene 'config/')
+        project_root = current_file_dir.parent
+
+        # Añadir la raíz del proyecto a sys.path si no está ya
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
+
+_configure_sys_path_for_direct_execution()
+
+import shutil
 from fabric import Application
 
 # Use relative imports now that 'config' is a package

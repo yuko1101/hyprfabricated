@@ -15,7 +15,11 @@ if __name__ == "__main__":
     setproctitle.setproctitle(APP_NAME)
 
     if not os.path.isfile(CONFIG_FILE):
-        exec_shell_command_async(f"python {get_relative_path('../config/config.py')}")
+        # Corregir la ruta a config.py.
+        # get_relative_path('config/config.py') asume que 'config' es un subdirectorio
+        # del directorio donde está main.py (la raíz del proyecto).
+        config_script_path = get_relative_path('config/config.py')
+        exec_shell_command_async(f"python {config_script_path}")
 
     current_wallpaper = os.path.expanduser("~/.current.wall")
     if not os.path.exists(current_wallpaper):
