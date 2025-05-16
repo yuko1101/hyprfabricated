@@ -12,22 +12,27 @@ from gi.repository import GLib
 
 from fabric.utils.helpers import exec_shell_command_async
 
-from .data import APP_NAME, APP_NAME_CAP, CONFIG_DIR, HOME_DIR
-from .settings_constants import DEFAULTS, SOURCE_STRING
+# Importar settings_constants para DEFAULTS
+from . import settings_constants
+from .data import APP_NAME, APP_NAME_CAP # CONFIG_DIR, HOME_DIR no se usan aquí directamente
 
 # Global variable to store binding variables, managed by this module
-bind_vars = {}
+bind_vars = {} # Se inicializa vacío, load_bind_vars lo poblará
 
 def deep_update(target: dict, update: dict) -> dict:
     """
     Recursively update a nested dictionary with values from another dictionary.
+    Modifies target in-place.
     """
     for key, value in update.items():
-        if isinstance(value, dict):
-            target[key] = deep_update(target.get(key, {}), value)
+        if isinstance(value, dict) and key in target and isinstance(target[key], dict):
+            # Si el valor es un diccionario y la clave ya existe en target como diccionario,
+            # entonces actualiza recursivamente.
+            deep_update(target[key], value)
         else:
+            # De lo contrario, simplemente establece/sobrescribe el valor.
             target[key] = value
-    return target
+    return target # Aunque modifica in-place, devolverlo es una convención común
 
 def ensure_matugen_config():
     """
@@ -76,13 +81,32 @@ def ensure_matugen_config():
 
     existing_config = {}
     if os.path.exists(config_path):
-        with open(config_path, 'r') as f:
-            existing_config = toml.load(f)
-        shutil.copyfile(config_path, config_path + '.bak')
+        try:
+            with open(config_path, 'r') as f:
+                existing_config = toml.load(f)
+            shutil.copyfile(config_path, config_path + '.bak')
+        except toml.TomlDecodeError:
+            print(f"Warning: Could not decode TOML from {config_path}. A new default config will be created.")
+            existing_config = {} # Resetear si está corrupto
+        except Exception as e:
+            print(f"Error reading or backing up {config_path}: {e}")
+            # existing_config podría estar parcialmente cargado o vacío.
+            # Continuar para intentar fusionar con defaults.
 
-    merged_config = deep_update(existing_config, expected_config)
-    with open(config_path, 'w') as f:
-        toml.dump(merged_config, f)
+    # Usamos una copia de existing_config para deep_update si no queremos modificarlo directamente
+    # o asegurarse que deep_update no lo haga si no es deseado.
+    # La implementación actual de deep_update modifica 'target'.
+    # Para ser más seguros, podemos pasar una copia si existing_config no debe cambiar.
+    # merged_config = deep_update(existing_config.copy(), expected_config)
+    # O si existing_config puede ser modificado:
+    merged_config = deep_update(existing_config, expected_config) # existing_config se modifica in-place
+
+    try:
+        with open(config_path, 'w') as f:
+            toml.dump(merged_config, f)
+    except Exception as e:
+        print(f"Error writing matugen config to {config_path}: {e}")
+
 
     current_wall = os.path.expanduser("~/.current.wall")
     hypr_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/colors.conf")
@@ -97,16 +121,17 @@ def ensure_matugen_config():
             example_wallpaper_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
             if os.path.exists(example_wallpaper_path):
                 try:
+                    # Si ya existe (posiblemente un enlace roto o archivo regular), eliminar y re-enlazar
+                    if os.path.lexists(current_wall): # lexists para no seguir el enlace si es uno
+                        os.remove(current_wall)
                     os.symlink(example_wallpaper_path, current_wall)
                     image_path = example_wallpaper_path
-                except FileExistsError:
-                    os.remove(current_wall)
-                    os.symlink(example_wallpaper_path, current_wall)
-                    image_path = example_wallpaper_path
+                except Exception as e:
+                    print(f"Error creating symlink for wallpaper: {e}")
         else:
             image_path = os.path.realpath(current_wall) if os.path.islink(current_wall) else current_wall
         
-        if image_path: # Only run matugen if we have a valid image_path
+        if image_path and os.path.exists(image_path): 
             print(f"Generating color theme from wallpaper: {image_path}")
             try:
                 matugen_cmd = f"matugen image '{image_path}'"
@@ -116,56 +141,67 @@ def ensure_matugen_config():
                 print("Error: matugen command not found. Please install matugen.")
             except Exception as e:
                 print(f"Error initiating matugen: {e}")
-        else:
-            print("Warning: No wallpaper found to generate matugen theme from.")
+        elif not image_path:
+            print("Warning: No wallpaper path determined to generate matugen theme from.")
+        else: # image_path existe pero el archivo no
+            print(f"Warning: Wallpaper at {image_path} not found. Cannot generate matugen theme.")
 
 
 def load_bind_vars():
     """
     Load saved key binding variables from JSON, if available.
-    Populates the global `bind_vars`.
+    Populates the global `bind_vars` in-place.
     """
-    global bind_vars
-    # Start with a fresh copy of defaults
-    bind_vars = DEFAULTS.copy()
+    global bind_vars # Necesario para modificar el objeto global bind_vars
+
+    # 1. Limpiar el diccionario bind_vars existente.
+    bind_vars.clear()
+    # 2. Actualizarlo con una copia de DEFAULTS.
+    bind_vars.update(settings_constants.DEFAULTS.copy()) # Usar .copy() para no modificar DEFAULTS accidentalmente
 
     config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
     if os.path.exists(config_json):
         try:
             with open(config_json, 'r') as f:
                 saved_vars = json.load(f)
-                # Update defaults with saved values, ensuring all keys exist
-                for key in DEFAULTS:
-                    if key in saved_vars:
-                        bind_vars[key] = saved_vars[key]
-                    # else: bind_vars[key] is already DEFAULTS[key]
-                
-                # Ensure nested dicts for metric visibility are properly handled
+                # 3. Usar deep_update para fusionar saved_vars en el bind_vars existente.
+                deep_update(bind_vars, saved_vars)
+
+                # La lógica para asegurar la estructura de diccionarios anidados
+                # como 'metrics_visible' y 'metrics_small_visible'
+                # debe operar sobre el 'bind_vars' ya actualizado.
                 for vis_key in ['metrics_visible', 'metrics_small_visible']:
-                    if vis_key in DEFAULTS: # Check if the key exists in DEFAULTS
-                        # Ensure the key exists in bind_vars and is a dict, or reset to default dict
-                        if vis_key not in bind_vars or not isinstance(bind_vars[vis_key], dict):
-                            bind_vars[vis_key] = DEFAULTS[vis_key].copy()
+                    # Asegurar que la clave exista en DEFAULTS como referencia de estructura
+                    if vis_key in settings_constants.DEFAULTS:
+                        default_sub_dict = settings_constants.DEFAULTS[vis_key]
+                        # Si la clave no está en bind_vars o no es un diccionario después de deep_update,
+                        # restaurarla desde una copia de DEFAULTS para esa clave.
+                        if not isinstance(bind_vars.get(vis_key), dict):
+                            bind_vars[vis_key] = default_sub_dict.copy()
                         else:
-                            # Ensure all sub-keys from DEFAULTS are present in bind_vars[vis_key]
-                            for m_key in DEFAULTS[vis_key]:
-                                if m_key not in bind_vars[vis_key]:
-                                    bind_vars[vis_key][m_key] = DEFAULTS[vis_key][m_key]
+                            # Si es un diccionario, asegurar que todas las sub-claves de DEFAULTS estén presentes.
+                            current_sub_dict = bind_vars[vis_key]
+                            for m_key, m_val in default_sub_dict.items():
+                                if m_key not in current_sub_dict:
+                                    current_sub_dict[m_key] = m_val
         except json.JSONDecodeError:
-            print(f"Warning: Could not decode JSON from {config_json}. Using defaults.")
-            bind_vars = DEFAULTS.copy() # Reset to defaults on error
+            print(f"Warning: Could not decode JSON from {config_json}. Using defaults (already initialized).")
+            # bind_vars ya está poblado con DEFAULTS, no se necesita acción adicional aquí.
         except Exception as e:
-            print(f"Error loading config from {config_json}: {e}. Using defaults.")
-            bind_vars = DEFAULTS.copy() # Reset to defaults on error
-    # If config_json doesn't exist, bind_vars is already DEFAULTS.copy()
+            print(f"Error loading config from {config_json}: {e}. Using defaults (already initialized).")
+            # bind_vars ya está poblado con DEFAULTS.
+    # else:
+        # Si config_json no existe, bind_vars ya está poblado con DEFAULTS.
+        # print(f"Config file {config_json} not found. Using defaults (already initialized).")
 
 
 def generate_hyprconf() -> str:
     """
     Generate the Hypr configuration string using the current bind_vars.
     """
-    home = os.path.expanduser('~') # HOME_DIR could also be used if it's always '~'
-    # Uses the global bind_vars from this module
+    home = os.path.expanduser('~') # HOME_DIR podría también ser usado si está definido globalmente
+    # Usa el bind_vars global de este módulo
+    # Asegurarse que todas las claves existen en bind_vars o usar .get con default
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
@@ -175,26 +211,26 @@ exec-once =  wl-paste --type image --watch cliphist store
 $fabricSend = fabric-cli exec {APP_NAME}
 $axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
-bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {APP_NAME}; uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py) # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
-bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
-bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
-bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
-bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend 'notch.open_notch("pins")' # Pins | Default: SUPER + Q
-bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban | Default: SUPER + N
-bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
-bind = {bind_vars['prefix_tmux']}, {bind_vars['suffix_tmux']}, exec, $fabricSend 'notch.open_notch("tmux")' # App Launcher | Default: SUPER + T
-bind = {bind_vars['prefix_cliphist']}, {bind_vars['suffix_cliphist']}, exec, $fabricSend 'notch.open_notch("cliphist")' # App Launcher | Default: SUPER + V
-bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
-bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
-bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
-bind = {bind_vars['prefix_emoji']}, {bind_vars['suffix_emoji']}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji | Default: SUPER + PERIOD
-bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE
-bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
-bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
-bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
-bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector | Default: SUPER CTRL ALT + B
+bind = {bind_vars.get('prefix_restart', 'SUPER ALT')}, {bind_vars.get('suffix_restart', 'B')}, exec, killall {APP_NAME}; uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py) # Reload {APP_NAME_CAP}
+bind = {bind_vars.get('prefix_axmsg', 'SUPER')}, {bind_vars.get('suffix_axmsg', 'A')}, exec, $axMessage # Message
+bind = {bind_vars.get('prefix_dash', 'SUPER')}, {bind_vars.get('suffix_dash', 'D')}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard
+bind = {bind_vars.get('prefix_bluetooth', 'SUPER')}, {bind_vars.get('suffix_bluetooth', 'B')}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth
+bind = {bind_vars.get('prefix_pins', 'SUPER')}, {bind_vars.get('suffix_pins', 'Q')}, exec, $fabricSend 'notch.open_notch("pins")' # Pins
+bind = {bind_vars.get('prefix_kanban', 'SUPER')}, {bind_vars.get('suffix_kanban', 'N')}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban
+bind = {bind_vars.get('prefix_launcher', 'SUPER')}, {bind_vars.get('suffix_launcher', 'R')}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher
+bind = {bind_vars.get('prefix_tmux', 'SUPER')}, {bind_vars.get('suffix_tmux', 'T')}, exec, $fabricSend 'notch.open_notch("tmux")' # Tmux
+bind = {bind_vars.get('prefix_cliphist', 'SUPER')}, {bind_vars.get('suffix_cliphist', 'V')}, exec, $fabricSend 'notch.open_notch("cliphist")' # Clipboard History
+bind = {bind_vars.get('prefix_toolbox', 'SUPER')}, {bind_vars.get('suffix_toolbox', 'S')}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox
+bind = {bind_vars.get('prefix_overview', 'SUPER')}, {bind_vars.get('suffix_overview', 'TAB')}, exec, $fabricSend 'notch.open_notch("overview")' # Overview
+bind = {bind_vars.get('prefix_wallpapers', 'SUPER')}, {bind_vars.get('suffix_wallpapers', 'COMMA')}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers
+bind = {bind_vars.get('prefix_emoji', 'SUPER')}, {bind_vars.get('suffix_emoji', 'PERIOD')}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji Picker
+bind = {bind_vars.get('prefix_power', 'SUPER')}, {bind_vars.get('suffix_power', 'ESCAPE')}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu
+bind = {bind_vars.get('prefix_toggle', 'SUPER CTRL')}, {bind_vars.get('suffix_toggle', 'B')}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar
+bind = {bind_vars.get('prefix_toggle', 'SUPER CTRL')}, {bind_vars.get('suffix_toggle', 'B')}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch
+bind = {bind_vars.get('prefix_css', 'SUPER SHIFT')}, {bind_vars.get('suffix_css', 'B')}, exec, $fabricSend 'app.set_css()' # Reload CSS
+bind = {bind_vars.get('prefix_restart_inspector', 'SUPER CTRL ALT')}, {bind_vars.get('suffix_restart_inspector', 'B')}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector
 
-# Wallpapers directory: {bind_vars['wallpapers_dir']}
+# Wallpapers directory: {bind_vars.get('wallpapers_dir', '~/.config/Ax-Shell/assets/wallpapers_example')}
 
 source = {home}/.config/{APP_NAME_CAP}/config/hypr/colors.conf
 
@@ -262,6 +298,8 @@ def backup_and_replace(src: str, dest: str, config_name: str):
     try:
         if os.path.exists(dest):
             backup_path = dest + ".bak"
+            # Asegurarse que el directorio de backup existe si es diferente
+            # os.makedirs(os.path.dirname(backup_path), exist_ok=True)
             shutil.copy(dest, backup_path)
             print(f"{config_name} config backed up to {backup_path}")
         os.makedirs(os.path.dirname(dest), exist_ok=True) # Ensure dest directory exists
@@ -283,8 +321,8 @@ def start_config():
 
     hypr_config_dir = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/")
     os.makedirs(hypr_config_dir, exist_ok=True)
-    # Use APP_NAME_CAP for the conf file name to match SOURCE_STRING
-    hypr_conf_path = os.path.join(hypr_config_dir, f"{APP_NAME_CAP}.conf")
+    # Usar APP_NAME para el nombre del archivo .conf para que coincida con SOURCE_STRING corregido
+    hypr_conf_path = os.path.join(hypr_config_dir, f"{APP_NAME}.conf")
     try:
         with open(hypr_conf_path, "w") as f:
             f.write(generate_hyprconf())
@@ -295,10 +333,13 @@ def start_config():
 
     print(f"{time.time():.4f}: start_config: Initiating hyprctl reload...")
     try:
-        exec_shell_command_async("hyprctl reload")
+        # subprocess.run(["hyprctl", "reload"], check=True, capture_output=True, text=True)
+        exec_shell_command_async("hyprctl reload") # Mantener async para no bloquear
         print(f"{time.time():.4f}: start_config: Hyprland configuration reload initiated.")
     except FileNotFoundError:
          print("Error: hyprctl command not found. Cannot reload Hyprland.")
+    except subprocess.CalledProcessError as e: # Si usáramos subprocess.run con check=True
+         print(f"Error reloading Hyprland with hyprctl: {e}\nOutput:\n{e.stdout}\n{e.stderr}")
     except Exception as e:
          print(f"An error occurred initiating hyprctl reload: {e}")
     print(f"{time.time():.4f}: start_config: Finished initiating hyprctl reload.")

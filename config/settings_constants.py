@@ -1,9 +1,9 @@
 import os
-from .data import APP_NAME_CAP, WALLPAPERS_DIR_DEFAULT
+from .data import APP_NAME, APP_NAME_CAP, WALLPAPERS_DIR_DEFAULT # Añadir APP_NAME
 
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
-source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME_CAP}.conf
+source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf # Usar APP_NAME para el nombre del archivo
 """
 
 DEFAULTS = {

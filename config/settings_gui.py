@@ -22,8 +22,10 @@ from fabric.widgets.stack import Stack
 from fabric.widgets.window import Window
 
 from .data import APP_NAME, APP_NAME_CAP
-from .settings_constants import DEFAULTS, SOURCE_STRING
-from .settings_utils import bind_vars, backup_and_replace, start_config, load_bind_vars
+# DEFAULTS se importa directamente en on_reset, SOURCE_STRING no se usa aquí
+# from .settings_constants import DEFAULTS, SOURCE_STRING
+# bind_vars se importa de settings_utils, backup_and_replace y start_config también
+from .settings_utils import bind_vars, backup_and_replace, start_config # load_bind_vars no se llama desde aquí
 
 
 class HyprConfGUI(Window):
@@ -134,11 +136,12 @@ class HyprConfGUI(Window):
             row = i + 1
             binding_label = Label(label=label_text, h_align="start")
             keybind_grid.attach(binding_label, 0, row, 1, 1)
-            prefix_entry = Entry(text=bind_vars[prefix_key])
+            # Usar .get() para seguridad, aunque load_bind_vars debería asegurar que existan
+            prefix_entry = Entry(text=bind_vars.get(prefix_key, ''))
             keybind_grid.attach(prefix_entry, 1, row, 1, 1)
             plus_label = Label(label="+", h_align="center")
             keybind_grid.attach(plus_label, 2, row, 1, 1)
-            suffix_entry = Entry(text=bind_vars[suffix_key])
+            suffix_entry = Entry(text=bind_vars.get(suffix_key, ''))
             keybind_grid.attach(suffix_entry, 3, row, 1, 1)
             self.entries.append((prefix_key, suffix_key, prefix_entry, suffix_entry))
 
@@ -175,7 +178,7 @@ class HyprConfGUI(Window):
             title="Select a folder", action=Gtk.FileChooserAction.SELECT_FOLDER
         )
         self.wall_dir_chooser.set_tooltip_text("Select the directory containing your wallpaper images")
-        self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
+        self.wall_dir_chooser.set_filename(bind_vars.get('wallpapers_dir',''))
         self.wall_dir_chooser.set_size_request(180, -1)
         chooser_container.add(self.wall_dir_chooser)
         top_grid.attach(chooser_container, 1, 1, 1, 1)
@@ -190,7 +193,7 @@ class HyprConfGUI(Window):
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(current_face, 64, 64)
                 self.face_image.set_from_pixbuf(pixbuf)
             else:
-                 self.face_image.set_from_icon_name("user-info", Gtk.IconSize.DIALOG) # Use Gtk.IconSize
+                 self.face_image.set_from_icon_name("user-info", Gtk.IconSize.DIALOG) 
         except Exception as e:
             print(f"Error loading face icon: {e}")
             self.face_image.set_from_icon_name("image-missing", Gtk.IconSize.DIALOG)
@@ -289,7 +292,10 @@ class HyprConfGUI(Window):
         themes = ["Pills", "Dense", "Edge"]
         for theme in themes: self.bar_theme_combo.append_text(theme)
         current_theme = bind_vars.get('bar_theme', "Pills")
-        self.bar_theme_combo.set_active(themes.index(current_theme) if current_theme in themes else 0)
+        try:
+            self.bar_theme_combo.set_active(themes.index(current_theme))
+        except ValueError:
+            self.bar_theme_combo.set_active(0) # Fallback
         bar_theme_combo_container.add(self.bar_theme_combo)
         layout_grid.attach(bar_theme_combo_container, 1, 4, 3, 1)
 
@@ -326,14 +332,10 @@ class HyprConfGUI(Window):
         
         current_row = 0
         current_col = 0
-        # Start components from row 1 if corners are in row 0, or adjust logic
-        # This layout places corners first, then fills two columns
         item_idx = 0
         for i, (name, display) in enumerate(component_display_names.items()):
-            # Determine position, starting after corners
-            # If corners is at (0,0), components start at (0,1) or (2,0)
-            if item_idx < (rows_per_column -1) : # -1 because corners took one slot in the first column conceptually
-                row = item_idx + 1 # Start from row 1 in the first column
+            if item_idx < (rows_per_column -1) : 
+                row = item_idx + 1 
                 col = 0
             else:
                 row = (item_idx - (rows_per_column -1))
@@ -445,21 +447,33 @@ class HyprConfGUI(Window):
         disks_label = Label(label="Disk directories for Metrics", h_align="start", v_align="center")
         vbox.add(disks_label)
         self.disk_entries = Box(orientation="v", spacing=8, h_align="start")
-        def create_disk_edit(path):
-            bar = Box(orientation="h", spacing=10, h_align="start")
-            entry = Entry(text=path, h_expand=True)
-            bar.add(entry)
-            x = Button(label="X", on_clicked=lambda _: self.disk_entries.remove(bar))
-            bar.add(x)
-            self.disk_entries.add(bar)
+        
+        # Guardar referencia a esta función para usarla en on_reset
+        self._create_disk_edit_entry_func = lambda path: self._add_disk_entry_widget(path)
+
+        for p in bind_vars.get('bar_metrics_disks', ["/"]): self._create_disk_edit_entry_func(p)
         vbox.add(self.disk_entries)
-        for p in bind_vars.get('bar_metrics_disks', ["/"]): create_disk_edit(p)
+        
         add_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
-        add_btn = Button(label="Add new disk", on_clicked=lambda _: create_disk_edit("/"))
+        add_btn = Button(label="Add new disk", on_clicked=lambda _: self._create_disk_edit_entry_func("/"))
         add_container.add(add_btn)
         vbox.add(add_container)
 
         return scrolled_window
+
+    def _add_disk_entry_widget(self, path):
+        """Helper para añadir una fila de entrada de disco al Box disk_entries."""
+        bar = Box(orientation="h", spacing=10, h_align="start")
+        entry = Entry(text=path, h_expand=True)
+        bar.add(entry)
+        # Usar una clausura para capturar 'bar' correctamente
+        x_btn = Button(label="X")
+        x_btn.connect("clicked", lambda _, current_bar_to_remove=bar: self.disk_entries.remove(current_bar_to_remove))
+        bar.add(x_btn)
+        self.disk_entries.add(bar)
+        # Mostrar todos los nuevos widgets añadidos a disk_entries
+        self.disk_entries.show_all()
+
 
     def create_about_tab(self):
         vbox = Box(orientation="v", spacing=18, style="margin: 30px;")
@@ -513,9 +527,9 @@ class HyprConfGUI(Window):
         dialog.destroy()
 
     def on_accept(self, widget):
-        global bind_vars # Access the global bind_vars from settings_utils
+        # global bind_vars # No es necesario aquí, ya que importamos bind_vars de settings_utils
         
-        current_bind_vars_snapshot = {} # Create a snapshot for the thread
+        current_bind_vars_snapshot = {} 
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
             current_bind_vars_snapshot[prefix_key] = prefix_entry.get_text()
             current_bind_vars_snapshot[suffix_key] = suffix_entry.get_text()
@@ -538,27 +552,22 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['metrics_visible'] = {k: s.get_active() for k, s in self.metrics_switches.items()}
         current_bind_vars_snapshot['metrics_small_visible'] = {k: s.get_active() for k, s in self.metrics_small_switches.items()}
         current_bind_vars_snapshot['bar_metrics_disks'] = [
-            entry.children[0].get_text() for entry in self.disk_entries.children
+            child.get_children()[0].get_text() for child in self.disk_entries.get_children() if isinstance(child, Gtk.Box) and child.get_children() and isinstance(child.get_children()[0], Entry)
         ]
+
 
         selected_icon_path = self.selected_face_icon
         replace_lock = self.lock_switch and self.lock_switch.get_active()
         replace_idle = self.idle_switch and self.idle_switch.get_active()
 
         if self.selected_face_icon:
-             self.selected_face_icon = None
-             self.face_status_label.label = ""
+             self.selected_face_icon = None # Resetear para la próxima selección
+             self.face_status_label.label = "" # Limpiar etiqueta de estado
 
         def _apply_and_reload_task_thread():
-            # Update the actual global bind_vars from settings_utils inside the thread
-            # This ensures that generate_hyprconf() called by start_config() uses the new values.
-            # It's generally safer to pass data explicitly, but for this refactor,
-            # we're keeping bind_vars as a module-level global in settings_utils.
-            nonlocal current_bind_vars_snapshot # Use the snapshot captured in the outer scope
+            nonlocal current_bind_vars_snapshot 
             
-            # Update the global bind_vars in settings_utils
-            # This is the critical part for making the new settings available to generate_hyprconf
-            from . import settings_utils 
+            from . import settings_utils # Importar el módulo para modificar su bind_vars
             settings_utils.bind_vars.clear()
             settings_utils.bind_vars.update(current_bind_vars_snapshot)
 
@@ -570,7 +579,7 @@ class HyprConfGUI(Window):
             os.makedirs(os.path.dirname(config_json), exist_ok=True)
             try:
                 with open(config_json, 'w') as f:
-                    json.dump(settings_utils.bind_vars, f, indent=4) # Save the updated global
+                    json.dump(settings_utils.bind_vars, f, indent=4) 
                 print(f"{time.time():.4f}: Saved config.json.")
             except Exception as e: print(f"Error saving config.json: {e}")
 
@@ -606,11 +615,16 @@ class HyprConfGUI(Window):
             print(f"{time.time():.4f}: Checking/Appending hyprland.conf source string...")
             hypr_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
             try:
+                from .settings_constants import SOURCE_STRING # Importar aquí para asegurar que es el valor actual
                 needs_append = True
                 if os.path.exists(hypr_path):
                     with open(hypr_path, "r") as f:
+                        # Comprobar si la línea específica de source está, no solo el comentario
+                        # Esto es más robusto si el comentario cambia pero la línea de source no.
+                        # El SOURCE_STRING incluye el comentario, así que la comprobación original es válida.
                         if SOURCE_STRING.strip() in f.read(): needs_append = False
-                else: os.makedirs(os.path.dirname(hypr_path), exist_ok=True)
+                else: os.makedirs(os.path.dirname(hypr_path), exist_ok=True) # Crear directorio si no existe
+                
                 if needs_append:
                     with open(hypr_path, "a") as f: f.write("\n" + SOURCE_STRING)
                     print(f"Appended source string to {hypr_path}")
@@ -618,7 +632,7 @@ class HyprConfGUI(Window):
             print(f"{time.time():.4f}: Finished checking/appending hyprland.conf source string.")
 
             print(f"{time.time():.4f}: Running start_config()...")
-            start_config() # This will use the updated settings_utils.bind_vars
+            start_config() 
             print(f"{time.time():.4f}: Finished start_config().")
 
             print(f"{time.time():.4f}: Initiating Ax-Shell restart using Popen...")
@@ -626,33 +640,41 @@ class HyprConfGUI(Window):
             kill_cmd = f"killall {APP_NAME}"
             start_cmd = ["uwsm", "app", "--", "python", main_py]
             try:
+                # Usar shell=True con killall puede ser necesario si APP_NAME contiene caracteres especiales
+                # o si killall es un alias, pero generalmente es mejor evitarlo si es posible.
+                # Para un nombre simple como "ax-shell", no debería ser un problema.
                 kill_proc = subprocess.Popen(kill_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                kill_proc.wait(timeout=2)
+                kill_proc.wait(timeout=2) # Esperar un poco a que termine
                 print(f"{time.time():.4f}: killall process finished (or timed out).")
+            except subprocess.TimeoutExpired: print("Warning: killall command timed out.")
+            except Exception as e: print(f"Error running killall: {e}")
+            
+            try:
+                # Iniciar la nueva instancia en una nueva sesión para que no muera si este script termina
                 subprocess.Popen(start_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
                 print(f"{APP_NAME_CAP} restart initiated via Popen.")
-            except subprocess.TimeoutExpired: print("Warning: killall command timed out.")
             except FileNotFoundError as e: print(f"Error restarting {APP_NAME_CAP}: Command not found ({e})")
             except Exception as e: print(f"Error restarting {APP_NAME_CAP} via Popen: {e}")
+            
             print(f"{time.time():.4f}: Ax-Shell restart commands issued via Popen.")
             end_time = time.time()
             print(f"{end_time:.4f}: Background task finished (Total: {end_time - start_time:.4f}s).")
 
         thread = threading.Thread(target=_apply_and_reload_task_thread)
-        thread.daemon = True
+        thread.daemon = True # Permitir que el programa principal salga aunque el hilo esté corriendo
         thread.start()
         print("Configuration apply/reload task started in background.")
 
     def _update_face_image_widget(self, icon_path):
         try:
-            if self.face_image and self.face_image.get_window(): # Check widget existence
+            if self.face_image and self.face_image.get_window(): 
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_path, 64, 64)
                 self.face_image.set_from_pixbuf(pixbuf)
         except Exception as e:
             print(f"Error reloading face icon preview: {e}")
             if self.face_image and self.face_image.get_window():
                 self.face_image.set_from_icon_name("image-missing", Gtk.IconSize.DIALOG)
-        return False
+        return GLib.SOURCE_REMOVE # Importante para que idle_add no lo llame repetidamente
 
     def on_reset(self, widget):
         dialog = Gtk.MessageDialog(
@@ -661,8 +683,11 @@ class HyprConfGUI(Window):
         )
         dialog.format_secondary_text("This will reset all keybindings and appearance settings to their default values.")
         if dialog.run() == Gtk.ResponseType.YES:
-            from . import settings_utils # Import to access its global bind_vars
-            settings_utils.bind_vars = DEFAULTS.copy() # Reset the global bind_vars
+            from . import settings_utils 
+            from .settings_constants import DEFAULTS 
+
+            settings_utils.bind_vars.clear()
+            settings_utils.bind_vars.update(DEFAULTS.copy())
 
             for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
                 prefix_entry.set_text(settings_utils.bind_vars[prefix_key])
@@ -671,41 +696,56 @@ class HyprConfGUI(Window):
             self.wall_dir_chooser.set_filename(settings_utils.bind_vars['wallpapers_dir'])
             self.vertical_switch.set_active(settings_utils.bind_vars.get('vertical', False))
             self.centered_switch.set_active(settings_utils.bind_vars.get('centered_bar', False))
-            self.centered_switch.set_sensitive(self.vertical_switch.get_active())
+            self.centered_switch.set_sensitive(self.vertical_switch.get_active()) # Re-evaluar sensibilidad
             self.dock_switch.set_active(settings_utils.bind_vars.get('dock_enabled', True))
             self.dock_hover_switch.set_active(settings_utils.bind_vars.get('dock_always_occluded', False))
-            self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
-            self.dock_size_scale.value = settings_utils.bind_vars.get('dock_icon_size', 28)
+            self.dock_hover_switch.set_sensitive(self.dock_switch.get_active()) # Re-evaluar sensibilidad
+            self.dock_size_scale.set_value(settings_utils.bind_vars.get('dock_icon_size', 28)) # Usar set_value para Scale
             self.terminal_entry.set_text(settings_utils.bind_vars['terminal_command'])
             self.ws_num_switch.set_active(settings_utils.bind_vars.get('bar_workspace_show_number', False))
             self.ws_chinese_switch.set_active(settings_utils.bind_vars.get('bar_workspace_use_chinese_numerals', False))
-            self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active())
+            self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active()) # Re-evaluar sensibilidad
             
-            default_theme = DEFAULTS.get('bar_theme', "Pills")
+            default_theme_val = DEFAULTS.get('bar_theme', "Pills") 
             themes = ["Pills", "Dense", "Edge"]
-            self.bar_theme_combo.set_active(themes.index(default_theme) if default_theme in themes else 0)
+            try:
+                self.bar_theme_combo.set_active(themes.index(default_theme_val))
+            except ValueError:
+                self.bar_theme_combo.set_active(0) 
 
             for name, switch in self.component_switches.items():
                  switch.set_active(settings_utils.bind_vars.get(f'bar_{name}_visible', True))
             self.corners_switch.set_active(settings_utils.bind_vars.get('corners_visible', True))
 
-            for k, s in self.metrics_switches.items(): s.set_active(DEFAULTS['metrics_visible'][k])
-            for k, s in self.metrics_small_switches.items(): s.set_active(DEFAULTS['metrics_small_visible'][k])
+            # Usar DEFAULTS para resetear los switches de métricas, ya que bind_vars ahora refleja DEFAULTS
+            # y settings_utils.bind_vars es la fuente de verdad.
+            metrics_vis_defaults = DEFAULTS.get('metrics_visible', {})
+            for k, s_widget in self.metrics_switches.items(): s_widget.set_active(metrics_vis_defaults.get(k, True))
+            
+            metrics_small_vis_defaults = DEFAULTS.get('metrics_small_visible', {})
+            for k, s_widget in self.metrics_small_switches.items(): s_widget.set_active(metrics_small_vis_defaults.get(k, True))
+            
+            # Re-aplicar la lógica de habilitación mínima
+            def enforce_minimum_metrics(switch_dict):
+                enabled_switches = [s_widget for s_widget in switch_dict.values() if s_widget.get_active()]
+                can_disable = len(enabled_switches) > 3
+                for s_widget in switch_dict.values():
+                    s_widget.set_sensitive(True if can_disable or not s_widget.get_active() else False)
+            enforce_minimum_metrics(self.metrics_switches)
+            enforce_minimum_metrics(self.metrics_small_switches)
 
-            # Clear and reset disk entries
+            # Limpiar y resetear disk_entries
             for child in list(self.disk_entries.get_children()): self.disk_entries.remove(child)
+            
+            # Recrear disk_entries usando la función helper y los valores de DEFAULTS
+            # Usamos la función _add_disk_entry_widget que definimos antes.
             for p in DEFAULTS.get('bar_metrics_disks', ["/"]):
-                bar = Box(orientation="h", spacing=10, h_align="start")
-                entry = Entry(text=p, h_expand=True)
-                bar.add(entry)
-                x_btn = Button(label="X", on_clicked=lambda b, current_bar=bar: self.disk_entries.remove(current_bar))
-                bar.add(x_btn)
-                self.disk_entries.add(bar)
+                self._add_disk_entry_widget(p)
 
 
             self.selected_face_icon = None
             self.face_status_label.label = ""
-            current_face = os.path.expanduser("~/.face.icon")
+            current_face = os.path.expanduser("~/.face.icon") # Re-chequear el .face.icon actual
             try:
                  pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(current_face, 64, 64) if os.path.exists(current_face) else None
                  if pixbuf: self.face_image.set_from_pixbuf(pixbuf)
