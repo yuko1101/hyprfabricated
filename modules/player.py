@@ -79,22 +79,43 @@ class PlayerBox(Box):
         self.prev = Button(
             name="player-btn",
             child=Label(name="player-btn-label", markup=icons.prev),
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
         self.backward = Button(
             name="player-btn",
             child=Label(name="player-btn-label", markup=icons.skip_back),
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
         self.play_pause = Button(
             name="player-btn",
-            child=Label(name="player-btn-label", markup=icons.play),
+            child=Label(name="player-btn-label", markup=icons.play, style_classes=["play-pause"]),
+            style_classes=["play-pause"],
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
         self.forward = Button(
             name="player-btn",
             child=Label(name="player-btn-label", markup=icons.skip_forward),
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
         self.next = Button(
             name="player-btn",
             child=Label(name="player-btn-label", markup=icons.next),
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
         )
         # Add hover effect to buttons
         add_hover_cursor(self.prev)
@@ -124,7 +145,7 @@ class PlayerBox(Box):
         self.player_box = Box(
             name="player-box",
             orientation="v",
-            spacing=8,
+            spacing=4,
             children=[
                 self.overlay_container,
                 self.title,
@@ -145,6 +166,7 @@ class PlayerBox(Box):
             self.mpris_player.connect("changed", self._on_mpris_changed)
         else:
             self.play_pause.get_child().set_markup(icons.stop)
+            self.play_pause.add_style_class("stop")
             # Ensure buttons are disabled visually if no player
             self.backward.add_style_class("disabled")
             self.forward.add_style_class("disabled")
@@ -252,8 +274,10 @@ class PlayerBox(Box):
     def update_play_pause_icon(self):
         if self.mpris_player.playback_status == "playing":
             self.play_pause.get_child().set_markup(icons.pause)
+            self.play_pause.add_style_class("playing")
         else:
             self.play_pause.get_child().set_markup(icons.play)
+            self.play_pause.remove_style_class("playing")
 
     def on_wallpaper_changed(self, monitor, file, other_file, event):
         self.cover.set_image_from_file(os.path.expanduser("~/.current.wall"))
