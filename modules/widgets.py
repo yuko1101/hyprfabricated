@@ -2,8 +2,8 @@ import gi
 
 gi.require_version('Gtk', '3.0')
 from fabric.widgets.box import Box
+from fabric.widgets.label import Label  # <--- Añadida esta importación
 from fabric.widgets.stack import Stack
-from fabric.widgets.label import Label # <--- Añadida esta importación
 
 from modules.bluetooth import BluetoothConnections
 from modules.buttons import Buttons
@@ -55,9 +55,9 @@ class Widgets(Box):
 
         self.notification_history = self.notch.notification_history # Esta es la página de historial de notificaciones
 
-        # Crear la nueva página "Coming soon" para la red
-        self.network_placeholder_page = Label( # <--- Añadidas estas líneas
-            label="Network Details: Coming soon.",
+        # Network "Coming Soon" (I hope)
+        self.network_placeholder_page = Label(
+            label="Network Manager: Coming soon.",
             name="network-applet-placeholder-label",
             h_align="center",
             v_align="center",
@@ -71,8 +71,8 @@ class Widgets(Box):
             transition_type="slide-left-right",
             children=[
                 self.notification_history,
+                self.network_placeholder_page, # Placeholder
                 self.bluetooth,
-                self.network_placeholder_page, # <--- Añadida la nueva página aquí
             ]
         )
 
