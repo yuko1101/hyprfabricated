@@ -84,8 +84,9 @@ class Notch(Window):
         self.cliphist = ClipHistory(notch=self)  # Create ClipHistory instance
 
         self.applet_stack = self.dashboard.widgets.applet_stack
-        self.nhistory = self.applet_stack.get_children()[0]
-        self.btdevices = self.applet_stack.get_children()[1]
+        self.nhistory = self.dashboard.widgets.notification_history
+        self.btdevices = self.dashboard.widgets.bluetooth
+        self.network_placeholder_widget = self.dashboard.widgets.network_placeholder_page # Añadida esta línea
 
         self.window_label = Label(
             name="notch-window-label",
@@ -376,8 +377,23 @@ class Notch(Window):
         # --- Parte 1: Manejo de casos donde el Dashboard ya está visible ---
         # Estos bloques pueden cerrar el notch o navegar dentro del dashboard y retornar.
 
+        # Caso Network Applet
+        if widget_name == "network_applet":
+            if is_dashboard_currently_visible:
+                # Si el dashboard está abierto y mostrando el network placeholder, cerrar.
+                if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
+                   self.applet_stack.get_visible_child() == self.network_placeholder_widget:
+                    self.close_notch()
+                    return
+                # Si el dashboard está abierto (en cualquier sección), navegar al network placeholder.
+                self.set_keyboard_mode("exclusive") 
+                self.dashboard.go_to_section("widgets")
+                self.applet_stack.set_visible_child(self.network_placeholder_widget)
+                return
+            # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
+
         # Caso 1: Bluetooth
-        if widget_name == "bluetooth":
+        elif widget_name == "bluetooth":
             if is_dashboard_currently_visible:
                 # Si el dashboard está abierto y mostrando dispositivos BT, cerrar.
                 if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
@@ -385,10 +401,9 @@ class Notch(Window):
                     self.close_notch()
                     return
                 # Si el dashboard está abierto (en cualquier sección), navegar a dispositivos BT.
-                self.set_keyboard_mode("exclusive") # Necesario si solo navegamos
+                self.set_keyboard_mode("exclusive") 
                 self.dashboard.go_to_section("widgets")
                 self.applet_stack.set_visible_child(self.btdevices)
-                # _is_notch_open ya es True, reveladores del bar ya están configurados para dashboard.
                 return
             # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
 
@@ -456,7 +471,7 @@ class Notch(Window):
                 return
         else:
             # Si widget_name no es uno de los simples, debe ser para el Dashboard
-            # (ej: "dashboard", "bluetooth", "pins", "kanban", "wallpapers").
+            # (ej: "dashboard", "bluetooth", "pins", "kanban", "wallpapers", "network_applet").
             target_widget_on_stack = self.dashboard
             hide_bar_revealers = True # Dashboard y sus vistas ocultan los reveladores del bar.
 
@@ -474,6 +489,9 @@ class Notch(Window):
             if widget_name == "bluetooth":
                 self.dashboard.go_to_section("widgets")
                 self.applet_stack.set_visible_child(self.btdevices)
+            elif widget_name == "network_applet": # Añadido este nuevo caso
+                self.dashboard.go_to_section("widgets")
+                self.applet_stack.set_visible_child(self.network_placeholder_widget)
             elif widget_name in dashboard_sections_map: # pins, kanban, wallpapers
                 self.dashboard.go_to_section(widget_name)
             elif widget_name == "dashboard": # Caso general para "dashboard"

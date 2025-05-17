@@ -3,6 +3,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 from fabric.widgets.box import Box
 from fabric.widgets.stack import Stack
+from fabric.widgets.label import Label # <--- Añadida esta importación
 
 from modules.bluetooth import BluetoothConnections
 from modules.buttons import Buttons
@@ -27,7 +28,7 @@ class Widgets(Box):
         self.notch = kwargs["notch"]
 
         self.buttons = Buttons(widgets=self)
-        self.bluetooth = BluetoothConnections(widgets=self)
+        self.bluetooth = BluetoothConnections(widgets=self) # Esta es la página de Bluetooth
 
         self.box_1 = Box(
             name="box-1",
@@ -52,7 +53,17 @@ class Widgets(Box):
 
         self.metrics = Metrics()
 
-        self.notification_history = self.notch.notification_history
+        self.notification_history = self.notch.notification_history # Esta es la página de historial de notificaciones
+
+        # Crear la nueva página "Coming soon" para la red
+        self.network_placeholder_page = Label( # <--- Añadidas estas líneas
+            label="Network Details: Coming soon.",
+            name="network-applet-placeholder-label",
+            h_align="center",
+            v_align="center",
+            h_expand=True,
+            v_expand=True,
+        )
 
         self.applet_stack = Stack(
             h_expand=True,
@@ -61,6 +72,7 @@ class Widgets(Box):
             children=[
                 self.notification_history,
                 self.bluetooth,
+                self.network_placeholder_page, # <--- Añadida la nueva página aquí
             ]
         )
 
@@ -127,3 +139,9 @@ class Widgets(Box):
 
     def show_notif(self):
         self.applet_stack.set_visible_child(self.notification_history)
+
+    def show_network_applet(self): # <--- Añadido este nuevo método
+        # Primero, asegúrate de que el dashboard esté visible y en la sección de widgets
+        self.notch.open_notch("network_applet")
+        # La lógica en open_notch("network_applet") se encargará de mostrar
+        # self.network_placeholder_page dentro del applet_stack.

@@ -20,7 +20,8 @@ def add_hover_cursor(widget):
 
 
 class NetworkButton(Box):
-    def __init__(self):
+    def __init__(self, **kwargs):
+        self.widgets_instance = kwargs.pop("widgets") # Almacenar la instancia de Widgets
         self.network_client = NetworkClient()
         self._animation_timeout_id = None
         self._animation_step = 0
@@ -61,7 +62,7 @@ class NetworkButton(Box):
             child=self.network_status_box,
             on_clicked=lambda *_: self.network_client.wifi_device.toggle_wifi() if self.network_client.wifi_device else None,
         )
-        add_hover_cursor(self.network_status_button)  # <-- Added hover
+        add_hover_cursor(self.network_status_button)
 
         self.network_menu_label = Label(
             name="network-menu-label",
@@ -70,8 +71,9 @@ class NetworkButton(Box):
         self.network_menu_button = Button(
             name="network-menu-button",
             child=self.network_menu_label,
+            on_clicked=lambda *_: self.widgets_instance.show_network_applet(), # Modificada esta línea
         )
-        add_hover_cursor(self.network_menu_button)  # <-- Added hover
+        add_hover_cursor(self.network_menu_button)
 
         super().__init__(
             name="network-button",
@@ -84,7 +86,7 @@ class NetworkButton(Box):
             children=[self.network_status_button, self.network_menu_button],
         )
 
-        self.widgets = [self, self.network_icon, self.network_label,
+        self.widgets_list_internal = [self, self.network_icon, self.network_label, # Renombrada esta variable
                        self.network_ssid, self.network_status_button,
                        self.network_menu_button, self.network_menu_label]
 
@@ -149,13 +151,13 @@ class NetworkButton(Box):
         if wifi and not wifi.enabled:
             self._stop_animation()
             self.network_icon.set_markup(icons.wifi_off)
-            for widget in self.widgets:
+            for widget in self.widgets_list_internal: # Usar el nombre renombrado
                 widget.add_style_class("disabled")
             self.network_ssid.set_label("Disabled")
             return
 
         # Remove disabled class if we got here
-        for widget in self.widgets:
+        for widget in self.widgets_list_internal: # Usar el nombre renombrado
             widget.remove_style_class("disabled")
 
         # Update text and animation based on state
@@ -256,7 +258,7 @@ class BluetoothButton(Box):
             child=self.bluetooth_status_container,
             on_clicked=lambda *_: self.widgets.bluetooth.client.toggle_power(),
         )
-        add_hover_cursor(self.bluetooth_status_button)  # <-- Added hover
+        add_hover_cursor(self.bluetooth_status_button)
         self.bluetooth_menu_label = Label(
             name="bluetooth-menu-label",
             markup=icons.chevron_right,
@@ -266,7 +268,7 @@ class BluetoothButton(Box):
             on_clicked=lambda *_: self.widgets.show_bt(),
             child=self.bluetooth_menu_label,
         )
-        add_hover_cursor(self.bluetooth_menu_button)  # <-- Added hover
+        add_hover_cursor(self.bluetooth_menu_button)
 
         self.add(self.bluetooth_status_button)
         self.add(self.bluetooth_menu_button)
@@ -310,7 +312,7 @@ class NightModeButton(Button):
             child=self.night_mode_box,
             on_clicked=self.toggle_hyprsunset,
         )
-        add_hover_cursor(self)  # <-- Added hover
+        add_hover_cursor(self)
 
         self.widgets = [self, self.night_mode_label, self.night_mode_status, self.night_mode_icon]
         self.check_hyprsunset()
@@ -385,7 +387,7 @@ class CaffeineButton(Button):
             child=self.caffeine_box,
             on_clicked=self.toggle_wlinhibit,
         )
-        add_hover_cursor(self)  # <-- Added hover
+        add_hover_cursor(self)
 
         self.widgets = [self, self.caffeine_label, self.caffeine_status, self.caffeine_icon]
         self.check_wlinhibit()
@@ -429,10 +431,10 @@ class Buttons(Gtk.Grid):
         self.set_column_spacing(4)
         self.set_vexpand(False)  # Prevent vertical expansion
 
-        self.widgets = kwargs["widgets"]
+        self.widgets = kwargs["widgets"] # Esta es la instancia de la clase Widgets
 
         # Instantiate each button
-        self.network_button = NetworkButton()
+        self.network_button = NetworkButton(widgets=self.widgets) # Pasar la instancia de Widgets
         self.bluetooth_button = BluetoothButton(widgets=self.widgets)
         self.night_mode_button = NightModeButton()
         self.caffeine_button = CaffeineButton()
