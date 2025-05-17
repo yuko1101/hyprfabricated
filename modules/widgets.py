@@ -2,7 +2,7 @@ import gi
 
 gi.require_version('Gtk', '3.0')
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label  # <--- Añadida esta importación
+from fabric.widgets.label import Label
 from fabric.widgets.stack import Stack
 
 from modules.bluetooth import BluetoothConnections
@@ -11,6 +11,7 @@ from modules.calendar import Calendar
 from modules.controls import ControlSliders
 from modules.metrics import Metrics
 from modules.player import Player
+from modules.network import NetworkConnections # <--- AÑADIDA ESTA IMPORTACIÓN
 
 
 class Widgets(Box):
@@ -55,15 +56,16 @@ class Widgets(Box):
 
         self.notification_history = self.notch.notification_history # Esta es la página de historial de notificaciones
 
-        # Network "Coming Soon" (I hope)
-        self.network_placeholder_page = Label(
-            label="Network Manager: Coming soon.",
-            name="network-applet-placeholder-label",
-            h_align="center",
-            v_align="center",
-            h_expand=True,
-            v_expand=True,
-        )
+        # Reemplazar el Label placeholder con el nuevo widget NetworkConnections
+        # self.network_placeholder_page = Label(
+        #     label="Network Manager: Coming soon.",
+        #     name="network-applet-placeholder-label",
+        #     h_align="center",
+        #     v_align="center",
+        #     h_expand=True,
+        #     v_expand=True,
+        # )
+        self.network_connections = NetworkConnections(widgets=self) # <--- REEMPLAZO/AÑADIDO
 
         self.applet_stack = Stack(
             h_expand=True,
@@ -71,7 +73,7 @@ class Widgets(Box):
             transition_type="slide-left-right",
             children=[
                 self.notification_history,
-                self.network_placeholder_page, # Placeholder
+                self.network_connections, # <--- USAR EL NUEVO WIDGET AQUÍ
                 self.bluetooth,
             ]
         )
@@ -140,14 +142,7 @@ class Widgets(Box):
     def show_notif(self):
         self.applet_stack.set_visible_child(self.notification_history)
 
-    def show_network_applet(self): # <--- Añadido este nuevo método
-        # Primero, asegúrate de que el dashboard esté visible y en la sección de widgets
+    def show_network_applet(self):
         self.notch.open_notch("network_applet")
         # La lógica en open_notch("network_applet") se encargará de mostrar
-        # self.network_placeholder_page dentro del applet_stack.
-
-    def show_network_applet(self): # <--- Añadido este nuevo método
-        # Primero, asegúrate de que el dashboard esté visible y en la sección de widgets
-        self.notch.open_notch("network_applet")
-        # La lógica en open_notch("network_applet") se encargará de mostrar
-        # self.network_placeholder_page dentro del applet_stack.
+        # el widget de red correcto dentro del applet_stack.

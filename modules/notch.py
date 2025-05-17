@@ -86,7 +86,8 @@ class Notch(Window):
         self.applet_stack = self.dashboard.widgets.applet_stack
         self.nhistory = self.dashboard.widgets.notification_history
         self.btdevices = self.dashboard.widgets.bluetooth
-        self.network_placeholder_widget = self.dashboard.widgets.network_placeholder_page # Añadida esta línea
+        # self.network_placeholder_widget = self.dashboard.widgets.network_placeholder_page # <--- ELIMINADA ESTA LÍNEA
+        self.network_connections_widget = self.dashboard.widgets.network_connections # <--- AÑADIDA ESTA LÍNEA
 
         self.window_label = Label(
             name="notch-window-label",
@@ -380,30 +381,15 @@ class Notch(Window):
         # Caso Network Applet
         if widget_name == "network_applet":
             if is_dashboard_currently_visible:
-                # Si el dashboard está abierto y mostrando el network placeholder, cerrar.
+                # Si el dashboard está abierto y mostrando el network widget, cerrar.
                 if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
-                   self.applet_stack.get_visible_child() == self.network_placeholder_widget:
+                   self.applet_stack.get_visible_child() == self.network_connections_widget: # <--- CAMBIO AQUÍ
                     self.close_notch()
                     return
-                # Si el dashboard está abierto (en cualquier sección), navegar al network placeholder.
+                # Si el dashboard está abierto (en cualquier sección), navegar al network widget.
                 self.set_keyboard_mode("exclusive") 
                 self.dashboard.go_to_section("widgets")
-                self.applet_stack.set_visible_child(self.network_placeholder_widget)
-                return
-            # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
-
-        # Caso Network Applet
-        if widget_name == "network_applet":
-            if is_dashboard_currently_visible:
-                # Si el dashboard está abierto y mostrando el network placeholder, cerrar.
-                if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
-                   self.applet_stack.get_visible_child() == self.network_placeholder_widget:
-                    self.close_notch()
-                    return
-                # Si el dashboard está abierto (en cualquier sección), navegar al network placeholder.
-                self.set_keyboard_mode("exclusive")
-                self.dashboard.go_to_section("widgets")
-                self.applet_stack.set_visible_child(self.network_placeholder_widget)
+                self.applet_stack.set_visible_child(self.network_connections_widget) # <--- CAMBIO AQUÍ
                 return
             # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
 
@@ -506,7 +492,7 @@ class Notch(Window):
                 self.applet_stack.set_visible_child(self.btdevices)
             elif widget_name == "network_applet": # Añadido este nuevo caso
                 self.dashboard.go_to_section("widgets")
-                self.applet_stack.set_visible_child(self.network_placeholder_widget)
+                self.applet_stack.set_visible_child(self.network_connections_widget) # <--- CAMBIO AQUÍ
             elif widget_name in dashboard_sections_map: # pins, kanban, wallpapers
                 self.dashboard.go_to_section(widget_name)
             elif widget_name == "dashboard": # Caso general para "dashboard"
