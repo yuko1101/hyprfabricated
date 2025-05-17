@@ -392,6 +392,21 @@ class Notch(Window):
                 return
             # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
 
+        # Caso Network Applet
+        if widget_name == "network_applet":
+            if is_dashboard_currently_visible:
+                # Si el dashboard está abierto y mostrando el network placeholder, cerrar.
+                if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
+                   self.applet_stack.get_visible_child() == self.network_placeholder_widget:
+                    self.close_notch()
+                    return
+                # Si el dashboard está abierto (en cualquier sección), navegar al network placeholder.
+                self.set_keyboard_mode("exclusive")
+                self.dashboard.go_to_section("widgets")
+                self.applet_stack.set_visible_child(self.network_placeholder_widget)
+                return
+            # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
+
         # Caso 1: Bluetooth
         elif widget_name == "bluetooth":
             if is_dashboard_currently_visible:

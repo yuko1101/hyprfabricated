@@ -145,3 +145,9 @@ class Widgets(Box):
         self.notch.open_notch("network_applet")
         # La lógica en open_notch("network_applet") se encargará de mostrar
         # self.network_placeholder_page dentro del applet_stack.
+
+    def show_network_applet(self): # <--- Añadido este nuevo método
+        # Primero, asegúrate de que el dashboard esté visible y en la sección de widgets
+        self.notch.open_notch("network_applet")
+        # La lógica en open_notch("network_applet") se encargará de mostrar
+        # self.network_placeholder_page dentro del applet_stack.
