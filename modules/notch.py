@@ -254,6 +254,7 @@ class Notch(Window):
         self.notch_hover_area_event_box.add(self.notch_revealer)
         self.notch_hover_area_event_box.connect("enter-notify-event", self.on_notch_hover_area_enter)
         self.notch_hover_area_event_box.connect("leave-notify-event", self.on_notch_hover_area_leave)
+        self.notch_hover_area_event_box.set_size_request(-1, 1)
 
         self.notch_complete = Box(
             name="notch-complete",

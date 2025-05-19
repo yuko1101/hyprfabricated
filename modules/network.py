@@ -1,19 +1,19 @@
-# modules/network.py
 import gi
+
 gi.require_version('Gtk', '3.0')
 gi.require_version('NM', '1.0') # Necesario para NM.utils_ssid_to_utf8 si se usa directamente
-from gi.repository import Gtk, GLib, NM
-
+from fabric.utils import bulk_connect
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.image import Image
-from fabric.widgets.label import Label # Asegúrate que Label está importado
+from fabric.widgets.label import Label  # Asegúrate que Label está importado
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import bulk_connect
+from gi.repository import NM, GLib, Gtk
 
-import modules.icons as icons # Para el botón de atrás y potencialmente otros
-from services.network import NetworkClient # El servicio principal de red
+import modules.icons as icons  # Para el botón de atrás y potencialmente otros
+from services.network import NetworkClient  # El servicio principal de red
+
 
 class WifiAccessPointSlot(CenterBox):
     # ... (contenido sin cambios) ...
@@ -105,8 +105,9 @@ class NetworkConnections(Box):
             child=self.ap_list_box,
             v_expand=True,
             h_expand=True,
-            min_content_height=200
         )
+
+        scrolled_window.set_propagate_natural_height(False)
 
         self.add(header_box)
         self.add(self.status_label)
