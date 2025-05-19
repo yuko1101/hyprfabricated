@@ -301,6 +301,22 @@ class HyprConfGUI(Window):
         bar_theme_combo_container.add(self.bar_theme_combo)
         layout_grid.attach(bar_theme_combo_container, 1, 4, 3, 1)
 
+        # Añade la fila para el tema del Dock (después de la fila de la barra, que es la fila 4)
+        dock_theme_label = Label(label="Dock Theme", h_align="start", v_align="center")
+        layout_grid.attach(dock_theme_label, 0, 5, 1, 1) # Nueva fila 5
+        dock_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        self.dock_theme_combo = Gtk.ComboBoxText() # Guarda la referencia
+        self.dock_theme_combo.set_tooltip_text("Select the visual theme for the dock")
+        themes = ["Pills", "Dense", "Edge"]
+        for theme in themes: self.dock_theme_combo.append_text(theme)
+        current_dock_theme = bind_vars.get('dock_theme', "Pills") # Carga el valor actual
+        try:
+            self.dock_theme_combo.set_active(themes.index(current_dock_theme))
+        except ValueError:
+            self.dock_theme_combo.set_active(0) # Fallback
+        dock_theme_combo_container.add(self.dock_theme_combo)
+        layout_grid.attach(dock_theme_combo_container, 1, 5, 3, 1) # Nueva fila 5, abarca 3 columnas
+
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;", h_expand=True)
         vbox.add(separator2)
 
@@ -548,6 +564,8 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['bar_workspace_show_number'] = self.ws_num_switch.get_active()
         current_bind_vars_snapshot['bar_workspace_use_chinese_numerals'] = self.ws_chinese_switch.get_active()
         current_bind_vars_snapshot['bar_theme'] = self.bar_theme_combo.get_active_text()
+        # Añade esta línea para guardar el tema del dock
+        current_bind_vars_snapshot['dock_theme'] = self.dock_theme_combo.get_active_text()
 
         for component_name, switch in self.component_switches.items():
             current_bind_vars_snapshot[f'bar_{component_name}_visible'] = switch.get_active()
@@ -715,6 +733,13 @@ class HyprConfGUI(Window):
                 self.bar_theme_combo.set_active(themes.index(default_theme_val))
             except ValueError:
                 self.bar_theme_combo.set_active(0) 
+
+            # Añade esta sección para restablecer el tema del dock
+            default_dock_theme_val = DEFAULTS.get('dock_theme', "Pills")
+            try:
+                self.dock_theme_combo.set_active(themes.index(default_dock_theme_val))
+            except ValueError:
+                self.dock_theme_combo.set_active(0)
 
             for name, switch in self.component_switches.items():
                  switch.set_active(settings_utils.bind_vars.get(f'bar_{name}_visible', True))
