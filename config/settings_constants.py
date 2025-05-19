@@ -53,6 +53,7 @@ DEFAULTS = {
     'bar_workspace_show_number': False,
     'bar_workspace_use_chinese_numerals': False,
     'bar_theme': "Pills",
+    'dock_theme': "Pills", # Añadido valor predeterminado para el tema del dock
     'bar_button_apps_visible': True,
     'bar_systray_visible': True,
     'bar_control_visible': True,
