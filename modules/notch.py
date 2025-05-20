@@ -51,6 +51,9 @@ class Notch(Window):
                     current_margin_str = dense_edge_margin_top_str
                 case _:
                     current_margin_str = default_top_anchor_margin_str
+
+        if data.BAR_POSITION == "Bottom":
+            current_margin_str = "0px 0px 0px 0px"  # No margin for bottom bar
         
         super().__init__(
             name="notch",
