@@ -30,10 +30,13 @@ from utils.occlusion import check_occlusion
 
 class Notch(Window):
     def __init__(self, **kwargs):
+        anchor_val = "bottom" if data.BAR_POSITION == "Bottom" else "top"
+        revealer_transition_type = "slide-up" if data.BAR_POSITION == "Bottom" else "slide-down"
+
         super().__init__(
             name="notch",
             layer="top",
-            anchor="top",
+            anchor=anchor_val,
             margin="-40px 8px 8px 8px" if not data.VERTICAL else "0px 0px 0px 0px",
             
             keyboard_mode="none",
@@ -43,9 +46,11 @@ class Notch(Window):
         )
 
         # Margins
-        self.margin = ""
-
-        if not data.VERTICAL:
+        if data.VERTICAL:
+            self.margin = "0px 0px 0px 0px"
+        elif data.BAR_POSITION == "Bottom":
+            self.margin = "0px 0px 0px 0px"
+        else:  # Horizontal bar at the top
             match data.BAR_THEME:
                 case "Pills":
                     self.margin = "-40px 0px 0px 0px"
@@ -54,11 +59,8 @@ class Notch(Window):
                 case "Edge":
                     self.margin = "-46px 0px 0px 0px"
                 case _:
-                    self.margin = "0px 0px 0px 0px"
-
-        if data.BAR_POSITION == "Bottom":
-            self.margin = "0px 0px 0px 0px"
-
+                    self.margin = "0px 0px 0px 0px" # Fallback for themed horizontal top
+        
         self.set_margin(self.margin)
 
         # Add character buffer for launcher transition
@@ -231,7 +233,7 @@ class Notch(Window):
 
         self.notification_revealer = Revealer(
             name="notification-revealer",
-            transition_type="slide-down",
+            transition_type=revealer_transition_type,
             transition_duration=250,
             child_revealed=False,
         )
@@ -246,7 +248,7 @@ class Notch(Window):
         
         self.notch_revealer = Revealer(
             name="notch-revealer",
-            transition_type="slide-down",
+            transition_type=revealer_transition_type,
             transition_duration=250,
             child_revealed=True,
             child=self.notch_box,
@@ -355,7 +357,7 @@ class Notch(Window):
         """Handle hover enter for the entire notch area"""
         self.is_hovered = True
         # If in vertical mode, notch is not open, and revealer is closed, reveal it
-        if data.VERTICAL and not self.notch_revealer.get_reveal_child() and not self._is_notch_open:
+        if (data.VERTICAL or data.BAR_POSITION == "Bottom") and not self.notch_revealer.get_reveal_child() and not self._is_notch_open:
             self.notch_revealer.set_reveal_child(True)
         return False  # Allow event propagation
 
@@ -717,7 +719,8 @@ class Notch(Window):
         """
         # Only check occlusion if not hovered, not open, and in vertical mode
         if (data.VERTICAL or data.BAR_POSITION == "Bottom") and not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
-            is_occluded = check_occlusion(("top", 40))
+            occlusion_check_edge = "bottom" if data.BAR_POSITION == "Bottom" else "top"
+            is_occluded = check_occlusion((occlusion_check_edge, 40))
             self.notch_revealer.set_reveal_child(not is_occluded)
         
         return True  # Return True to keep the timeout active
@@ -740,7 +743,7 @@ class Notch(Window):
         Temporarily remove the 'occluded' class when active window class changes
         to make the notch visible momentarily.
         """
-        if not data.VERTICAL:
+        if not (data.VERTICAL or data.BAR_POSITION == "Bottom"):
             return
             
         # Get the current window class
