@@ -156,8 +156,8 @@ class HyprConfGUI(Window):
             h_expand=True,
             v_expand=True
         )
-        scrolled_window.set_propagate_natural_height(False)  # <--- LÍNEA AÑADIDA
-        scrolled_window.set_min_content_height(300) # Keep some min height
+        scrolled_window.set_propagate_natural_height(False)
+        scrolled_window.set_min_content_height(300)
 
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
         scrolled_window.add(vbox)
@@ -225,20 +225,30 @@ class HyprConfGUI(Window):
         layout_grid.set_margin_top(5)
         vbox.add(layout_grid)
 
-        # Vertical Layout
-        vertical_label = Label(label="Vertical Layout", h_align="start", v_align="center")
-        layout_grid.attach(vertical_label, 0, 0, 1, 1)
-        vertical_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
-        self.vertical_switch = Gtk.Switch(active=bind_vars.get('vertical', False))
-        self.vertical_switch.connect("notify::active", self.on_vertical_changed)
-        vertical_switch_container.add(self.vertical_switch)
-        layout_grid.attach(vertical_switch_container, 1, 0, 1, 1)
+        # Replace Vertical Layout switch with a Bar Position dropdown
+        position_label = Label(label="Bar Position", h_align="start", v_align="center")
+        layout_grid.attach(position_label, 0, 0, 1, 1)
+        position_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        self.position_combo = Gtk.ComboBoxText()
+        self.position_combo.set_tooltip_text("Select the position of the bar")
+        positions = ["Top", "Bottom", "Left", "Right"]
+        for pos in positions: 
+            self.position_combo.append_text(pos)
+        current_position = bind_vars.get('bar_position', "Top")
+        try:
+            self.position_combo.set_active(positions.index(current_position))
+        except ValueError:
+            self.position_combo.set_active(0)  # Default to Top
+        self.position_combo.connect("changed", self.on_position_changed)
+        position_combo_container.add(self.position_combo)
+        layout_grid.attach(position_combo_container, 1, 0, 1, 1)
 
         # Centered Bar
-        centered_label = Label(label="Centered Bar (Vertical Only)", h_align="start", v_align="center")
+        centered_label = Label(label="Centered Bar (Left/Right Only)", h_align="start", v_align="center")
         layout_grid.attach(centered_label, 2, 0, 1, 1)
         centered_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
-        self.centered_switch = Gtk.Switch(active=bind_vars.get('centered_bar', False), sensitive=self.vertical_switch.get_active())
+        self.centered_switch = Gtk.Switch(active=bind_vars.get('centered_bar', False), 
+                                          sensitive=bind_vars.get('bar_position', "Top") in ["Left", "Right"])
         centered_switch_container.add(self.centered_switch)
         layout_grid.attach(centered_switch_container, 3, 0, 1, 1)
 
@@ -514,10 +524,12 @@ class HyprConfGUI(Window):
         self.ws_chinese_switch.set_sensitive(is_active)
         if not is_active: self.ws_chinese_switch.set_active(False)
 
-    def on_vertical_changed(self, switch, gparam):
-        is_active = switch.get_active()
-        self.centered_switch.set_sensitive(is_active)
-        if not is_active: self.centered_switch.set_active(False)
+    def on_position_changed(self, combo):
+        position = combo.get_active_text()
+        is_vertical = position in ["Left", "Right"]
+        self.centered_switch.set_sensitive(is_vertical)
+        if not is_vertical:
+            self.centered_switch.set_active(False)
 
     def on_dock_enabled_changed(self, switch, gparam):
         is_active = switch.get_active()
@@ -554,7 +566,11 @@ class HyprConfGUI(Window):
             current_bind_vars_snapshot[suffix_key] = suffix_entry.get_text()
 
         current_bind_vars_snapshot['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
-        current_bind_vars_snapshot['vertical'] = self.vertical_switch.get_active()
+        
+        # Update with bar position and derive vertical from it
+        current_bind_vars_snapshot['bar_position'] = self.position_combo.get_active_text()
+        current_bind_vars_snapshot['vertical'] = self.position_combo.get_active_text() in ["Left", "Right"]
+        
         current_bind_vars_snapshot['centered_bar'] = self.centered_switch.get_active()
         current_bind_vars_snapshot['dock_enabled'] = self.dock_switch.get_active()
         current_bind_vars_snapshot['dock_always_occluded'] = self.dock_hover_switch.get_active()
@@ -715,9 +731,18 @@ class HyprConfGUI(Window):
                 suffix_entry.set_text(settings_utils.bind_vars[suffix_key])
 
             self.wall_dir_chooser.set_filename(settings_utils.bind_vars['wallpapers_dir'])
-            self.vertical_switch.set_active(settings_utils.bind_vars.get('vertical', False))
+            
+            # Update position dropdown when resetting
+            positions = ["Top", "Bottom", "Left", "Right"]
+            default_position = DEFAULTS.get('bar_position', "Top")
+            try:
+                self.position_combo.set_active(positions.index(default_position))
+            except ValueError:
+                self.position_combo.set_active(0)  # Default to Top
+                
             self.centered_switch.set_active(settings_utils.bind_vars.get('centered_bar', False))
-            self.centered_switch.set_sensitive(self.vertical_switch.get_active()) # Re-evaluar sensibilidad
+            self.centered_switch.set_sensitive(default_position in ["Left", "Right"])
+            
             self.dock_switch.set_active(settings_utils.bind_vars.get('dock_enabled', True))
             self.dock_hover_switch.set_active(settings_utils.bind_vars.get('dock_always_occluded', False))
             self.dock_hover_switch.set_sensitive(self.dock_switch.get_active()) # Re-evaluar sensibilidad

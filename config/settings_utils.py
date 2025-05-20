@@ -200,9 +200,12 @@ def generate_hyprconf() -> str:
     """
     Generate the Hypr configuration string using the current bind_vars.
     """
-    home = os.path.expanduser('~') # HOME_DIR podría también ser usado si está definido globalmente
-    # Usa el bind_vars global de este módulo
-    # Asegurarse que todas las claves existen en bind_vars o usar .get con default
+    home = os.path.expanduser('~')
+    # Determine animation type based on bar position
+    bar_position = bind_vars.get('bar_position', 'Top')
+    is_vertical = bar_position in ["Left", "Right"]
+    animation_type = "slidefadevert" if is_vertical else "slidefade"
+    
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
@@ -240,8 +243,8 @@ layerrule = noanim, fabric
 exec = cp $wallpaper ~/.current.wall
 
 general {{
-    col.active_border = 0xff$primary
-    col.inactive_border = 0xff$surface
+    col.active_border = rgb($primary)
+    col.inactive_border = rgb($surface)
     gaps_in = 2
     gaps_out = 4
     border_size = 2
@@ -276,7 +279,7 @@ animations {{
     animation = windows, 1, 2.5, myBezier, popin 80%
     animation = border, 1, 2.5, myBezier
     animation = fade, 1, 2.5, myBezier
-    animation = workspaces, 1, 2.5, myBezier, {'slidefadevert' if bind_vars.get('vertical', False) else 'slidefade'} 20%
+    animation = workspaces, 1, 2.5, myBezier, {animation_type} 20%
 }}
 """
 

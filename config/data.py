@@ -51,7 +51,8 @@ if os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, 'r') as f:
         config = json.load(f)
     WALLPAPERS_DIR = config.get('wallpapers_dir', WALLPAPERS_DIR_DEFAULT)
-    VERTICAL = config.get('vertical', False)  # Use saved value or False as default
+    BAR_POSITION = config.get('bar_position', "Top")  # Load bar position
+    VERTICAL = BAR_POSITION in ["Left", "Right"]  # Derive vertical from position
     CENTERED_BAR = config.get('centered_bar', False)  # Load centered bar setting
     TERMINAL_COMMAND = config.get('terminal_command', "kitty -e")  # Load terminal command
     DOCK_ENABLED = config.get('dock_enabled', True)  # Load dock visibility setting
@@ -84,7 +85,8 @@ if os.path.exists(CONFIG_FILE):
     METRICS_SMALL_VISIBLE = config.get('metrics_small_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
-    VERTICAL = False  # Default value when no config exists
+    BAR_POSITION = "Top"  # Default position
+    VERTICAL = False  # Default value derived from Top position
     CENTERED_BAR = False  # Default value for centered bar
     DOCK_ENABLED = True  # Default value for dock visibility
     DOCK_ALWAYS_OCCLUDED = False  # Default value for dock hover-only mode

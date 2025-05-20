@@ -44,7 +44,8 @@ DEFAULTS = {
     'wallpapers_dir': WALLPAPERS_DIR_DEFAULT,
     'prefix_restart_inspector': "SUPER CTRL ALT",
     'suffix_restart_inspector': "B",
-    'vertical': False,
+    'bar_position': "Top",  # New default position setting
+    'vertical': False,  # Kept for backward compatibility
     'centered_bar': False,
     'terminal_command': "kitty -e",
     'dock_enabled': True,
