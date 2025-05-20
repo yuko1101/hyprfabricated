@@ -3,18 +3,19 @@ import os
 import shutil
 import subprocess
 import time
-import toml
 from pathlib import Path
 
 import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import GLib
+import toml
 
+gi.require_version('Gtk', '3.0')
 from fabric.utils.helpers import exec_shell_command_async
+from gi.repository import GLib
 
 # Importar settings_constants para DEFAULTS
 from . import settings_constants
-from .data import APP_NAME, APP_NAME_CAP # CONFIG_DIR, HOME_DIR no se usan aquí directamente
+from .data import (  # CONFIG_DIR, HOME_DIR no se usan aquí directamente
+    APP_NAME, APP_NAME_CAP)
 
 # Global variable to store binding variables, managed by this module
 bind_vars = {} # Se inicializa vacío, load_bind_vars lo poblará
@@ -271,7 +272,7 @@ decoration {{
 
 animations {{
     enabled = yes
-    bezier = myBezier, 0.4, 0, 0.2, 1
+    bezier = myBezier, 0.4, 0.0, 0.2, 1.0
     animation = windows, 1, 2.5, myBezier, popin 80%
     animation = border, 1, 2.5, myBezier
     animation = fade, 1, 2.5, myBezier

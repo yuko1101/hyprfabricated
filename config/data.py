@@ -1,11 +1,11 @@
-import os
 import json
+import os
+
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk, GLib
-
 from fabric.utils.helpers import get_relative_path
+from gi.repository import Gdk, GLib
 
 APP_NAME = "ax-shell"
 APP_NAME_CAP = "Ax-Shell"
@@ -30,6 +30,8 @@ MATUGEN_STATE_FILE = os.path.join(CONFIG_DIR, "matugen")
 # Default value for the new setting
 BAR_WORKSPACE_USE_CHINESE_NUMERALS = False
 BAR_THEME = "Pills" # Default bar theme
+
+DOCK_THEME = "Pills" # Default dock theme
 
 def load_config():
     """Load the configuration from config.json"""
@@ -58,6 +60,7 @@ if os.path.exists(CONFIG_FILE):
     BAR_WORKSPACE_SHOW_NUMBER = config.get('bar_workspace_show_number', False) # Load workspace number visibility
     BAR_WORKSPACE_USE_CHINESE_NUMERALS = config.get('bar_workspace_use_chinese_numerals', False) # Load Chinese numeral setting
     BAR_THEME = config.get('bar_theme', "Pills") # Load bar theme setting
+    DOCK_THEME = config.get('dock_theme', "Pills") # Load dock theme setting
 
     # Load bar component visibility settings
     BAR_COMPONENTS_VISIBILITY = {
@@ -90,6 +93,7 @@ else:
     BAR_WORKSPACE_SHOW_NUMBER = False # Default workspace number visibility
     BAR_WORKSPACE_USE_CHINESE_NUMERALS = False # Default Chinese numeral setting
     BAR_THEME = "Pills" # Default bar theme
+    DOCK_THEME = "Pills"
 
     # Default values for component visibility (all visible)
     BAR_COMPONENTS_VISIBILITY = {

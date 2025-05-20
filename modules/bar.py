@@ -85,6 +85,7 @@ class Bar(Window):
                     v_align="center",
                     id=i,
                     label=None,
+                    style_classes=["vertical"] if data.VERTICAL else None,
                 )
                 for i in range(1, 11)
             ],
@@ -328,21 +329,26 @@ class Bar(Window):
         for tc in theme_classes:
             self.bar_inner.remove_style_class(tc)
         
-        if current_theme == "Pills":
-            self.bar_inner.add_style_class("pills")
-        elif current_theme == "Dense":
-            self.bar_inner.add_style_class("dense")
-        elif current_theme == "Edge":
-            if data.VERTICAL:
-                if data.CENTERED_BAR:
-                    self.bar_inner.add_style_class("edgevertcentered")
-                else:
-                    self.bar_inner.add_style_class("edgevert")
-            else:
-                self.bar_inner.add_style_class("edge")
-        else: # Default to Pills if somehow invalid
-            self.bar_inner.add_style_class("pills")
 
+        self.style = None
+
+        match current_theme:
+            case "Pills":
+                self.style = "pills"
+            case "Dense":
+                self.style = "dense"
+            case "Edge":
+                if data.VERTICAL and data.CENTERED_BAR:
+                    self.style = "edgecenter"
+                else:
+                    self.style = "edge"
+            case _:
+                self.style = "pills"  # Default
+
+        self.bar_inner.add_style_class(self.style)
+
+        if data.VERTICAL:
+            self.bar_inner.add_style_class("vertical")
 
         # self.show_all()
         self.systray._update_visibility()

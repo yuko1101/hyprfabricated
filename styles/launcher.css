@@ -75,14 +75,18 @@
   border-radius: 16px;
 }
 
-#scrolled-window scrollbar {
+#scrolled-window scrollbar,
+#bluetooth-devices scrollbar,
+#network-ap-scrolled-window scrollbar {
   border-radius: 10px;
   background-color: var(--surface);
   padding: 4px;
   margin-left: 6px;
 }
 
-#scrolled-window slider {
+#scrolled-window slider,
+#bluetooth-devices slider,
+#network-ap-scrolled-window slider {
   border-radius: 8px;
   min-width: 16px;
   min-height: 48px;

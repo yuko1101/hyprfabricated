@@ -101,10 +101,25 @@ class Dock(Window):
         self.view = Box(name="viewport", orientation="h" if not data.VERTICAL else "v", spacing=4)
         self.wrapper = Box(name="dock", orientation="v", children=[self.view])
 
+        match data.DOCK_THEME:
+            case "Pills":
+                self.wrapper.add_style_class("pills")
+            case "Dense":
+                self.wrapper.add_style_class("dense")
+            case "Edge":
+                self.wrapper.add_style_class("edge")
+            case _:
+                self.wrapper.add_style_class("pills")
+
         self.dock_eventbox = EventBox()
         self.dock_eventbox.add(self.wrapper)
         self.dock_eventbox.connect("enter-notify-event", self._on_dock_enter)
         self.dock_eventbox.connect("leave-notify-event", self._on_dock_leave)
+
+        self.corner_left = Box()
+        self.corner_right = Box()
+        self.corner_top = Box()
+        self.corner_bottom = Box()
 
         if not data.VERTICAL:
             self.corner_left = Box(
@@ -187,6 +202,10 @@ class Dock(Window):
             self.wrapper.remove_style_class("vertical")
 
         GLib.timeout_add_seconds(1, self.check_config_change)
+
+        if data.DOCK_THEME in ["Edge", "Dense"]:
+            for corner in [self.corner_left, self.corner_right, self.corner_top, self.corner_bottom]:
+                corner.set_visible(False)
         
         if not data.DOCK_ENABLED:
             self.set_visible(False)

@@ -7,11 +7,10 @@
 
 #bar-inner.dense,
 #bar-inner.edge,
-#bar-inner.edgevert,
-#bar-inner.edgevertcentered {
+#bar-inner.edge.vertical,
+#bar-inner.edgecenter.vertical {
   padding: 4px;
   background-color: var(--shadow);
-  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
   border-style: solid;
   border-color: var(--surface-bright);
 }
@@ -25,12 +24,12 @@
   border-radius: 0;
 }
 
-#bar-inner.edgevert {
+#bar-inner.edge.vertical {
   border-width: 0 2px 0 0;
   border-radius: 0;
 }
 
-#bar-inner.edgevertcentered {
+#bar-inner.edgecenter.vertical {
   border-width: 2px;
   border-left-width: 0;
   border-radius: 0 16px 16px 0;

@@ -39,6 +39,7 @@ class WifiAccessPointSlot(CenterBox):
             label="Conectado" if self.is_active else "Conectar",
             sensitive=not self.is_active,
             on_clicked=self._on_connect_clicked,
+            style_classes=["connected"] if self.is_active else None,
         )
 
         self.set_start_children([
@@ -60,7 +61,7 @@ class NetworkConnections(Box):
         super().__init__(
             name="network-connections",
             orientation="vertical",
-            spacing=8,
+            spacing=4,
             **kwargs,
         )
         self.widgets = kwargs["widgets"]
@@ -69,7 +70,7 @@ class NetworkConnections(Box):
         self.status_label = Label(label="Inicializando Wi-Fi...", h_expand=True, h_align="center")
 
         self.back_button = Button(
-            name="network-back-button",
+            name="network-back",
             child=Label(name="network-back-label", markup=icons.chevron_left), # Esto ya usa Label
             on_clicked=lambda *_: self.widgets.show_notif()
         )
@@ -84,9 +85,9 @@ class NetworkConnections(Box):
         )
         
         # Cambiar de Image a Label para usar iconos de modules.icons
-        self.refresh_button_icon = Label(markup=icons.reload) # Usar el icono de recargar
+        self.refresh_button_icon = Label(name="network-refresh-label", markup=icons.reload) # Usar el icono de recargar
         self.refresh_button = Button(
-            name="network-refresh-button",
+            name="network-refresh",
             child=self.refresh_button_icon,
             tooltip_text="Buscar redes Wi-Fi",
             on_clicked=self._refresh_access_points
@@ -96,7 +97,7 @@ class NetworkConnections(Box):
             name="network-header",
             start_children=[self.back_button],
             center_children=[Label(name="network-title", label="Redes Wi-Fi")],
-            end_children=[Box(orientation="horizontal", spacing=4, children=[self.wifi_toggle_button, self.refresh_button])]
+            end_children=[Box(orientation="horizontal", spacing=4, children=[self.refresh_button])]
         )
 
         self.ap_list_box = Box(orientation="vertical", spacing=4)

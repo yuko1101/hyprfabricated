@@ -23,6 +23,7 @@ class BluetoothDeviceSlot(CenterBox):
             name="bluetooth-connect",
             label="Connect",
             on_clicked=lambda *_: self.device.set_connecting(not self.device.connected),
+            style_classes=["connected"] if self.device.connected else None,
         )
 
         self.start_children = [
@@ -45,12 +46,16 @@ class BluetoothDeviceSlot(CenterBox):
         )
         if self.device.connecting:
             self.connect_button.set_label(
-                "Connecting..." if not self.device.connecting else "Disconnecting..."
+                "Connecting..." if not self.device.connecting else "..."
             )
         else:
             self.connect_button.set_label(
                 "Connect" if not self.device.connected else "Disconnect"
             )
+        if self.device.connected:
+            self.connect_button.add_style_class("connected")
+        else:
+            self.connect_button.remove_style_class("connected")
         return
 
 class BluetoothConnections(Box):
