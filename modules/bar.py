@@ -28,43 +28,41 @@ class Bar(Window):
         super().__init__(
             name="bar",
             layer="top",
-            anchor = (
-                "left top right"
-                if not data.VERTICAL
-                else "left" if data.CENTERED_BAR
-                else "top left bottom"
-            ),
-            margin="-4px -4px -8px -4px" if not data.VERTICAL else "-4px -8px -4px -4px",
             exclusivity="auto",
             visible=True,
             all_visible=True,
         )
 
-        # Margins
-        self.margin = ""
+        self.anchor_var = ""
+        self.margin_var = ""
+
+        match data.BAR_POSITION:
+            case "Top":
+                self.anchor_var = "left top right"
+            case "Bottom":
+                self.anchor_var = "left bottom right"
+            case "Left":
+                self.anchor_var = "left" if data.CENTERED_BAR else "left top bottom"
+            case "Right":
+                self.anchor_var = "right" if data.CENTERED_BAR else "top right bottom"
+            case _:
+                self.anchor_var = "left top right"
 
         if data.VERTICAL:
             match data.BAR_THEME:
-                case "Pills":
-                    self.margin = "-4px -8px -4px -4px"
-                case "Dense":
-                    self.margin = "-4px -8px -4px -4px"
                 case "Edge":
-                    self.margin = "-8px -8px -8px -8px" if data.CENTERED_BAR else "-8px -8px -8px -8px"
+                    self.margin_var = "-8px -8px -8px -8px"
                 case _:
-                    self.margin = "-4px -8px -4px -4px"
+                    self.margin_var = "-4px -8px -4px -4px"
         else:
             match data.BAR_THEME:
-                case "Pills":
-                    self.margin = "-4px -4px -8px -4px"
-                case "Dense":
-                    self.margin = "-4px -4px -8px -4px"
                 case "Edge":
-                    self.margin = "-8px -8px -8px -8px"
+                    self.margin_var = "-8px -8px -8px -8px"
                 case _:
-                    self.margin = "-4px -4px -8px -4px"
+                    self.margin_var = "-4px -4px -8px -4px"
 
-        self.set_margin(self.margin)
+        self.set_anchor(self.anchor_var)
+        self.set_margin(self.margin_var)
 
         self.notch = kwargs.get("notch", None)
         self.component_visibility = data.BAR_COMPONENTS_VISIBILITY
@@ -346,6 +344,18 @@ class Bar(Window):
                 self.style = "pills"  # Default
 
         self.bar_inner.add_style_class(self.style)
+
+        match data.BAR_POSITION:
+            case "Top":
+                self.bar_inner.add_style_class("top")
+            case "Bottom":
+                self.bar_inner.add_style_class("bottom")
+            case "Left":
+                self.bar_inner.add_style_class("left")
+            case "Right":
+                self.bar_inner.add_style_class("right")
+            case _:
+                self.bar_inner.add_style_class("top")
 
         if data.VERTICAL:
             self.bar_inner.add_style_class("vertical")

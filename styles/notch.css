@@ -94,19 +94,6 @@
   margin: 10px;
 }
 
-#vert-comp,
-#vert-comp.pills {
-  min-width: 44px;
-}
-
-#vert-comp.dense {
-  min-width: 56px;
-}
-
-#vert-comp.edge {
-  min-width: 48px;
-}
-
 #app-launcher,
 #power-menu,
 #toolbox,

@@ -29,10 +29,31 @@
   border-radius: 0;
 }
 
+#bar-inner.edge.bottom {
+  border-width: 2px 0 0 0;
+  border-radius: 0;
+}
+
+#bar-inner.edge.vertical.right {
+  border-width: 0 0 0 2px;
+  border-radius: 0;
+}
+
 #bar-inner.edgecenter.vertical {
   border-width: 2px;
   border-left-width: 0;
   border-radius: 0 16px 16px 0;
+}
+
+#bar-inner.edge.vertical.right {
+  border-width: 0 0 0 2px;
+  border-radius: 0;
+}
+
+#bar-inner.edgecenter.vertical.right {
+  border-width: 2px;
+  border-right-width: 0;
+  border-radius: 16px 0 0 16px;
 }
 
 #bar-inner.hidden {

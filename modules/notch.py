@@ -56,6 +56,9 @@ class Notch(Window):
                 case _:
                     self.margin = "0px 0px 0px 0px"
 
+        if data.BAR_POSITION == "Bottom":
+            self.margin = "0px 0px 0px 0px"
+
         self.set_margin(self.margin)
 
         # Add character buffer for launcher transition
@@ -168,7 +171,7 @@ class Notch(Window):
             name="notch-content",
             v_expand=True,
             h_expand=True,
-            style_classes = ["invert"] if (not data.VERTICAL and data.BAR_THEME in ["Dense", "Edge"]) else [],
+            style_classes = ["invert"] if (not data.VERTICAL and data.BAR_THEME in ["Dense", "Edge"]) and data.BAR_POSITION not in ["Bottom"] else [],
             transition_type="crossfade",
             transition_duration=250,
             children=[
@@ -270,26 +273,34 @@ class Notch(Window):
         self._is_notch_open = False
         self._scrolling = False
 
-        self.vert_comp = Box(
-            name="vert-comp",
-        )
+        self.vert_comp_left = Box(name="vert-comp")
+        self.vert_comp_right = Box(name="vert-comp")
+
+        self.vert_comp = Box()
+
+        match data.BAR_POSITION:
+            case "Left":
+                self.vert_comp = self.vert_comp_right
+            case "Right":
+                self.vert_comp = self.vert_comp_left
 
         match data.BAR_THEME:
             case "Pills":
-                self.vert_comp.add_style_class("pills")
+                self.vert_comp.set_size_request(38, 0)
             case "Dense":
-                self.vert_comp.add_style_class("dense")
+                self.vert_comp.set_size_request(50, 0)
             case "Edge":
-                self.vert_comp.add_style_class("edge")
+                self.vert_comp.set_size_request(44, 0)
             case _:
-                self.vert_comp.add_style_class("pills")
+                self.vert_comp.set_size_request(38, 0)
 
         self.notch_children = []
 
         if data.VERTICAL:
             self.notch_children = [
+                self.vert_comp_left,
                 self.notch_complete,
-                self.vert_comp,
+                self.vert_comp_right,
             ]
         else:
             self.notch_children = [
@@ -705,7 +716,7 @@ class Notch(Window):
         and update the notch_revealer accordingly.
         """
         # Only check occlusion if not hovered, not open, and in vertical mode
-        if data.VERTICAL and not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
+        if (data.VERTICAL or data.BAR_POSITION == "Bottom") and not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
             is_occluded = check_occlusion(("top", 40))
             self.notch_revealer.set_reveal_child(not is_occluded)
         
