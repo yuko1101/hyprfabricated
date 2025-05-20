@@ -55,12 +55,17 @@ class Bar(Window):
                     self.margin_var = "-8px -8px -8px -8px"
                 case _:
                     self.margin_var = "-4px -8px -4px -4px"
-        else:
+        else:  # Barra horizontal
             match data.BAR_THEME:
                 case "Edge":
                     self.margin_var = "-8px -8px -8px -8px"
-                case _:
-                    self.margin_var = "-4px -4px -8px -4px"
+                case _:  # "Pills" o "Dense"
+                    if data.BAR_POSITION == "Bottom":
+                        # Margen invertido para posición inferior: top, right, bottom, left
+                        self.margin_var = "-8px -4px -4px -4px"
+                    else:
+                        # Margen original para otras posiciones (ej. "Top")
+                        self.margin_var = "-4px -4px -8px -4px"
 
         self.set_anchor(self.anchor_var)
         self.set_margin(self.margin_var)
