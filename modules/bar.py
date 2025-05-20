@@ -342,11 +342,6 @@ class Bar(Window):
             self.themed_children.append(self.integrated_dock_widget)
 
 
-        if data.BAR_THEME == "Dense" or data.BAR_THEME == "Edge":
-            for child in self.themed_children:
-                if hasattr(child, 'add_style_class'): # Asegurarse de que el widget puede tener clases de estilo
-                    child.add_style_class("invert")
-
         current_theme = data.BAR_THEME
         theme_classes = ["pills", "dense", "edge", "edgecenter"]
         for tc in theme_classes:
@@ -367,6 +362,22 @@ class Bar(Window):
                 self.style = "pills"
 
         self.bar_inner.add_style_class(self.style)
+        
+        if self.integrated_dock_widget and hasattr(self.integrated_dock_widget, 'add_style_class'):
+            # Eliminar clases de tema anteriores que podrían haber sido aplicadas por el Dock
+            # si la lógica en Dock.__init__ no se hubiera ajustado.
+            # Esto es más una medida de seguridad, idealmente Dock no las añade en modo integrado.
+            for theme_class_to_remove in ["pills", "dense", "edge"]:
+                style_context = self.integrated_dock_widget.get_style_context()
+                if style_context.has_class(theme_class_to_remove):
+                    self.integrated_dock_widget.remove_style_class(theme_class_to_remove)
+            self.integrated_dock_widget.add_style_class(self.style)
+
+        if data.BAR_THEME == "Dense" or data.BAR_THEME == "Edge":
+            for child in self.themed_children:
+                if hasattr(child, 'add_style_class'): # Asegurarse de que el widget puede tener clases de estilo
+                    child.add_style_class("invert")
+
 
         match data.BAR_POSITION:
             case "Top":

@@ -128,15 +128,16 @@ class Dock(Window):
         self.wrapper.set_orientation(common_orientation)
         self.view.set_orientation(common_orientation)
 
-        match data.DOCK_THEME:
-            case "Pills":
-                self.wrapper.add_style_class("pills")
-            case "Dense":
-                self.wrapper.add_style_class("dense")
-            case "Edge":
-                self.wrapper.add_style_class("edge")
-            case _:
-                self.wrapper.add_style_class("pills")
+        if not self.integrated_mode:
+            match data.DOCK_THEME:
+                case "Pills":
+                    self.wrapper.add_style_class("pills")
+                case "Dense":
+                    self.wrapper.add_style_class("dense")
+                case "Edge":
+                    self.wrapper.add_style_class("edge")
+                case _:
+                    self.wrapper.add_style_class("pills")
 
         # --- Lógica específica del modo no integrado (ventana) ---
         if not self.integrated_mode:
