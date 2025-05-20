@@ -519,8 +519,12 @@ class Notch(Window):
                 self.applet_stack.set_visible_child(self.nhistory)
             # No se necesita 'else', widget_name debe ser uno de estos si target_widget_on_stack es dashboard.
             
-        self.bar.revealer_right.set_reveal_child(not hide_bar_revealers)
-        self.bar.revealer_left.set_reveal_child(not hide_bar_revealers)
+        if data.BAR_POSITION == "Bottom":
+            self.bar.revealer_right.set_reveal_child(True)
+            self.bar.revealer_left.set_reveal_child(True)
+        else:
+            self.bar.revealer_right.set_reveal_child(not hide_bar_revealers)
+            self.bar.revealer_left.set_reveal_child(not hide_bar_revealers)
         
         self._is_notch_open = True
 
