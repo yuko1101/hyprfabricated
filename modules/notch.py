@@ -30,38 +30,41 @@ from utils.occlusion import check_occlusion
 
 class Notch(Window):
     def __init__(self, **kwargs):
-        anchor_val = "bottom" if data.BAR_POSITION == "Bottom" else "top"
-        revealer_transition_type = "slide-up" if data.BAR_POSITION == "Bottom" else "slide-down"
+        # Notch window is always anchored фармацевт top
+        anchor_val = "top"
+        # Transition for revealers is always slide-down as notch is at the top
+        revealer_transition_type = "slide-down"
 
+        # Determine margin string based on orientation and theme (always for top anchor)
+        default_top_anchor_margin_str = "-40px 8px 8px 8px"  # top, right, bottom, left
+        pills_margin_top_str = "-40px 0px 0px 0px"
+        dense_edge_margin_top_str = "-46px 0px 0px 0px"
+        current_margin_str = ""
+
+        if data.VERTICAL:
+            current_margin_str = "0px 0px 0px 0px"
+        else:  # Horizontal bar, notch is always anchored top
+            match data.BAR_THEME:
+                case "Pills":
+                    current_margin_str = pills_margin_top_str
+                case "Dense" | "Edge":
+                    current_margin_str = dense_edge_margin_top_str
+                case _:
+                    current_margin_str = default_top_anchor_margin_str
+        
         super().__init__(
             name="notch",
             layer="top",
-            anchor=anchor_val,
-            margin="-40px 8px 8px 8px" if not data.VERTICAL else "0px 0px 0px 0px",
-            
+            anchor=anchor_val, # Ahora siempre "top"
+            margin=current_margin_str, # Margen para ocultar hacia arriba
             keyboard_mode="none",
             exclusivity="none",
             visible=True,
             all_visible=True,
         )
 
-        # Margins
-        if data.VERTICAL:
-            self.margin = "0px 0px 0px 0px"
-        elif data.BAR_POSITION == "Bottom":
-            self.margin = "0px 0px 0px 0px"
-        else:  # Horizontal bar at the top
-            match data.BAR_THEME:
-                case "Pills":
-                    self.margin = "-40px 0px 0px 0px"
-                case "Dense":
-                    self.margin = "-46px 0px 0px 0px"
-                case "Edge":
-                    self.margin = "-46px 0px 0px 0px"
-                case _:
-                    self.margin = "0px 0px 0px 0px" # Fallback for themed horizontal top
-        
-        self.set_margin(self.margin)
+        # self.margin = current_margin_str # Opcional: guardar si se necesita referenciar
+        # self.set_margin(self.margin) # No es necesario llamar a set_margin si se pasa en __init__
 
         # Add character buffer for launcher transition
         self._typed_chars_buffer = ""
@@ -91,8 +94,7 @@ class Notch(Window):
         self.applet_stack = self.dashboard.widgets.applet_stack
         self.nhistory = self.dashboard.widgets.notification_history
         self.btdevices = self.dashboard.widgets.bluetooth
-        # self.network_placeholder_widget = self.dashboard.widgets.network_placeholder_page # <--- ELIMINADA ESTA LÍNEA
-        self.network_connections_widget = self.dashboard.widgets.network_connections # <--- AÑADIDA ESTA LÍNEA
+        self.network_connections_widget = self.dashboard.widgets.network_connections
 
         self.window_label = Label(
             name="notch-window-label",
@@ -233,7 +235,7 @@ class Notch(Window):
 
         self.notification_revealer = Revealer(
             name="notification-revealer",
-            transition_type=revealer_transition_type,
+            transition_type=revealer_transition_type, # Usará "slide-down"
             transition_duration=250,
             child_revealed=False,
         )
@@ -248,7 +250,7 @@ class Notch(Window):
         
         self.notch_revealer = Revealer(
             name="notch-revealer",
-            transition_type=revealer_transition_type,
+            transition_type=revealer_transition_type, # Usará "slide-down"
             transition_duration=250,
             child_revealed=True,
             child=self.notch_box,
@@ -397,13 +399,13 @@ class Notch(Window):
             if is_dashboard_currently_visible:
                 # Si el dashboard está abierto y mostrando el network widget, cerrar.
                 if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
-                   self.applet_stack.get_visible_child() == self.network_connections_widget: # <--- CAMBIO AQUÍ
+                   self.applet_stack.get_visible_child() == self.network_connections_widget:
                     self.close_notch()
                     return
                 # Si el dashboard está abierto (en cualquier sección), navegar al network widget.
                 self.set_keyboard_mode("exclusive") 
                 self.dashboard.go_to_section("widgets")
-                self.applet_stack.set_visible_child(self.network_connections_widget) # <--- CAMBIO AQUÍ
+                self.applet_stack.set_visible_child(self.network_connections_widget)
                 return
             # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
 
@@ -506,7 +508,7 @@ class Notch(Window):
                 self.applet_stack.set_visible_child(self.btdevices)
             elif widget_name == "network_applet": # Añadido este nuevo caso
                 self.dashboard.go_to_section("widgets")
-                self.applet_stack.set_visible_child(self.network_connections_widget) # <--- CAMBIO AQUÍ
+                self.applet_stack.set_visible_child(self.network_connections_widget)
             elif widget_name in dashboard_sections_map: # pins, kanban, wallpapers
                 self.dashboard.go_to_section(widget_name)
             elif widget_name == "dashboard": # Caso general para "dashboard"
@@ -670,8 +672,9 @@ class Notch(Window):
         if conn:
             try:
                 import json
-                active_window = json.loads(conn.send_command("j/activewindow").reply.decode())
-                app_id = active_window.get("initialClass", "") or active_window.get("class", "")
+                active_window_json = conn.send_command("j/activewindow").reply.decode()
+                active_window_data = json.loads(active_window_json)
+                app_id = active_window_data.get("initialClass", "") or active_window_data.get("class", "")
                 
                 # Find app using icon resolver or desktop apps
                 icon_size = 20
@@ -717,10 +720,10 @@ class Notch(Window):
         Check if top 40px of the screen is occluded by any window
         and update the notch_revealer accordingly.
         """
-        # Only check occlusion if not hovered, not open, and in vertical mode
+        # Only check occlusion if not hovered, not open, and in vertical mode or bar at bottom
         if (data.VERTICAL or data.BAR_POSITION == "Bottom") and not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
-            occlusion_check_edge = "bottom" if data.BAR_POSITION == "Bottom" else "top"
-            is_occluded = check_occlusion((occlusion_check_edge, 40))
+            # Always check occlusion at the "top" edge as the notch window is there
+            is_occluded = check_occlusion(("top", 40)) 
             self.notch_revealer.set_reveal_child(not is_occluded)
         
         return True  # Return True to keep the timeout active
@@ -732,8 +735,9 @@ class Notch(Window):
             conn = get_hyprland_connection()
             if conn:
                 import json
-                active_window = json.loads(conn.send_command("j/activewindow").reply.decode())
-                return active_window.get("initialClass", "") or active_window.get("class", "")
+                active_window_json = conn.send_command("j/activewindow").reply.decode()
+                active_window_data = json.loads(active_window_json)
+                return active_window_data.get("initialClass", "") or active_window_data.get("class", "")
         except Exception as e:
             print(f"Error getting window class: {e}")
         return ""
