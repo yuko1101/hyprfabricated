@@ -202,7 +202,7 @@ class Dock(Window):
                 for corner in [self.corner_left, self.corner_right, self.corner_top, self.corner_bottom]:
                     corner.set_visible(False)
             
-            if not data.DOCK_ENABLED:
+            if not data.DOCK_ENABLED or data.BAR_POSITION == "Bottom":
                 self.set_visible(False) # Método de Gtk.Window
             
             if self.always_occluded: # self.always_occluded ya está definido arriba
