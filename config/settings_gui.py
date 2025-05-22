@@ -312,37 +312,36 @@ class HyprConfGUI(Window):
         bar_theme_combo_container.add(self.bar_theme_combo)
         layout_grid.attach(bar_theme_combo_container, 1, 4, 3, 1)
 
-        # Añade la fila para el tema del Dock (después de la fila de la barra, que es la fila 4)
+        # Dock Theme
         dock_theme_label = Label(label="Dock Theme", h_align="start", v_align="center")
-        layout_grid.attach(dock_theme_label, 0, 5, 1, 1) # Nueva fila 5
+        layout_grid.attach(dock_theme_label, 0, 5, 1, 1) 
         dock_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
-        self.dock_theme_combo = Gtk.ComboBoxText() # Guarda la referencia
+        self.dock_theme_combo = Gtk.ComboBoxText() 
         self.dock_theme_combo.set_tooltip_text("Select the visual theme for the dock")
-        # themes ya está definido arriba
         for theme in themes: self.dock_theme_combo.append_text(theme)
-        current_dock_theme = bind_vars.get('dock_theme', "Pills") # Carga el valor actual
+        current_dock_theme = bind_vars.get('dock_theme', "Pills") 
         try:
             self.dock_theme_combo.set_active(themes.index(current_dock_theme))
         except ValueError:
-            self.dock_theme_combo.set_active(0) # Fallback
+            self.dock_theme_combo.set_active(0) 
         dock_theme_combo_container.add(self.dock_theme_combo)
-        layout_grid.attach(dock_theme_combo_container, 1, 5, 3, 1) # Nueva fila 5, abarca 3 columnas
+        layout_grid.attach(dock_theme_combo_container, 1, 5, 3, 1)
 
         # Panel Theme
         panel_theme_label = Label(label="Panel Theme", h_align="start", v_align="center")
-        layout_grid.attach(panel_theme_label, 0, 6, 1, 1) # Nueva fila 6
+        layout_grid.attach(panel_theme_label, 0, 6, 1, 1) # Fila 6, Columna 0
         panel_theme_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.panel_theme_combo = Gtk.ComboBoxText()
         self.panel_theme_combo.set_tooltip_text("Select the theme/mode for panels like toolbox, clipboard, etc.")
         panel_themes = ["Notch", "Panel"]
         for theme in panel_themes: self.panel_theme_combo.append_text(theme)
-        current_panel_theme = bind_vars.get('panel_theme', "Notch") # Carga el valor actual
+        current_panel_theme = bind_vars.get('panel_theme', "Notch") 
         try:
             self.panel_theme_combo.set_active(panel_themes.index(current_panel_theme))
         except ValueError:
-            self.panel_theme_combo.set_active(0) # Fallback a Notch
+            self.panel_theme_combo.set_active(0) 
         panel_theme_combo_container.add(self.panel_theme_combo)
-        layout_grid.attach(panel_theme_combo_container, 1, 6, 3, 1) # Nueva fila 6, abarca 3 columnas
+        layout_grid.attach(panel_theme_combo_container, 1, 6, 1, 1) # Fila 6, Columna 1, Span 1
         self.panel_theme_combo.connect("changed", self._on_panel_theme_changed_for_position_sensitivity)
 
         # Almacenar opciones de posición del panel
@@ -352,9 +351,9 @@ class HyprConfGUI(Window):
             "Bottom", "Bottom-left", "Bottom-right"
         ]
 
-        # Panel Position (Nueva sección para la fila 7)
+        # Panel Position (misma fila que Panel Theme, columnas derechas)
         panel_position_label = Label(label="Panel Position", h_align="start", v_align="center")
-        layout_grid.attach(panel_position_label, 0, 7, 1, 1) # Nueva fila 7
+        layout_grid.attach(panel_position_label, 2, 6, 1, 1) # Fila 6, Columna 2
 
         panel_position_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.panel_position_combo = Gtk.ComboBoxText()
@@ -372,7 +371,7 @@ class HyprConfGUI(Window):
                 self.panel_position_combo.set_active(0) 
 
         panel_position_combo_container.add(self.panel_position_combo)
-        layout_grid.attach(panel_position_combo_container, 1, 7, 3, 1) # Nueva fila 7, abarca 3 columnas
+        layout_grid.attach(panel_position_combo_container, 3, 6, 1, 1) # Fila 6, Columna 3, Span 1
 
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;", h_expand=True)
         vbox.add(separator2)
