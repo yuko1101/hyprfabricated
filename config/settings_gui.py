@@ -21,7 +21,8 @@ from fabric.widgets.window import Window
 from gi.repository import GdkPixbuf, GLib, Gtk
 from PIL import Image
 
-from .data import APP_NAME, APP_NAME_CAP
+from .data import (APP_NAME, APP_NAME_CAP, PANEL_POSITION_KEY,
+                   PANEL_POSITION_DEFAULT)
 # DEFAULTS se importa directamente en on_reset, SOURCE_STRING no se usa aquí
 # from .settings_constants import DEFAULTS, SOURCE_STRING
 # bind_vars se importa de settings_utils, backup_and_replace y start_config también
@@ -317,7 +318,7 @@ class HyprConfGUI(Window):
         dock_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.dock_theme_combo = Gtk.ComboBoxText() # Guarda la referencia
         self.dock_theme_combo.set_tooltip_text("Select the visual theme for the dock")
-        themes = ["Pills", "Dense", "Edge"]
+        # themes ya está definido arriba
         for theme in themes: self.dock_theme_combo.append_text(theme)
         current_dock_theme = bind_vars.get('dock_theme', "Pills") # Carga el valor actual
         try:
@@ -330,7 +331,7 @@ class HyprConfGUI(Window):
         # Panel Theme
         panel_theme_label = Label(label="Panel Theme", h_align="start", v_align="center")
         layout_grid.attach(panel_theme_label, 0, 6, 1, 1) # Nueva fila 6
-        panel_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        panel_theme_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.panel_theme_combo = Gtk.ComboBoxText()
         self.panel_theme_combo.set_tooltip_text("Select the theme/mode for panels like toolbox, clipboard, etc.")
         panel_themes = ["Notch", "Panel"]
@@ -342,6 +343,36 @@ class HyprConfGUI(Window):
             self.panel_theme_combo.set_active(0) # Fallback a Notch
         panel_theme_combo_container.add(self.panel_theme_combo)
         layout_grid.attach(panel_theme_combo_container, 1, 6, 3, 1) # Nueva fila 6, abarca 3 columnas
+        self.panel_theme_combo.connect("changed", self._on_panel_theme_changed_for_position_sensitivity)
+
+        # Almacenar opciones de posición del panel
+        self.panel_position_options = [
+            "Top", "Top-left", "Top-right",
+            "Center", "Center-left", "Center-right",
+            "Bottom", "Bottom-left", "Bottom-right"
+        ]
+
+        # Panel Position (Nueva sección para la fila 7)
+        panel_position_label = Label(label="Panel Position", h_align="start", v_align="center")
+        layout_grid.attach(panel_position_label, 0, 7, 1, 1) # Nueva fila 7
+
+        panel_position_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        self.panel_position_combo = Gtk.ComboBoxText()
+        self.panel_position_combo.set_tooltip_text("Select the position for the 'Panel' theme panels")
+        for option in self.panel_position_options:
+            self.panel_position_combo.append_text(option)
+        
+        current_panel_position = bind_vars.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT)
+        try:
+            self.panel_position_combo.set_active(self.panel_position_options.index(current_panel_position))
+        except ValueError:
+            try:
+                self.panel_position_combo.set_active(self.panel_position_options.index(PANEL_POSITION_DEFAULT))
+            except ValueError:
+                self.panel_position_combo.set_active(0) 
+
+        panel_position_combo_container.add(self.panel_position_combo)
+        layout_grid.attach(panel_position_combo_container, 1, 7, 3, 1) # Nueva fila 7, abarca 3 columnas
 
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;", h_expand=True)
         vbox.add(separator2)
@@ -394,8 +425,26 @@ class HyprConfGUI(Window):
             components_grid.attach(switch_container, col + 1, row, 1, 1)
             self.component_switches[name] = component_switch
             item_idx +=1
-
+        
+        self._update_panel_position_sensitivity() # Configurar sensibilidad inicial
         return scrolled_window
+
+    def _on_panel_theme_changed_for_position_sensitivity(self, combo):
+        self._update_panel_position_sensitivity()
+
+    def _update_panel_position_sensitivity(self):
+        if hasattr(self, 'panel_theme_combo') and hasattr(self, 'panel_position_combo'):
+            selected_theme = self.panel_theme_combo.get_active_text()
+            is_panel_theme_selected = (selected_theme == "Panel") # "Panel" debe ser el texto exacto
+            self.panel_position_combo.set_sensitive(is_panel_theme_selected)
+            # Opcional: si se deshabilita, se podría restablecer a un valor por defecto.
+            # if not is_panel_theme_selected:
+            #     try:
+            #         default_pos_idx = self.panel_position_options.index(PANEL_POSITION_DEFAULT)
+            #         self.panel_position_combo.set_active(default_pos_idx)
+            #     except ValueError:
+            #         self.panel_position_combo.set_active(0)
+            # Por ahora, simplemente lo deshabilita, manteniendo el valor seleccionado.
 
     def create_system_tab(self):
         scrolled_window = ScrolledWindow(
@@ -596,9 +645,9 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['bar_workspace_show_number'] = self.ws_num_switch.get_active()
         current_bind_vars_snapshot['bar_workspace_use_chinese_numerals'] = self.ws_chinese_switch.get_active()
         current_bind_vars_snapshot['bar_theme'] = self.bar_theme_combo.get_active_text()
-        # Añade esta línea para guardar el tema del dock
         current_bind_vars_snapshot['dock_theme'] = self.dock_theme_combo.get_active_text()
         current_bind_vars_snapshot['panel_theme'] = self.panel_theme_combo.get_active_text()
+        current_bind_vars_snapshot[PANEL_POSITION_KEY] = self.panel_position_combo.get_active_text()
 
         for component_name, switch in self.component_switches.items():
             current_bind_vars_snapshot[f'bar_{component_name}_visible'] = switch.get_active()
@@ -778,34 +827,39 @@ class HyprConfGUI(Window):
             except ValueError:
                 self.bar_theme_combo.set_active(0) 
 
-            # Añade esta sección para restablecer el tema del dock
             default_dock_theme_val = DEFAULTS.get('dock_theme', "Pills")
             try:
                 self.dock_theme_combo.set_active(themes.index(default_dock_theme_val))
             except ValueError:
                 self.dock_theme_combo.set_active(0)
 
-            # Restablecer el tema del panel
             default_panel_theme_val = DEFAULTS.get('panel_theme', "Notch")
-            panel_themes_options = ["Notch", "Panel"] # Asegúrate que estas son las opciones
+            panel_themes_options = ["Notch", "Panel"] 
             try:
                 self.panel_theme_combo.set_active(panel_themes_options.index(default_panel_theme_val))
             except ValueError:
-                self.panel_theme_combo.set_active(0) # Fallback a Notch
+                self.panel_theme_combo.set_active(0)
+            
+            # Restablecer la posición del panel
+            default_panel_position_val = DEFAULTS.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT)
+            try:
+                self.panel_position_combo.set_active(self.panel_position_options.index(default_panel_position_val))
+            except ValueError:
+                try:
+                    self.panel_position_combo.set_active(self.panel_position_options.index(PANEL_POSITION_DEFAULT))
+                except ValueError:
+                    self.panel_position_combo.set_active(0) 
 
             for name, switch in self.component_switches.items():
                  switch.set_active(settings_utils.bind_vars.get(f'bar_{name}_visible', True))
             self.corners_switch.set_active(settings_utils.bind_vars.get('corners_visible', True))
 
-            # Usar DEFAULTS para resetear los switches de métricas, ya que bind_vars ahora refleja DEFAULTS
-            # y settings_utils.bind_vars es la fuente de verdad.
             metrics_vis_defaults = DEFAULTS.get('metrics_visible', {})
             for k, s_widget in self.metrics_switches.items(): s_widget.set_active(metrics_vis_defaults.get(k, True))
             
             metrics_small_vis_defaults = DEFAULTS.get('metrics_small_visible', {})
             for k, s_widget in self.metrics_small_switches.items(): s_widget.set_active(metrics_small_vis_defaults.get(k, True))
             
-            # Re-aplicar la lógica de habilitación mínima
             def enforce_minimum_metrics(switch_dict):
                 enabled_switches = [s_widget for s_widget in switch_dict.values() if s_widget.get_active()]
                 can_disable = len(enabled_switches) > 3
@@ -814,18 +868,17 @@ class HyprConfGUI(Window):
             enforce_minimum_metrics(self.metrics_switches)
             enforce_minimum_metrics(self.metrics_small_switches)
 
-            # Limpiar y resetear disk_entries
             for child in list(self.disk_entries.get_children()): self.disk_entries.remove(child)
             
-            # Recrear disk_entries usando la función helper y los valores de DEFAULTS
-            # Usamos la función _add_disk_entry_widget que definimos antes.
             for p in DEFAULTS.get('bar_metrics_disks', ["/"]):
                 self._add_disk_entry_widget(p)
 
+            # Actualizar sensibilidad después de todos los resets
+            self._update_panel_position_sensitivity()
 
             self.selected_face_icon = None
             self.face_status_label.label = ""
-            current_face = os.path.expanduser("~/.face.icon") # Re-chequear el .face.icon actual
+            current_face = os.path.expanduser("~/.face.icon") 
             try:
                  pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(current_face, 64, 64) if os.path.exists(current_face) else None
                  if pixbuf: self.face_image.set_from_pixbuf(pixbuf)
