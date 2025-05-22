@@ -7,10 +7,8 @@ import time
 from pathlib import Path
 
 import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import GdkPixbuf, GLib, Gtk
-from PIL import Image
 
+gi.require_version('Gtk', '3.0')
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
@@ -20,12 +18,15 @@ from fabric.widgets.scale import Scale
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.stack import Stack
 from fabric.widgets.window import Window
+from gi.repository import GdkPixbuf, GLib, Gtk
+from PIL import Image
 
 from .data import APP_NAME, APP_NAME_CAP
 # DEFAULTS se importa directamente en on_reset, SOURCE_STRING no se usa aquí
 # from .settings_constants import DEFAULTS, SOURCE_STRING
 # bind_vars se importa de settings_utils, backup_and_replace y start_config también
-from .settings_utils import bind_vars, backup_and_replace, start_config # load_bind_vars no se llama desde aquí
+from .settings_utils import (  # load_bind_vars no se llama desde aquí
+    backup_and_replace, bind_vars, start_config)
 
 
 class HyprConfGUI(Window):
@@ -128,7 +129,6 @@ class HyprConfGUI(Window):
             ("Wallpapers", 'prefix_wallpapers', 'suffix_wallpapers'),
             ("Emoji Picker", 'prefix_emoji', 'suffix_emoji'),
             ("Power Menu", 'prefix_power', 'suffix_power'),
-            ("Toggle Bar and Notch", 'prefix_toggle', 'suffix_toggle'),
             ("Reload CSS", 'prefix_css', 'suffix_css'),
             ("Restart with inspector", 'prefix_restart_inspector', 'suffix_restart_inspector'),
         ]
@@ -621,7 +621,8 @@ class HyprConfGUI(Window):
         def _apply_and_reload_task_thread():
             nonlocal current_bind_vars_snapshot 
             
-            from . import settings_utils # Importar el módulo para modificar su bind_vars
+            from . import \
+                settings_utils  # Importar el módulo para modificar su bind_vars
             settings_utils.bind_vars.clear()
             settings_utils.bind_vars.update(current_bind_vars_snapshot)
 
@@ -669,7 +670,8 @@ class HyprConfGUI(Window):
             print(f"{time.time():.4f}: Checking/Appending hyprland.conf source string...")
             hypr_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
             try:
-                from .settings_constants import SOURCE_STRING # Importar aquí para asegurar que es el valor actual
+                from .settings_constants import \
+                    SOURCE_STRING  # Importar aquí para asegurar que es el valor actual
                 needs_append = True
                 if os.path.exists(hypr_path):
                     with open(hypr_path, "r") as f:
@@ -737,7 +739,7 @@ class HyprConfGUI(Window):
         )
         dialog.format_secondary_text("This will reset all keybindings and appearance settings to their default values.")
         if dialog.run() == Gtk.ResponseType.YES:
-            from . import settings_utils 
+            from . import settings_utils
             from .settings_constants import DEFAULTS 
 
             settings_utils.bind_vars.clear()

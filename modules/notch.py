@@ -54,6 +54,10 @@ class Notch(Window):
 
         if data.BAR_POSITION == "Bottom":
             current_margin_str = "0px 0px 0px 0px"  # No margin for bottom bar
+
+        if data.PANEL_THEME == "Panel":
+            # Panel theme uses a different margin for the top anchor
+            current_margin_str = "0px 0px 0px 0px"
         
         super().__init__(
             name="notch",
@@ -61,7 +65,7 @@ class Notch(Window):
             anchor=anchor_val, # Ahora siempre "top"
             margin=current_margin_str, # Margen para ocultar hacia arriba
             keyboard_mode="none",
-            exclusivity="none",
+            exclusivity="none" if data.PANEL_THEME == "Notch" else "normal",
             visible=True,
             all_visible=True,
         )
@@ -132,7 +136,9 @@ class Notch(Window):
         self.active_window_box.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
 
         self.active_window.connect("notify::label", self.update_window_icon)
-        self.active_window.connect("notify::label", self.on_active_window_changed)  # Connect to window change event
+
+        if data.PANEL_THEME == "Notch":
+            self.active_window.connect("notify::label", self.on_active_window_changed)  # Connect to window change event
 
         self.active_window.get_children()[0].set_hexpand(True)
         self.active_window.get_children()[0].set_halign(Gtk.Align.FILL)
@@ -194,10 +200,29 @@ class Notch(Window):
             ]
         )
 
+        if data.PANEL_THEME == "Panel":
+            self.stack.add_style_class("panel")
+
+        THEME_SIZES = {
+            "Notch": {
+                "launcher": (480, 244),
+                "tmux": (480, 244),
+                "cliphist": (480, 244),
+            },
+            "Panel": {
+                "launcher": (400, 579),
+                "tmux": (400, 579),
+                "cliphist": (400, 579),
+            },
+        }
+
+        theme = data.PANEL_THEME
+        sizes = THEME_SIZES.get(theme, THEME_SIZES["Notch"])
+
         self.compact.set_size_request(260, 40)
-        self.launcher.set_size_request((480, 244) if data.PANEL_THEME == "Notch" else (480, 512))
-        self.tmux.set_size_request(480, 244)
-        self.cliphist.set_size_request(480, 244)
+        self.launcher.set_size_request(*sizes["launcher"])
+        self.tmux.set_size_request(*sizes["tmux"])
+        self.cliphist.set_size_request(*sizes["cliphist"])
         self.dashboard.set_size_request(1093, 472)
         self.overview.set_size_request(1093, 480)
         self.emoji.set_size_request(574, 238)
@@ -235,6 +260,8 @@ class Notch(Window):
             center_children=self.stack,
             end_children=self.corner_right,
         )
+
+        self.notch_box.add_style_class(data.PANEL_THEME.lower())
 
         self.notification_revealer = Revealer(
             name="notification-revealer",
@@ -276,7 +303,6 @@ class Notch(Window):
             ]
         )
 
-        self.hidden = False
         self._is_notch_open = False
         self._scrolling = False
 
@@ -329,12 +355,19 @@ class Notch(Window):
         self.update_window_icon()
         
         self.active_window.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
+
+        if data.PANEL_THEME != "Notch":
+            for corner in [self.corner_left, self.corner_right]:
+                corner.set_visible(False)
         
         # Track current window class
         self._current_window_class = self._get_current_window_class()
         
         # Start checking for occlusion every 250ms
-        GLib.timeout_add(250, self._check_occlusion)
+        if data.PANEL_THEME == "Notch":
+            GLib.timeout_add(250, self._check_occlusion)
+        else:
+            self.notch_revealer.set_reveal_child(False)
         
         # Add key press event handling to the entire notch window
         self.connect("key-press-event", self.on_key_press)
@@ -386,6 +419,8 @@ class Notch(Window):
         self.applet_stack.set_visible_child(self.nhistory)
         self._is_notch_open = False
         self.stack.set_visible_child(self.compact)
+        if data.PANEL_THEME != "Notch":
+            self.notch_revealer.set_reveal_child(False)
 
     def open_notch(self, widget_name: str):
         self.notch_revealer.set_reveal_child(True)
@@ -809,10 +844,6 @@ class Notch(Window):
         # Otherwise similar to standard open_notch("launcher") but with text
         self.set_keyboard_mode("exclusive")
         
-        if self.hidden:
-            self.notch_box.remove_style_class("hidden")
-            self.notch_box.add_style_class("hideshow")
-            
         # Clear previous style classes and states
         for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
             self.stack.remove_style_class(style)
