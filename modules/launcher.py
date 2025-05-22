@@ -51,6 +51,7 @@ class AppLauncher(Box):
             name="search-entry",
             placeholder="Search Applications...",
             h_expand=True,
+            h_align="fill",
             notify_text=self.notify_text,  # Use the method instead of lambda
             on_activate=lambda entry, *_: self.on_search_entry_activate(entry.get_text()),
             on_key_press_event=self.on_search_entry_key_press,  # Handle key presses
@@ -59,10 +60,15 @@ class AppLauncher(Box):
         self.scrolled_window = ScrolledWindow(
             name="scrolled-window",
             spacing=10,
-            min_content_size=(450, 105),
-            max_content_size=(450, 105),
+            h_expand=True,
+            v_expand=True,
+            h_align="fill",
+            v_align="fill",
             child=self.viewport,
         )
+
+        self.scrolled_window.set_propagate_natural_width(False)
+        self.scrolled_window.set_propagate_natural_height(False)
 
         self.header_box = Box(
             name="header_box",

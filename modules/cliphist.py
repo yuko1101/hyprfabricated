@@ -42,6 +42,7 @@ class ClipHistory(Box):
             name="search-entry",
             placeholder="Search Clipboard History...",
             h_expand=True,
+            h_align="fill",
             notify_text=self.filter_items,
             on_activate=lambda entry, *_: self.use_selected_item(),
             on_key_press_event=self.on_search_entry_key_press,
@@ -51,10 +52,15 @@ class ClipHistory(Box):
         self.scrolled_window = ScrolledWindow(
             name="scrolled-window",
             spacing=10,
-            min_content_size=(450, 105),
-            max_content_size=(450, 105),
+            h_expand=True,
+            v_expand=True,
+            h_align="fill",
+            v_align="fill",
             child=self.viewport,
         )
+
+        self.scrolled_window.set_propagate_natural_width(False)
+        self.scrolled_window.set_propagate_natural_height(False)
 
         self.header_box = Box(
             name="header_box",

@@ -1,5 +1,5 @@
 #control-slider {
-  background-color: var(--surface-bright);
+  background-color: var(--surface);
   margin: 0px 0px 0px 0px;
   border-radius: 2px 10px 10px 2px;
 }
@@ -20,7 +20,7 @@
 
 #control-slider.muted trough highlight,
 #control-slider.muted slider {
-  background-color: var(--outline);
+  background-color: var(--surface-bright);
 }
 
 #control-slider slider {
@@ -86,7 +86,7 @@
 
 #vol-icon.muted,
 #mic-icon.muted {
-  background-color: var(--outline);
+  background-color: var(--surface-bright);
 }
 
 #vol-label-dash,

@@ -1,9 +1,11 @@
 import os
+
 import setproctitle
 from fabric import Application
-from fabric.utils import get_relative_path, exec_shell_command_async
+from fabric.utils import exec_shell_command_async, get_relative_path
 
-from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE, DOCK_ICON_SIZE, VERTICAL, APP_NAME_CAP
+from config.data import (APP_NAME, APP_NAME_CAP, CACHE_DIR, CONFIG_FILE,
+                         DOCK_ICON_SIZE, VERTICAL)
 from modules.bar import Bar
 from modules.corners import Corners
 from modules.dock import Dock
@@ -44,7 +46,7 @@ if __name__ == "__main__":
     app = Application(f"{APP_NAME}", bar, notch, dock, corners)  # Make sure corners is added to the app
 
     def set_css():
-        from config.data import CURRENT_WIDTH, CURRENT_HEIGHT
+        from config.data import CURRENT_HEIGHT, CURRENT_WIDTH
         app.set_stylesheet_from_file(
             get_relative_path("main.css"),
             exposed_functions={

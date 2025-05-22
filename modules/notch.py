@@ -195,9 +195,9 @@ class Notch(Window):
         )
 
         self.compact.set_size_request(260, 40)
-        self.launcher.set_size_request(480, 220)
-        self.tmux.set_size_request(480, 220)
-        self.cliphist.set_size_request(480, 220)
+        self.launcher.set_size_request(480, 244)
+        self.tmux.set_size_request(480, 244)
+        self.cliphist.set_size_request(480, 244)
         self.dashboard.set_size_request(1093, 472)
         self.overview.set_size_request(1093, 480)
         self.emoji.set_size_request(574, 238)

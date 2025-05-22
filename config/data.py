@@ -33,6 +33,8 @@ BAR_THEME = "Pills" # Default bar theme
 
 DOCK_THEME = "Pills" # Default dock theme
 
+PANEL_THEME = "Notch"  # Default panel mode
+
 def load_config():
     """Load the configuration from config.json"""
     config_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
@@ -62,6 +64,7 @@ if os.path.exists(CONFIG_FILE):
     BAR_WORKSPACE_USE_CHINESE_NUMERALS = config.get('bar_workspace_use_chinese_numerals', False) # Load Chinese numeral setting
     BAR_THEME = config.get('bar_theme', "Pills") # Load bar theme setting
     DOCK_THEME = config.get('dock_theme', "Pills") # Load dock theme setting
+    PANEL_THEME = config.get('panel_theme', "Pills") # Load panel theme setting
 
     # Load bar component visibility settings
     BAR_COMPONENTS_VISIBILITY = {
@@ -96,6 +99,7 @@ else:
     BAR_WORKSPACE_USE_CHINESE_NUMERALS = False # Default Chinese numeral setting
     BAR_THEME = "Pills" # Default bar theme
     DOCK_THEME = "Pills"
+    PANEL_THEME = "Notch"
 
     # Default values for component visibility (all visible)
     BAR_COMPONENTS_VISIBILITY = {
