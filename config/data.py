@@ -10,6 +10,10 @@ from gi.repository import Gdk, GLib
 APP_NAME = "ax-shell"
 APP_NAME_CAP = "Ax-Shell"
 
+# Añade estas líneas:
+PANEL_POSITION_KEY = "panel_position"
+PANEL_POSITION_DEFAULT = "top" # O el valor por defecto que prefieras (ej: "bottom")
+
 CACHE_DIR = str(GLib.get_user_cache_dir()) + f"/{APP_NAME}"
 
 USERNAME = os.getlogin()
@@ -65,6 +69,8 @@ if os.path.exists(CONFIG_FILE):
     BAR_THEME = config.get('bar_theme', "Pills") # Load bar theme setting
     DOCK_THEME = config.get('dock_theme', "Pills") # Load dock theme setting
     PANEL_THEME = config.get('panel_theme', "Pills") # Load panel theme setting
+    # Añade esta línea:
+    PANEL_POSITION = config.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT) # Load panel position
 
     # Load bar component visibility settings
     BAR_COMPONENTS_VISIBILITY = {
@@ -100,6 +106,8 @@ else:
     BAR_THEME = "Pills" # Default bar theme
     DOCK_THEME = "Pills"
     PANEL_THEME = "Notch"
+    # Añade esta línea:
+    PANEL_POSITION = PANEL_POSITION_DEFAULT # Default panel position
 
     # Default values for component visibility (all visible)
     BAR_COMPONENTS_VISIBILITY = {
