@@ -1,7 +1,7 @@
 import os
 
 from .data import (APP_NAME, APP_NAME_CAP,  # Añadir APP_NAME
-                   WALLPAPERS_DIR_DEFAULT)
+                   WALLPAPERS_DIR_DEFAULT, PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT)
 
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
@@ -55,6 +55,8 @@ DEFAULTS = {
     'bar_workspace_use_chinese_numerals': False,
     'bar_theme': "Pills",
     'dock_theme': "Pills",
+    'panel_theme': "Notch", # Default panel theme
+    PANEL_POSITION_KEY: PANEL_POSITION_DEFAULT, # Default panel position
     'bar_button_apps_visible': True,
     'bar_systray_visible': True,
     'bar_control_visible': True,
