@@ -327,6 +327,22 @@ class HyprConfGUI(Window):
         dock_theme_combo_container.add(self.dock_theme_combo)
         layout_grid.attach(dock_theme_combo_container, 1, 5, 3, 1) # Nueva fila 5, abarca 3 columnas
 
+        # Panel Theme
+        panel_theme_label = Label(label="Panel Theme", h_align="start", v_align="center")
+        layout_grid.attach(panel_theme_label, 0, 6, 1, 1) # Nueva fila 6
+        panel_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        self.panel_theme_combo = Gtk.ComboBoxText()
+        self.panel_theme_combo.set_tooltip_text("Select the theme/mode for panels like toolbox, clipboard, etc.")
+        panel_themes = ["Notch", "Panel"]
+        for theme in panel_themes: self.panel_theme_combo.append_text(theme)
+        current_panel_theme = bind_vars.get('panel_theme', "Notch") # Carga el valor actual
+        try:
+            self.panel_theme_combo.set_active(panel_themes.index(current_panel_theme))
+        except ValueError:
+            self.panel_theme_combo.set_active(0) # Fallback a Notch
+        panel_theme_combo_container.add(self.panel_theme_combo)
+        layout_grid.attach(panel_theme_combo_container, 1, 6, 3, 1) # Nueva fila 6, abarca 3 columnas
+
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;", h_expand=True)
         vbox.add(separator2)
 
@@ -582,6 +598,7 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['bar_theme'] = self.bar_theme_combo.get_active_text()
         # Añade esta línea para guardar el tema del dock
         current_bind_vars_snapshot['dock_theme'] = self.dock_theme_combo.get_active_text()
+        current_bind_vars_snapshot['panel_theme'] = self.panel_theme_combo.get_active_text()
 
         for component_name, switch in self.component_switches.items():
             current_bind_vars_snapshot[f'bar_{component_name}_visible'] = switch.get_active()
@@ -765,6 +782,14 @@ class HyprConfGUI(Window):
                 self.dock_theme_combo.set_active(themes.index(default_dock_theme_val))
             except ValueError:
                 self.dock_theme_combo.set_active(0)
+
+            # Restablecer el tema del panel
+            default_panel_theme_val = DEFAULTS.get('panel_theme', "Notch")
+            panel_themes_options = ["Notch", "Panel"] # Asegúrate que estas son las opciones
+            try:
+                self.panel_theme_combo.set_active(panel_themes_options.index(default_panel_theme_val))
+            except ValueError:
+                self.panel_theme_combo.set_active(0) # Fallback a Notch
 
             for name, switch in self.component_switches.items():
                  switch.set_active(settings_utils.bind_vars.get(f'bar_{name}_visible', True))
