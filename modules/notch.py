@@ -195,8 +195,6 @@ class Notch(Window):
         )
 
         self.compact.set_size_request(260, 40)
-        # self.launcher.set_size_request(480, 244)
-        # Fix this line to work with PANEL_THEME, AI!
         self.launcher.set_size_request((480, 244) if data.PANEL_THEME == "Notch" else (480, 512))
         self.tmux.set_size_request(480, 244)
         self.cliphist.set_size_request(480, 244)
