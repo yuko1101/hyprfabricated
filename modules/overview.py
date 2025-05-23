@@ -318,6 +318,7 @@ class Overview(Box):
                 
         return None
 
+    # Make it so if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top", instead of a 5x2 grid, it is a 2x5 grid, AI!
     def update(self, signal_update=False):
         # Refresh app registry when updating to ensure latest data
         self._all_apps = get_desktop_applications()
