@@ -4,13 +4,14 @@ import gi
 from fabric.utils import get_relative_path
 from fabric.widgets.box import Box
 from fabric.widgets.image import Image
-from fabric.widgets.label import Label
+from fabric.widgets.label import Label # Ya presente, asegurarse que es esta la que se usa
 from fabric.widgets.stack import Stack
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import Gdk, GdkPixbuf, Gtk
+from gi.repository import Gdk, GdkPixbuf, Gtk, GLib # Añadir GLib aquí
 
+import modules.icons as icons # Añadir esta importación
 from modules.kanban import Kanban
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
@@ -31,8 +32,6 @@ class Dashboard(Box):
         )
 
         self.notch = kwargs["notch"]
-        
-        # Remove the key press setup - Notch will handle this
         
         self.widgets = Widgets(notch=self.notch)
         self.pins = Pins()
@@ -56,27 +55,9 @@ class Dashboard(Box):
             spacing=8,
         )
 
-        self.label_1 = Label(
-            name="label-1",
-            label="Widgets",
-        )
+        # Las definiciones de Label anteriores (self.label_1, etc.) se eliminan
+        # ya que no se usaban para el switcher de la manera que se implementará con iconos.
 
-        self.label_2 = Label(
-            name="label-2",
-            label="Pins",
-        )
-
-        self.label_3 = Label(
-            name="label-3",
-            label="Kanban",
-        )
-
-        self.label_4 = Label(
-            name="label-4",
-            label="Wallpapers",
-        )
-
-        # Create the coming_soon labels as attributes for later update
         self.coming_soon_start_label = Label(
             name="coming-soon-label",
             label="I need...",
@@ -133,14 +114,49 @@ class Dashboard(Box):
         self.switcher.set_homogeneous(True)
         self.switcher.set_can_focus(True)
         
-        # Add signal to detect when the visible child changes
         self.stack.connect("notify::visible-child", self.on_visible_child_changed)
         
-        # Just add the stack directly, not in an event box
         self.add(self.switcher)
         self.add(self.stack)
 
+        GLib.idle_add(self._setup_switcher_icons)
+
         self.show_all()
+
+    def _setup_switcher_icons(self):
+        icon_details_map = {
+            "Widgets": {"icon": icons.widgets, "name": "widgets"},
+            "Pins": {"icon": icons.pins, "name": "pins"},
+            "Kanban": {"icon": icons.kanban, "name": "kanban"},
+            "Wallpapers": {"icon": icons.wallpapers, "name": "wallpapers"},
+            "Coming soon...": {"icon": icons.sparkles, "name": "coming-soon"},
+        }
+        
+        buttons = self.switcher.get_children()
+        for btn in buttons:
+            if isinstance(btn, Gtk.ToggleButton):
+                original_gtk_label = None
+                for child_widget in btn.get_children():
+                    if isinstance(child_widget, Gtk.Label): 
+                        original_gtk_label = child_widget
+                        break
+                
+                if original_gtk_label:
+                    label_text = original_gtk_label.get_text()
+                    if label_text in icon_details_map:
+                        details = icon_details_map[label_text]
+                        icon_markup = details["icon"]
+                        css_name_suffix = details["name"]
+                        
+                        btn.remove(original_gtk_label) 
+                        
+                        new_icon_label = Label(
+                            name=f"switcher-icon-{css_name_suffix}", 
+                            markup=icon_markup
+                        )
+                        btn.add(new_icon_label)
+                        new_icon_label.show_all() 
+        return GLib.SOURCE_REMOVE 
 
     def go_to_next_child(self):
         children = self.stack.get_children()
@@ -164,7 +180,6 @@ class Dashboard(Box):
             self.wallpapers.search_entry.set_text("")
             self.wallpapers.search_entry.grab_focus()
         if visible == self.coming_soon:
-            # Define paired messages for the coming_soon widget using tuples
             text_pairs = (
                 ("I need...", "To sleep..."),
                 ("Another day...", " Another bug..."),
