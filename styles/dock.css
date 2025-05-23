@@ -14,24 +14,24 @@
 #dock.dense {
   margin: 8px 8px 4px 8px;
   border-radius: 20px;
-  border: 2px solid var(--surface-bright);
+  border: 2px solid var(--surface);
 }
 
 #dock.edge {
   border-radius: 20px 20px 0 0;
-  border: 2px solid var(--surface-bright);
+  border: 2px solid var(--surface);
   border-bottom: none;
 }
 
 #dock.dense.vertical {
   margin: 8px 4px 8px 8px;
   border-radius: 20px;
-  border: 2px solid var(--surface-bright);
+  border: 2px solid var(--surface);
 }
 
 #dock.edge.vertical {
   border-radius: 20px 0 0 20px;
-  border: 2px solid var(--surface-bright);
+  border: 2px solid var(--surface);
   border-right: none;
 }
 

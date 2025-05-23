@@ -5,13 +5,14 @@ from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.stack import Stack
 
+import config.data as data
 from modules.bluetooth import BluetoothConnections
 from modules.buttons import Buttons
 from modules.calendar import Calendar
 from modules.controls import ControlSliders
 from modules.metrics import Metrics
+from modules.network import NetworkConnections  # <--- AÑADIDA ESTA IMPORTACIÓN
 from modules.player import Player
-from modules.network import NetworkConnections # <--- AÑADIDA ESTA IMPORTACIÓN
 
 
 class Widgets(Box):
@@ -25,6 +26,11 @@ class Widgets(Box):
             visible=True,
             all_visible=True,
         )
+
+        vertical_layout = False
+
+        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+            vertical_layout = True
 
         self.notch = kwargs["notch"]
 
@@ -50,21 +56,14 @@ class Widgets(Box):
 
         self.controls = ControlSliders()
 
+        self.calendar = Calendar()
+
         self.player = Player()
 
         self.metrics = Metrics()
 
         self.notification_history = self.notch.notification_history # Esta es la página de historial de notificaciones
 
-        # Reemplazar el Label placeholder con el nuevo widget NetworkConnections
-        # self.network_placeholder_page = Label(
-        #     label="Network Manager: Coming soon.",
-        #     name="network-applet-placeholder-label",
-        #     h_align="center",
-        #     v_align="center",
-        #     h_expand=True,
-        #     v_expand=True,
-        # )
         self.network_connections = NetworkConnections(widgets=self) # <--- REEMPLAZO/AÑADIDO
 
         self.applet_stack = Stack(
@@ -73,7 +72,7 @@ class Widgets(Box):
             transition_type="slide-left-right",
             children=[
                 self.notification_history,
-                self.network_connections, # <--- USAR EL NUEVO WIDGET AQUÍ
+                self.network_connections,
                 self.bluetooth,
             ]
         )
@@ -88,25 +87,41 @@ class Widgets(Box):
             ]
         )
 
+        self.children_1 = [
+            Box(
+                name="container-sub-1",
+                h_expand=True,
+                v_expand=True,
+                spacing=8,
+                children=[
+                    Calendar(),
+                    self.applet_stack_box,
+                ]
+            ),
+            self.metrics,
+        ] if not vertical_layout else [
+            Box(
+                name="container-sub-3",
+                orientation="v",
+                h_expand=True,
+                v_expand=True,
+                spacing=8,
+                children=[
+                    self.player,
+                    self.calendar,
+                    self.metrics,
+                ]
+            ),
+            self.applet_stack_box,
+        ]
+
         self.container_1 = Box(
             name="container-1",
             h_expand=True,
             v_expand=True,
             orientation="h",
             spacing=8,
-            children=[
-                Box(
-                    name="container-sub-1",
-                    h_expand=True,
-                    v_expand=True,
-                    spacing=8,
-                    children=[
-                        Calendar(),
-                        self.applet_stack_box,
-                    ]
-                ),
-                self.metrics,
-            ]
+            children=self.children_1,
         )
 
         self.container_2 = Box(
@@ -122,16 +137,20 @@ class Widgets(Box):
             ]
         )
 
+        self.children_3 = [
+            self.player,
+            self.container_2,
+        ] if not vertical_layout else [
+            self.container_2,
+        ]
+
         self.container_3 = Box(
             name="container-3",
             h_expand=True,
             v_expand=True,
             orientation="h",
             spacing=8,
-            children=[
-                self.player,
-                self.container_2,
-            ]
+            children=self.children_3,
         )
 
         self.add(self.container_3)
@@ -144,5 +163,3 @@ class Widgets(Box):
 
     def show_network_applet(self):
         self.notch.open_notch("network_applet")
-        # La lógica en open_notch("network_applet") se encargará de mostrar
-        # el widget de red correcto dentro del applet_stack.

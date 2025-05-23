@@ -14,6 +14,7 @@
 
 #notch-content.open {
   border-radius: 0 0 36px 36px;
+  padding: 2px;
 }
 
 #notch-content.open.invert {
@@ -98,19 +99,21 @@
 #notch-content.panel #clip-history,
 #notch-content.panel #overview,
 #notch-content.panel #emoji {
-  border-radius: 22px;
+  border-radius: 34px;
 }
 
 #notch-content.panel {
-  border-radius: 20px;
+  border-radius: 36px;
 }
 
 #notch-box.panel {
   margin: 4px;
+  border: 2px solid var(--surface);
+  border-radius: 36px;
 }
 
 #notch-content.open.panel {
-  background-color: var(--surface);
-  padding: 2px;
-  border-radius: 24px;
+  background-color: var(--shadow);
+  padding: 0px;
+  border-radius: 36px;
 }

@@ -7,6 +7,8 @@ from fabric.widgets.button import Button
 from fabric.widgets.label import Label
 from gi.repository import Gdk, GLib, Gtk  # Added GLib import
 
+import config.data as data
+
 gi.require_version('Gtk', '3.0')
 import modules.icons as icons
 from services.network import NetworkClient
@@ -439,10 +441,17 @@ class Buttons(Gtk.Grid):
         self.night_mode_button = NightModeButton()
         self.caffeine_button = CaffeineButton()
 
-        # Attach buttons into the grid (one row, four columns)
-        self.attach(self.network_button, 0, 0, 1, 1)
-        self.attach(self.bluetooth_button, 1, 0, 1, 1)
-        self.attach(self.night_mode_button, 2, 0, 1, 1)
-        self.attach(self.caffeine_button, 3, 0, 1, 1)
+        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+            # 2x2
+            self.attach(self.network_button, 0, 0, 1, 1)
+            self.attach(self.bluetooth_button, 1, 0, 1, 1)
+            self.attach(self.night_mode_button, 0, 1, 1, 1)
+            self.attach(self.caffeine_button, 1, 1, 1, 1)
+        else:
+            # Attach buttons into the grid (one row, four columns)
+            self.attach(self.network_button, 0, 0, 1, 1)
+            self.attach(self.bluetooth_button, 1, 0, 1, 1)
+            self.attach(self.night_mode_button, 2, 0, 1, 1)
+            self.attach(self.caffeine_button, 3, 0, 1, 1)
 
         self.show_all()

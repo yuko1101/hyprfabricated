@@ -21,8 +21,8 @@ from fabric.widgets.window import Window
 from gi.repository import GdkPixbuf, GLib, Gtk
 from PIL import Image
 
-from .data import (APP_NAME, APP_NAME_CAP, PANEL_POSITION_KEY,
-                   PANEL_POSITION_DEFAULT)
+from .data import (APP_NAME, APP_NAME_CAP, PANEL_POSITION_DEFAULT,
+                   PANEL_POSITION_KEY)
 # DEFAULTS se importa directamente en on_reset, SOURCE_STRING no se usa aquí
 # from .settings_constants import DEFAULTS, SOURCE_STRING
 # bind_vars se importa de settings_utils, backup_and_replace y start_config también
@@ -346,9 +346,8 @@ class HyprConfGUI(Window):
 
         # Almacenar opciones de posición del panel
         self.panel_position_options = [
-            "Top", "Top-left", "Top-right",
-            "Center", "Center-left", "Center-right",
-            "Bottom", "Bottom-left", "Bottom-right"
+            "Top", "Bottom", "Left", "Right",
+            "Top-left", "Top-right", "Bottom-left", "Bottom-right"
         ]
 
         # Panel Position (misma fila que Panel Theme, columnas derechas)

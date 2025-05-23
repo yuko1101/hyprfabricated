@@ -30,10 +30,38 @@ from utils.occlusion import check_occlusion
 
 class Notch(Window):
     def __init__(self, **kwargs):
-        # Notch window is always anchored фармацевт top
         anchor_val = "top"
-        # Transition for revealers is always slide-down as notch is at the top
         revealer_transition_type = "slide-down"
+
+        if data.PANEL_THEME == "Panel":
+            match data.PANEL_POSITION:
+                case "Top":
+                    anchor_val = "top"
+                    revealer_transition_type = "slide-down"
+                case "Bottom":
+                    anchor_val = "bottom"
+                    revealer_transition_type = "slide-up"
+                case "Left":
+                    anchor_val = "left"
+                    revealer_transition_type = "slide-right"
+                case "Right":
+                    anchor_val = "right"
+                    revealer_transition_type = "slide-left"
+                case "Top-left":
+                    anchor_val = "top left"
+                    revealer_transition_type = "slide-down"
+                case "Top-right":
+                    anchor_val = "top right"
+                    revealer_transition_type = "slide-down"
+                case "Bottom-left":
+                    anchor_val = "bottom left"
+                    revealer_transition_type = "slide-up"
+                case "Bottom-right":
+                    anchor_val = "bottom right"
+                    revealer_transition_type = "slide-up"
+                case _:
+                    anchor_val = "top"
+                    revealer_transition_type = "slide-down"
 
         # Determine margin string based on orientation and theme (always for top anchor)
         default_top_anchor_margin_str = "-40px 8px 8px 8px"  # top, right, bottom, left
@@ -202,31 +230,27 @@ class Notch(Window):
 
         if data.PANEL_THEME == "Panel":
             self.stack.add_style_class("panel")
+            self.stack.add_style_class(data.PANEL_POSITION)
 
-        THEME_SIZES = {
-            "Notch": {
-                "launcher": (480, 244),
-                "tmux": (480, 244),
-                "cliphist": (480, 244),
-            },
-            "Panel": {
-                "launcher": (400, 579),
-                "tmux": (400, 579),
-                "cliphist": (400, 579),
-            },
-        }
+        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+            self.compact.set_size_request(260, 40)
+            self.launcher.set_size_request(320, 635)
+            self.tmux.set_size_request(320, 635)
+            self.cliphist.set_size_request(320, 635)
+            self.dashboard.set_size_request(1093, 472)
+            self.overview.set_size_request(1093, 480)
+            self.emoji.set_size_request(574, 238)
+            self.overview.set_size_request(-1, -1)
 
-        theme = data.PANEL_THEME
-        sizes = THEME_SIZES.get(theme, THEME_SIZES["Notch"])
-
-        self.compact.set_size_request(260, 40)
-        self.launcher.set_size_request(*sizes["launcher"])
-        self.tmux.set_size_request(*sizes["tmux"])
-        self.cliphist.set_size_request(*sizes["cliphist"])
-        self.dashboard.set_size_request(1093, 472)
-        self.overview.set_size_request(1093, 480)
-        self.emoji.set_size_request(574, 238)
-        self.overview.set_size_request(-1, -1)
+        else:
+            self.compact.set_size_request(260, 40)
+            self.launcher.set_size_request(480, 244)
+            self.tmux.set_size_request(480, 244)
+            self.cliphist.set_size_request(480, 244)
+            self.dashboard.set_size_request(1093, 472)
+            self.overview.set_size_request(1093, 480)
+            self.emoji.set_size_request(574, 238)
+            self.overview.set_size_request(-1, -1)
 
         self.stack.set_interpolate_size(True)
         self.stack.set_homogeneous(False)
@@ -289,8 +313,9 @@ class Notch(Window):
         # Create an EventBox to handle hover events for the notch_revealer area
         self.notch_hover_area_event_box = Gtk.EventBox()
         self.notch_hover_area_event_box.add(self.notch_revealer)
-        self.notch_hover_area_event_box.connect("enter-notify-event", self.on_notch_hover_area_enter)
-        self.notch_hover_area_event_box.connect("leave-notify-event", self.on_notch_hover_area_leave)
+        if data.PANEL_THEME == "Notch":
+            self.notch_hover_area_event_box.connect("enter-notify-event", self.on_notch_hover_area_enter)
+            self.notch_hover_area_event_box.connect("leave-notify-event", self.on_notch_hover_area_leave)
         self.notch_hover_area_event_box.set_size_request(-1, 1)
 
         self.notch_complete = Box(
@@ -326,6 +351,11 @@ class Notch(Window):
                 self.vert_comp.set_size_request(44, 0)
             case _:
                 self.vert_comp.set_size_request(38, 0)
+
+        if data.PANEL_THEME == "Panel":
+            self.vert_comp.set_size_request(1, 1)
+
+        self.vert_comp.set_sensitive(False)
 
         self.notch_children = []
 

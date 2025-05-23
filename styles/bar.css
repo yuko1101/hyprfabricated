@@ -12,7 +12,7 @@
   padding: 4px;
   background-color: var(--shadow);
   border-style: solid;
-  border-color: var(--surface-bright);
+  border-color: var(--surface);
 }
 
 #bar-inner.dense {
@@ -36,6 +36,11 @@
 
 #bar-inner.edge.vertical.right {
   border-width: 0 0 0 2px;
+  border-radius: 0;
+}
+
+#bar-inner.edge.vertical.left {
+  border-width: 0 2px 0 0;
   border-radius: 0;
 }
 
