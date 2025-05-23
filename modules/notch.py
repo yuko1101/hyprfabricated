@@ -237,10 +237,8 @@ class Notch(Window):
             self.launcher.set_size_request(320, 635)
             self.tmux.set_size_request(320, 635)
             self.cliphist.set_size_request(320, 635)
-            self.dashboard.set_size_request(1093, 472)
-            self.overview.set_size_request(1093, 480)
+            self.dashboard.set_size_request(410, 900)
             self.emoji.set_size_request(574, 238)
-            self.overview.set_size_request(-1, -1)
 
         else:
             self.compact.set_size_request(260, 40)
@@ -248,9 +246,7 @@ class Notch(Window):
             self.tmux.set_size_request(480, 244)
             self.cliphist.set_size_request(480, 244)
             self.dashboard.set_size_request(1093, 472)
-            self.overview.set_size_request(1093, 480)
             self.emoji.set_size_request(574, 238)
-            self.overview.set_size_request(-1, -1)
 
         self.stack.set_interpolate_size(True)
         self.stack.set_homogeneous(False)

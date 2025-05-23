@@ -13,6 +13,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from loguru import logger
 
+import config.data as data
 import modules.icons as icons
 # WIP icon resolver (app_id to guessing the icon name)
 from utils.icon_resolver import IconResolver

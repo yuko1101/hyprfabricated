@@ -4,14 +4,17 @@ import gi
 from fabric.utils import get_relative_path
 from fabric.widgets.box import Box
 from fabric.widgets.image import Image
-from fabric.widgets.label import Label # Ya presente, asegurarse que es esta la que se usa
+from fabric.widgets.label import \
+    Label  # Ya presente, asegurarse que es esta la que se usa
 from fabric.widgets.stack import Stack
+
+import config.data as data
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import Gdk, GdkPixbuf, Gtk, GLib # Añadir GLib aquí
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk  # Añadir GLib aquí
 
-import modules.icons as icons # Añadir esta importación
+import modules.icons as icons  # Añadir esta importación
 from modules.kanban import Kanban
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
@@ -119,7 +122,8 @@ class Dashboard(Box):
         self.add(self.switcher)
         self.add(self.stack)
 
-        GLib.idle_add(self._setup_switcher_icons)
+        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+            GLib.idle_add(self._setup_switcher_icons)
 
         self.show_all()
 

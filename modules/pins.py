@@ -1,5 +1,7 @@
 import gi
 
+import config.data as data
+
 gi.require_version('Gtk', '3.0')
 import json
 import os
@@ -21,6 +23,10 @@ from watchdog.observers import Observer
 import modules.icons as icons
 
 SAVE_FILE = os.path.expanduser("~/.pins.json")
+
+icon_size = 80
+if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+    icon_size = 36
 
 def createSurfaceFromWidget(widget: Gtk.Widget) -> cairo.ImageSurface:
     alloc = widget.get_allocation()
@@ -178,7 +184,7 @@ class Cell(Gtk.EventBox):
                     self.box.pack_start(icon_container, True, True, 0)
                     
                     # Initially use the world icon in the container
-                    url_icon = Label(name="pin-url-icon", markup=icons.world)
+                    url_icon = Label(name="pin-url-icon", markup=icons.world, style=f"font-size: {icon_size}px;")
                     icon_container.pack_start(url_icon, True, True, 0)
                     
                     # Add the domain name label below the icon
@@ -211,8 +217,13 @@ class Cell(Gtk.EventBox):
             self.favicon_temp_path = favicon_path
             
             # Create a pixbuf from the favicon file
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                favicon_path, width=48, height=48, preserve_aspect_ratio=True)
+            if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+                # Use a smaller size for the icon in the panel
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                    favicon_path, width=36, height=36, preserve_aspect_ratio=True)
+            else:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                    favicon_path, width=48, height=48, preserve_aspect_ratio=True)
             
             # Remove the old icon widget from the container
             container.remove(icon_widget)
@@ -240,7 +251,7 @@ class Cell(Gtk.EventBox):
 
         if content_type == "inode/directory":
             try:
-                pixbuf = icon_theme.load_icon("default-folder", 80, 0)
+                pixbuf = icon_theme.load_icon("default-folder", icon_size, 0)
                 return Gtk.Image.new_from_pixbuf(pixbuf)
             except Exception:
                 print("Error loading folder icon")
@@ -249,14 +260,14 @@ class Cell(Gtk.EventBox):
         if content_type and content_type.startswith("image/"):
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                    filepath, width=80, height=80, preserve_aspect_ratio=True)
+                    filepath, width=icon_size, height=icon_size, preserve_aspect_ratio=True)
                 return Gtk.Image.new_from_pixbuf(pixbuf)
             except Exception as e:
                 print("Error loading image preview:", e)
         
         elif content_type and content_type.startswith("video/"):
             try:
-                pixbuf = icon_theme.load_icon("video-x-generic", 80, 0)
+                pixbuf = icon_theme.load_icon("video-x-generic", icon_size, 0)
                 return Gtk.Image.new_from_pixbuf(pixbuf)
             except Exception:
                 print("Error loading video icon")
@@ -270,7 +281,7 @@ class Cell(Gtk.EventBox):
                     if names:
                         icon_name = names[0]
             try:
-                pixbuf = icon_theme.load_icon(icon_name, 80, 0)
+                pixbuf = icon_theme.load_icon(icon_name, icon_size, 0)
                 return Gtk.Image.new_from_pixbuf(pixbuf)
             except Exception:
                 print("Error loading icon", icon_name)
@@ -401,11 +412,18 @@ class Pins(Gtk.Box):
         self.pack_start(scrolled_window, True, True, 0)
 
         # Create 30 cells (5x6)
-        for row in range(6):
-            for col in range(5):
-                cell = Cell(self)
-                self.cells.append(cell)
-                grid.attach(cell, col, row, 1, 1)
+        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+            for row in range(10):
+                for col in range(3):
+                    cell = Cell(self)
+                    self.cells.append(cell)
+                    grid.attach(cell, col, row, 1, 1)
+        else:
+            for row in range(6):
+                for col in range(5):
+                    cell = Cell(self)
+                    self.cells.append(cell)
+                    grid.attach(cell, col, row, 1, 1)
 
         self.load_state()
         self.loading_state = False
