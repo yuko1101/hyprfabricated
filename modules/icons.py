@@ -8,7 +8,6 @@ span: str = f"<span font-family='{font_family}' font-weight='{font_weight}'>"
 apps: str = "&#xf1fd;"
 dashboard: str = "&#xea87;"
 chat: str = "&#xf59f;"
-wallpapers: str = "&#xeb01;"
 windows: str = "&#xefe6;"
 
 # Bar
@@ -156,6 +155,13 @@ brightness_medium: str = "&#xeb7e;"
 brightness_high: str = "&#xeb30;"
 
 brightness: str = "&#xee1a;"
+
+# Dashboard
+widgets: str = "&#xf02c;"
+pins: str = "&#xec9c;"
+kanban: str = "&#xec3f;"
+wallpapers: str = "&#xeb61;"
+sparkles: str = "&#xf6d7;"
 
 # Misc
 dot: str = "&#xf698;"
