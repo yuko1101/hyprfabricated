@@ -100,26 +100,17 @@ class Widgets(Box):
             ),
             self.metrics,
         ] if not vertical_layout else [
-            Box(
-                name="container-sub-3",
-                orientation="v",
-                h_expand=True,
-                v_expand=True,
-                spacing=8,
-                children=[
-                    self.player,
-                    self.calendar,
-                    self.metrics,
-                ]
-            ),
             self.applet_stack_box,
+            self.player,
+            # self.calendar,
+            # self.metrics,
         ]
 
         self.container_1 = Box(
             name="container-1",
             h_expand=True,
             v_expand=True,
-            orientation="h",
+            orientation="h" if not vertical_layout else "v",
             spacing=8,
             children=self.children_1,
         )

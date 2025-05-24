@@ -22,6 +22,11 @@
   font-size: 11pt;
 }
 
+#player-title.vertical {
+  margin-top: 0;
+  font-size: 11pt;
+}
+
 #player-album {
   /* margin-top: -5px; */
   font-size: 9pt;
@@ -142,4 +147,45 @@
 #player-switcher.stack-switcher > *:checked:hover label {
   font-size: 20px;
   color: var(--foreground);
+}
+
+#player-switcher-vertical {
+  margin: 0 8px;
+}
+
+#player-switcher-vertical.stack-switcher > *:focus {
+  background-color: var(--surface-bright);
+}
+
+#player-switcher-vertical.stack-switcher button {
+  font-size: 0px;
+  color: var(--surface-bright);
+  background-color: var(--surface-bright);
+  min-width: 8px;
+  min-height: 8px;
+  margin: 0 -1px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#player-switcher-vertical.stack-switcher button:hover {
+  font-size: 0px;
+  color: var(--outline);
+  background-color: var(--foreground);
+}
+
+#player-switcher-vertical.stack-switcher > *:checked {
+  font-size: 0px;
+  color: var(--foreground);
+  background-color: var(--primary);
+  min-width: 32px;
+}
+
+#player-switcher-vertical.stack-switcher > *:checked:hover {
+  font-size: 0px;
+  color: var(--foreground);
+  background-color: var(--foreground);
+}
+
+#player-switcher-vertical.stack-switcher button label {
+  font-size: 0px;
 }

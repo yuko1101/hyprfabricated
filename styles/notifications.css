@@ -43,7 +43,7 @@
   padding: 16px;
   background-color: var(--shadow);
   margin: 8px;
-  /* min-width: 330px; */
+  min-width: 330px;
 }
 
 #boxed-notification-revealer {

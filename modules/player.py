@@ -18,6 +18,9 @@ from modules.cavalcade import SpectrumRender
 from services.mpris import MprisPlayer, MprisPlayerManager
 from widgets.circle_image import CircleImage
 
+vertical_mode = False
+if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+    vertical_mode = True
 
 def get_player_icon_markup_by_name(player_name):
     if player_name:
@@ -38,29 +41,29 @@ def add_hover_cursor(widget):
 
 class PlayerBox(Box):
     def __init__(self, mpris_player=None):
-        super().__init__(orientation="v", h_align="fill", spacing=0, h_expand=False, v_expand=True)
+        super().__init__(orientation="v", h_align="fill", spacing=0, h_expand=False, v_expand=not vertical_mode)
         self.mpris_player = mpris_player
         self._progress_timer_id = None  # Initialize timer ID
 
         self.cover = CircleImage(
             name="player-cover",
             image_file=os.path.expanduser("~/.current.wall"),
-            size=162,
+            size=162 if not vertical_mode else 96,
             h_align="center",
             v_align="center",
         )
         self.cover_placerholder = CircleImage(
             name="player-cover",
-            size=198,
+            size=198 if not vertical_mode else 132,
             h_align="center",
             v_align="center",
         )
-        self.title = Label(name="player-title", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1)
+        self.title = Label(name="player-title", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1, style_classes=["vertical"] if vertical_mode else [])
         self.album = Label(name="player-album", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1)
         self.artist = Label(name="player-artist", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1)
         self.progressbar = CircularProgressBar(
             name="player-progress",
-            size=198,
+            size=198 if not vertical_mode else 132,
             h_align="center",
             v_align="center",
             start_angle=180,
@@ -142,18 +145,39 @@ class PlayerBox(Box):
                 )
             ]
         )
+
+        self.p_children=[
+            self.overlay_container,
+            self.title,
+            self.album,
+            self.artist,
+            self.btn_box,
+            self.time,
+        ] if not vertical_mode else [
+            self.overlay_container,
+            Box(
+                orientation="v",
+                spacing=4,
+                h_expand=True,
+                h_align="fill",
+                v_expand=False,
+                v_align="center",
+                children=[
+                    self.title,
+                    self.album,
+                    self.btn_box,
+                    self.artist,
+                    self.time,
+                ]
+            )
+        ]
+
         self.player_box = Box(
             name="player-box",
-            orientation="v",
+            orientation="v" if not vertical_mode else "h",
+            v_align="center",
             spacing=4,
-            children=[
-                self.overlay_container,
-                self.title,
-                self.album,
-                self.artist,
-                self.btn_box,
-                self.time,
-            ]
+            children=self.p_children,
         )
         self.add(self.player_box)
         if mpris_player:
@@ -371,16 +395,16 @@ class PlayerBox(Box):
 
 class Player(Box):
     def __init__(self):
-        super().__init__(name="player", orientation="v", h_align="fill", spacing=0, h_expand=False, v_expand=True)
+        super().__init__(name="player", orientation="v", h_align="fill", spacing=0, h_expand=False, v_expand=not vertical_mode)
         self.player_stack = Stack(
             name="player-stack",
             transition_type="slide-left-right",
             transition_duration=500,
             v_align="center",
-            v_expand=True,
+            v_expand=not vertical_mode,
         )
         self.switcher = Gtk.StackSwitcher(
-            name="player-switcher",
+            name="player-switcher" if not vertical_mode else "player-switcher-vertical",
             spacing=8,
         )
         self.switcher.set_stack(self.player_stack)

@@ -29,9 +29,10 @@ class BluetoothDeviceSlot(CenterBox):
         self.start_children = [
             Box(
                 spacing=8,
+                h_expand=True,
                 children=[
                     Image(icon_name=device.icon_name + "-symbolic", size=32),
-                    Label(label=device.name),
+                    Label(label=device.name, h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1),
                     self.connection_label,
                 ],
             )

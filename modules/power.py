@@ -3,14 +3,19 @@ from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.label import Label
 
+import config.data as data
 import modules.icons as icons
 
 
 class PowerMenu(Box):
     def __init__(self, **kwargs):
+        orientation = "h"
+        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+            orientation = "v"
+
         super().__init__(
             name="power-menu",
-            orientation="h",
+            orientation=orientation,
             spacing=4,
             v_align="center",
             h_align="center",

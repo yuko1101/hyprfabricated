@@ -32,7 +32,7 @@ class WifiAccessPointSlot(CenterBox):
             self.is_active = True
         
         self.ap_icon = Image(icon_name=icon_name, size=24) # Esto se mantiene como Image
-        self.ap_label = Label(label=ssid)
+        self.ap_label = Label(label=ssid, h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1)
         
         self.connect_button = Button(
             name="wifi-connect-button",
@@ -43,7 +43,7 @@ class WifiAccessPointSlot(CenterBox):
         )
 
         self.set_start_children([
-            Box(spacing=8, children=[
+            Box(spacing=8, h_expand=True, h_align="fill", children=[
                 self.ap_icon,
                 self.ap_label,
             ])
