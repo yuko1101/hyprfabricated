@@ -4,7 +4,7 @@
 #bar-inner.edge.vertical,
 #bar-inner.edgecenter.vertical,
 #workspaces-container,
-#notch-content,
+#notch-box,
 #date-time,
 #systray,
 #battery,
@@ -15,7 +15,7 @@
 #weather,
 #language,
 #dock {
-  box-shadow: 0 0 3px alpha(black, 0.5);
+  box-shadow: 0 0 3px alpha(black, 0.99);
 }
 
 #bar-revealer {
