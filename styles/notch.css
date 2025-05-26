@@ -108,7 +108,8 @@
 
 #notch-box.panel {
   margin: 4px;
-  border: 2px solid var(--surface);
+  padding: 2px;
+  background-color: var(--surface);
   border-radius: 36px;
 }
 

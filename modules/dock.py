@@ -76,25 +76,88 @@ class Dock(Window):
         self.icon_size = 20 if self.integrated_mode else data.DOCK_ICON_SIZE
         self.effective_occlusion_size = 36 + self.icon_size
 
+        # Variables para la configuración dinámica del dock
+        anchor_to_set: str
+        revealer_transition_type: str
+        # self.actual_dock_is_horizontal determinará el comportamiento general (inferior vs lateral)
+        # Se necesita como atributo de instancia para usarlo en otros métodos (ej. check_occlusion_state)
+        self.actual_dock_is_horizontal: bool 
+        main_box_orientation_val: Gtk.Orientation
+        main_box_h_align_val: str
+        dock_wrapper_orientation_val: Gtk.Orientation
+
+
         if not self.integrated_mode:
+            # Determinar la configuración del dock basada en la configuración del panel
+            
+            # Valores por defecto para un dock horizontal (anclado abajo)
+            _anchor_if_bottom = "bottom"
+            _transition_if_bottom = "slide-up"
+            _orient_main_box_if_bottom = Gtk.Orientation.VERTICAL # main_box es vertical (hover_activator encima de revealer)
+            _halign_main_box_if_bottom = "center"
+            _orient_wrapper_if_bottom = Gtk.Orientation.HORIZONTAL # Iconos del dock en horizontal
+
+            # Valores por defecto para un dock vertical (anclado a un lado, ej. "right")
+            _anchor_if_vertical_on_side = "right" 
+            _transition_if_vertical_on_side = "slide-left" # Desde la derecha
+            _orient_main_box_if_vertical_on_side = Gtk.Orientation.HORIZONTAL # main_box es horizontal (hover_activator al lado de revealer)
+            _halign_main_box_if_vertical_on_side = "end" # main_box se alinea al final (derecha)
+            _orient_wrapper_if_vertical_on_side = Gtk.Orientation.VERTICAL # Iconos del dock en vertical
+
+            if not data.VERTICAL: # El panel es horizontal
+                anchor_to_set = _anchor_if_bottom
+                revealer_transition_type = _transition_if_bottom
+                self.actual_dock_is_horizontal = True
+                main_box_orientation_val = _orient_main_box_if_bottom
+                main_box_h_align_val = _halign_main_box_if_bottom
+                dock_wrapper_orientation_val = _orient_wrapper_if_bottom
+            else: # El panel es vertical (data.VERTICAL es True)
+                # Por defecto, el dock se comporta como vertical en el lado derecho
+                anchor_to_set = _anchor_if_vertical_on_side
+                revealer_transition_type = _transition_if_vertical_on_side
+                self.actual_dock_is_horizontal = False
+                main_box_orientation_val = _orient_main_box_if_vertical_on_side
+                main_box_h_align_val = _halign_main_box_if_vertical_on_side
+                dock_wrapper_orientation_val = _orient_wrapper_if_vertical_on_side
+                
+                # Comprobar si la posición del panel fuerza al dock a la parte inferior
+                if hasattr(data, "PANEL_POSITION") and data.PANEL_POSITION:
+                    panel_pos_lower = data.PANEL_POSITION.lower()
+                    
+                    # Si el dock intenta estar en "right" (por defecto para panel vertical) 
+                    # y el panel también está en "right"
+                    if _anchor_if_vertical_on_side == "right" and "right" in panel_pos_lower:
+                        # Forzar dock a la configuración de "bottom"
+                        anchor_to_set = _anchor_if_bottom
+                        revealer_transition_type = _transition_if_bottom
+                        self.actual_dock_is_horizontal = True
+                        main_box_orientation_val = _orient_main_box_if_bottom
+                        main_box_h_align_val = _halign_main_box_if_bottom
+                        dock_wrapper_orientation_val = _orient_wrapper_if_bottom
+            
             super().__init__(
                 name="dock-window",
                 layer="top",
-                anchor="bottom" if not data.VERTICAL else "right",
+                anchor=anchor_to_set, # MODIFICADO
                 margin="0px 0px 0px 0px",
                 exclusivity="none",
                 **kwargs,
             )
             Dock._instances.append(self)
-        else:
+        else: # Modo integrado
             # No se llama a super().__init__ de Window si está integrado.
-            # Gtk.Widget.__init__(self) no es necesario ya que el widget principal
-            # que se usa (self.wrapper) es un Box.
-            pass
+            self.actual_dock_is_horizontal = True # El dock integrado se asume horizontal
+            dock_wrapper_orientation_val = Gtk.Orientation.HORIZONTAL
+            # Las siguientes no son directamente usadas por el dock integrado en su forma actual
+            # pero se inicializan por completitud.
+            anchor_to_set = "bottom" 
+            revealer_transition_type = "slide-up"
+            main_box_orientation_val = Gtk.Orientation.VERTICAL
+            main_box_h_align_val = "center"
 
         self.config = read_config()
         self.conn = get_hyprland_connection()
-        self.icon_resolver = IconResolver() # Cambiado de self.icon
+        self.icon_resolver = IconResolver() 
         self.pinned = self.config.get("pinned_apps", [])
         self.config_path = get_relative_path("../config/dock.json")
         self.app_map = {}
@@ -104,7 +167,6 @@ class Dock(Window):
         self.hide_id = None
         self._arranger_handler = None
         self._drag_in_progress = False
-        # self.always_occluded se establece en check_config_change_immediate o aquí si es necesario un valor inicial
         self.always_occluded = data.DOCK_ALWAYS_OCCLUDED if not self.integrated_mode else False
         self.is_mouse_over_dock_area = False
         self._prevent_occlusion = False
@@ -113,22 +175,19 @@ class Dock(Window):
         self.view = Box(name="viewport", spacing=4)
         self.wrapper = Box(name="dock", children=[self.view])
 
+        # Usar dock_wrapper_orientation_val determinada anteriormente
+        self.wrapper.set_orientation(dock_wrapper_orientation_val)
+        self.view.set_orientation(dock_wrapper_orientation_val)
+
         if self.integrated_mode:
-            common_orientation = Gtk.Orientation.HORIZONTAL
             self.wrapper.add_style_class("integrated")
-            # No se añade 'vertical' al wrapper si está integrado
-        else:
-            # El dock independiente respeta data.VERTICAL
-            common_orientation = Gtk.Orientation.HORIZONTAL if not data.VERTICAL else Gtk.Orientation.VERTICAL
-            if data.VERTICAL:
+        else: # Dock independiente
+            # Añadir/quitar clase 'vertical' al wrapper basado en su orientación final
+            if dock_wrapper_orientation_val == Gtk.Orientation.VERTICAL:
                 self.wrapper.add_style_class("vertical")
             else:
-                self.wrapper.remove_style_class("vertical") # Asegurar que no esté si no es vertical
+                self.wrapper.remove_style_class("vertical") 
 
-        self.wrapper.set_orientation(common_orientation)
-        self.view.set_orientation(common_orientation)
-
-        if not self.integrated_mode:
             match data.DOCK_THEME:
                 case "Pills":
                     self.wrapper.add_style_class("pills")
@@ -151,7 +210,8 @@ class Dock(Window):
             self.corner_top = Box()
             self.corner_bottom = Box()
 
-            if not data.VERTICAL:
+            # Usar self.actual_dock_is_horizontal para la lógica de las esquinas
+            if self.actual_dock_is_horizontal: 
                 self.corner_left = Box(
                     name="dock-corner-left", orientation=Gtk.Orientation.VERTICAL, h_align="start",
                     children=[Box(v_expand=True, v_align="fill"), MyCorner("bottom-right")]
@@ -164,7 +224,7 @@ class Dock(Window):
                     name="dock-full", orientation=Gtk.Orientation.HORIZONTAL, h_expand=True, h_align="fill",
                     children=[self.corner_left, self.dock_eventbox, self.corner_right]
                 )
-            else: # Vertical
+            else: # Dock es vertical en un lado
                 self.corner_top = Box(
                     name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
                     children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-right")]
@@ -180,32 +240,33 @@ class Dock(Window):
 
             self.dock_revealer = Revealer(
                 name="dock-revealer",
-                transition_type="slide-up" if not data.VERTICAL else "slide-left",
+                transition_type=revealer_transition_type, # MODIFICADO
                 transition_duration=250,
                 child_revealed=False, 
                 child=self.dock_full
             )
 
             self.hover_activator = EventBox()
-            self.hover_activator.set_size_request(-1 if not data.VERTICAL else 1, 1 if not data.VERTICAL else -1)
+            # MODIFICADO (usa self.actual_dock_is_horizontal)
+            self.hover_activator.set_size_request(-1 if self.actual_dock_is_horizontal else 1, 1 if self.actual_dock_is_horizontal else -1)
             self.hover_activator.connect("enter-notify-event", self._on_hover_enter)
             self.hover_activator.connect("leave-notify-event", self._on_hover_leave)
 
             self.main_box = Box(
-                orientation=Gtk.Orientation.VERTICAL if not data.VERTICAL else Gtk.Orientation.HORIZONTAL, 
+                orientation=main_box_orientation_val, # MODIFICADO
                 children=[self.hover_activator, self.dock_revealer],
-                h_align="center" if not data.VERTICAL else "end",
+                h_align=main_box_h_align_val, # MODIFICADO
             )
-            self.add(self.main_box) # self.add es de Gtk.Window
+            self.add(self.main_box) 
             
             if data.DOCK_THEME in ["Edge", "Dense"]:
                 for corner in [self.corner_left, self.corner_right, self.corner_top, self.corner_bottom]:
                     corner.set_visible(False)
             
-            if not data.DOCK_ENABLED or data.BAR_POSITION == "Bottom":
-                self.set_visible(False) # Método de Gtk.Window
+            if not data.DOCK_ENABLED or data.BAR_POSITION == "Bottom": # TODO: Revisar esta condición con la nueva lógica
+                self.set_visible(False) 
             
-            if self.always_occluded: # self.always_occluded ya está definido arriba
+            if self.always_occluded: 
                 self.dock_full.add_style_class("occluded")
 
         # --- Conexiones y Timers (comunes o condicionales) ---
@@ -269,7 +330,7 @@ class Dock(Window):
         Gtk.drag_set_icon_surface(drag_context, createSurfaceFromWidget(widget))
 
     def _on_hover_enter(self, *args):
-        if self.integrated_mode: return # No aplicable en modo integrado
+        if self.integrated_mode: return 
         self.is_mouse_over_dock_area = True
         if self.hide_id:
             GLib.source_remove(self.hide_id)
@@ -279,12 +340,12 @@ class Dock(Window):
             self.dock_full.remove_style_class("occluded")
 
     def _on_hover_leave(self, *args):
-        if self.integrated_mode: return # No aplicable en modo integrado
+        if self.integrated_mode: return 
         self.is_mouse_over_dock_area = False
         self.delay_hide()
 
     def _on_dock_enter(self, widget, event):
-        if self.integrated_mode: return True # No aplicable en modo integrado
+        if self.integrated_mode: return True 
         self.is_mouse_over_dock_area = True
         if self.hide_id:
             GLib.source_remove(self.hide_id)
@@ -295,7 +356,7 @@ class Dock(Window):
         return True
 
     def _on_dock_leave(self, widget, event):
-        if self.integrated_mode: return True # No aplicable en modo integrado
+        if self.integrated_mode: return True 
         if event.detail == Gdk.NotifyType.INFERIOR:
             return False
 
@@ -340,18 +401,18 @@ class Dock(Window):
         display_name = None
         
         if desktop_app:
-            icon_img = desktop_app.get_icon_pixbuf(size=self.icon_size) # Usar self.icon_size
+            icon_img = desktop_app.get_icon_pixbuf(size=self.icon_size) 
             display_name = desktop_app.display_name or desktop_app.name
         
         id_value = app_identifier["name"] if isinstance(app_identifier, dict) else app_identifier
         
         if not icon_img:
-            icon_img = self.icon_resolver.get_icon_pixbuf(id_value, self.icon_size) # Usar self.icon_resolver y self.icon_size
+            icon_img = self.icon_resolver.get_icon_pixbuf(id_value, self.icon_size) 
         
         if not icon_img:
-            icon_img = self.icon_resolver.get_icon_pixbuf("application-x-executable-symbolic", self.icon_size) # Usar self.icon_resolver y self.icon_size
+            icon_img = self.icon_resolver.get_icon_pixbuf("application-x-executable-symbolic", self.icon_size) 
             if not icon_img:
-                icon_img = self.icon_resolver.get_icon_pixbuf("image-missing", self.icon_size) # Usar self.icon_resolver y self.icon_size
+                icon_img = self.icon_resolver.get_icon_pixbuf("image-missing", self.icon_size) 
                 
         items = [Image(pixbuf=icon_img)]
         tooltip = display_name or (id_value if isinstance(id_value, str) else "Unknown")
@@ -359,7 +420,7 @@ class Dock(Window):
             tooltip = instances[0]["title"]
 
         button = Button(
-            child= Box(name="dock-icon", orientation="v", h_align="center", children=items), # Orientation 'v' es para el contenido interno del botón (icono)
+            child= Box(name="dock-icon", orientation="v", h_align="center", children=items), 
             on_clicked=lambda *a: self.handle_app(app_identifier, instances, desktop_app),
             tooltip_text=tooltip, name="dock-app-button",
         )
@@ -408,7 +469,7 @@ class Dock(Window):
             exec_shell_command(f"hyprctl dispatch focuswindow address:{next_inst['address']}")
 
     def _on_child_enter(self, widget, event):
-        if self.integrated_mode: return False # No aplicable en modo integrado
+        if self.integrated_mode: return False 
         self.is_mouse_over_dock_area = True 
         if self.hide_id:
             GLib.source_remove(self.hide_id)
@@ -416,7 +477,7 @@ class Dock(Window):
         return False
 
     def delay_hide(self):
-        if self.integrated_mode: return # No aplicable en modo integrado
+        if self.integrated_mode: return 
         if self.hide_id:
             GLib.source_remove(self.hide_id)
         self.hide_id = GLib.timeout_add(250, self.hide_dock_if_not_hovered)
@@ -429,7 +490,8 @@ class Dock(Window):
             if self.always_occluded:
                 self.dock_revealer.set_reveal_child(False)
             else:
-                occlusion_region = ("bottom", self.effective_occlusion_size) if not data.VERTICAL else ("right", self.effective_occlusion_size)
+                # Usar self.actual_dock_is_horizontal para determinar la región de oclusión
+                occlusion_region = ("bottom", self.effective_occlusion_size) if self.actual_dock_is_horizontal else ("right", self.effective_occlusion_size)
                 if check_occlusion(occlusion_region) or not self.view.get_children():
                     self.dock_revealer.set_reveal_child(False)
         return False
@@ -504,7 +566,7 @@ class Dock(Window):
                 if app.name: possible_identifiers.append(app.name.lower())
                 if app.display_name: possible_identifiers.append(app.display_name.lower())
             
-            possible_identifiers = list(set(possible_identifiers)) # Deduplicate
+            possible_identifiers = list(set(possible_identifiers)) 
             
             for identifier in possible_identifiers:
                 if identifier in running_windows:
@@ -512,7 +574,7 @@ class Dock(Window):
                 normalized = self._normalize_window_class(identifier)
                 if normalized in running_windows:
                     instances = running_windows[normalized]; matched_class = normalized; break
-                for window_class_key in running_windows: # Renombrar window_class para evitar conflicto
+                for window_class_key in running_windows: 
                     if len(identifier) >= 3 and identifier in window_class_key:
                         instances = running_windows[window_class_key]; matched_class = window_class_key
                         break
@@ -549,7 +611,6 @@ class Dock(Window):
                 open_buttons.append(self.create_button(identifier, instances))
 
         children = pinned_buttons
-        # Determinar la orientación del separador basado en la orientación del dock (view/wrapper)
         separator_orientation = Gtk.Orientation.VERTICAL if self.view.get_orientation() == Gtk.Orientation.HORIZONTAL else Gtk.Orientation.HORIZONTAL
         if pinned_buttons and open_buttons:
             children += [Box(orientation=separator_orientation, v_expand=False, h_expand=False, h_align="center", v_align="center", name="dock-separator")]
@@ -563,9 +624,9 @@ class Dock(Window):
             self.check_occlusion_state()
 
     def _update_size(self):
-        if self.integrated_mode: return False # No aplicable
+        if self.integrated_mode: return False 
         width, _ = self.view.get_preferred_width()
-        self.set_size_request(width, -1) # Método de Gtk.Window
+        self.set_size_request(width, -1) 
         return False
 
     def get_clients(self):
@@ -582,7 +643,7 @@ class Dock(Window):
 
     def check_occlusion_state(self):
         if self.integrated_mode:
-            return False # No ejecutar chequeo periódico si está integrado
+            return False 
             
         if self.is_mouse_over_dock_area or self._drag_in_progress or self._prevent_occlusion:
             if not self.dock_revealer.get_reveal_child():
@@ -597,7 +658,8 @@ class Dock(Window):
             self.dock_full.add_style_class("occluded")
             return True
 
-        occlusion_region = ("bottom", self.effective_occlusion_size) if not data.VERTICAL else ("right", self.effective_occlusion_size)
+        # Usar self.actual_dock_is_horizontal para determinar la región de oclusión
+        occlusion_region = ("bottom", self.effective_occlusion_size) if self.actual_dock_is_horizontal else ("right", self.effective_occlusion_size)
         is_occluded_by_window = check_occlusion(occlusion_region)
         is_empty = not self.view.get_children()
 
@@ -636,14 +698,14 @@ class Dock(Window):
 
         if source_index != target_index:
             separator_index = -1
-            for i, child_item_loop in enumerate(children): # Renombrar child_item
+            for i, child_item_loop in enumerate(children): 
                 if child_item_loop.get_name() == "dock-separator":
                     separator_index = i; break
             cross_section_drag = (separator_index != -1 and
                                  ((source_index < separator_index and target_index > separator_index) or
                                   (source_index > separator_index and target_index < separator_index)))
             
-            child_item_to_move = children.pop(source_index) # Renombrar child
+            child_item_to_move = children.pop(source_index) 
             children.insert(target_index, child_item_to_move)
             self.view.children = children
             self.update_pinned_apps(skip_update=not cross_section_drag)
@@ -654,19 +716,19 @@ class Dock(Window):
             return
 
         def process_drag_end():
-            if not self.integrated_mode and self.get_mapped(): # self.get_mapped es de Gtk.Window
+            if not self.integrated_mode and self.get_mapped(): 
                 display = Gdk.Display.get_default()
                 if display:
-                    _, x_ptr, y_ptr, _ = display.get_pointer() # Renombrar x, y
-                    gdk_window = self.get_window() # Gdk.Window
+                    _, x_ptr, y_ptr, _ = display.get_pointer() 
+                    gdk_window = self.get_window() 
                     if gdk_window:
                         win_x, win_y, width, height = gdk_window.get_geometry()
                         if not (win_x <= x_ptr <= win_x + width and win_y <= y_ptr <= win_y + height):
-                            app_id_dragged = widget.app_identifier # Renombrar app_id
-                            instances_dragged = widget.instances # Renombrar instances
+                            app_id_dragged = widget.app_identifier 
+                            instances_dragged = widget.instances 
                             
-                            app_index_dragged = -1 # Renombrar app_index
-                            for i, pinned_app_item in enumerate(self.pinned): # Renombrar pinned_app
+                            app_index_dragged = -1 
+                            for i, pinned_app_item in enumerate(self.pinned): 
                                 if isinstance(app_id_dragged, dict) and isinstance(pinned_app_item, dict):
                                     if app_id_dragged.get("name") == pinned_app_item.get("name"):
                                         app_index_dragged = i; break
@@ -682,7 +744,6 @@ class Dock(Window):
                                 address = instances_dragged[0].get("address")
                                 if address:
                                     exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
-                                    # self.update_dock() se llamará por el evento de cierre
             
             self._drag_in_progress = False
             if not self.integrated_mode:
@@ -693,19 +754,18 @@ class Dock(Window):
 
     def check_config_change(self):
         new_config = read_config()
-        # Comprobar cambios en always_occluded solo si no está integrado
         if not self.integrated_mode:
-            new_always_occluded = data.DOCK_ALWAYS_OCCLUDED # Asumimos que data se actualiza
+            new_always_occluded = data.DOCK_ALWAYS_OCCLUDED 
             if self.always_occluded != new_always_occluded:
                 self.always_occluded = new_always_occluded
-                self.check_occlusion_state() # Reevaluar visibilidad/estilo
+                self.check_occlusion_state() 
 
         if new_config.get("pinned_apps", []) != self.config.get("pinned_apps", []):
             self.config = new_config
             self.pinned = self.config.get("pinned_apps", [])
             self.update_app_map()
             self.update_dock()
-        return True # Para que el timeout continúe
+        return True 
 
     def update_pinned_apps_file(self):
         config_path = get_relative_path("../config/dock.json")
@@ -718,8 +778,8 @@ class Dock(Window):
             return False
 
     def update_pinned_apps(self, skip_update=False):
-        pinned_children_data = [] # Renombrar pinned_children
-        for child_widget in self.view.get_children(): # Renombrar child_item
+        pinned_children_data = [] 
+        for child_widget in self.view.get_children(): 
             if child_widget.get_name() == "dock-separator": break
             if hasattr(child_widget, "app_identifier"):
                 if hasattr(child_widget, "desktop_app") and child_widget.desktop_app:
@@ -741,17 +801,10 @@ class Dock(Window):
 
     @staticmethod
     def notify_config_change():
-        # Esta notificación es genérica. check_config_change_immediate en cada instancia
-        # decidirá qué hacer basado en su estado (integrado o no).
-        # No podemos acceder a self.integrated_mode desde un método estático directamente.
-        # La lógica dentro de check_config_change_immediate debe manejar esto.
-        for dock_instance in Dock._instances: # Solo itera sobre docks no integrados
+        for dock_instance in Dock._instances: 
              GLib.idle_add(dock_instance.check_config_change_immediate)
-        # Para docks integrados, si es necesario, se necesitaría un mecanismo diferente
-        # o que la barra que los contiene maneje la recarga de su configuración.
-        # Por ahora, esto solo afecta a los docks independientes.
 
-    def check_config_change_immediate(self): # Este método se llama en instancias
+    def check_config_change_immediate(self): 
         new_config = read_config()
         
         if not self.integrated_mode:
@@ -766,11 +819,11 @@ class Dock(Window):
             self.pinned = self.config.get("pinned_apps", [])
             self.update_app_map()
             self.update_dock()
-        return False # Para que no se repita si es llamado por GLib.idle_add
+        return False 
 
     @staticmethod
     def update_visibility(visible):
-        for dock in Dock._instances: # _instances solo contiene docks no integrados (ventanas)
+        for dock in Dock._instances: 
             dock.set_visible(visible)
             if visible:
                 GLib.idle_add(dock.check_occlusion_state)

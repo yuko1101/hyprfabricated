@@ -85,6 +85,7 @@ class WallpaperSelector(Box):
             name="search-entry-walls",
             placeholder="Search Wallpapers...",
             h_expand=True,
+            h_align="fill",
             notify_text=lambda entry, *_: self.arrange_viewport(entry.get_text()),
             on_key_press_event=self.on_search_entry_key_press,
         )
@@ -139,14 +140,12 @@ class WallpaperSelector(Box):
         self.mat_icon = Label(name="mat-label", markup=icons.palette)
 
         # Add the switcher to the header_box's start_children
-        self.header_box = CenterBox(
+        self.header_box = Box(
             name="header-box",
-            spacing=8,
+            spacing=4,
             orientation="h",
             # Removed color button and label from here
-            start_children=[self.matugen_switcher, self.mat_icon],
-            center_children=[self.search_entry],
-            end_children=[self.scheme_dropdown],
+            children=[self.matugen_switcher, self.mat_icon, self.search_entry, self.scheme_dropdown],
         )
 
         self.add(self.header_box)

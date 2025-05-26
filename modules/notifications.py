@@ -429,7 +429,6 @@ class NotificationHistory(Box):
             min_content_size=(-1, -1),
             max_content_size=(-1, -1),
         )
-        self.scrolled_window.set_propagate_natural_height(False)
         self.scrolled_window_viewport_box = Box(orientation="v", children=[self.notifications_list, self.no_notifications_box])
         self.scrolled_window.add_with_viewport(self.scrolled_window_viewport_box)
         self.persistent_notifications = []
@@ -438,6 +437,8 @@ class NotificationHistory(Box):
         self._load_persistent_history()
         self._cleanup_orphan_cached_images()
         self.schedule_midnight_update()
+        self.scrolled_window.set_propagate_natural_height(False)
+        self.scrolled_window.set_propagate_natural_width(False)
 
         # List of apps for which notifications should be limited to one in history too
         self.LIMITED_APPS_HISTORY = ["Spotify"] # Add your list of apps here, same as NotificationContainer if needed
@@ -637,26 +638,34 @@ class NotificationHistory(Box):
             name="notification-summary",
             markup=hist_notif.summary,
             h_align="start",
+            # h_expand=True,
             ellipsization="end",
+            # max_chars_width=1,
         )
+        # self.hist_notif_summary_label.set_xalign(0.0)
         self.hist_notif_app_name_label = Label(
             name="notification-app-name",
             markup=f"{hist_notif.app_name}",
             h_align="start",
+            # h_expand=True,
             ellipsization="end",
+            # max_chars_width=1,
         )
+        # self.hist_notif_app_name_label.set_xalign(0.0)
         self.hist_notif_body_label = Label(
             name="notification-body",
             markup=hist_notif.body,
             h_align="start",
+            # h_expand=True,
             ellipsization="end",
             line_wrap="word-char",
+            # max_chars_width=1,
         ) if hist_notif.body else Box()
         self.hist_notif_body_label.set_single_line_mode(True) if hist_notif.body else None
+        # self.hist_notif_body_label.set_xalign(0.0) if hist_notif.body else None
         self.hist_notif_summary_box = Box(
             name="notification-summary-box",
             orientation="h",
-            h_align="start",
             children=[
                 self.hist_notif_summary_label,
                 Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
