@@ -112,13 +112,18 @@ class Notch(Window):
         self._occlusion_timer_id = None  # Track the timeout ID to cancel it if needed
 
         self.notification = NotificationContainer(notch=self)
-        self.notification_history = self.notification.history
+        # self.notification_history se asignará después de crear self.dashboard
 
         self.icon_resolver = IconResolver()
         self._all_apps = get_desktop_applications()
         self.app_identifiers = self._build_app_identifiers_map()
 
-        self.dashboard = Dashboard(notch=self)
+        self.dashboard = Dashboard(notch=self) # Dashboard se crea aquí
+
+        # --- ASIGNAR self.notification_history DESPUÉS DE CREAR self.dashboard ---
+        # Ahora accedemos a la instancia de NotificationHistory creada en Widgets.
+        self.notification_history = self.dashboard.widgets.notification_history
+
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
         self.emoji = EmojiPicker(notch=self)
@@ -127,9 +132,8 @@ class Notch(Window):
         self.cliphist = ClipHistory(notch=self)  # Create ClipHistory instance
 
         self.applet_stack = self.dashboard.widgets.applet_stack
-        self.nhistory = self.dashboard.widgets.notification_history
-        self.btdevices = self.dashboard.widgets.bluetooth
-        self.network_connections_widget = self.dashboard.widgets.network_connections
+        self.nhistory = self.dashboard.widgets.notification_history # self.nhistory ya apunta al lugar correcto.
+                                                                    # self.notification_history ahora también.
 
         self.window_label = Label(
             name="notch-window-label",
