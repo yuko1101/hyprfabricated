@@ -13,6 +13,7 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.scrolledwindow import ScrolledWindow
+from fabric.widgets.wayland import WaylandWindow as Window # Import Window
 from gi.repository import GdkPixbuf, GLib, Gtk
 from loguru import logger
 
@@ -365,7 +366,6 @@ class NotificationHistory(Box):
             orientation="v",
             **kwargs
         )
-        # self.notch = kwargs["notch"] # Eliminada esta línea
         
         self.containers = []
         self.header_label = Label(
@@ -938,15 +938,14 @@ class NotificationHistory(Box):
 class NotificationContainer(Box):
     LIMITED_APPS = ["Spotify"] # Add your list of apps here
 
-    def __init__(self, revealer_transition_type: str = "slide-down", **kwargs): # Añadir revealer_transition_type
-        super().__init__(name="notification-container-main", orientation="v", spacing=4) # Cambiado el name para evitar colisión si se usa "notification"
-        self.notch = kwargs["notch"]
+    def __init__(self, notification_history_instance: NotificationHistory, revealer_transition_type: str = "slide-down"):
+        super().__init__(name="notification-container-main", orientation="v", spacing=4)
+        self.notification_history = notification_history_instance
+
         self._server = Notifications()
         self._server.connect("notification-added", self.on_new_notification)
         self._pending_removal = False
         self._is_destroying = False
-
-        # self.history ya no se crea aquí, se accederá a través de notch.dashboard.widgets.notification_history
 
         self.stack = Gtk.Stack(
             name="notification-stack",
@@ -991,29 +990,27 @@ class NotificationContainer(Box):
 
         # Create the Revealer for navigation buttons
         self.navigation_revealer = Revealer(
-            transition_type="slide-down", # Podría ser configurable si se desea
+            transition_type="slide-down", 
             transition_duration=200,
             child=self.navigation,
-            reveal_child=False, # Initially hidden
+            reveal_child=False, 
         )
 
         self.notification_box_container = Box(
-            name="notification-box-internal-container", # Renombrado para claridad
+            name="notification-box-internal-container", 
             orientation="v",
             spacing=4,
             children=[self.stack_box, self.navigation_revealer]
         )
         
-        # Crear el Revealer principal para este contenedor de notificaciones
         self.main_revealer = Revealer(
             name="notification-main-revealer",
             transition_type=revealer_transition_type,
-            transition_duration=250, # Puede ser el mismo que el del notch o configurable
+            transition_duration=250, 
             child_revealed=False,
             child=self.notification_box_container,
         )
         
-        # Añadir el main_revealer como el hijo principal de este NotificationContainer Box
         self.add(self.main_revealer)
 
         self.notifications = []
@@ -1022,15 +1019,13 @@ class NotificationContainer(Box):
         self._destroyed_notifications = set()
 
     def on_new_notification(self, fabric_notif, id):
-        # Accede a do_not_disturb_enabled a través de la instancia de NotificationHistory en Widgets
-        notification_history_instance = self.notch.dashboard.widgets.notification_history
+        notification_history_instance = self.notification_history
         if notification_history_instance.do_not_disturb_enabled:
             logger.info("Do Not Disturb mode enabled: adding notification directly to history.")
             notification = fabric_notif.get_notification_from_id(id)
             new_box = NotificationBox(notification)
             if notification.image_pixbuf:
                 cache_notification_pixbuf(new_box)
-            # Usa la instancia correcta de NotificationHistory para añadir la notificación
             notification_history_instance.add_notification(new_box)
             return
 
@@ -1041,7 +1036,6 @@ class NotificationContainer(Box):
 
         app_name = notification.app_name
         if app_name in self.LIMITED_APPS:
-            # Usa la instancia correcta de NotificationHistory para limpiar el historial
             notification_history_instance.clear_history_for_app(app_name)
 
             existing_notification_index = -1
@@ -1051,21 +1045,17 @@ class NotificationContainer(Box):
                     break
 
             if existing_notification_index != -1:
-                # Replace existing notification in live stack
                 old_notification_box = self.notifications.pop(existing_notification_index)
                 self.stack.remove(old_notification_box)
-                old_notification_box.destroy() # Clean up resources
+                old_notification_box.destroy() 
 
-                # Add the new notification at the end of live stack
                 self.stack.add_named(new_box, str(id))
                 self.notifications.append(new_box)
-                self.current_index = len(self.notifications) - 1 # Update current index
+                self.current_index = len(self.notifications) - 1 
                 self.stack.set_visible_child(new_box)
             else:
-                # Add new notification normally if no existing notification from the same app in live stack
                 while len(self.notifications) >= 5:
                     oldest_notification = self.notifications[0]
-                    # Usa la instancia correcta de NotificationHistory para añadir la notificación
                     notification_history_instance.add_notification(oldest_notification)
                     self.stack.remove(oldest_notification)
                     self.notifications.pop(0)
@@ -1076,10 +1066,8 @@ class NotificationContainer(Box):
                 self.current_index = len(self.notifications) - 1
                 self.stack.set_visible_child(new_box)
         else:
-            # Add new notification normally for non-limited apps
             while len(self.notifications) >= 5:
                 oldest_notification = self.notifications[0]
-                # Usa la instancia correcta de NotificationHistory para añadir la notificación
                 notification_history_instance.add_notification(oldest_notification)
                 self.stack.remove(oldest_notification)
                 self.notifications.pop(0)
@@ -1092,9 +1080,7 @@ class NotificationContainer(Box):
 
         for notification_box in self.notifications:
             notification_box.start_timeout()
-        # Ya no se añade self.notification_box_container a un revealer externo aquí.
-        # self.main_revealer se encargará de la visibilidad.
-        self.main_revealer.show_all() # Asegura que el revealer y sus hijos estén listos.
+        self.main_revealer.show_all() 
         self.main_revealer.set_reveal_child(True)
         self.update_navigation_buttons()
 
@@ -1113,7 +1099,6 @@ class NotificationContainer(Box):
     def update_navigation_buttons(self):
         self.prev_button.set_sensitive(self.current_index > 0)
         self.next_button.set_sensitive(self.current_index < len(self.notifications) - 1)
-        # Control the revealer instead of the navigation box directly
         should_reveal = len(self.notifications) > 1
         self.navigation_revealer.set_reveal_child(should_reveal)
 
@@ -1136,8 +1121,7 @@ class NotificationContainer(Box):
             i, notif_box = notif_to_remove
             reason_str = str(reason)
             
-            # Accede a la instancia de NotificationHistory a través de la cadena de dependencias
-            notification_history_instance = self.notch.dashboard.widgets.notification_history
+            notification_history_instance = self.notification_history
 
             if reason_str == "NotificationCloseReason.DISMISSED_BY_USER":
                 logger.info(f"Cleaning up resources for dismissed notification {notification.id}")
@@ -1147,35 +1131,31 @@ class NotificationContainer(Box):
                   reason_str == "NotificationCloseReason.UNDEFINED"):
                 logger.info(f"Adding notification {notification.id} to history (reason: {reason_str})")
                 notif_box.set_is_history(True)
-                # Usa la instancia correcta de NotificationHistory
                 notification_history_instance.add_notification(notif_box)
                 notif_box.stop_timeout()
             else:
                 logger.warning(f"Unknown close reason: {reason_str} for notification {notification.id}. Defaulting to destroy.")
                 notif_box.destroy()
 
-            if len(self.notifications) == 1: # Si era la última notificación
+            if len(self.notifications) == 1: 
                 self._is_destroying = True
-                self.main_revealer.set_reveal_child(False) # Usar main_revealer
+                self.main_revealer.set_reveal_child(False) 
                 GLib.timeout_add(
-                    self.main_revealer.get_transition_duration(), # Usar main_revealer
+                    self.main_revealer.get_transition_duration(), 
                     self._destroy_container
                 )
-                return # Retornar aquí, _destroy_container se encargará del resto
+                return 
             
-            # Lógica para cuando no es la última notificación
             new_index = i
             if i == self.current_index:
                 new_index = max(0, i - 1)
             elif i < self.current_index:
                 new_index = self.current_index - 1
             
-            # Eliminar la notificación de la lista ANTES de intentar establecer el nuevo hijo visible
             if notif_box.get_parent() == self.stack:
                 self.stack.remove(notif_box)
-            self.notifications.pop(i) # Eliminar por índice 'i'
+            self.notifications.pop(i) 
             
-            # Ajustar new_index si era el último elemento y fue eliminado
             if new_index >= len(self.notifications) and len(self.notifications) > 0:
                 new_index = len(self.notifications) - 1
 
@@ -1183,31 +1163,24 @@ class NotificationContainer(Box):
             
             if len(self.notifications) > 0:
                 self.stack.set_visible_child(self.notifications[self.current_index])
-            # else: _destroy_container ya se habría llamado si len(self.notifications) era 1 antes de pop
 
             self.update_navigation_buttons()
         except Exception as e:
             logger.error(f"Error closing notification: {e}")
-        # logger.info(f"Notification {notification.id} closed with reason: {reason}") # Movido arriba para evitar doble log en algunos casos
 
     def _destroy_container(self):
         try:
-            # self.notifications ya debería estar vacía si se llamó desde on_notification_closed
-            # pero por si acaso, limpiamos.
             self.notifications.clear()
             self._destroyed_notifications.clear()
-            for child in self.stack.get_children(): # Limpiar el stack
-                self.stack.remove(child) # Primero remover del stack
-                child.destroy() # Luego destruir
+            for child in self.stack.get_children(): 
+                self.stack.remove(child) 
+                child.destroy() 
             self.current_index = 0
-            # self.main_revealer ya debería tener reveal_child=False
-            # No es necesario remover self.notification_box_container de self.main_revealer
-            # ya que es su hijo permanente.
         except Exception as e:
             logger.error(f"Error cleaning up the container: {e}")
         finally:
             self._is_destroying = False
-            return False # Para que GLib.timeout_add no se repita
+            return False 
 
     def pause_and_reset_all_timeouts(self):
         if self._is_destroying:
@@ -1246,4 +1219,9 @@ class NotificationPopup(Window):
             visible=True,
             all_visible=True,
         )
-        # Instancia el container aquí, AI!
+        self.notification_history = NotificationHistory()
+        self.notification_container = NotificationContainer(
+            notification_history_instance=self.notification_history,
+            revealer_transition_type="slide-down"
+        )
+        self.add(self.notification_container)

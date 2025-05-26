@@ -18,7 +18,7 @@ from modules.corners import MyCorner
 from modules.dashboard import Dashboard
 from modules.emoji import EmojiPicker
 from modules.launcher import AppLauncher
-from modules.notifications import NotificationContainer
+from modules.notifications import NotificationContainer # Import NotificationContainer
 from modules.overview import Overview
 from modules.player import PlayerSmall
 from modules.power import PowerMenu
@@ -106,18 +106,20 @@ class Notch(Window):
         self.is_hovered = False
         self._prevent_occlusion = False
         self._occlusion_timer_id = None
-
-        # Pasar revealer_transition_type a NotificationContainer
-        self.notification = NotificationContainer(notch=self, revealer_transition_type=revealer_transition_type)
         
         self.icon_resolver = IconResolver()
         self._all_apps = get_desktop_applications()
         self.app_identifiers = self._build_app_identifiers_map()
 
-        self.dashboard = Dashboard(notch=self)
+        self.dashboard = Dashboard(notch=self) # self.dashboard crea self.dashboard.widgets.notification_history
+        self.notification_history = self.dashboard.widgets.notification_history # Accede a la instancia
 
-        self.notification_history = self.dashboard.widgets.notification_history
-
+        # Pasar la instancia de notification_history directamente
+        self.notification = NotificationContainer(
+            notification_history_instance=self.notification_history, # MODIFICADO
+            revealer_transition_type=revealer_transition_type
+        )
+        
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
         self.emoji = EmojiPicker(notch=self)
@@ -126,7 +128,7 @@ class Notch(Window):
         self.cliphist = ClipHistory(notch=self)
 
         self.applet_stack = self.dashboard.widgets.applet_stack
-        self.nhistory = self.dashboard.widgets.notification_history
+        self.nhistory = self.dashboard.widgets.notification_history # Ya estaba definido, solo para confirmar
         
         self.window_label = Label(
             name="notch-window-label",
