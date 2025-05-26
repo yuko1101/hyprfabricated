@@ -13,11 +13,13 @@ from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import Gdk, GLib, Gtk, Pango
 
 import config.data as data
+from modules.bluetooth import BluetoothConnections # NUEVO
 from modules.cliphist import ClipHistory  # Import the ClipHistory module
 from modules.corners import MyCorner
 from modules.dashboard import Dashboard
 from modules.emoji import EmojiPicker
 from modules.launcher import AppLauncher
+from modules.network import NetworkConnections # NUEVO
 from modules.notifications import \
     NotificationContainer  # Import NotificationContainer
 from modules.overview import Overview
@@ -116,6 +118,20 @@ class Notch(Window):
         self.dashboard = Dashboard(notch=self) # self.dashboard crea self.dashboard.widgets.notification_history
         self.nhistory = self.dashboard.widgets.notification_history # Ya estaba definido, solo para confirmar
 
+        # NUEVO: Inicializar BluetoothConnections y NetworkConnections
+        self.btdevices = BluetoothConnections(widgets=self.dashboard.widgets)
+        self.network_connections_widget = NetworkConnections(widgets=self.dashboard.widgets)
+
+        # NUEVO: Añadir los nuevos widgets al applet_stack
+        # self.applet_stack ya está definido como self.dashboard.widgets.applet_stack
+        self.applet_stack = self.dashboard.widgets.applet_stack # Asegurarse de que applet_stack esté disponible
+        self.applet_stack.add_named(self.btdevices, "bluetooth_connections_widget") # Nombre para el stack
+        self.applet_stack.add_named(self.network_connections_widget, "network_connections_widget") # Nombre para el stack
+
+        # Asegurarse de que estén ocultos inicialmente
+        self.btdevices.set_visible(False)
+        self.network_connections_widget.set_visible(False)
+
         # Pasar la instancia de notification_history directamente
         # self.notification = NotificationContainer(
         #     notification_history_instance=self.nhistory,
@@ -129,8 +145,8 @@ class Notch(Window):
         self.tmux = TmuxManager(notch=self)
         self.cliphist = ClipHistory(notch=self)
 
-        self.applet_stack = self.dashboard.widgets.applet_stack
-        
+        # self.applet_stack = self.dashboard.widgets.applet_stack # Esta línea se movió arriba para asegurar que esté disponible
+
         self.window_label = Label(
             name="notch-window-label",
             h_expand=True,
@@ -534,7 +550,7 @@ class Notch(Window):
                 return
         else:
             # Si widget_name no es uno de los simples, debe ser para el Dashboard
-            # (ej: "dashboard", "bluetooth", "pins", "kanban", "wallpapers", "network_applet").
+            # (ej: "dashboard", "bluetooth", "pins", "kanban, "wallpapers", "network_applet").
             target_widget_on_stack = self.dashboard
             hide_bar_revealers = True # Dashboard y sus vistas ocultan los reveladores del bar.
 
@@ -642,56 +658,6 @@ class Notch(Window):
                 identifiers[exe_basename] = app
                 
             # Map by command line if available (without parameters)
-            if app.command_line:
-                cmd_base = app.command_line.split()[0].split('/')[-1].lower()
-                identifiers[cmd_base] = app
-                
-        return identifiers
-
-    def _normalize_window_class(self, class_name):
-        """Normalize window class by removing common suffixes and lowercase."""
-        if not class_name:
-            return ""
-            
-        normalized = class_name.lower()
-        
-        # Remove common suffixes
-        suffixes = [".bin", ".exe", ".so", "-bin", "-gtk"]
-        for suffix in suffixes:
-            if normalized.endswith(suffix):
-                normalized = normalized[:-len(suffix)]
-                
-        return normalized
-    
-    def find_app(self, app_identifier):
-        """Return the DesktopApp object by matching any app identifier."""
-        if not app_identifier:
-            return None
-        
-        # Try direct lookup in our identifiers map
-        normalized_id = str(app_identifier).lower()
-        if normalized_id in self.app_identifiers:
-            return self.app_identifiers[normalized_id]
-            
-        # Try with normalized class name
-        norm_id = self._normalize_window_class(normalized_id)
-        if norm_id in self.app_identifiers:
-            return self.app_identifiers[norm_id]
-            
-        # More targeted matching with exact names only
-        for app in self._all_apps:
-            if app.name and app.name.lower() == normalized_id:
-                return app
-            if app.window_class and app.window_class.lower() == normalized_id:
-                return app
-            if app.display_name and app.display_name.lower() == normalized_id:
-                return app
-            # Try with executable basename
-            if app.executable:
-                exe_base = app.executable.split('/')[-1].lower()
-                if exe_base == normalized_id:
-                    return app
-            # Try with command basename
             if app.command_line:
                 cmd_base = app.command_line.split()[0].split('/')[-1].lower()
                 if cmd_base == normalized_id:
