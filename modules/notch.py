@@ -13,13 +13,13 @@ from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import Gdk, GLib, Gtk, Pango
 
 import config.data as data
-from modules.bluetooth import BluetoothConnections # NUEVO
+from modules.bluetooth import BluetoothConnections
 from modules.cliphist import ClipHistory  # Import the ClipHistory module
 from modules.corners import MyCorner
 from modules.dashboard import Dashboard
 from modules.emoji import EmojiPicker
 from modules.launcher import AppLauncher
-from modules.network import NetworkConnections # NUEVO
+from modules.network import NetworkConnections
 from modules.notifications import \
     NotificationContainer  # Import NotificationContainer
 from modules.overview import Overview
@@ -660,10 +660,14 @@ class Notch(Window):
             # Map by command line if available (without parameters)
             if app.command_line:
                 cmd_base = app.command_line.split()[0].split('/')[-1].lower()
-                if cmd_base == normalized_id:
-                    return app
+                identifiers[cmd_base] = app # Add to map, don't return here
                 
-        return None
+        return identifiers
+
+    def find_app(self, app_id: str):
+        """Find a DesktopApp object by various identifiers using the pre-built map."""
+        normalized_id = app_id.lower()
+        return self.app_identifiers.get(normalized_id)
 
     def update_window_icon(self, *args):
         """Update the window icon based on the current active window title"""
@@ -821,7 +825,7 @@ class Notch(Window):
         # Clear previous style classes and states
         for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
             self.stack.remove_style_class(style)
-        for w in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools, self.tmux]:
+        for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools, self.tmux, self.cliphist]: # Removed self.notification as it's not a direct child of stack
             w.remove_style_class("open")
             
         # Configure for launcher
