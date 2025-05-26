@@ -90,51 +90,44 @@ class Notch(Window):
         super().__init__(
             name="notch",
             layer="top",
-            anchor=anchor_val, # Ahora siempre "top"
-            margin=current_margin_str, # Margen para ocultar hacia arriba
+            anchor=anchor_val, 
+            margin=current_margin_str, 
             keyboard_mode="none",
             exclusivity="none" if data.PANEL_THEME == "Notch" else "normal",
             visible=True,
             all_visible=True,
         )
 
-        # self.margin = current_margin_str # Opcional: guardar si se necesita referenciar
-        # self.set_margin(self.margin) # No es necesario llamar a set_margin si se pasa en __init__
-
-        # Add character buffer for launcher transition
         self._typed_chars_buffer = ""
         self._launcher_transitioning = False
         self._launcher_transition_timeout = None
 
         self.bar = kwargs.get("bar", None)
-        self.is_hovered = False  # Add hover tracking property
-        self._prevent_occlusion = False  # Flag to prevent occlusion temporarily
-        self._occlusion_timer_id = None  # Track the timeout ID to cancel it if needed
+        self.is_hovered = False
+        self._prevent_occlusion = False
+        self._occlusion_timer_id = None
 
-        self.notification = NotificationContainer(notch=self)
-        # self.notification_history se asignará después de crear self.dashboard
-
+        # Pasar revealer_transition_type a NotificationContainer
+        self.notification = NotificationContainer(notch=self, revealer_transition_type=revealer_transition_type)
+        
         self.icon_resolver = IconResolver()
         self._all_apps = get_desktop_applications()
         self.app_identifiers = self._build_app_identifiers_map()
 
-        self.dashboard = Dashboard(notch=self) # Dashboard se crea aquí
+        self.dashboard = Dashboard(notch=self)
 
-        # --- ASIGNAR self.notification_history DESPUÉS DE CREAR self.dashboard ---
-        # Ahora accedemos a la instancia de NotificationHistory creada en Widgets.
         self.notification_history = self.dashboard.widgets.notification_history
 
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
         self.emoji = EmojiPicker(notch=self)
         self.power = PowerMenu(notch=self)
-        self.tmux = TmuxManager(notch=self)  # Create TmuxManager instance
-        self.cliphist = ClipHistory(notch=self)  # Create ClipHistory instance
+        self.tmux = TmuxManager(notch=self)
+        self.cliphist = ClipHistory(notch=self)
 
         self.applet_stack = self.dashboard.widgets.applet_stack
-        self.nhistory = self.dashboard.widgets.notification_history # self.nhistory ya apunta al lugar correcto.
-                                                                    # self.notification_history ahora también.
-
+        self.nhistory = self.dashboard.widgets.notification_history
+        
         self.window_label = Label(
             name="notch-window-label",
             h_expand=True,
@@ -170,7 +163,7 @@ class Notch(Window):
         self.active_window.connect("notify::label", self.update_window_icon)
 
         if data.PANEL_THEME == "Notch":
-            self.active_window.connect("notify::label", self.on_active_window_changed)  # Connect to window change event
+            self.active_window.connect("notify::label", self.on_active_window_changed)
 
         self.active_window.get_children()[0].set_hexpand(True)
         self.active_window.get_children()[0].set_halign(Gtk.Align.FILL)
@@ -286,31 +279,15 @@ class Notch(Window):
         )
 
         self.notch_box.add_style_class(data.PANEL_THEME.lower())
-
-        self.notification_revealer = Revealer(
-            name="notification-revealer",
-            transition_type=revealer_transition_type, # Usará "slide-down"
-            transition_duration=250,
-            child_revealed=False,
-        )
-
-        self.boxed_notification_revealer = Box(
-            name="boxed-notification-revealer",
-            orientation="v",
-            children=[
-                self.notification_revealer,
-            ]
-        )
         
         self.notch_revealer = Revealer(
             name="notch-revealer",
-            transition_type=revealer_transition_type, # Usará "slide-down"
+            transition_type=revealer_transition_type,
             transition_duration=250,
             child_revealed=True,
             child=self.notch_box,
         )
 
-        # Create an EventBox to handle hover events for the notch_revealer area
         self.notch_hover_area_event_box = Gtk.EventBox()
         self.notch_hover_area_event_box.add(self.notch_revealer)
         if data.PANEL_THEME == "Notch":
@@ -323,8 +300,8 @@ class Notch(Window):
             orientation="v",
             spacing=4,
             children=[
-                self.notch_hover_area_event_box,  # Use the event box instead of direct revealer
-                self.boxed_notification_revealer,
+                self.notch_hover_area_event_box,
+                self.notification, # Usar la instancia de NotificationContainer directamente
             ]
         )
 
