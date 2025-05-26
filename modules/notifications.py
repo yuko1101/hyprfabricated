@@ -576,9 +576,28 @@ class NotificationHistory(Box):
             notif_box = container.notification_box
             notif_box.destroy(from_history_delete=True)
 
-        self.persistent_notifications = [
-            note for note in self.persistent_notifications if note.get("id") != note_id
-        ]
+        # Convertir note_id a cadena para asegurar la comparación, aunque ya debería serlo.
+        target_note_id_str = str(note_id)
+        
+        new_persistent_notifications = []
+        removed_from_list = False
+        for note_in_list in self.persistent_notifications:
+            current_note_id_str = str(note_in_list.get("id")) # Asegurar que el ID de la lista también es cadena
+            if current_note_id_str == target_note_id_str:
+                removed_from_list = True
+                # No añadir esta nota a la nueva lista (efectivamente eliminándola)
+                # Si solo se quiere eliminar la primera ocurrencia (aunque los IDs deberían ser únicos):
+                # una vez encontrada y marcada para no añadir, se podría romper el bucle si se garantiza unicidad.
+                # Por ahora, se asume que si hay duplicados (no debería), se eliminan todos.
+                continue
+            new_persistent_notifications.append(note_in_list)
+        
+        if removed_from_list:
+            self.persistent_notifications = new_persistent_notifications
+            logger.info(f"Notification with ID {target_note_id_str} was marked for removal from persistent_notifications list.")
+        else:
+            logger.warning(f"Notification with ID {target_note_id_str} was NOT found in persistent_notifications list. The list remains unchanged.")
+
         self._save_persistent_history()
         container.destroy()
         self.containers = [c for c in self.containers if c != container]
