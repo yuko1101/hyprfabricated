@@ -1233,3 +1233,17 @@ class NotificationContainer(Box):
         notifications_to_close = self.notifications.copy()
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
+
+
+class NotificationPopup(Window):
+    def __init__(self):
+        super().__init__(
+            name="notification-popup",
+            margin="1px 1px 1px 1px",
+            layer="top",
+            keyboard_mode="none",
+            exclusivity="normal",
+            visible=True,
+            all_visible=True,
+        )
+        # Instancia el container aquí, AI!
