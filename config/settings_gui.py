@@ -18,8 +18,7 @@ from fabric.widgets.scale import Scale
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.stack import Stack
 from fabric.widgets.window import Window
-from gi.repository import GdkPixbuf, GLib, Gtk, GObject # Añade GObject aquí
-from PIL import Image
+from gi.repository import GdkPixbuf, GLib, Gtk # GObject eliminado
 
 from .data import (APP_NAME, APP_NAME_CAP, PANEL_POSITION_DEFAULT,
                    PANEL_POSITION_KEY, NOTIF_POS_KEY, NOTIF_POS_DEFAULT) # Importa las nuevas constantes
@@ -28,6 +27,7 @@ from .data import (APP_NAME, APP_NAME_CAP, PANEL_POSITION_DEFAULT,
 # bind_vars se importa de settings_utils, backup_and_replace y start_config también
 from .settings_utils import (  # load_bind_vars no se llama desde aquí
     backup_and_replace, bind_vars, start_config)
+from PIL import Image
 
 
 class HyprConfGUI(Window):
@@ -379,23 +379,28 @@ class HyprConfGUI(Window):
         notification_pos_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         
         # Opciones para el dropdown de posición de notificaciones
-        notification_positions = Gtk.StringList.new(["Top", "Bottom"])
-        self.notification_pos_dropdown = Gtk.DropDown.new(notification_positions, Gtk.Expression.new(GObject.TYPE_STRING, None))
-        self.notification_pos_dropdown.set_tooltip_text("Select where notifications appear on the screen.")
+        # CAMBIO: Usar Gtk.ComboBoxText en lugar de Gtk.DropDown
+        self.notification_pos_combo = Gtk.ComboBoxText() # CAMBIO: Renombrado a _combo
+        self.notification_pos_combo.set_tooltip_text("Select where notifications appear on the screen.")
+        
+        # Añadir las opciones "Top" y "Bottom"
+        notification_positions_list = ["Top", "Bottom"]
+        for pos in notification_positions_list:
+            self.notification_pos_combo.append_text(pos)
         
         # Establecer la selección inicial basada en bind_vars
         current_notif_pos = bind_vars.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
         try:
-            # Gtk.DropDown.set_selected espera un índice
-            index = 0 if current_notif_pos == "Top" else 1 # Asumiendo "Top" es índice 0, "Bottom" es índice 1
-            self.notification_pos_dropdown.set_selected(index)
+            # CAMBIO: Usar set_active para Gtk.ComboBoxText
+            self.notification_pos_combo.set_active(notification_positions_list.index(current_notif_pos))
         except ValueError:
-            self.notification_pos_dropdown.set_selected(0) # Fallback a "Top"
+            self.notification_pos_combo.set_active(0) # Fallback a "Top"
 
         # Conectar la señal para actualizar bind_vars cuando cambie la selección
-        self.notification_pos_dropdown.connect("notify::selected-item", self.on_notification_position_changed)
+        # CAMBIO: La señal para Gtk.ComboBoxText es "changed"
+        self.notification_pos_combo.connect("changed", self.on_notification_position_changed)
         
-        notification_pos_combo_container.add(self.notification_pos_dropdown)
+        notification_pos_combo_container.add(self.notification_pos_combo) # CAMBIO: Renombrado a _combo
         layout_grid.attach(notification_pos_combo_container, 1, 7, 3, 1) # Fila 7, Columna 1, Span 3 (para que ocupe el espacio)
         # --- FIN NUEVA SECCIÓN ---
 
@@ -472,10 +477,10 @@ class HyprConfGUI(Window):
             # Por ahora, simplemente lo deshabilita, manteniendo el valor seleccionado.
 
     # --- NUEVO MÉTODO: Manejar cambio de posición de notificaciones ---
-    def on_notification_position_changed(self, dropdown: Gtk.DropDown, pspec):
-        selected_item = dropdown.get_selected_item()
-        if selected_item:
-            selected_text = selected_item.get_string()
+    # CAMBIO: Parámetros del método para Gtk.ComboBoxText
+    def on_notification_position_changed(self, combo: Gtk.ComboBoxText):
+        selected_text = combo.get_active_text() # CAMBIO: Obtener texto de Gtk.ComboBoxText
+        if selected_text: # Asegurarse de que no sea None
             bind_vars[NOTIF_POS_KEY] = selected_text
             print(f"Notification position updated in bind_vars: {bind_vars[NOTIF_POS_KEY]}") # Para depuración
     # --- FIN NUEVO MÉTODO ---
@@ -668,7 +673,7 @@ class HyprConfGUI(Window):
         
         # Update with bar position and derive vertical from it
         current_bind_vars_snapshot['bar_position'] = self.position_combo.get_active_text()
-        current_bind_vars_snapshot['vertical'] = self.position_combo.get_active_text() in ["Left", "Right"]
+        current_bind_vars_snapshot['vertical'] = current_bind_vars_snapshot['bar_position'] in ["Left", "Right"]
         
         current_bind_vars_snapshot['centered_bar'] = self.centered_switch.get_active()
         current_bind_vars_snapshot['dock_enabled'] = self.dock_switch.get_active()
@@ -683,9 +688,10 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['panel_theme'] = self.panel_theme_combo.get_active_text()
         current_bind_vars_snapshot[PANEL_POSITION_KEY] = self.panel_position_combo.get_active_text()
         # --- NUEVO: Capturar la posición de las notificaciones ---
-        selected_notif_pos_item = self.notification_pos_dropdown.get_selected_item()
-        if selected_notif_pos_item:
-            current_bind_vars_snapshot[NOTIF_POS_KEY] = selected_notif_pos_item.get_string()
+        # CAMBIO: Obtener texto de Gtk.ComboBoxText
+        selected_notif_pos_text = self.notification_pos_combo.get_active_text()
+        if selected_notif_pos_text:
+            current_bind_vars_snapshot[NOTIF_POS_KEY] = selected_notif_pos_text
         else:
             current_bind_vars_snapshot[NOTIF_POS_KEY] = NOTIF_POS_DEFAULT # Fallback
         # --- FIN NUEVO ---
@@ -893,11 +899,12 @@ class HyprConfGUI(Window):
 
             # --- NUEVO: Restablecer la posición de las notificaciones ---
             default_notif_pos_val = DEFAULTS.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
+            notification_positions_list = ["Top", "Bottom"] # Definir la lista de opciones aquí también
             try:
-                index = 0 if default_notif_pos_val == "Top" else 1
-                self.notification_pos_dropdown.set_selected(index)
+                # CAMBIO: Usar set_active para Gtk.ComboBoxText
+                self.notification_pos_combo.set_active(notification_positions_list.index(default_notif_pos_val))
             except ValueError:
-                self.notification_pos_dropdown.set_selected(0) # Fallback a "Top"
+                self.notification_pos_combo.set_active(0) # Fallback a "Top"
             # --- FIN NUEVO ---
 
             for name, switch in self.component_switches.items():
