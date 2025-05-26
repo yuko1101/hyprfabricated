@@ -11,8 +11,10 @@ from fabric.widgets.label import Label
 from fabric.widgets.stack import Stack
 from gi.repository import Gdk
 
+import config.data as data
 import modules.icons as icons
 
+vertical_mode = True if data.PANEL_THEME == "Panel" and data.PANEL_POSITION in ["Left", "Right"] else False
 
 class EmojiPicker(Box):
     def __init__(self, **kwargs):

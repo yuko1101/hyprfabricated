@@ -41,13 +41,11 @@
 #notification-stack-box {
   border-radius: 32px;
   padding: 16px;
+  border: 2px solid var(--surface);
   background-color: var(--shadow);
   margin: 8px;
+  margin-bottom: 4px;
   min-width: 330px;
-}
-
-#boxed-notification-revealer {
-  margin-top: -14px;
 }
 
 #notification-navigation {
@@ -82,6 +80,7 @@
   padding: 8px;
   border-radius: 16px;
   background: var(--shadow);
+  border: 2px solid var(--surface);
   margin-top: -12px;
 }
 
@@ -185,13 +184,4 @@
 #notif-date-sep-label {
   color: var(--outline);
   font-weight: bold;
-}
-
-#notification-popup {
-  border-radius: 16px;
-  padding: 8px;
-  min-width: 300px;
-  min-height: 100px;
-  margin: 8px;
-  background-color: var(--shadow);
 }

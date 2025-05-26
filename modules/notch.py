@@ -302,14 +302,14 @@ class Notch(Window):
             self.tmux.set_size_request(320, 635)
             self.cliphist.set_size_request(320, 635)
             self.dashboard.set_size_request(410, 900) # Narrower, taller
-            self.emoji.set_size_request(574, 238) # Emoji is fixed size, might not need change
+            # self.emoji.set_size_request(574, 238) # Emoji is fixed size, might not need change
         else: # Panel is horizontal (e.g., on Top/Bottom side)
             self.compact.set_size_request(260, 40)
             self.launcher.set_size_request(480, 244) # Wider, shorter
             self.tmux.set_size_request(480, 244)
             self.cliphist.set_size_request(480, 244)
             self.dashboard.set_size_request(1093, 472) # Wider, shorter
-            self.emoji.set_size_request(574, 238)
+            # self.emoji.set_size_request(574, 238)
 
         self.stack.set_interpolate_size(True)
         self.stack.set_homogeneous(False)

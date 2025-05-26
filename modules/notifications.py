@@ -953,16 +953,16 @@ class NotificationContainer(Box):
             transition_duration=200,
             visible=True,
         )
+        self.navigation = Box(
+            name="notification-navigation",
+            spacing=4,
+            h_align="center"
+        )
         self.stack_box = Box(
             name="notification-stack-box",
             h_align="center",
             h_expand=False,
             children=[self.stack]
-        )
-        self.navigation = Box(
-            name="notification-navigation",
-            spacing=4,
-            h_align="center"
         )
         self.prev_button = Button(
             name="nav-button",
@@ -999,7 +999,6 @@ class NotificationContainer(Box):
         self.notification_box_container = Box(
             name="notification-box-internal-container", 
             orientation="v",
-            spacing=4,
             children=[self.stack_box, self.navigation_revealer]
         )
         
@@ -1210,10 +1209,17 @@ class NotificationContainer(Box):
 
 class NotificationPopup(Window):
     def __init__(self, **kwargs):
+        x_pos = "right"
+        y_pos = "top"
+
+        if data.BAR_POSITION in ["Right"]:
+            x_pos = "left"
+        else:
+            x_pos = "right"
+
         super().__init__(
             name="notification-popup",
-            anchor="top",
-            margin="10px 10px 10px 10px",
+            anchor=f"{x_pos} {y_pos}",
             layer="top",
             keyboard_mode="none",
             exclusivity="none",
@@ -1226,6 +1232,14 @@ class NotificationPopup(Window):
         self.notification_history = self.widgets.notification_history if self.widgets else NotificationHistory()
         self.notification_container = NotificationContainer(
             notification_history_instance=self.notification_history,
-            revealer_transition_type="slide-down"
+            revealer_transition_type="slide-down" if data.NOTIF_POS == "Top" else "slide-up"
         )
-        self.add(self.notification_container)
+
+        self.show_box = Box()
+        self.show_box.set_size_request(1, 1)
+
+        self.add(Box(
+            name="notification-popup-box",
+            orientation="v",
+            children=[self.notification_container, self.show_box]
+        ))
