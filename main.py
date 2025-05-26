@@ -10,6 +10,7 @@ from modules.bar import Bar
 from modules.corners import Corners
 from modules.dock import Dock
 from modules.notch import Notch
+from modules.notifications import NotificationPopup
 
 fonts_updated_file = f"{CACHE_DIR}/fonts_updated"
 
@@ -38,12 +39,13 @@ if __name__ == "__main__":
     dock = Dock() 
     bar.notch = notch
     notch.bar = bar
+    notification = NotificationPopup()
     
     # Set corners visibility based on config
     corners_visible = config.get('corners_visible', True)
     corners.set_visible(corners_visible)
     
-    app = Application(f"{APP_NAME}", bar, notch, dock, corners)  # Make sure corners is added to the app
+    app = Application(f"{APP_NAME}", bar, notch, dock, notification, corners)  # Make sure corners is added to the app
 
     def set_css():
         from config.data import CURRENT_HEIGHT, CURRENT_WIDTH

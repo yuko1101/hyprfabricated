@@ -18,7 +18,8 @@ from modules.corners import MyCorner
 from modules.dashboard import Dashboard
 from modules.emoji import EmojiPicker
 from modules.launcher import AppLauncher
-from modules.notifications import NotificationContainer # Import NotificationContainer
+from modules.notifications import \
+    NotificationContainer  # Import NotificationContainer
 from modules.overview import Overview
 from modules.player import PlayerSmall
 from modules.power import PowerMenu

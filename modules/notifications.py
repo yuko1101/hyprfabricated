@@ -13,7 +13,7 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.widgets.wayland import WaylandWindow as Window # Import Window
+from fabric.widgets.wayland import WaylandWindow as Window  # Import Window
 from gi.repository import GdkPixbuf, GLib, Gtk
 from loguru import logger
 
@@ -1212,6 +1212,7 @@ class NotificationPopup(Window):
     def __init__(self):
         super().__init__(
             name="notification-popup",
+            anchor="top right",
             margin="1px 1px 1px 1px",
             layer="top",
             keyboard_mode="none",
