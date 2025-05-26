@@ -186,3 +186,12 @@
   color: var(--outline);
   font-weight: bold;
 }
+
+#notification-popup {
+  border-radius: 16px;
+  padding: 8px;
+  min-width: 300px;
+  min-height: 100px;
+  margin: 8px;
+  background-color: var(--shadow);
+}

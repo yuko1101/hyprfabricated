@@ -39,7 +39,7 @@ if __name__ == "__main__":
     dock = Dock() 
     bar.notch = notch
     notch.bar = bar
-    notification = NotificationPopup()
+    notification = NotificationPopup(widgets=notch.dashboard.widgets)
     
     # Set corners visibility based on config
     corners_visible = config.get('corners_visible', True)
@@ -48,18 +48,10 @@ if __name__ == "__main__":
     app = Application(f"{APP_NAME}", bar, notch, dock, notification, corners)  # Make sure corners is added to the app
 
     def set_css():
-        from config.data import CURRENT_HEIGHT, CURRENT_WIDTH
         app.set_stylesheet_from_file(
             get_relative_path("main.css"),
-            exposed_functions={
-                "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
-                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32 + 64}px;",
-                "dock_nmargin": lambda: f"margin-bottom: -{32 + DOCK_ICON_SIZE}px;" if not VERTICAL else f"margin-right: -{32 + DOCK_ICON_SIZE}px;",
-                "ws_width": lambda: "min-width: 48px;" if not VERTICAL else "min-width: 8px;",
-                "ws_height": lambda: "min-height: 8px;" if not VERTICAL else "min-height: 48px;",
-                "dock_sep": lambda: f"margin: 8px 0;" if not VERTICAL else f"margin: 0 8px;",
-            },
         )
+
     app.set_css = set_css
 
     app.set_css()

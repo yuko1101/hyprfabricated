@@ -1209,18 +1209,21 @@ class NotificationContainer(Box):
 
 
 class NotificationPopup(Window):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(
             name="notification-popup",
-            anchor="top right",
-            margin="1px 1px 1px 1px",
+            anchor="top",
+            margin="10px 10px 10px 10px",
             layer="top",
             keyboard_mode="none",
-            exclusivity="normal",
+            exclusivity="none",
             visible=True,
             all_visible=True,
         )
-        self.notification_history = NotificationHistory()
+
+        self.widgets = kwargs.get("widgets", None)
+
+        self.notification_history = self.widgets.notification_history if self.widgets else NotificationHistory()
         self.notification_container = NotificationContainer(
             notification_history_instance=self.notification_history,
             revealer_transition_type="slide-down"

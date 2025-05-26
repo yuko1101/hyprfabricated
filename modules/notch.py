@@ -113,13 +113,13 @@ class Notch(Window):
         self.app_identifiers = self._build_app_identifiers_map()
 
         self.dashboard = Dashboard(notch=self) # self.dashboard crea self.dashboard.widgets.notification_history
-        self.notification_history = self.dashboard.widgets.notification_history # Accede a la instancia
+        self.nhistory = self.dashboard.widgets.notification_history # Ya estaba definido, solo para confirmar
 
         # Pasar la instancia de notification_history directamente
-        self.notification = NotificationContainer(
-            notification_history_instance=self.notification_history, # MODIFICADO
-            revealer_transition_type=revealer_transition_type
-        )
+        # self.notification = NotificationContainer(
+        #     notification_history_instance=self.nhistory,
+        #     revealer_transition_type=revealer_transition_type
+        # )
         
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
@@ -129,7 +129,6 @@ class Notch(Window):
         self.cliphist = ClipHistory(notch=self)
 
         self.applet_stack = self.dashboard.widgets.applet_stack
-        self.nhistory = self.dashboard.widgets.notification_history # Ya estaba definido, solo para confirmar
         
         self.window_label = Label(
             name="notch-window-label",
@@ -304,7 +303,7 @@ class Notch(Window):
             spacing=4,
             children=[
                 self.notch_hover_area_event_box,
-                self.notification, # Usar la instancia de NotificationContainer directamente
+                # self.notification, # Usar la instancia de NotificationContainer directamente
             ]
         )
 
