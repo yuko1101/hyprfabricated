@@ -11,8 +11,10 @@ from modules.buttons import Buttons
 from modules.calendar import Calendar
 from modules.controls import ControlSliders
 from modules.metrics import Metrics
-from modules.network import NetworkConnections  # <--- AÑADIDA ESTA IMPORTACIÓN
+from modules.network import NetworkConnections
 from modules.player import Player
+# --- AÑADIR ESTA IMPORTACIÓN ---
+from modules.notifications import NotificationHistory
 
 
 class Widgets(Box):
@@ -32,10 +34,10 @@ class Widgets(Box):
         if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
             vertical_layout = True
 
-        self.notch = kwargs["notch"]
+        self.notch = kwargs["notch"]  # notch sigue siendo necesario para otras funciones (ej. open_notch)
 
         self.buttons = Buttons(widgets=self)
-        self.bluetooth = BluetoothConnections(widgets=self) # Esta es la página de Bluetooth
+        self.bluetooth = BluetoothConnections(widgets=self)
 
         self.box_1 = Box(
             name="box-1",
@@ -62,16 +64,20 @@ class Widgets(Box):
 
         self.metrics = Metrics()
 
-        self.notification_history = self.notch.notification_history # Esta es la página de historial de notificaciones
+        # --- MODIFICAR ESTA LÍNEA ---
+        # Antes: self.notification_history = self.notch.notification_history
+        # Ahora: Widgets crea la instancia de NotificationHistory.
+        # El constructor de NotificationHistory ya fue modificado para no tomar 'notch'.
+        self.notification_history = NotificationHistory()
 
-        self.network_connections = NetworkConnections(widgets=self) # <--- REEMPLAZO/AÑADIDO
+        self.network_connections = NetworkConnections(widgets=self)
 
         self.applet_stack = Stack(
             h_expand=True,
             v_expand=True,
             transition_type="slide-left-right",
             children=[
-                self.notification_history,
+                self.notification_history, # Ahora usa la instancia creada localmente
                 self.network_connections,
                 self.bluetooth,
             ]
@@ -94,7 +100,8 @@ class Widgets(Box):
                 v_expand=True,
                 spacing=8,
                 children=[
-                    Calendar(),
+                    Calendar(), # Si Calendar() es una nueva instancia, está bien.
+                                # Si se supone que es self.calendar, entonces usa self.calendar.
                     self.applet_stack_box,
                 ]
             ),
