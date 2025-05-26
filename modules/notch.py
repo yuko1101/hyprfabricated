@@ -33,63 +33,105 @@ from utils.occlusion import check_occlusion
 
 class Notch(Window):
     def __init__(self, **kwargs):
-        vertical_mode = True if data.PANEL_THEME == "Panel" and data.PANEL_POSITION in ["Left", "Right"] else False
-        anchor_val = "top"
-        revealer_transition_type = "slide-down"
-
+        # Determine if the panel itself should be rendered vertically
+        # This depends on the bar's orientation, as the panel usually aligns with the bar.
+        # If PANEL_THEME is "Notch", it's always horizontal (top-centered).
+        # If PANEL_THEME is "Panel", its orientation follows the bar's orientation.
+        is_panel_vertical = False
         if data.PANEL_THEME == "Panel":
-            match data.PANEL_POSITION:
-                case "Top":
-                    anchor_val = "top"
-                    revealer_transition_type = "slide-down"
-                case "Bottom":
-                    anchor_val = "bottom"
-                    revealer_transition_type = "slide-up"
-                case "Left":
-                    anchor_val = "left"
-                    revealer_transition_type = "slide-right"
-                case "Right":
-                    anchor_val = "right"
-                    revealer_transition_type = "slide-left"
-                case "Top-left":
-                    anchor_val = "top left"
-                    revealer_transition_type = "slide-down"
-                case "Top-right":
-                    anchor_val = "top right"
-                    revealer_transition_type = "slide-down"
-                case "Bottom-left":
-                    anchor_val = "bottom left"
-                    revealer_transition_type = "slide-up"
-                case "Bottom-right":
-                    anchor_val = "bottom right"
-                    revealer_transition_type = "slide-up"
-                case _:
-                    anchor_val = "top"
-                    revealer_transition_type = "slide-down"
+            is_panel_vertical = data.VERTICAL # data.VERTICAL is True if BAR_POSITION is "Left" or "Right"
 
-        # Determine margin string based on orientation and theme (always for top anchor)
+        anchor_val = "top" # Default for horizontal panel
+        revealer_transition_type = "slide-down" # Default for horizontal panel
+
+        if data.PANEL_THEME == "Notch":
+            # Notch theme is always top-centered, horizontal
+            anchor_val = "top"
+            revealer_transition_type = "slide-down"
+        elif data.PANEL_THEME == "Panel":
+            if is_panel_vertical:
+                # Panel is vertical (bar is vertical)
+                if data.BAR_POSITION == "Left":
+                    match data.PANEL_POSITION:
+                        case "Start":
+                            anchor_val = "left top"
+                            revealer_transition_type = "slide-right"
+                        case "Center":
+                            anchor_val = "left" # Full left side
+                            revealer_transition_type = "slide-right"
+                        case "End":
+                            anchor_val = "left bottom"
+                            revealer_transition_type = "slide-right"
+                        case _: # Fallback for old values or unexpected
+                            anchor_val = "left"
+                            revealer_transition_type = "slide-right"
+                elif data.BAR_POSITION == "Right":
+                    match data.PANEL_POSITION:
+                        case "Start":
+                            anchor_val = "right top"
+                            revealer_transition_type = "slide-left"
+                        case "Center":
+                            anchor_val = "right" # Full right side
+                            revealer_transition_type = "slide-left"
+                        case "End":
+                            anchor_val = "right bottom"
+                            revealer_transition_type = "slide-left"
+                        case _: # Fallback
+                            anchor_val = "right"
+                            revealer_transition_type = "slide-left"
+            else:
+                # Panel is horizontal (bar is horizontal)
+                if data.BAR_POSITION == "Top":
+                    match data.PANEL_POSITION:
+                        case "Start":
+                            anchor_val = "top left"
+                            revealer_transition_type = "slide-down"
+                        case "Center":
+                            anchor_val = "top" # Full top side
+                            revealer_transition_type = "slide-down"
+                        case "End":
+                            anchor_val = "top right"
+                            revealer_transition_type = "slide-down"
+                        case _: # Fallback
+                            anchor_val = "top"
+                            revealer_transition_type = "slide-down"
+                elif data.BAR_POSITION == "Bottom":
+                    match data.PANEL_POSITION:
+                        case "Start":
+                            anchor_val = "bottom left"
+                            revealer_transition_type = "slide-up"
+                        case "Center":
+                            anchor_val = "bottom" # Full bottom side
+                            revealer_transition_type = "slide-up"
+                        case "End":
+                            anchor_val = "bottom right"
+                            revealer_transition_type = "slide-up"
+                        case _: # Fallback
+                            anchor_val = "bottom"
+                            revealer_transition_type = "slide-up"
+
+        # Determine margin string based on orientation and theme
         default_top_anchor_margin_str = "-40px 8px 8px 8px"  # top, right, bottom, left
         pills_margin_top_str = "-40px 0px 0px 0px"
         dense_edge_margin_top_str = "-46px 0px 0px 0px"
         current_margin_str = ""
 
-        if data.VERTICAL:
-            current_margin_str = "0px 0px 0px 0px"
-        else:  # Horizontal bar, notch is always anchored top
-            match data.BAR_THEME:
-                case "Pills":
-                    current_margin_str = pills_margin_top_str
-                case "Dense" | "Edge":
-                    current_margin_str = dense_edge_margin_top_str
-                case _:
-                    current_margin_str = default_top_anchor_margin_str
-
-        if data.BAR_POSITION == "Bottom":
-            current_margin_str = "0px 0px 0px 0px"  # No margin for bottom bar
-
         if data.PANEL_THEME == "Panel":
-            # Panel theme uses a different margin for the top anchor
-            current_margin_str = "0px 0px 0px 0px"
+            current_margin_str = "0px 0px 0px 0px" # Panel theme always uses no margin
+        else: # Notch theme
+            if data.VERTICAL: # Bar is vertical
+                current_margin_str = "0px 0px 0px 0px" # Notch is still top-centered, but bar is vertical
+            else: # Bar is horizontal
+                if data.BAR_POSITION == "Bottom":
+                    current_margin_str = "0px 0px 0px 0px" # Notch is still top-centered, but bar is at bottom
+                else: # Bar is at Top
+                    match data.BAR_THEME:
+                        case "Pills":
+                            current_margin_str = pills_margin_top_str
+                        case "Dense" | "Edge":
+                            current_margin_str = dense_edge_margin_top_str
+                        case _:
+                            current_margin_str = default_top_anchor_margin_str
         
         super().__init__(
             name="notch",
@@ -246,22 +288,27 @@ class Notch(Window):
 
         if data.PANEL_THEME == "Panel":
             self.stack.add_style_class("panel")
-            self.stack.add_style_class(data.PANEL_POSITION)
+            # The old PANEL_POSITION values like "Top-left" were used here.
+            # With "Start", "Center", "End", we need to derive the class.
+            # For simplicity, let's add the BAR_POSITION and PANEL_POSITION as classes.
+            self.stack.add_style_class(data.BAR_POSITION.lower())
+            self.stack.add_style_class(data.PANEL_POSITION.lower())
 
-        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
-            self.compact.set_size_request(260, 40)
-            self.launcher.set_size_request(320, 635)
+
+        # Adjust size requests based on panel orientation
+        if is_panel_vertical: # Panel is vertical (e.g., on Left/Right side)
+            self.compact.set_size_request(260, 40) # This is compact, so width is more important
+            self.launcher.set_size_request(320, 635) # Narrower, taller
             self.tmux.set_size_request(320, 635)
             self.cliphist.set_size_request(320, 635)
-            self.dashboard.set_size_request(410, 900)
-            self.emoji.set_size_request(574, 238)
-
-        else:
+            self.dashboard.set_size_request(410, 900) # Narrower, taller
+            self.emoji.set_size_request(574, 238) # Emoji is fixed size, might not need change
+        else: # Panel is horizontal (e.g., on Top/Bottom side)
             self.compact.set_size_request(260, 40)
-            self.launcher.set_size_request(480, 244)
+            self.launcher.set_size_request(480, 244) # Wider, shorter
             self.tmux.set_size_request(480, 244)
             self.cliphist.set_size_request(480, 244)
-            self.dashboard.set_size_request(1093, 472)
+            self.dashboard.set_size_request(1093, 472) # Wider, shorter
             self.emoji.set_size_request(574, 238)
 
         self.stack.set_interpolate_size(True)
@@ -316,7 +363,7 @@ class Notch(Window):
 
         self.notch_complete = Box(
             name="notch-complete",
-            orientation="v" if not vertical_mode else "h",
+            orientation="v" if is_panel_vertical else "h", # Use the new variable here
             children=[
                 self.notch_hover_area_event_box,
             ]
@@ -330,6 +377,9 @@ class Notch(Window):
 
         self.vert_comp = Box()
 
+        # This logic is for the "vertical compensation" boxes, which are part of the bar, not the panel.
+        # It seems to be related to the bar's vertical mode.
+        # If data.VERTICAL is True (bar is vertical), then these comps are used.
         match data.BAR_POSITION:
             case "Left":
                 self.vert_comp = self.vert_comp_right
@@ -346,14 +396,17 @@ class Notch(Window):
             case _:
                 self.vert_comp.set_size_request(38, 0)
 
-        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION in ["Left", "Right", "Top-left", "Top-right", "Bottom-left", "Bottom-right"]:
+        # This condition was for old PANEL_POSITION values.
+        # If the panel is vertical, these compensation boxes might not be needed or need different sizes.
+        # Let's assume if the panel is vertical, these are not needed.
+        if is_panel_vertical: # If the panel itself is vertical, these comps are likely irrelevant
             self.vert_comp.set_size_request(1, 1)
 
         self.vert_comp.set_sensitive(False)
 
         self.notch_children = []
 
-        if data.VERTICAL:
+        if data.VERTICAL: # This is still based on BAR_POSITION, not PANEL_POSITION
             self.notch_children = [
                 self.vert_comp_left,
                 self.notch_complete,
@@ -419,8 +472,9 @@ class Notch(Window):
         """Handle hover enter for the entire notch area"""
         self.is_hovered = True
         # If in vertical mode, notch is not open, and revealer is closed, reveal it
-        if (data.VERTICAL or data.BAR_POSITION == "Bottom") and not self.notch_revealer.get_reveal_child() and not self._is_notch_open:
-            self.notch_revealer.set_reveal_child(True)
+        # This condition should be based on the panel's actual orientation and position.
+        # The `_check_occlusion` function handles the reveal logic.
+        # For now, just set hovered state.
         return False  # Allow event propagation
 
     def on_notch_hover_area_leave(self, widget, event):
@@ -741,9 +795,25 @@ class Notch(Window):
         and update the notch_revealer accordingly.
         """
         # Only check occlusion if not hovered, not open, and in vertical mode or bar at bottom
-        if (data.VERTICAL or data.BAR_POSITION == "Bottom") and not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
-            # Always check occlusion at the "top" edge as the notch window is there
-            is_occluded = check_occlusion(("top", 40)) 
+        # The occlusion check should be based on the panel's actual anchor and orientation.
+        # If the panel is vertical, check left/right edge. If horizontal, check top/bottom edge.
+        
+        # Determine the edge and size for occlusion check based on anchor_val
+        occlusion_edge = "top"
+        occlusion_size = 40 # Default for horizontal top notch
+        
+        if self.get_anchor() == "bottom" or "bottom" in self.get_anchor():
+            occlusion_edge = "bottom"
+            occlusion_size = 40 # Assuming same size for bottom
+        elif self.get_anchor() == "left" or "left" in self.get_anchor():
+            occlusion_edge = "left"
+            occlusion_size = 40 # Assuming same size for side
+        elif self.get_anchor() == "right" or "right" in self.get_anchor():
+            occlusion_edge = "right"
+            occlusion_size = 40 # Assuming same size for side
+
+        if not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
+            is_occluded = check_occlusion((occlusion_edge, occlusion_size)) 
             self.notch_revealer.set_reveal_child(not is_occluded)
         
         return True  # Return True to keep the timeout active
@@ -767,7 +837,9 @@ class Notch(Window):
         Temporarily remove the 'occluded' class when active window class changes
         to make the notch visible momentarily.
         """
-        if not (data.VERTICAL or data.BAR_POSITION == "Bottom"):
+        # This logic is specifically for the "Notch" theme, which is always top-centered.
+        # If PANEL_THEME is "Panel", this behavior might not be desired or needs adjustment.
+        if data.PANEL_THEME != "Notch":
             return
             
         # Get the current window class

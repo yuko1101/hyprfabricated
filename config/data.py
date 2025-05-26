@@ -12,7 +12,7 @@ APP_NAME_CAP = "Ax-Shell"
 
 # Añade estas líneas:
 PANEL_POSITION_KEY = "panel_position"
-PANEL_POSITION_DEFAULT = "top" # O el valor por defecto que prefieras (ej: "bottom")
+PANEL_POSITION_DEFAULT = "Center" # O el valor por defecto que prefieras (ej: "bottom")
 NOTIF_POS_KEY = "notif_pos" # Nueva clave para la posición de notificaciones
 NOTIF_POS_DEFAULT = "Top" # Valor por defecto para la posición de notificaciones
 

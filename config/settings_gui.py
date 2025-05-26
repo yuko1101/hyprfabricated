@@ -346,8 +346,7 @@ class HyprConfGUI(Window):
 
         # Almacenar opciones de posición del panel
         self.panel_position_options = [
-            "Top", "Bottom", "Left", "Right",
-            "Top-left", "Top-right", "Bottom-left", "Bottom-right"
+            "Start", "Center", "End"
         ]
 
         # Panel Position (misma fila que Panel Theme, columnas derechas)

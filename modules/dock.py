@@ -88,69 +88,47 @@ class Dock(Window):
 
 
         if not self.integrated_mode:
-            # Determinar la configuración del dock basada en la configuración del panel
-            
-            # Valores por defecto para un dock horizontal (anclado abajo)
-            _anchor_if_bottom = "bottom"
-            _transition_if_bottom = "slide-up"
-            _orient_main_box_if_bottom = Gtk.Orientation.VERTICAL # main_box es vertical (hover_activator encima de revealer)
-            _halign_main_box_if_bottom = "center"
-            _orient_wrapper_if_bottom = Gtk.Orientation.HORIZONTAL # Iconos del dock en horizontal
+            # Determine if the dock itself should be horizontal or vertical
+            # By default, the dock's orientation follows the bar's orientation.
+            self.actual_dock_is_horizontal = not data.VERTICAL # data.VERTICAL is True if BAR_POSITION is "Left" or "Right"
 
-            # Valores por defecto para un dock vertical (anclado a un lado, ej. "right")
-            _anchor_if_vertical_on_side = "right" 
-            _transition_if_vertical_on_side = "slide-left" # Desde la derecha
-            _orient_main_box_if_vertical_on_side = Gtk.Orientation.HORIZONTAL # main_box es horizontal (hover_activator al lado de revealer)
-            _halign_main_box_if_vertical_on_side = "end" # main_box se alinea al final (derecha)
-            _orient_wrapper_if_vertical_on_side = Gtk.Orientation.VERTICAL # Iconos del dock en vertical
+            # Now, determine the anchor and transition based on the dock's determined orientation
+            if self.actual_dock_is_horizontal:
+                anchor_to_set = "bottom"
+                revealer_transition_type = "slide-up"
+                main_box_orientation_val = Gtk.Orientation.VERTICAL # main_box is vertical (hover_activator above revealer)
+                main_box_h_align_val = "center"
+                dock_wrapper_orientation_val = Gtk.Orientation.HORIZONTAL # Dock icons horizontal
+            else: # Dock is vertical
+                # If the dock is vertical, it should be on the opposite side of the bar
+                if data.BAR_POSITION == "Left":
+                    anchor_to_set = "right"
+                    revealer_transition_type = "slide-left"
+                elif data.BAR_POSITION == "Right":
+                    anchor_to_set = "left"
+                    revealer_transition_type = "slide-right"
+                else: # Fallback for unexpected BAR_POSITION with vertical dock
+                    anchor_to_set = "right"
+                    revealer_transition_type = "slide-left"
 
-            if not data.VERTICAL: # El panel es horizontal
-                anchor_to_set = _anchor_if_bottom
-                revealer_transition_type = _transition_if_bottom
-                self.actual_dock_is_horizontal = True
-                main_box_orientation_val = _orient_main_box_if_bottom
-                main_box_h_align_val = _halign_main_box_if_bottom
-                dock_wrapper_orientation_val = _orient_wrapper_if_bottom
-            else: # El panel es vertical (data.VERTICAL es True)
-                # Por defecto, el dock se comporta como vertical en el lado derecho
-                anchor_to_set = _anchor_if_vertical_on_side
-                revealer_transition_type = _transition_if_vertical_on_side
-                self.actual_dock_is_horizontal = False
-                main_box_orientation_val = _orient_main_box_if_vertical_on_side
-                main_box_h_align_val = _halign_main_box_if_vertical_on_side
-                dock_wrapper_orientation_val = _orient_wrapper_if_vertical_on_side
-                
-                # Comprobar si la posición del panel fuerza al dock a la parte inferior
-                if hasattr(data, "PANEL_POSITION") and data.PANEL_POSITION:
-                    panel_pos_lower = data.PANEL_POSITION.lower()
-                    
-                    # Si el dock intenta estar en "right" (por defecto para panel vertical) 
-                    # y el panel también está en "right"
-                    if _anchor_if_vertical_on_side == "right" and "right" in panel_pos_lower:
-                        # Forzar dock a la configuración de "bottom"
-                        anchor_to_set = _anchor_if_bottom
-                        revealer_transition_type = _transition_if_bottom
-                        self.actual_dock_is_horizontal = True
-                        main_box_orientation_val = _orient_main_box_if_bottom
-                        main_box_h_align_val = _halign_main_box_if_bottom
-                        dock_wrapper_orientation_val = _orient_wrapper_if_bottom
-            
+                main_box_orientation_val = Gtk.Orientation.HORIZONTAL # main_box is horizontal (hover_activator next to revealer)
+                main_box_h_align_val = "end" if anchor_to_set == "right" else "start" # Align main_box to the side it's anchored to
+                dock_wrapper_orientation_val = Gtk.Orientation.VERTICAL # Dock icons vertical
+
             super().__init__(
                 name="dock-window",
                 layer="top",
-                anchor=anchor_to_set, # MODIFICADO
+                anchor=anchor_to_set,
                 margin="0px 0px 0px 0px",
                 exclusivity="none",
                 **kwargs,
             )
             Dock._instances.append(self)
         else: # Modo integrado
-            # No se llama a super().__init__ de Window si está integrado.
-            self.actual_dock_is_horizontal = True # El dock integrado se asume horizontal
+            self.actual_dock_is_horizontal = True # The integrated dock is always horizontal
             dock_wrapper_orientation_val = Gtk.Orientation.HORIZONTAL
-            # Las siguientes no son directamente usadas por el dock integrado en su forma actual
-            # pero se inicializan por completitud.
-            anchor_to_set = "bottom" 
+            # These are not used for integrated mode, but initialized for consistency
+            anchor_to_set = "bottom"
             revealer_transition_type = "slide-up"
             main_box_orientation_val = Gtk.Orientation.VERTICAL
             main_box_h_align_val = "center"
@@ -225,14 +203,37 @@ class Dock(Window):
                     children=[self.corner_left, self.dock_eventbox, self.corner_right]
                 )
             else: # Dock es vertical en un lado
-                self.corner_top = Box(
-                    name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
-                    children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-right")]
-                )
-                self.corner_bottom = Box(
-                    name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
-                    children=[Box(h_expand=True, h_align="fill"), MyCorner("top-right")]
-                )
+                # Corners for vertical dock should be top-left/bottom-left or top-right/bottom-right
+                # depending on which side the dock is anchored.
+                # The MyCorner widgets are designed for horizontal bars, so their names ("bottom-right")
+                # refer to the corner of the bar itself.
+                # For a vertical dock, the corners are at the top and bottom of the dock.
+                # If anchored left, top corner is "top-right" (of the dock), bottom corner is "bottom-right".
+                # If anchored right, top corner is "top-left" (of the dock), bottom corner is "bottom-left".
+                
+                # Let's assume the corners are relative to the dock's position.
+                # If dock is on the right, its top corner is top-left, bottom corner is bottom-left.
+                # If dock is on the left, its top corner is top-right, bottom corner is bottom-right.
+                
+                if anchor_to_set == "right": # Dock is on the right side
+                    self.corner_top = Box(
+                        name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("top-left")] # Top-left corner of the dock
+                    )
+                    self.corner_bottom = Box(
+                        name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-left")] # Bottom-left corner of the dock
+                    )
+                else: # Dock is on the left side
+                    self.corner_top = Box(
+                        name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("top-right")] # Top-right corner of the dock
+                    )
+                    self.corner_bottom = Box(
+                        name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-right")] # Bottom-right corner of the dock
+                    )
+
                 self.dock_full = Box(
                     name="dock-full", orientation=Gtk.Orientation.VERTICAL, v_expand=True, v_align="fill",
                     children=[self.corner_top, self.dock_eventbox, self.corner_bottom]
@@ -263,7 +264,8 @@ class Dock(Window):
                 for corner in [self.corner_left, self.corner_right, self.corner_top, self.corner_bottom]:
                     corner.set_visible(False)
             
-            if not data.DOCK_ENABLED or data.BAR_POSITION == "Bottom": # TODO: Revisar esta condición con la nueva lógica
+            # Hide standalone dock if disabled or if bar is at bottom (meaning dock is integrated)
+            if not data.DOCK_ENABLED or data.BAR_POSITION == "Bottom":
                 self.set_visible(False) 
             
             if self.always_occluded: 
@@ -743,7 +745,7 @@ class Dock(Window):
                             elif instances_dragged:
                                 address = instances_dragged[0].get("address")
                                 if address:
-                                    exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
+                                    exec_shell_command(f"hyprctl dispatch focuswindow address:{address}")
             
             self._drag_in_progress = False
             if not self.integrated_mode:
