@@ -1209,8 +1209,3 @@ class NotificationContainer(Box):
         notifications_to_close = self.notifications.copy()
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
-
-
-# Mueve la notificación del notch a esta ventana, AI!
-class NotificationPopup(Window):
-
