@@ -31,6 +31,7 @@ from utils.occlusion import check_occlusion
 
 class Notch(Window):
     def __init__(self, **kwargs):
+        vertical_mode = True if data.PANEL_THEME == "Panel" and data.PANEL_POSITION in ["Left", "Right"] else False
         anchor_val = "top"
         revealer_transition_type = "slide-down"
 
@@ -299,11 +300,9 @@ class Notch(Window):
 
         self.notch_complete = Box(
             name="notch-complete",
-            orientation="v",
-            spacing=4,
+            orientation="v" if not vertical_mode else "h",
             children=[
                 self.notch_hover_area_event_box,
-                # self.notification, # Usar la instancia de NotificationContainer directamente
             ]
         )
 
@@ -331,7 +330,7 @@ class Notch(Window):
             case _:
                 self.vert_comp.set_size_request(38, 0)
 
-        if data.PANEL_THEME == "Panel":
+        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION in ["Left", "Right", "Top-left", "Top-right", "Bottom-left", "Bottom-right"]:
             self.vert_comp.set_size_request(1, 1)
 
         self.vert_comp.set_sensitive(False)
