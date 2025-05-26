@@ -1,7 +1,8 @@
 import os
 
 from .data import (APP_NAME, APP_NAME_CAP,  # Añadir APP_NAME
-                   WALLPAPERS_DIR_DEFAULT, PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT)
+                   WALLPAPERS_DIR_DEFAULT, PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT,
+                   NOTIF_POS_KEY, NOTIF_POS_DEFAULT) # Importar las nuevas constantes
 
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
@@ -57,6 +58,7 @@ DEFAULTS = {
     'dock_theme': "Pills",
     'panel_theme': "Notch", # Default panel theme
     PANEL_POSITION_KEY: PANEL_POSITION_DEFAULT, # Default panel position
+    NOTIF_POS_KEY: NOTIF_POS_DEFAULT, # Nueva entrada para la posición de notificaciones
     'bar_button_apps_visible': True,
     'bar_systray_visible': True,
     'bar_control_visible': True,

@@ -18,11 +18,11 @@ from fabric.widgets.scale import Scale
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.stack import Stack
 from fabric.widgets.window import Window
-from gi.repository import GdkPixbuf, GLib, Gtk
+from gi.repository import GdkPixbuf, GLib, Gtk, GObject # Añade GObject aquí
 from PIL import Image
 
 from .data import (APP_NAME, APP_NAME_CAP, PANEL_POSITION_DEFAULT,
-                   PANEL_POSITION_KEY)
+                   PANEL_POSITION_KEY, NOTIF_POS_KEY, NOTIF_POS_DEFAULT) # Importa las nuevas constantes
 # DEFAULTS se importa directamente en on_reset, SOURCE_STRING no se usa aquí
 # from .settings_constants import DEFAULTS, SOURCE_STRING
 # bind_vars se importa de settings_utils, backup_and_replace y start_config también
@@ -372,6 +372,33 @@ class HyprConfGUI(Window):
         panel_position_combo_container.add(self.panel_position_combo)
         layout_grid.attach(panel_position_combo_container, 3, 6, 1, 1) # Fila 6, Columna 3, Span 1
 
+        # --- NUEVA SECCIÓN: Posición de Notificaciones ---
+        notification_pos_label = Label(label="Notification Position", h_align="start", v_align="center")
+        layout_grid.attach(notification_pos_label, 0, 7, 1, 1) # Nueva fila 7, Columna 0
+
+        notification_pos_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        
+        # Opciones para el dropdown de posición de notificaciones
+        notification_positions = Gtk.StringList.new(["Top", "Bottom"])
+        self.notification_pos_dropdown = Gtk.DropDown.new(notification_positions, Gtk.Expression.new(GObject.TYPE_STRING, None))
+        self.notification_pos_dropdown.set_tooltip_text("Select where notifications appear on the screen.")
+        
+        # Establecer la selección inicial basada en bind_vars
+        current_notif_pos = bind_vars.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
+        try:
+            # Gtk.DropDown.set_selected espera un índice
+            index = 0 if current_notif_pos == "Top" else 1 # Asumiendo "Top" es índice 0, "Bottom" es índice 1
+            self.notification_pos_dropdown.set_selected(index)
+        except ValueError:
+            self.notification_pos_dropdown.set_selected(0) # Fallback a "Top"
+
+        # Conectar la señal para actualizar bind_vars cuando cambie la selección
+        self.notification_pos_dropdown.connect("notify::selected-item", self.on_notification_position_changed)
+        
+        notification_pos_combo_container.add(self.notification_pos_dropdown)
+        layout_grid.attach(notification_pos_combo_container, 1, 7, 3, 1) # Fila 7, Columna 1, Span 3 (para que ocupe el espacio)
+        # --- FIN NUEVA SECCIÓN ---
+
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;", h_expand=True)
         vbox.add(separator2)
 
@@ -443,6 +470,15 @@ class HyprConfGUI(Window):
             #     except ValueError:
             #         self.panel_position_combo.set_active(0)
             # Por ahora, simplemente lo deshabilita, manteniendo el valor seleccionado.
+
+    # --- NUEVO MÉTODO: Manejar cambio de posición de notificaciones ---
+    def on_notification_position_changed(self, dropdown: Gtk.DropDown, pspec):
+        selected_item = dropdown.get_selected_item()
+        if selected_item:
+            selected_text = selected_item.get_string()
+            bind_vars[NOTIF_POS_KEY] = selected_text
+            print(f"Notification position updated in bind_vars: {bind_vars[NOTIF_POS_KEY]}") # Para depuración
+    # --- FIN NUEVO MÉTODO ---
 
     def create_system_tab(self):
         scrolled_window = ScrolledWindow(
@@ -646,6 +682,13 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['dock_theme'] = self.dock_theme_combo.get_active_text()
         current_bind_vars_snapshot['panel_theme'] = self.panel_theme_combo.get_active_text()
         current_bind_vars_snapshot[PANEL_POSITION_KEY] = self.panel_position_combo.get_active_text()
+        # --- NUEVO: Capturar la posición de las notificaciones ---
+        selected_notif_pos_item = self.notification_pos_dropdown.get_selected_item()
+        if selected_notif_pos_item:
+            current_bind_vars_snapshot[NOTIF_POS_KEY] = selected_notif_pos_item.get_string()
+        else:
+            current_bind_vars_snapshot[NOTIF_POS_KEY] = NOTIF_POS_DEFAULT # Fallback
+        # --- FIN NUEVO ---
 
         for component_name, switch in self.component_switches.items():
             current_bind_vars_snapshot[f'bar_{component_name}_visible'] = switch.get_active()
@@ -748,7 +791,7 @@ class HyprConfGUI(Window):
                 # Para un nombre simple como "ax-shell", no debería ser un problema.
                 kill_proc = subprocess.Popen(kill_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 kill_proc.wait(timeout=2) # Esperar un poco a que termine
-                print(f"{time.time():.4f}: killall process finished (or timed out).")
+                print(f"{time.time():.4f}: killall process finished (o timed out).")
             except subprocess.TimeoutExpired: print("Warning: killall command timed out.")
             except Exception as e: print(f"Error running killall: {e}")
             
@@ -848,6 +891,15 @@ class HyprConfGUI(Window):
                 except ValueError:
                     self.panel_position_combo.set_active(0) 
 
+            # --- NUEVO: Restablecer la posición de las notificaciones ---
+            default_notif_pos_val = DEFAULTS.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
+            try:
+                index = 0 if default_notif_pos_val == "Top" else 1
+                self.notification_pos_dropdown.set_selected(index)
+            except ValueError:
+                self.notification_pos_dropdown.set_selected(0) # Fallback a "Top"
+            # --- FIN NUEVO ---
+
             for name, switch in self.component_switches.items():
                  switch.set_active(settings_utils.bind_vars.get(f'bar_{name}_visible', True))
             self.corners_switch.set_active(settings_utils.bind_vars.get('corners_visible', True))
@@ -869,7 +921,7 @@ class HyprConfGUI(Window):
             for child in list(self.disk_entries.get_children()): self.disk_entries.remove(child)
             
             for p in DEFAULTS.get('bar_metrics_disks', ["/"]):
-                self._add_disk_entry_widget(p)
+                self._add_disk_edit_entry_func(p)
 
             # Actualizar sensibilidad después de todos los resets
             self._update_panel_position_sensitivity()
@@ -891,4 +943,3 @@ class HyprConfGUI(Window):
     def on_close(self, widget):
         if self.application: self.application.quit()
         else: self.destroy()
-

@@ -13,6 +13,8 @@ APP_NAME_CAP = "Ax-Shell"
 # Añade estas líneas:
 PANEL_POSITION_KEY = "panel_position"
 PANEL_POSITION_DEFAULT = "top" # O el valor por defecto que prefieras (ej: "bottom")
+NOTIF_POS_KEY = "notif_pos" # Nueva clave para la posición de notificaciones
+NOTIF_POS_DEFAULT = "Top" # Valor por defecto para la posición de notificaciones
 
 CACHE_DIR = str(GLib.get_user_cache_dir()) + f"/{APP_NAME}"
 
@@ -71,6 +73,7 @@ if os.path.exists(CONFIG_FILE):
     PANEL_THEME = config.get('panel_theme', "Pills") # Load panel theme setting
     # Añade esta línea:
     PANEL_POSITION = config.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT) # Load panel position
+    NOTIF_POS = config.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT) # Load notification position
 
     # Load bar component visibility settings
     BAR_COMPONENTS_VISIBILITY = {
@@ -108,6 +111,7 @@ else:
     PANEL_THEME = "Notch"
     # Añade esta línea:
     PANEL_POSITION = PANEL_POSITION_DEFAULT # Default panel position
+    NOTIF_POS = NOTIF_POS_DEFAULT # Default notification position
 
     # Default values for component visibility (all visible)
     BAR_COMPONENTS_VISIBILITY = {
