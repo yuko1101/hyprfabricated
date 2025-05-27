@@ -10,11 +10,11 @@ from gi.repository import Gdk, GLib
 APP_NAME = "ax-shell"
 APP_NAME_CAP = "Ax-Shell"
 
-# Añade estas líneas:
+
 PANEL_POSITION_KEY = "panel_position"
-PANEL_POSITION_DEFAULT = "Center" # O el valor por defecto que prefieras (ej: "bottom")
-NOTIF_POS_KEY = "notif_pos" # Nueva clave para la posición de notificaciones
-NOTIF_POS_DEFAULT = "Top" # Valor por defecto para la posición de notificaciones
+PANEL_POSITION_DEFAULT = "Center"
+NOTIF_POS_KEY = "notif_pos"
+NOTIF_POS_DEFAULT = "Top"
 
 CACHE_DIR = str(GLib.get_user_cache_dir()) + f"/{APP_NAME}"
 
@@ -28,18 +28,18 @@ screen = Gdk.Screen.get_default()
 CURRENT_WIDTH = screen.get_width()
 CURRENT_HEIGHT = screen.get_height()
 
-# Rename to match what's being imported in config.py
+
 WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
 CONFIG_FILE = get_relative_path('../config/config.json')
 MATUGEN_STATE_FILE = os.path.join(CONFIG_DIR, "matugen")
 
-# Default value for the new setting
+
 BAR_WORKSPACE_USE_CHINESE_NUMERALS = False
-BAR_THEME = "Pills" # Default bar theme
+BAR_THEME = "Pills"
 
-DOCK_THEME = "Pills" # Default dock theme
+DOCK_THEME = "Pills"
 
-PANEL_THEME = "Notch"  # Default panel mode
+PANEL_THEME = "Notch"
 
 def load_config():
     """Load the configuration from config.json"""
@@ -59,23 +59,23 @@ if os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, 'r') as f:
         config = json.load(f)
     WALLPAPERS_DIR = config.get('wallpapers_dir', WALLPAPERS_DIR_DEFAULT)
-    BAR_POSITION = config.get('bar_position', "Top")  # Load bar position
-    VERTICAL = BAR_POSITION in ["Left", "Right"]  # Derive vertical from position
-    CENTERED_BAR = config.get('centered_bar', False)  # Load centered bar setting
-    TERMINAL_COMMAND = config.get('terminal_command', "kitty -e")  # Load terminal command
-    DOCK_ENABLED = config.get('dock_enabled', True)  # Load dock visibility setting
-    DOCK_ALWAYS_OCCLUDED = config.get('dock_always_occluded', False)  # Load dock hover-only setting
-    DOCK_ICON_SIZE = config.get('dock_icon_size', 28)  # Load dock icon size setting
-    BAR_WORKSPACE_SHOW_NUMBER = config.get('bar_workspace_show_number', False) # Load workspace number visibility
-    BAR_WORKSPACE_USE_CHINESE_NUMERALS = config.get('bar_workspace_use_chinese_numerals', False) # Load Chinese numeral setting
-    BAR_THEME = config.get('bar_theme', "Pills") # Load bar theme setting
-    DOCK_THEME = config.get('dock_theme', "Pills") # Load dock theme setting
-    PANEL_THEME = config.get('panel_theme', "Pills") # Load panel theme setting
-    # Añade esta línea:
-    PANEL_POSITION = config.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT) # Load panel position
-    NOTIF_POS = config.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT) # Load notification position
+    BAR_POSITION = config.get('bar_position', "Top")
+    VERTICAL = BAR_POSITION in ["Left", "Right"]
+    CENTERED_BAR = config.get('centered_bar', False)
+    TERMINAL_COMMAND = config.get('terminal_command', "kitty -e")
+    DOCK_ENABLED = config.get('dock_enabled', True)
+    DOCK_ALWAYS_OCCLUDED = config.get('dock_always_occluded', False)
+    DOCK_ICON_SIZE = config.get('dock_icon_size', 28)
+    BAR_WORKSPACE_SHOW_NUMBER = config.get('bar_workspace_show_number', False)
+    BAR_WORKSPACE_USE_CHINESE_NUMERALS = config.get('bar_workspace_use_chinese_numerals', False)
+    BAR_THEME = config.get('bar_theme', "Pills")
+    DOCK_THEME = config.get('dock_theme', "Pills")
+    PANEL_THEME = config.get('panel_theme', "Pills")
 
-    # Load bar component visibility settings
+    PANEL_POSITION = config.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT)
+    NOTIF_POS = config.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
+
+
     BAR_COMPONENTS_VISIBILITY = {
         'button_apps': config.get('bar_button_apps_visible', True),
         'systray': config.get('bar_systray_visible', True),
@@ -97,23 +97,23 @@ if os.path.exists(CONFIG_FILE):
     METRICS_SMALL_VISIBLE = config.get('metrics_small_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
-    BAR_POSITION = "Top"  # Default position
-    VERTICAL = False  # Default value derived from Top position
-    CENTERED_BAR = False  # Default value for centered bar
-    DOCK_ENABLED = True  # Default value for dock visibility
-    DOCK_ALWAYS_OCCLUDED = False  # Default value for dock hover-only mode
-    TERMINAL_COMMAND = "kitty -e"  # Default terminal command when no config
-    DOCK_ICON_SIZE = 28  # Default dock icon size when no config
-    BAR_WORKSPACE_SHOW_NUMBER = False # Default workspace number visibility
-    BAR_WORKSPACE_USE_CHINESE_NUMERALS = False # Default Chinese numeral setting
-    BAR_THEME = "Pills" # Default bar theme
+    BAR_POSITION = "Top"
+    VERTICAL = False
+    CENTERED_BAR = False
+    DOCK_ENABLED = True
+    DOCK_ALWAYS_OCCLUDED = False
+    TERMINAL_COMMAND = "kitty -e"
+    DOCK_ICON_SIZE = 28
+    BAR_WORKSPACE_SHOW_NUMBER = False
+    BAR_WORKSPACE_USE_CHINESE_NUMERALS = False
+    BAR_THEME = "Pills"
     DOCK_THEME = "Pills"
     PANEL_THEME = "Notch"
-    # Añade esta línea:
-    PANEL_POSITION = PANEL_POSITION_DEFAULT # Default panel position
-    NOTIF_POS = NOTIF_POS_DEFAULT # Default notification position
 
-    # Default values for component visibility (all visible)
+    PANEL_POSITION = PANEL_POSITION_DEFAULT
+    NOTIF_POS = NOTIF_POS_DEFAULT
+
+
     BAR_COMPONENTS_VISIBILITY = {
         'button_apps': True,
         'systray': True,

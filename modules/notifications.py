@@ -1207,13 +1207,11 @@ class NotificationContainer(Box):
 
 class NotificationPopup(Window):
     def __init__(self, **kwargs):
+        y_pos = data.NOTIF_POS.lower()
         x_pos = "right"
-        y_pos = "top"
 
-        if data.BAR_POSITION in ["Right"]:
+        if data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_POSITION == "End" and data.NOTIF_POS == data.BAR_POSITION:
             x_pos = "left"
-        else:
-            x_pos = "right"
 
         super().__init__(
             name="notification-popup",
@@ -1230,7 +1228,7 @@ class NotificationPopup(Window):
         self.notification_history = self.widgets.notification_history if self.widgets else NotificationHistory()
         self.notification_container = NotificationContainer(
             notification_history_instance=self.notification_history,
-            revealer_transition_type="slide-down" if data.NOTIF_POS == "Top" else "slide-up"
+            revealer_transition_type="slide-down" if y_pos == "top" else "slide-up"
         )
 
         self.show_box = Box()

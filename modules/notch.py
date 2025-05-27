@@ -626,7 +626,7 @@ class Notch(Window):
                 self.applet_stack.set_visible_child(self.nhistory)
             # No se necesita 'else', widget_name debe ser uno de estos si target_widget_on_stack es dashboard.
             
-        if data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_THEME == "Panel":
+        if data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_THEME == "Panel" or data.BAR_POSITION in ["Bottom"] and data.PANEL_THEME == "Notch":
             self.bar.revealer_right.set_reveal_child(True)
             self.bar.revealer_left.set_reveal_child(True)
         else:
@@ -795,16 +795,6 @@ class Notch(Window):
         # Determine the edge and size for occlusion check based on anchor_val
         occlusion_edge = "top"
         occlusion_size = 40 # Default for horizontal top notch
-        
-        if self.get_anchor() == "bottom" or "bottom" in self.get_anchor():
-            occlusion_edge = "bottom"
-            occlusion_size = 40 # Assuming same size for bottom
-        elif self.get_anchor() == "left" or "left" in self.get_anchor():
-            occlusion_edge = "left"
-            occlusion_size = 40 # Assuming same size for side
-        elif self.get_anchor() == "right" or "right" in self.get_anchor():
-            occlusion_edge = "right"
-            occlusion_size = 40 # Assuming same size for side
 
         if not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
             is_occluded = check_occlusion((occlusion_edge, occlusion_size)) 

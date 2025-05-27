@@ -1,6 +1,7 @@
 import os
-import sys 
-from pathlib import Path 
+import sys
+from pathlib import Path
+
 
 def _configure_sys_path_for_direct_execution():
     """
@@ -9,49 +10,34 @@ def _configure_sys_path_for_direct_execution():
     Esto permite ejecutar `python config/config.py` desde cualquier directorio.
     """
     if __name__ == "__main__":
-        # Obtener la ruta del directorio que contiene este archivo (config/)
         current_file_dir = Path(__file__).resolve().parent
-        # Obtener la ruta del directorio padre (la raíz del proyecto, que contiene 'config/')
         project_root = current_file_dir.parent
 
-        # Añadir la raíz del proyecto a sys.path si no está ya
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
 
 _configure_sys_path_for_direct_execution()
 
 import shutil
+
 from fabric import Application
 
-# Importaciones condicionales para módulos del paquete 'config'
 if __name__ == "__main__" and (__package__ is None or __package__ == ''):
-    # Modo script: Ejecutado directamente (ej. python config/config.py)
-    # __package__ no está definido o es una cadena vacía.
-    # _configure_sys_path_for_direct_execution() ya ha añadido la raíz del proyecto a sys.path.
-    # Por lo tanto, podemos usar importaciones absolutas desde la raíz del proyecto.
     from config.data import APP_NAME, APP_NAME_CAP
-    from config.settings_utils import load_bind_vars 
     from config.settings_gui import HyprConfGUI
+    from config.settings_utils import load_bind_vars
 else:
-    # Modo paquete: Importado como un módulo (ej. import config.config)
-    # o ejecutado con 'python -m config.config'.
-    # __package__ estará definido (ej. "config").
-    # Usamos importaciones relativas.
     from .data import APP_NAME, APP_NAME_CAP
-    from .settings_utils import load_bind_vars 
     from .settings_gui import HyprConfGUI
+    from .settings_utils import load_bind_vars
 
 
 def open_config():
     """
     Entry point for opening the configuration GUI using Fabric Application.
     """
-    # Load initial settings into settings_utils.bind_vars
     load_bind_vars()
 
-    # Determine if checkboxes for Hyprlock/Hypridle should be shown
-    # This logic remains similar, checking for existing user configs
-    # and copying defaults if they don't exist.
     show_lock_checkbox = True
     dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
     src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
@@ -59,15 +45,11 @@ def open_config():
         try:
             os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
             shutil.copy(src_lock, dest_lock)
-            # If we just copied the default, no need to ask to replace it again immediately
-            # However, the GUI might still offer it if the user wants to re-apply.
-            # For simplicity, let's assume if we copy it, the user might want to manage it.
-            # The original logic set show_lock_checkbox = False. Let's stick to that.
             show_lock_checkbox = False 
             print(f"Copied default hyprlock config to {dest_lock}")
         except Exception as e:
             print(f"Error copying default hyprlock config: {e}")
-            show_lock_checkbox = os.path.exists(src_lock) # Fallback if copy fails
+            show_lock_checkbox = os.path.exists(src_lock)
 
     show_idle_checkbox = True
     dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
@@ -76,11 +58,11 @@ def open_config():
         try:
             os.makedirs(os.path.dirname(dest_idle), exist_ok=True)
             shutil.copy(src_idle, dest_idle)
-            show_idle_checkbox = False # Same logic as for lock
+            show_idle_checkbox = False
             print(f"Copied default hypridle config to {dest_idle}")
         except Exception as e:
             print(f"Error copying default hypridle config: {e}")
-            show_idle_checkbox = os.path.exists(src_idle) # Fallback
+            show_idle_checkbox = os.path.exists(src_idle)
 
     app = Application(f"{APP_NAME}-settings")
     window = HyprConfGUI(
@@ -91,13 +73,9 @@ def open_config():
     )
     app.add_window(window)
 
-    window.show_all() # Ensure the window is shown
+    window.show_all()
     app.run()
 
 
 if __name__ == "__main__":
-    # This allows running the config GUI directly for development/testing
-    # Ensure that if this is run, the context for relative imports is correct.
-    # If run as `python -m config.config`, relative imports work.
-    # If run as `python config/config.py` from project root, they also work.
     open_config()

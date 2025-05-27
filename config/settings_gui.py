@@ -18,17 +18,12 @@ from fabric.widgets.scale import Scale
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.stack import Stack
 from fabric.widgets.window import Window
-from gi.repository import GdkPixbuf, GLib, Gtk  # GObject eliminado
+from gi.repository import GdkPixbuf, GLib, Gtk
 from PIL import Image
 
-from .data import (APP_NAME, APP_NAME_CAP,  # Importa las nuevas constantes
-                   NOTIF_POS_DEFAULT, NOTIF_POS_KEY, PANEL_POSITION_DEFAULT,
-                   PANEL_POSITION_KEY)
-# DEFAULTS se importa directamente en on_reset, SOURCE_STRING no se usa aquí
-# from .settings_constants import DEFAULTS, SOURCE_STRING
-# bind_vars se importa de settings_utils, backup_and_replace y start_config también
-from .settings_utils import (  # load_bind_vars no se llama desde aquí
-    backup_and_replace, bind_vars, start_config)
+from .data import (APP_NAME, APP_NAME_CAP, NOTIF_POS_DEFAULT, NOTIF_POS_KEY,
+                   PANEL_POSITION_DEFAULT, PANEL_POSITION_KEY)
+from .settings_utils import backup_and_replace, bind_vars, start_config
 
 
 class HyprConfGUI(Window):
@@ -36,7 +31,7 @@ class HyprConfGUI(Window):
         super().__init__(
             title="Ax-Shell Settings",
             name="axshell-settings-window",
-            size=(650, 550),
+            size=(640, 640),
             **kwargs,
         )
 
@@ -138,7 +133,6 @@ class HyprConfGUI(Window):
             row = i + 1
             binding_label = Label(label=label_text, h_align="start")
             keybind_grid.attach(binding_label, 0, row, 1, 1)
-            # Usar .get() para seguridad, aunque load_bind_vars debería asegurar que existan
             prefix_entry = Entry(text=bind_vars.get(prefix_key, ''))
             keybind_grid.attach(prefix_entry, 1, row, 1, 1)
             plus_label = Label(label="+", h_align="center")
@@ -226,7 +220,6 @@ class HyprConfGUI(Window):
         layout_grid.set_margin_top(5)
         vbox.add(layout_grid)
 
-        # Replace Vertical Layout switch with a Bar Position dropdown
         position_label = Label(label="Bar Position", h_align="start", v_align="center")
         layout_grid.attach(position_label, 0, 0, 1, 1)
         position_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
@@ -239,12 +232,11 @@ class HyprConfGUI(Window):
         try:
             self.position_combo.set_active(positions.index(current_position))
         except ValueError:
-            self.position_combo.set_active(0)  # Default to Top
+            self.position_combo.set_active(0)
         self.position_combo.connect("changed", self.on_position_changed)
         position_combo_container.add(self.position_combo)
         layout_grid.attach(position_combo_container, 1, 0, 1, 1)
 
-        # Centered Bar
         centered_label = Label(label="Centered Bar (Left/Right Only)", h_align="start", v_align="center")
         layout_grid.attach(centered_label, 2, 0, 1, 1)
         centered_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
@@ -253,7 +245,6 @@ class HyprConfGUI(Window):
         centered_switch_container.add(self.centered_switch)
         layout_grid.attach(centered_switch_container, 3, 0, 1, 1)
 
-        # Dock Options
         dock_label = Label(label="Show Dock", h_align="start", v_align="center")
         layout_grid.attach(dock_label, 0, 1, 1, 1)
         dock_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
@@ -262,7 +253,6 @@ class HyprConfGUI(Window):
         dock_switch_container.add(self.dock_switch)
         layout_grid.attach(dock_switch_container, 1, 1, 1, 1)
 
-        # Dock Hover
         dock_hover_label = Label(label="Show Dock Only on Hover", h_align="start", v_align="center")
         layout_grid.attach(dock_hover_label, 2, 1, 1, 1)
         dock_hover_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
@@ -270,7 +260,6 @@ class HyprConfGUI(Window):
         dock_hover_switch_container.add(self.dock_hover_switch)
         layout_grid.attach(dock_hover_switch_container, 3, 1, 1, 1)
         
-        # Dock Icon Size
         dock_size_label = Label(label="Dock Icon Size", h_align="start", v_align="center")
         layout_grid.attach(dock_size_label, 0, 2, 1, 1)
         self.dock_size_scale = Scale(
@@ -279,7 +268,6 @@ class HyprConfGUI(Window):
         )
         layout_grid.attach(self.dock_size_scale, 1, 2, 3, 1)
 
-        # Workspace Number
         ws_num_label = Label(label="Show Workspace Numbers", h_align="start", v_align="center")
         layout_grid.attach(ws_num_label, 0, 3, 1, 1)
         ws_num_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
@@ -288,7 +276,6 @@ class HyprConfGUI(Window):
         ws_num_switch_container.add(self.ws_num_switch)
         layout_grid.attach(ws_num_switch_container, 1, 3, 1, 1)
 
-        # Chinese Numerals
         ws_chinese_label = Label(label="Use Chinese Numerals", h_align="start", v_align="center")
         layout_grid.attach(ws_chinese_label, 2, 3, 1, 1)
         ws_chinese_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
@@ -296,7 +283,6 @@ class HyprConfGUI(Window):
         ws_chinese_switch_container.add(self.ws_chinese_switch)
         layout_grid.attach(ws_chinese_switch_container, 3, 3, 1, 1)
 
-        # Bar Theme
         bar_theme_label = Label(label="Bar Theme", h_align="start", v_align="center")
         layout_grid.attach(bar_theme_label, 0, 4, 1, 1)
         bar_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
@@ -308,11 +294,10 @@ class HyprConfGUI(Window):
         try:
             self.bar_theme_combo.set_active(themes.index(current_theme))
         except ValueError:
-            self.bar_theme_combo.set_active(0) # Fallback
+            self.bar_theme_combo.set_active(0)
         bar_theme_combo_container.add(self.bar_theme_combo)
         layout_grid.attach(bar_theme_combo_container, 1, 4, 3, 1)
 
-        # Dock Theme
         dock_theme_label = Label(label="Dock Theme", h_align="start", v_align="center")
         layout_grid.attach(dock_theme_label, 0, 5, 1, 1) 
         dock_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
@@ -327,9 +312,8 @@ class HyprConfGUI(Window):
         dock_theme_combo_container.add(self.dock_theme_combo)
         layout_grid.attach(dock_theme_combo_container, 1, 5, 3, 1)
 
-        # Panel Theme
         panel_theme_label = Label(label="Panel Theme", h_align="start", v_align="center")
-        layout_grid.attach(panel_theme_label, 0, 6, 1, 1) # Fila 6, Columna 0
+        layout_grid.attach(panel_theme_label, 0, 6, 1, 1)
         panel_theme_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.panel_theme_combo = Gtk.ComboBoxText()
         self.panel_theme_combo.set_tooltip_text("Select the theme/mode for panels like toolbox, clipboard, etc.")
@@ -341,17 +325,15 @@ class HyprConfGUI(Window):
         except ValueError:
             self.panel_theme_combo.set_active(0) 
         panel_theme_combo_container.add(self.panel_theme_combo)
-        layout_grid.attach(panel_theme_combo_container, 1, 6, 1, 1) # Fila 6, Columna 1, Span 1
+        layout_grid.attach(panel_theme_combo_container, 1, 6, 1, 1)
         self.panel_theme_combo.connect("changed", self._on_panel_theme_changed_for_position_sensitivity)
 
-        # Almacenar opciones de posición del panel
         self.panel_position_options = [
             "Start", "Center", "End"
         ]
 
-        # Panel Position (misma fila que Panel Theme, columnas derechas)
         panel_position_label = Label(label="Panel Position", h_align="start", v_align="center")
-        layout_grid.attach(panel_position_label, 2, 6, 1, 1) # Fila 6, Columna 2
+        layout_grid.attach(panel_position_label, 2, 6, 1, 1)
 
         panel_position_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.panel_position_combo = Gtk.ComboBoxText()
@@ -369,39 +351,30 @@ class HyprConfGUI(Window):
                 self.panel_position_combo.set_active(0) 
 
         panel_position_combo_container.add(self.panel_position_combo)
-        layout_grid.attach(panel_position_combo_container, 3, 6, 1, 1) # Fila 6, Columna 3, Span 1
+        layout_grid.attach(panel_position_combo_container, 3, 6, 1, 1)
 
-        # --- NUEVA SECCIÓN: Posición de Notificaciones ---
         notification_pos_label = Label(label="Notification Position", h_align="start", v_align="center")
-        layout_grid.attach(notification_pos_label, 0, 7, 1, 1) # Nueva fila 7, Columna 0
+        layout_grid.attach(notification_pos_label, 0, 7, 1, 1)
 
         notification_pos_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         
-        # Opciones para el dropdown de posición de notificaciones
-        # CAMBIO: Usar Gtk.ComboBoxText en lugar de Gtk.DropDown
-        self.notification_pos_combo = Gtk.ComboBoxText() # CAMBIO: Renombrado a _combo
+        self.notification_pos_combo = Gtk.ComboBoxText()
         self.notification_pos_combo.set_tooltip_text("Select where notifications appear on the screen.")
         
-        # Añadir las opciones "Top" y "Bottom"
         notification_positions_list = ["Top", "Bottom"]
         for pos in notification_positions_list:
             self.notification_pos_combo.append_text(pos)
         
-        # Establecer la selección inicial basada en bind_vars
         current_notif_pos = bind_vars.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
         try:
-            # CAMBIO: Usar set_active para Gtk.ComboBoxText
             self.notification_pos_combo.set_active(notification_positions_list.index(current_notif_pos))
         except ValueError:
-            self.notification_pos_combo.set_active(0) # Fallback a "Top"
+            self.notification_pos_combo.set_active(0)
 
-        # Conectar la señal para actualizar bind_vars cuando cambie la selección
-        # CAMBIO: La señal para Gtk.ComboBoxText es "changed"
         self.notification_pos_combo.connect("changed", self.on_notification_position_changed)
         
-        notification_pos_combo_container.add(self.notification_pos_combo) # CAMBIO: Renombrado a _combo
-        layout_grid.attach(notification_pos_combo_container, 1, 7, 3, 1) # Fila 7, Columna 1, Span 3 (para que ocupe el espacio)
-        # --- FIN NUEVA SECCIÓN ---
+        notification_pos_combo_container.add(self.notification_pos_combo)
+        layout_grid.attach(notification_pos_combo_container, 1, 7, 3, 1)
 
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;", h_expand=True)
         vbox.add(separator2)
@@ -455,7 +428,7 @@ class HyprConfGUI(Window):
             self.component_switches[name] = component_switch
             item_idx +=1
         
-        self._update_panel_position_sensitivity() # Configurar sensibilidad inicial
+        self._update_panel_position_sensitivity()
         return scrolled_window
 
     def _on_panel_theme_changed_for_position_sensitivity(self, combo):
@@ -464,25 +437,14 @@ class HyprConfGUI(Window):
     def _update_panel_position_sensitivity(self):
         if hasattr(self, 'panel_theme_combo') and hasattr(self, 'panel_position_combo'):
             selected_theme = self.panel_theme_combo.get_active_text()
-            is_panel_theme_selected = (selected_theme == "Panel") # "Panel" debe ser el texto exacto
+            is_panel_theme_selected = (selected_theme == "Panel")
             self.panel_position_combo.set_sensitive(is_panel_theme_selected)
-            # Opcional: si se deshabilita, se podría restablecer a un valor por defecto.
-            # if not is_panel_theme_selected:
-            #     try:
-            #         default_pos_idx = self.panel_position_options.index(PANEL_POSITION_DEFAULT)
-            #         self.panel_position_combo.set_active(default_pos_idx)
-            #     except ValueError:
-            #         self.panel_position_combo.set_active(0)
-            # Por ahora, simplemente lo deshabilita, manteniendo el valor seleccionado.
 
-    # --- NUEVO MÉTODO: Manejar cambio de posición de notificaciones ---
-    # CAMBIO: Parámetros del método para Gtk.ComboBoxText
     def on_notification_position_changed(self, combo: Gtk.ComboBoxText):
-        selected_text = combo.get_active_text() # CAMBIO: Obtener texto de Gtk.ComboBoxText
-        if selected_text: # Asegurarse de que no sea None
+        selected_text = combo.get_active_text()
+        if selected_text:
             bind_vars[NOTIF_POS_KEY] = selected_text
-            print(f"Notification position updated in bind_vars: {bind_vars[NOTIF_POS_KEY]}") # Para depuración
-    # --- FIN NUEVO MÉTODO ---
+            print(f"Notification position updated in bind_vars: {bind_vars[NOTIF_POS_KEY]}")
 
     def create_system_tab(self):
         scrolled_window = ScrolledWindow(
@@ -580,7 +542,6 @@ class HyprConfGUI(Window):
         vbox.add(disks_label)
         self.disk_entries = Box(orientation="v", spacing=8, h_align="start")
         
-        # Guardar referencia a esta función para usarla en on_reset
         self._create_disk_edit_entry_func = lambda path: self._add_disk_entry_widget(path)
 
         for p in bind_vars.get('bar_metrics_disks', ["/"]): self._create_disk_edit_entry_func(p)
@@ -598,12 +559,10 @@ class HyprConfGUI(Window):
         bar = Box(orientation="h", spacing=10, h_align="start")
         entry = Entry(text=path, h_expand=True)
         bar.add(entry)
-        # Usar una clausura para capturar 'bar' correctamente
         x_btn = Button(label="X")
         x_btn.connect("clicked", lambda _, current_bar_to_remove=bar: self.disk_entries.remove(current_bar_to_remove))
         bar.add(x_btn)
         self.disk_entries.add(bar)
-        # Mostrar todos los nuevos widgets añadidos a disk_entries
         self.disk_entries.show_all()
 
 
@@ -619,7 +578,7 @@ class HyprConfGUI(Window):
         def on_kofi_clicked(_): import webbrowser; webbrowser.open("https://ko-fi.com/Axenide")
         kofi_btn = Button(label="Support on Ko-Fi ❤️", on_clicked=on_kofi_clicked, tooltip_text="Support Axenide on Ko-Fi", style="margin-top: 18px; min-width: 160px;")
         vbox.add(kofi_btn)
-        vbox.add(Box(v_expand=True)) # Spacer
+        vbox.add(Box(v_expand=True))
         return vbox
 
     def on_ws_num_changed(self, switch, gparam):
@@ -661,7 +620,6 @@ class HyprConfGUI(Window):
         dialog.destroy()
 
     def on_accept(self, widget):
-        # global bind_vars # No es necesario aquí, ya que importamos bind_vars de settings_utils
         
         current_bind_vars_snapshot = {} 
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
@@ -670,7 +628,6 @@ class HyprConfGUI(Window):
 
         current_bind_vars_snapshot['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
         
-        # Update with bar position and derive vertical from it
         current_bind_vars_snapshot['bar_position'] = self.position_combo.get_active_text()
         current_bind_vars_snapshot['vertical'] = current_bind_vars_snapshot['bar_position'] in ["Left", "Right"]
         
@@ -686,14 +643,11 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['dock_theme'] = self.dock_theme_combo.get_active_text()
         current_bind_vars_snapshot['panel_theme'] = self.panel_theme_combo.get_active_text()
         current_bind_vars_snapshot[PANEL_POSITION_KEY] = self.panel_position_combo.get_active_text()
-        # --- NUEVO: Capturar la posición de las notificaciones ---
-        # CAMBIO: Obtener texto de Gtk.ComboBoxText
         selected_notif_pos_text = self.notification_pos_combo.get_active_text()
         if selected_notif_pos_text:
             current_bind_vars_snapshot[NOTIF_POS_KEY] = selected_notif_pos_text
         else:
-            current_bind_vars_snapshot[NOTIF_POS_KEY] = NOTIF_POS_DEFAULT # Fallback
-        # --- FIN NUEVO ---
+            current_bind_vars_snapshot[NOTIF_POS_KEY] = NOTIF_POS_DEFAULT
 
         for component_name, switch in self.component_switches.items():
             current_bind_vars_snapshot[f'bar_{component_name}_visible'] = switch.get_active()
@@ -710,14 +664,13 @@ class HyprConfGUI(Window):
         replace_idle = self.idle_switch and self.idle_switch.get_active()
 
         if self.selected_face_icon:
-             self.selected_face_icon = None # Resetear para la próxima selección
-             self.face_status_label.label = "" # Limpiar etiqueta de estado
+             self.selected_face_icon = None
+             self.face_status_label.label = ""
 
         def _apply_and_reload_task_thread():
             nonlocal current_bind_vars_snapshot 
             
-            from . import \
-                settings_utils  # Importar el módulo para modificar su bind_vars
+            from . import settings_utils
             settings_utils.bind_vars.clear()
             settings_utils.bind_vars.update(current_bind_vars_snapshot)
 
@@ -765,16 +718,12 @@ class HyprConfGUI(Window):
             print(f"{time.time():.4f}: Checking/Appending hyprland.conf source string...")
             hypr_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
             try:
-                from .settings_constants import \
-                    SOURCE_STRING  # Importar aquí para asegurar que es el valor actual
+                from .settings_constants import SOURCE_STRING
                 needs_append = True
                 if os.path.exists(hypr_path):
                     with open(hypr_path, "r") as f:
-                        # Comprobar si la línea específica de source está, no solo el comentario
-                        # Esto es más robusto si el comentario cambia pero la línea de source no.
-                        # El SOURCE_STRING incluye el comentario, así que la comprobación original es válida.
                         if SOURCE_STRING.strip() in f.read(): needs_append = False
-                else: os.makedirs(os.path.dirname(hypr_path), exist_ok=True) # Crear directorio si no existe
+                else: os.makedirs(os.path.dirname(hypr_path), exist_ok=True)
                 
                 if needs_append:
                     with open(hypr_path, "a") as f: f.write("\n" + SOURCE_STRING)
@@ -791,17 +740,13 @@ class HyprConfGUI(Window):
             kill_cmd = f"killall {APP_NAME}"
             start_cmd = ["uwsm", "app", "--", "python", main_py]
             try:
-                # Usar shell=True con killall puede ser necesario si APP_NAME contiene caracteres especiales
-                # o si killall es un alias, pero generalmente es mejor evitarlo si es posible.
-                # Para un nombre simple como "ax-shell", no debería ser un problema.
                 kill_proc = subprocess.Popen(kill_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                kill_proc.wait(timeout=2) # Esperar un poco a que termine
+                kill_proc.wait(timeout=2)
                 print(f"{time.time():.4f}: killall process finished (o timed out).")
             except subprocess.TimeoutExpired: print("Warning: killall command timed out.")
             except Exception as e: print(f"Error running killall: {e}")
             
             try:
-                # Iniciar la nueva instancia en una nueva sesión para que no muera si este script termina
                 subprocess.Popen(start_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
                 print(f"{APP_NAME_CAP} restart initiated via Popen.")
             except FileNotFoundError as e: print(f"Error restarting {APP_NAME_CAP}: Command not found ({e})")
@@ -812,7 +757,7 @@ class HyprConfGUI(Window):
             print(f"{end_time:.4f}: Background task finished (Total: {end_time - start_time:.4f}s).")
 
         thread = threading.Thread(target=_apply_and_reload_task_thread)
-        thread.daemon = True # Permitir que el programa principal salga aunque el hilo esté corriendo
+        thread.daemon = True
         thread.start()
         print("Configuration apply/reload task started in background.")
 
@@ -825,7 +770,7 @@ class HyprConfGUI(Window):
             print(f"Error reloading face icon preview: {e}")
             if self.face_image and self.face_image.get_window():
                 self.face_image.set_from_icon_name("image-missing", Gtk.IconSize.DIALOG)
-        return GLib.SOURCE_REMOVE # Importante para que idle_add no lo llame repetidamente
+        return GLib.SOURCE_REMOVE
 
     def on_reset(self, widget):
         dialog = Gtk.MessageDialog(
@@ -846,25 +791,24 @@ class HyprConfGUI(Window):
 
             self.wall_dir_chooser.set_filename(settings_utils.bind_vars['wallpapers_dir'])
             
-            # Update position dropdown when resetting
             positions = ["Top", "Bottom", "Left", "Right"]
             default_position = DEFAULTS.get('bar_position', "Top")
             try:
                 self.position_combo.set_active(positions.index(default_position))
             except ValueError:
-                self.position_combo.set_active(0)  # Default to Top
+                self.position_combo.set_active(0)
                 
             self.centered_switch.set_active(settings_utils.bind_vars.get('centered_bar', False))
             self.centered_switch.set_sensitive(default_position in ["Left", "Right"])
             
             self.dock_switch.set_active(settings_utils.bind_vars.get('dock_enabled', True))
             self.dock_hover_switch.set_active(settings_utils.bind_vars.get('dock_always_occluded', False))
-            self.dock_hover_switch.set_sensitive(self.dock_switch.get_active()) # Re-evaluar sensibilidad
-            self.dock_size_scale.set_value(settings_utils.bind_vars.get('dock_icon_size', 28)) # Usar set_value para Scale
+            self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
+            self.dock_size_scale.set_value(settings_utils.bind_vars.get('dock_icon_size', 28))
             self.terminal_entry.set_text(settings_utils.bind_vars['terminal_command'])
             self.ws_num_switch.set_active(settings_utils.bind_vars.get('bar_workspace_show_number', False))
             self.ws_chinese_switch.set_active(settings_utils.bind_vars.get('bar_workspace_use_chinese_numerals', False))
-            self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active()) # Re-evaluar sensibilidad
+            self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active())
             
             default_theme_val = DEFAULTS.get('bar_theme', "Pills") 
             themes = ["Pills", "Dense", "Edge"]
@@ -886,7 +830,6 @@ class HyprConfGUI(Window):
             except ValueError:
                 self.panel_theme_combo.set_active(0)
             
-            # Restablecer la posición del panel
             default_panel_position_val = DEFAULTS.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT)
             try:
                 self.panel_position_combo.set_active(self.panel_position_options.index(default_panel_position_val))
@@ -896,15 +839,12 @@ class HyprConfGUI(Window):
                 except ValueError:
                     self.panel_position_combo.set_active(0) 
 
-            # --- NUEVO: Restablecer la posición de las notificaciones ---
             default_notif_pos_val = DEFAULTS.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
-            notification_positions_list = ["Top", "Bottom"] # Definir la lista de opciones aquí también
+            notification_positions_list = ["Top", "Bottom"]
             try:
-                # CAMBIO: Usar set_active para Gtk.ComboBoxText
                 self.notification_pos_combo.set_active(notification_positions_list.index(default_notif_pos_val))
             except ValueError:
-                self.notification_pos_combo.set_active(0) # Fallback a "Top"
-            # --- FIN NUEVO ---
+                self.notification_pos_combo.set_active(0)
 
             for name, switch in self.component_switches.items():
                  switch.set_active(settings_utils.bind_vars.get(f'bar_{name}_visible', True))
@@ -929,7 +869,6 @@ class HyprConfGUI(Window):
             for p in DEFAULTS.get('bar_metrics_disks', ["/"]):
                 self._add_disk_edit_entry_func(p)
 
-            # Actualizar sensibilidad después de todos los resets
             self._update_panel_position_sensitivity()
 
             self.selected_face_icon = None

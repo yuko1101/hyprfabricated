@@ -12,15 +12,15 @@ from fabric.widgets.datetime import DateTime
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
-from gi.repository import Gdk, Gtk # Añadir Gtk para Gtk.Orientation
+from gi.repository import Gdk, Gtk  # Añadir Gtk para Gtk.Orientation
 
 import config.data as data
 import modules.icons as icons
 from modules.controls import ControlSmall
+from modules.dock import Dock  # Importar Dock
 from modules.metrics import Battery, MetricsSmall, NetworkApplet
 from modules.systemtray import SystemTray
 from modules.weather import Weather
-from modules.dock import Dock # Importar Dock
 
 CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "〇"]
 
@@ -279,7 +279,7 @@ class Bar(Window):
         self.v_all_children.extend(self.v_end_children)
 
         # Crear instancia del Dock si está habilitado y la posición es "Bottom" (y la barra es horizontal)
-        if data.DOCK_ENABLED and data.BAR_POSITION == "Bottom":
+        if data.DOCK_ENABLED and data.BAR_POSITION == "Bottom" or data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Top", "Bottom"]:
             if not data.VERTICAL: 
                 self.dock_instance = Dock(integrated_mode=True)
                 self.integrated_dock_widget = self.dock_instance.wrapper
