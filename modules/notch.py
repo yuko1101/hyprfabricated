@@ -465,10 +465,8 @@ class Notch(Window):
     def on_notch_hover_area_enter(self, widget, event):
         """Handle hover enter for the entire notch area"""
         self.is_hovered = True
-        # If in vertical mode, notch is not open, and revealer is closed, reveal it
-        # This condition should be based on the panel's actual orientation and position.
-        # The `_check_occlusion` function handles the reveal logic.
-        # For now, just set hovered state.
+        if data.PANEL_THEME == "Notch":
+            self.notch_revealer.set_reveal_child(True)
         return False  # Allow event propagation
 
     def on_notch_hover_area_leave(self, widget, event):
