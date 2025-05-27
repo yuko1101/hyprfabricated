@@ -25,7 +25,7 @@ import modules.icons as icons
 SAVE_FILE = os.path.expanduser("~/.pins.json")
 
 icon_size = 80
-if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
     icon_size = 36
 
 def createSurfaceFromWidget(widget: Gtk.Widget) -> cairo.ImageSurface:
@@ -217,7 +217,7 @@ class Cell(Gtk.EventBox):
             self.favicon_temp_path = favicon_path
             
             # Create a pixbuf from the favicon file
-            if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+            if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
                 # Use a smaller size for the icon in the panel
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
                     favicon_path, width=36, height=36, preserve_aspect_ratio=True)
@@ -402,17 +402,15 @@ class Pins(Gtk.Box):
         # self.pack_start(scrolled_window, True, True, 0)
 
         # With the Fabric ScrolledWindow:
-        scrolled_window = ScrolledWindow(child=grid, name="scrolled-window", style_classes="pins")
+        scrolled_window = ScrolledWindow(child=grid, name="scrolled-window", style_classes="pins", propagate_width=False, propagate_height=False)
         scrolled_window.set_hexpand(True)
         scrolled_window.set_vexpand(True)
         scrolled_window.set_halign(Gtk.Align.FILL)
         scrolled_window.set_valign(Gtk.Align.FILL)
-        scrolled_window.set_propagate_natural_width(False)
-        scrolled_window.set_propagate_natural_height(False)
         self.pack_start(scrolled_window, True, True, 0)
 
         # Create 30 cells (5x6)
-        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
             for row in range(10):
                 for col in range(3):
                     cell = Cell(self)

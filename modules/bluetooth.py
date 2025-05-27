@@ -30,9 +30,10 @@ class BluetoothDeviceSlot(CenterBox):
             Box(
                 spacing=8,
                 h_expand=True,
+                h_align="fill",
                 children=[
-                    Image(icon_name=device.icon_name + "-symbolic", size=32),
-                    Label(label=device.name, h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1),
+                    Image(icon_name=device.icon_name + "-symbolic", size=16),
+                    Label(label=device.name, h_expand=True, h_align="start", ellipsization="end"),
                     self.connection_label,
                 ],
             )
@@ -119,7 +120,9 @@ class BluetoothConnections(Box):
                 name="bluetooth-devices",
                 min_content_size=(-1, -1),
                 child=content_box,
-                v_expand=True
+                v_expand=True,
+                propagate_width=False,
+                propagate_height=False,
             ),
         ]
 

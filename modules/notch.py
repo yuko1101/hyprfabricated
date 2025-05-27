@@ -160,19 +160,13 @@ class Notch(Window):
         self.dashboard = Dashboard(notch=self) # self.dashboard crea self.dashboard.widgets.notification_history
         self.nhistory = self.dashboard.widgets.notification_history # Ya estaba definido, solo para confirmar
 
-        # NUEVO: Inicializar BluetoothConnections y NetworkConnections
-        self.btdevices = BluetoothConnections(widgets=self.dashboard.widgets)
-        self.network_connections_widget = NetworkConnections(widgets=self.dashboard.widgets)
-
-        # NUEVO: Añadir los nuevos widgets al applet_stack
-        # self.applet_stack ya está definido como self.dashboard.widgets.applet_stack
         self.applet_stack = self.dashboard.widgets.applet_stack # Asegurarse de que applet_stack esté disponible
-        self.applet_stack.add_named(self.btdevices, "bluetooth_connections_widget") # Nombre para el stack
-        self.applet_stack.add_named(self.network_connections_widget, "network_connections_widget") # Nombre para el stack
+        self.btdevices = self.dashboard.widgets.bluetooth
+        self.nwconnections = self.dashboard.widgets.network_connections
 
         # Asegurarse de que estén ocultos inicialmente
         self.btdevices.set_visible(False)
-        self.network_connections_widget.set_visible(False)
+        self.nwconnections.set_visible(False)
 
         # Pasar la instancia de notification_history directamente
         # self.notification = NotificationContainer(
@@ -515,13 +509,13 @@ class Notch(Window):
             if is_dashboard_currently_visible:
                 # Si el dashboard está abierto y mostrando el network widget, cerrar.
                 if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and \
-                   self.applet_stack.get_visible_child() == self.network_connections_widget:
+                   self.applet_stack.get_visible_child() == self.nwconnections:
                     self.close_notch()
                     return
                 # Si el dashboard está abierto (en cualquier sección), navegar al network widget.
                 self.set_keyboard_mode("exclusive") 
                 self.dashboard.go_to_section("widgets")
-                self.applet_stack.set_visible_child(self.network_connections_widget)
+                self.applet_stack.set_visible_child(self.nwconnections)
                 return
             # Si el dashboard no está visible, se procederá a abrirlo en la Parte 2.
 
@@ -624,7 +618,7 @@ class Notch(Window):
                 self.applet_stack.set_visible_child(self.btdevices)
             elif widget_name == "network_applet": # Añadido este nuevo caso
                 self.dashboard.go_to_section("widgets")
-                self.applet_stack.set_visible_child(self.network_connections_widget)
+                self.applet_stack.set_visible_child(self.nwconnections)
             elif widget_name in dashboard_sections_map: # pins, kanban, wallpapers
                 self.dashboard.go_to_section(widget_name)
             elif widget_name == "dashboard": # Caso general para "dashboard"
@@ -632,7 +626,7 @@ class Notch(Window):
                 self.applet_stack.set_visible_child(self.nhistory)
             # No se necesita 'else', widget_name debe ser uno de estos si target_widget_on_stack es dashboard.
             
-        if data.BAR_POSITION == "Bottom":
+        if data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_THEME == "Panel":
             self.bar.revealer_right.set_reveal_child(True)
             self.bar.revealer_left.set_reveal_child(True)
         else:

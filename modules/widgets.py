@@ -12,9 +12,9 @@ from modules.calendar import Calendar
 from modules.controls import ControlSliders
 from modules.metrics import Metrics
 from modules.network import NetworkConnections
-from modules.player import Player
 # --- AÑADIR ESTA IMPORTACIÓN ---
 from modules.notifications import NotificationHistory
+from modules.player import Player
 
 
 class Widgets(Box):
@@ -31,7 +31,7 @@ class Widgets(Box):
 
         vertical_layout = False
 
-        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
             vertical_layout = True
 
         self.notch = kwargs["notch"]  # notch sigue siendo necesario para otras funciones (ej. open_notch)

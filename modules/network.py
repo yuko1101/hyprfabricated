@@ -32,7 +32,7 @@ class WifiAccessPointSlot(CenterBox):
             self.is_active = True
         
         self.ap_icon = Image(icon_name=icon_name, size=24) # Esto se mantiene como Image
-        self.ap_label = Label(label=ssid, h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1)
+        self.ap_label = Label(label=ssid, h_expand=True, h_align="start", ellipsization="end")
         
         self.connect_button = Button(
             name="wifi-connect-button",
@@ -104,11 +104,11 @@ class NetworkConnections(Box):
         scrolled_window = ScrolledWindow(
             name="network-ap-scrolled-window",
             child=self.ap_list_box,
-            v_expand=True,
             h_expand=True,
+            v_expand=True,
+            propagate_width=False,
+            propagate_height=False,
         )
-
-        scrolled_window.set_propagate_natural_height(False)
 
         self.add(header_box)
         self.add(self.status_label)

@@ -122,7 +122,7 @@ class Dashboard(Box):
         self.add(self.switcher)
         self.add(self.stack)
 
-        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
             GLib.idle_add(self._setup_switcher_icons)
 
         self.show_all()

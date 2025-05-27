@@ -45,10 +45,9 @@ class TmuxManager(Box):
             h_align="fill",
             v_align="fill",
             child=self.viewport,
+            propagate_width=False,
+            propagate_height=False,
         )
-
-        self.scrolled_window.set_propagate_natural_width(False)
-        self.scrolled_window.set_propagate_natural_height(False)
 
         self.header_box = Box(
             name="header_box",

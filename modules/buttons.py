@@ -441,7 +441,7 @@ class Buttons(Gtk.Grid):
         self.night_mode_button = NightModeButton()
         self.caffeine_button = CaffeineButton()
 
-        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
             # 2x2
             self.attach(self.network_button, 0, 0, 1, 1)
             self.attach(self.bluetooth_button, 1, 0, 1, 1)

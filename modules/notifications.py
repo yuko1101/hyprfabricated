@@ -427,8 +427,8 @@ class NotificationHistory(Box):
             v_expand=True,
             h_align="fill",
             v_align="fill",
-            min_content_size=(-1, -1),
-            max_content_size=(-1, -1),
+            propagate_width=False,
+            propagate_height=False,
         )
         self.scrolled_window_viewport_box = Box(orientation="v", children=[self.notifications_list, self.no_notifications_box])
         self.scrolled_window.add_with_viewport(self.scrolled_window_viewport_box)
@@ -438,8 +438,6 @@ class NotificationHistory(Box):
         self._load_persistent_history()
         self._cleanup_orphan_cached_images()
         self.schedule_midnight_update()
-        self.scrolled_window.set_propagate_natural_height(False)
-        self.scrolled_window.set_propagate_natural_width(False)
 
         # List of apps for which notifications should be limited to one in history too
         self.LIMITED_APPS_HISTORY = ["Spotify"] # Add your list of apps here, same as NotificationContainer if needed

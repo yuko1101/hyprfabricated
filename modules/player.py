@@ -19,7 +19,7 @@ from services.mpris import MprisPlayer, MprisPlayerManager
 from widgets.circle_image import CircleImage
 
 vertical_mode = False
-if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
     vertical_mode = True
 
 def get_player_icon_markup_by_name(player_name):

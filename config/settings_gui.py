@@ -18,16 +18,17 @@ from fabric.widgets.scale import Scale
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.stack import Stack
 from fabric.widgets.window import Window
-from gi.repository import GdkPixbuf, GLib, Gtk # GObject eliminado
+from gi.repository import GdkPixbuf, GLib, Gtk  # GObject eliminado
+from PIL import Image
 
-from .data import (APP_NAME, APP_NAME_CAP, PANEL_POSITION_DEFAULT,
-                   PANEL_POSITION_KEY, NOTIF_POS_KEY, NOTIF_POS_DEFAULT) # Importa las nuevas constantes
+from .data import (APP_NAME, APP_NAME_CAP,  # Importa las nuevas constantes
+                   NOTIF_POS_DEFAULT, NOTIF_POS_KEY, PANEL_POSITION_DEFAULT,
+                   PANEL_POSITION_KEY)
 # DEFAULTS se importa directamente en on_reset, SOURCE_STRING no se usa aquí
 # from .settings_constants import DEFAULTS, SOURCE_STRING
 # bind_vars se importa de settings_utils, backup_and_replace y start_config también
 from .settings_utils import (  # load_bind_vars no se llama desde aquí
     backup_and_replace, bind_vars, start_config)
-from PIL import Image
 
 
 class HyprConfGUI(Window):
@@ -87,11 +88,10 @@ class HyprConfGUI(Window):
             h_scrollbar_policy="never", 
             v_scrollbar_policy="automatic",
             h_expand=True,
-            v_expand=True
+            v_expand=True,
+            propagate_width=False,
+            propagate_height=False
         )
-        scrolled_window.set_propagate_natural_height(False)  # <--- LÍNEA AÑADIDA
-        scrolled_window.set_min_content_height(300) # Keep some min height
-        # Max height will be determined by stack expansion
 
         main_vbox = Box(orientation="v", spacing=10, style="margin: 15px;")
         scrolled_window.add(main_vbox)
@@ -155,10 +155,10 @@ class HyprConfGUI(Window):
             h_scrollbar_policy="never", 
             v_scrollbar_policy="automatic",
             h_expand=True,
-            v_expand=True
+            v_expand=True,
+            propagate_width=False,
+            propagate_height=False
         )
-        scrolled_window.set_propagate_natural_height(False)
-        scrolled_window.set_min_content_height(300)
 
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
         scrolled_window.add(vbox)
@@ -489,10 +489,10 @@ class HyprConfGUI(Window):
             h_scrollbar_policy="never", 
             v_scrollbar_policy="automatic",
             h_expand=True,
-            v_expand=True
+            v_expand=True,
+            propagate_width=False,
+            propagate_height=False
         )
-        scrolled_window.set_propagate_natural_height(False)  # <--- LÍNEA AÑADIDA
-        scrolled_window.set_min_content_height(300)
 
         vbox = Box(orientation="v", spacing=15, style="margin: 15px;")
         scrolled_window.add(vbox)

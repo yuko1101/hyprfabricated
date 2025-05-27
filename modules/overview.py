@@ -328,7 +328,7 @@ class Overview(Box):
             workspace.destroy()
         self.workspace_boxes.clear()
 
-        if data.PANEL_THEME == "Panel" and data.PANEL_POSITION != "Top":
+        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
             rows = 5
             cols = 2
         else:
