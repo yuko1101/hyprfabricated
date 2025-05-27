@@ -4,17 +4,16 @@ import gi
 from fabric.utils import get_relative_path
 from fabric.widgets.box import Box
 from fabric.widgets.image import Image
-from fabric.widgets.label import \
-    Label  # Ya presente, asegurarse que es esta la que se usa
+from fabric.widgets.label import Label
 from fabric.widgets.stack import Stack
 
 import config.data as data
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import Gdk, GdkPixbuf, GLib, Gtk  # Añadir GLib aquí
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
 
-import modules.icons as icons  # Añadir esta importación
+import modules.icons as icons
 from modules.kanban import Kanban
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
@@ -57,9 +56,6 @@ class Dashboard(Box):
             name="switcher",
             spacing=8,
         )
-
-        # Las definiciones de Label anteriores (self.label_1, etc.) se eliminan
-        # ya que no se usaban para el switcher de la manera que se implementará con iconos.
 
         self.coming_soon_start_label = Label(
             name="coming-soon-label",

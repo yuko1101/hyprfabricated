@@ -12,7 +12,6 @@ from modules.calendar import Calendar
 from modules.controls import ControlSliders
 from modules.metrics import Metrics
 from modules.network import NetworkConnections
-# --- AÑADIR ESTA IMPORTACIÓN ---
 from modules.notifications import NotificationHistory
 from modules.player import Player
 
@@ -34,7 +33,7 @@ class Widgets(Box):
         if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
             vertical_layout = True
 
-        self.notch = kwargs["notch"]  # notch sigue siendo necesario para otras funciones (ej. open_notch)
+        self.notch = kwargs["notch"]
 
         self.buttons = Buttons(widgets=self)
         self.bluetooth = BluetoothConnections(widgets=self)
@@ -64,10 +63,6 @@ class Widgets(Box):
 
         self.metrics = Metrics()
 
-        # --- MODIFICAR ESTA LÍNEA ---
-        # Antes: self.notification_history = self.notch.notification_history
-        # Ahora: Widgets crea la instancia de NotificationHistory.
-        # El constructor de NotificationHistory ya fue modificado para no tomar 'notch'.
         self.notification_history = NotificationHistory()
 
         self.network_connections = NetworkConnections(widgets=self)
@@ -77,7 +72,7 @@ class Widgets(Box):
             v_expand=True,
             transition_type="slide-left-right",
             children=[
-                self.notification_history, # Ahora usa la instancia creada localmente
+                self.notification_history,
                 self.network_connections,
                 self.bluetooth,
             ]
@@ -100,8 +95,8 @@ class Widgets(Box):
                 v_expand=True,
                 spacing=8,
                 children=[
-                    Calendar(), # Si Calendar() es una nueva instancia, está bien.
-                                # Si se supone que es self.calendar, entonces usa self.calendar.
+                    Calendar(),
+
                     self.applet_stack_box,
                 ]
             ),
@@ -109,8 +104,7 @@ class Widgets(Box):
         ] if not vertical_layout else [
             self.applet_stack_box,
             self.player,
-            # self.calendar,
-            # self.metrics,
+
         ]
 
         self.container_1 = Box(

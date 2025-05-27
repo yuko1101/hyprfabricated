@@ -1,27 +1,26 @@
 import gi
 
 gi.require_version('Gtk', '3.0')
-gi.require_version('NM', '1.0') # Necesario para NM.utils_ssid_to_utf8 si se usa directamente
+gi.require_version('NM', '1.0')
 from fabric.utils import bulk_connect
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.image import Image
-from fabric.widgets.label import Label  # Asegúrate que Label está importado
+from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from gi.repository import NM, GLib, Gtk
 
-import modules.icons as icons  # Para el botón de atrás y potencialmente otros
-from services.network import NetworkClient  # El servicio principal de red
+import modules.icons as icons
+from services.network import NetworkClient
 
 
 class WifiAccessPointSlot(CenterBox):
-    # ... (contenido sin cambios) ...
     def __init__(self, ap_data: dict, network_service: NetworkClient, wifi_service, **kwargs):
         super().__init__(name="wifi-ap-slot", **kwargs)
         self.ap_data = ap_data
         self.network_service = network_service
-        self.wifi_service = wifi_service # Es network_service.wifi_device
+        self.wifi_service = wifi_service
 
         ssid = ap_data.get("ssid", "SSID Desconocido")
         icon_name = ap_data.get("icon-name", "network-wireless-signal-none-symbolic")
@@ -31,7 +30,7 @@ class WifiAccessPointSlot(CenterBox):
         if active_ap_details and hasattr(active_ap_details, 'get_bssid') and active_ap_details.get_bssid() == ap_data.get("bssid"):
             self.is_active = True
         
-        self.ap_icon = Image(icon_name=icon_name, size=24) # Esto se mantiene como Image
+        self.ap_icon = Image(icon_name=icon_name, size=24)
         self.ap_label = Label(label=ssid, h_expand=True, h_align="start", ellipsization="end")
         
         self.connect_button = Button(
@@ -71,12 +70,12 @@ class NetworkConnections(Box):
 
         self.back_button = Button(
             name="network-back",
-            child=Label(name="network-back-label", markup=icons.chevron_left), # Esto ya usa Label
+            child=Label(name="network-back-label", markup=icons.chevron_left),
             on_clicked=lambda *_: self.widgets.show_notif()
         )
         
-        # Cambiar de Image a Label para usar iconos de modules.icons
-        self.wifi_toggle_button_icon = Label(markup=icons.wifi_3) # Usar un icono "on" por defecto si está disponible, o el más fuerte
+
+        self.wifi_toggle_button_icon = Label(markup=icons.wifi_3)
         self.wifi_toggle_button = Button(
             name="wifi-toggle-button",
             child=self.wifi_toggle_button_icon,
@@ -84,8 +83,8 @@ class NetworkConnections(Box):
             on_clicked=self._toggle_wifi
         )
         
-        # Cambiar de Image a Label para usar iconos de modules.icons
-        self.refresh_button_icon = Label(name="network-refresh-label", markup=icons.reload) # Usar el icono de recargar
+
+        self.refresh_button_icon = Label(name="network-refresh-label", markup=icons.reload)
         self.refresh_button = Button(
             name="network-refresh",
             child=self.refresh_button_icon,
@@ -119,7 +118,7 @@ class NetworkConnections(Box):
         self.refresh_button.set_sensitive(False)
 
     def _on_device_ready(self, _client):
-        # ... (contenido sin cambios) ...
+
         if self.network_client.wifi_device:
             self.network_client.wifi_device.connect("changed", self._load_access_points)
             self.network_client.wifi_device.connect("notify::enabled", self._update_wifi_status_ui)
@@ -135,7 +134,6 @@ class NetworkConnections(Box):
             self.wifi_toggle_button.set_sensitive(False)
             self.refresh_button.set_sensitive(False)
 
-
     def _update_wifi_status_ui(self, *args):
         if self.network_client.wifi_device:
             enabled = self.network_client.wifi_device.enabled
@@ -143,11 +141,11 @@ class NetworkConnections(Box):
             self.refresh_button.set_sensitive(enabled)
             
             if enabled:
-                # Actualizar markup del Label
-                self.wifi_toggle_button_icon.set_markup(icons.wifi_3) # Icono para Wi-Fi encendido (ej. señal completa)
+
+                self.wifi_toggle_button_icon.set_markup(icons.wifi_3)
             else:
-                # Actualizar markup del Label
-                self.wifi_toggle_button_icon.set_markup(icons.wifi_off) # Icono para Wi-Fi apagado
+
+                self.wifi_toggle_button_icon.set_markup(icons.wifi_off)
                 self.status_label.set_label("Wi-Fi desactivado.")
                 self.status_label.set_visible(True)
                 self._clear_ap_list()
@@ -158,7 +156,6 @@ class NetworkConnections(Box):
             self.wifi_toggle_button.set_sensitive(False)
             self.refresh_button.set_sensitive(False)
 
-    # ... (resto de los métodos _toggle_wifi, _refresh_access_points, _clear_ap_list, _load_access_points sin cambios) ...
     def _toggle_wifi(self, _):
         if self.network_client.wifi_device:
             self.network_client.wifi_device.toggle_wifi()

@@ -19,7 +19,6 @@ from modules.corners import MyCorner
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
 
-# OCCLUSION = 36 + data.DOCK_ICON_SIZE # Eliminada constante global
 
 def read_config():
     """Read and return the full configuration from the JSON file, handling missing file."""
@@ -71,49 +70,44 @@ class Dock(Window):
     _instances = []
     
     def __init__(self, integrated_mode: bool = False, **kwargs):
-        # --- Bloque de inicialización común ---
+
         self.integrated_mode = integrated_mode
         self.icon_size = 20 if self.integrated_mode else data.DOCK_ICON_SIZE
         self.effective_occlusion_size = 36 + self.icon_size
 
-        # Variables para la configuración dinámica del dock
         anchor_to_set: str
         revealer_transition_type: str
-        # self.actual_dock_is_horizontal determinará el comportamiento general (inferior vs lateral)
-        # Se necesita como atributo de instancia para usarlo en otros métodos (ej. check_occlusion_state)
+
         self.actual_dock_is_horizontal: bool 
         main_box_orientation_val: Gtk.Orientation
         main_box_h_align_val: str
         dock_wrapper_orientation_val: Gtk.Orientation
 
-
         if not self.integrated_mode:
-            # Determine if the dock itself should be horizontal or vertical
-            # By default, the dock's orientation follows the bar's orientation.
-            self.actual_dock_is_horizontal = not data.VERTICAL # data.VERTICAL is True if BAR_POSITION is "Left" or "Right"
 
-            # Now, determine the anchor and transition based on the dock's determined orientation
+            self.actual_dock_is_horizontal = not data.VERTICAL
+
             if self.actual_dock_is_horizontal:
                 anchor_to_set = "bottom"
                 revealer_transition_type = "slide-up"
-                main_box_orientation_val = Gtk.Orientation.VERTICAL # main_box is vertical (hover_activator above revealer)
+                main_box_orientation_val = Gtk.Orientation.VERTICAL
                 main_box_h_align_val = "center"
-                dock_wrapper_orientation_val = Gtk.Orientation.HORIZONTAL # Dock icons horizontal
-            else: # Dock is vertical
-                # If the dock is vertical, it should be on the opposite side of the bar
+                dock_wrapper_orientation_val = Gtk.Orientation.HORIZONTAL
+            else:
+
                 if data.BAR_POSITION == "Left":
                     anchor_to_set = "right"
                     revealer_transition_type = "slide-left"
                 elif data.BAR_POSITION == "Right":
                     anchor_to_set = "left"
                     revealer_transition_type = "slide-right"
-                else: # Fallback for unexpected BAR_POSITION with vertical dock
+                else:
                     anchor_to_set = "right"
                     revealer_transition_type = "slide-left"
 
-                main_box_orientation_val = Gtk.Orientation.HORIZONTAL # main_box is horizontal (hover_activator next to revealer)
-                main_box_h_align_val = "end" if anchor_to_set == "right" else "start" # Align main_box to the side it's anchored to
-                dock_wrapper_orientation_val = Gtk.Orientation.VERTICAL # Dock icons vertical
+                main_box_orientation_val = Gtk.Orientation.HORIZONTAL
+                main_box_h_align_val = "end" if anchor_to_set == "right" else "start"
+                dock_wrapper_orientation_val = Gtk.Orientation.VERTICAL
 
             super().__init__(
                 name="dock-window",
@@ -124,10 +118,10 @@ class Dock(Window):
                 **kwargs,
             )
             Dock._instances.append(self)
-        else: # Modo integrado
-            self.actual_dock_is_horizontal = True # The integrated dock is always horizontal
+        else:
+            self.actual_dock_is_horizontal = True
             dock_wrapper_orientation_val = Gtk.Orientation.HORIZONTAL
-            # These are not used for integrated mode, but initialized for consistency
+
             anchor_to_set = "bottom"
             revealer_transition_type = "slide-up"
             main_box_orientation_val = Gtk.Orientation.VERTICAL
@@ -149,18 +143,16 @@ class Dock(Window):
         self.is_mouse_over_dock_area = False
         self._prevent_occlusion = False
 
-        # --- Configuración de self.view y self.wrapper ---
         self.view = Box(name="viewport", spacing=4)
         self.wrapper = Box(name="dock", children=[self.view])
 
-        # Usar dock_wrapper_orientation_val determinada anteriormente
         self.wrapper.set_orientation(dock_wrapper_orientation_val)
         self.view.set_orientation(dock_wrapper_orientation_val)
 
         if self.integrated_mode:
             self.wrapper.add_style_class("integrated")
-        else: # Dock independiente
-            # Añadir/quitar clase 'vertical' al wrapper basado en su orientación final
+        else:
+
             if dock_wrapper_orientation_val == Gtk.Orientation.VERTICAL:
                 self.wrapper.add_style_class("vertical")
             else:
@@ -176,7 +168,6 @@ class Dock(Window):
                 case _:
                     self.wrapper.add_style_class("pills")
 
-        # --- Lógica específica del modo no integrado (ventana) ---
         if not self.integrated_mode:
             self.dock_eventbox = EventBox()
             self.dock_eventbox.add(self.wrapper)
@@ -188,7 +179,6 @@ class Dock(Window):
             self.corner_top = Box()
             self.corner_bottom = Box()
 
-            # Usar self.actual_dock_is_horizontal para la lógica de las esquinas
             if self.actual_dock_is_horizontal: 
                 self.corner_left = Box(
                     name="dock-corner-left", orientation=Gtk.Orientation.VERTICAL, h_align="start",
@@ -202,36 +192,28 @@ class Dock(Window):
                     name="dock-full", orientation=Gtk.Orientation.HORIZONTAL, h_expand=True, h_align="fill",
                     children=[self.corner_left, self.dock_eventbox, self.corner_right]
                 )
-            else: # Dock es vertical en un lado
-                # Corners for vertical dock should be top-left/bottom-left or top-right/bottom-right
-                # depending on which side the dock is anchored.
-                # The MyCorner widgets are designed for horizontal bars, so their names ("bottom-right")
-                # refer to the corner of the bar itself.
-                # For a vertical dock, the corners are at the top and bottom of the dock.
-                # If anchored left, top corner is "top-right" (of the dock), bottom corner is "bottom-right".
-                # If anchored right, top corner is "top-left" (of the dock), bottom corner is "bottom-left".
+            else:
+
                 
-                # Let's assume the corners are relative to the dock's position.
-                # If dock is on the right, its top corner is top-left, bottom corner is bottom-left.
-                # If dock is on the left, its top corner is top-right, bottom corner is bottom-right.
+
                 
-                if anchor_to_set == "right": # Dock is on the right side
+                if anchor_to_set == "right":
                     self.corner_top = Box(
                         name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
-                        children=[Box(h_expand=True, h_align="fill"), MyCorner("top-left")] # Top-left corner of the dock
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("top-left")]
                     )
                     self.corner_bottom = Box(
                         name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
-                        children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-left")] # Bottom-left corner of the dock
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-left")]
                     )
-                else: # Dock is on the left side
+                else:
                     self.corner_top = Box(
                         name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
-                        children=[Box(h_expand=True, h_align="fill"), MyCorner("top-right")] # Top-right corner of the dock
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("top-right")]
                     )
                     self.corner_bottom = Box(
                         name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
-                        children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-right")] # Bottom-right corner of the dock
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-right")]
                     )
 
                 self.dock_full = Box(
@@ -241,22 +223,22 @@ class Dock(Window):
 
             self.dock_revealer = Revealer(
                 name="dock-revealer",
-                transition_type=revealer_transition_type, # MODIFICADO
+                transition_type=revealer_transition_type,
                 transition_duration=250,
                 child_revealed=False, 
                 child=self.dock_full
             )
 
             self.hover_activator = EventBox()
-            # MODIFICADO (usa self.actual_dock_is_horizontal)
+
             self.hover_activator.set_size_request(-1 if self.actual_dock_is_horizontal else 1, 1 if self.actual_dock_is_horizontal else -1)
             self.hover_activator.connect("enter-notify-event", self._on_hover_enter)
             self.hover_activator.connect("leave-notify-event", self._on_hover_leave)
 
             self.main_box = Box(
-                orientation=main_box_orientation_val, # MODIFICADO
+                orientation=main_box_orientation_val,
                 children=[self.hover_activator, self.dock_revealer],
-                h_align=main_box_h_align_val, # MODIFICADO
+                h_align=main_box_h_align_val,
             )
             self.add(self.main_box) 
             
@@ -264,14 +246,13 @@ class Dock(Window):
                 for corner in [self.corner_left, self.corner_right, self.corner_top, self.corner_bottom]:
                     corner.set_visible(False)
             
-            # Hide standalone dock if disabled or if bar is at bottom (meaning dock is integrated)
+
             if not data.DOCK_ENABLED or data.BAR_POSITION == "Bottom":
                 self.set_visible(False) 
             
             if self.always_occluded: 
                 self.dock_full.add_style_class("occluded")
 
-        # --- Conexiones y Timers (comunes o condicionales) ---
         self.view.drag_source_set(
             Gdk.ModifierType.BUTTON1_MASK,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
@@ -492,7 +473,7 @@ class Dock(Window):
             if self.always_occluded:
                 self.dock_revealer.set_reveal_child(False)
             else:
-                # Usar self.actual_dock_is_horizontal para determinar la región de oclusión
+
                 occlusion_region = ("bottom", self.effective_occlusion_size) if self.actual_dock_is_horizontal else ("right", self.effective_occlusion_size)
                 if check_occlusion(occlusion_region) or not self.view.get_children():
                     self.dock_revealer.set_reveal_child(False)
@@ -660,7 +641,6 @@ class Dock(Window):
             self.dock_full.add_style_class("occluded")
             return True
 
-        # Usar self.actual_dock_is_horizontal para determinar la región de oclusión
         occlusion_region = ("bottom", self.effective_occlusion_size) if self.actual_dock_is_horizontal else ("right", self.effective_occlusion_size)
         is_occluded_by_window = check_occlusion(occlusion_region)
         is_empty = not self.view.get_children()
@@ -752,7 +732,6 @@ class Dock(Window):
                 self.check_occlusion_state()
 
         GLib.idle_add(process_drag_end)
-
 
     def check_config_change(self):
         new_config = read_config()

@@ -91,7 +91,6 @@ class PowerMenu(Box):
     def close_menu(self):
         self.notch.close_notch()
 
-    # Métodos de acción
     def lock(self, *args):
         print("Locking screen...")
         exec_shell_command_async("loginctl lock-session")

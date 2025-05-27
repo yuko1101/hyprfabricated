@@ -12,12 +12,12 @@ from fabric.widgets.datetime import DateTime
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
-from gi.repository import Gdk, Gtk  # Añadir Gtk para Gtk.Orientation
+from gi.repository import Gdk, Gtk
 
 import config.data as data
 import modules.icons as icons
 from modules.controls import ControlSmall
-from modules.dock import Dock  # Importar Dock
+from modules.dock import Dock
 from modules.metrics import Battery, MetricsSmall, NetworkApplet
 from modules.systemtray import SystemTray
 from modules.weather import Weather
@@ -55,16 +55,15 @@ class Bar(Window):
                     self.margin_var = "-8px -8px -8px -8px"
                 case _:
                     self.margin_var = "-4px -8px -4px -4px"
-        else:  # Barra horizontal
+        else:
             match data.BAR_THEME:
                 case "Edge":
                     self.margin_var = "-8px -8px -8px -8px"
-                case _:  # "Pills" o "Dense"
+                case _:
                     if data.BAR_POSITION == "Bottom":
-                        # Margen invertido para posición inferior: top, right, bottom, left
                         self.margin_var = "-8px -4px -4px -4px"
                     else:
-                        # Margen original para otras posiciones (ej. "Top")
+
                         self.margin_var = "-4px -4px -8px -4px"
 
         self.set_anchor(self.anchor_var)
@@ -73,7 +72,6 @@ class Bar(Window):
         self.notch = kwargs.get("notch", None)
         self.component_visibility = data.BAR_COMPONENTS_VISIBILITY
 
-        # Inicializar atributos para el dock integrado
         self.dock_instance = None
         self.integrated_dock_widget = None
 
@@ -259,7 +257,7 @@ class Bar(Window):
             self.button_tools,
         ]
         
-        self.v_center_children = [ # Usado si la barra es vertical y no centrada
+        self.v_center_children = [
             self.button_overview,
             self.ws_container,
             self.weather,
@@ -273,31 +271,29 @@ class Bar(Window):
             self.button_power,
         ]
         
-        self.v_all_children = [] # Usado si la barra es vertical y centrada
+        self.v_all_children = []
         self.v_all_children.extend(self.v_start_children)
         self.v_all_children.extend(self.v_center_children)
         self.v_all_children.extend(self.v_end_children)
 
-        # Crear instancia del Dock si está habilitado y la posición es "Bottom" (y la barra es horizontal)
         if data.DOCK_ENABLED and data.BAR_POSITION == "Bottom" or data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Top", "Bottom"]:
             if not data.VERTICAL: 
                 self.dock_instance = Dock(integrated_mode=True)
                 self.integrated_dock_widget = self.dock_instance.wrapper
-                # self.dock_instance se mantiene para que sus timers/conexiones sigan activos
+
         
         is_centered_bar = data.VERTICAL and getattr(data, 'CENTERED_BAR', False)
         
         bar_center_actual_children = None
         
-        if self.integrated_dock_widget is not None: # Prioridad si el dock está integrado
+        if self.integrated_dock_widget is not None:
             bar_center_actual_children = self.integrated_dock_widget
-        elif data.VERTICAL: # Si no hay dock integrado Y la barra es vertical
+        elif data.VERTICAL:
             bar_center_actual_children = Box(
                 orientation=Gtk.Orientation.VERTICAL, 
                 spacing=4, 
                 children=self.v_all_children if is_centered_bar else self.v_center_children
             )
-        # else: (barra horizontal sin dock integrado) -> bar_center_actual_children permanece None
 
         self.bar_inner = CenterBox(
             name="bar-inner",
@@ -319,7 +315,7 @@ class Bar(Window):
             ),
         )
 
-        self.children = self.bar_inner # Asignar self.bar_inner a self.children
+        self.children = self.bar_inner
 
         self.hidden = False
 
@@ -338,9 +334,8 @@ class Bar(Window):
             self.systray,
             self.control,
         ]
-        if self.integrated_dock_widget: # Si el dock está integrado, también aplicar tema
+        if self.integrated_dock_widget:
             self.themed_children.append(self.integrated_dock_widget)
-
 
         current_theme = data.BAR_THEME
         theme_classes = ["pills", "dense", "edge", "edgecenter"]
@@ -364,9 +359,7 @@ class Bar(Window):
         self.bar_inner.add_style_class(self.style)
         
         if self.integrated_dock_widget and hasattr(self.integrated_dock_widget, 'add_style_class'):
-            # Eliminar clases de tema anteriores que podrían haber sido aplicadas por el Dock
-            # si la lógica en Dock.__init__ no se hubiera ajustado.
-            # Esto es más una medida de seguridad, idealmente Dock no las añade en modo integrado.
+
             for theme_class_to_remove in ["pills", "dense", "edge"]:
                 style_context = self.integrated_dock_widget.get_style_context()
                 if style_context.has_class(theme_class_to_remove):
@@ -375,9 +368,8 @@ class Bar(Window):
 
         if data.BAR_THEME == "Dense" or data.BAR_THEME == "Edge":
             for child in self.themed_children:
-                if hasattr(child, 'add_style_class'): # Asegurarse de que el widget puede tener clases de estilo
+                if hasattr(child, 'add_style_class'):
                     child.add_style_class("invert")
-
 
         match data.BAR_POSITION:
             case "Top":
@@ -448,9 +440,9 @@ class Bar(Window):
                     config[f'bar_{component_name}_visible'] = self.component_visibility[component_name]
                     
                     with open(config_file, 'w') as f:
-                        json.dump(config, f, indent=4) # Añadir indentación para legibilidad
+                        json.dump(config, f, indent=4)
                 except Exception as e:
-                    print(f"Error updating config file: {e}") # Mejor loguear esto
+                    print(f"Error updating config file: {e}")
             
             return self.component_visibility[component_name]
         
@@ -459,7 +451,7 @@ class Bar(Window):
     def on_button_enter(self, widget, event):
         window = widget.get_window()
         if window:
-            window.set_cursor(Gdk.Cursor.new_from_name(widget.get_display(),"hand2")) # Usar new_from_name
+            window.set_cursor(Gdk.Cursor.new_from_name(widget.get_display(),"hand2"))
 
     def on_button_leave(self, widget, event):
         window = widget.get_window()
@@ -482,7 +474,7 @@ class Bar(Window):
         if self.notch: self.notch.open_notch("tools")
 
     def on_language_switch(self, _=None, event: HyprlandEvent=None):
-        lang_data = event.data[1] if event and event.data and len(event.data) > 1 else Language().get_label() # Corregir acceso a event.data
+        lang_data = event.data[1] if event and event.data and len(event.data) > 1 else Language().get_label()
         self.language.set_tooltip_text(lang_data)
         if not data.VERTICAL:
             self.lang_label.set_label(lang_data[:3].upper())

@@ -26,12 +26,11 @@ class ClipHistory(Box):
             **kwargs,
         )
 
-        # Create a temporary directory for image icons
         self.tmp_dir = tempfile.mkdtemp(prefix="cliphist-")
-        self.image_cache = {}  # Cache for image previews
+        self.image_cache = {}
         
         self.notch = kwargs["notch"]
-        self.selected_index = -1  # Track the selected item index
+        self.selected_index = -1
         self._arranger_handler = 0
         self.clipboard_items = []
         self._loading = False
@@ -98,7 +97,7 @@ class ClipHistory(Box):
     def close(self):
         """Close the clipboard history panel"""
         self.viewport.children = []
-        self.selected_index = -1  # Reset selection
+        self.selected_index = -1
         self.notch.close_notch()
 
     def open(self):
@@ -106,9 +105,9 @@ class ClipHistory(Box):
         if self._loading:
             return
         self._loading = True
-        self.search_entry.set_text("")  # Clear search
+        self.search_entry.set_text("")
         self.search_entry.grab_focus()
-        # Start loading in background using GLib.idle_add
+
         GLib.idle_add(self._load_clipboard_items_thread)
 
     def _load_clipboard_items_thread(self):
@@ -136,7 +135,7 @@ class ClipHistory(Box):
             if self._pending_updates:
                 self._pending_updates = False
                 GLib.idle_add(self._load_clipboard_items_thread)
-        return False  # Ensure idle_add does not repeat
+        return False
 
     def _update_items(self, new_items):
         """Update the items list from main thread"""
@@ -147,19 +146,19 @@ class ClipHistory(Box):
         """Display clipboard items in the viewport"""
         remove_handler(self._arranger_handler) if self._arranger_handler else None
         self.viewport.children = []
-        self.selected_index = -1  # Reset selection
+        self.selected_index = -1
         
-        # Filter items if search text is provided
+
         filtered_items = []
         for item in self.clipboard_items:
-            # Extract just the content part (after the first tab)
+
             content = item.split('\t', 1)[1] if '\t' in item else item
             if filter_text.lower() in content.lower():
                 filtered_items.append(item)
         
-        # Show message if no items are found
+
         if not filtered_items:
-            # Create a container box to better center the message
+
             container = Box(
                 name="no-clip-container",
                 orientation="v",
@@ -169,7 +168,7 @@ class ClipHistory(Box):
                 v_expand=True
             )
             
-            # Show a message if no clipboard items
+
             label = Label(
                 name="no-clip",
                 markup=icons.clipboard,
@@ -181,7 +180,7 @@ class ClipHistory(Box):
             self.viewport.add(container)
             return
             
-        # Display items in batches to prevent UI freeze
+
         self._display_items_batch(filtered_items, 0, 10)
 
     def _display_items_batch(self, items, start, batch_size):
@@ -192,31 +191,31 @@ class ClipHistory(Box):
             item = items[i]
             self.viewport.add(self.create_clipboard_item(item))
         
-        # Schedule next batch if there are more items
+
         if end < len(items):
             GLib.idle_add(self._display_items_batch, items, end, batch_size)
         else:
-            # Auto-select first item if we have filter text
+
             if self.search_entry.get_text() and self.viewport.get_children():
                 self.update_selection(0)
 
     def create_clipboard_item(self, item):
         """Create a button for a clipboard item"""
-        # Extract ID and content
+
         parts = item.split('\t', 1)
         item_id = parts[0] if len(parts) > 1 else "0"
         content = parts[1] if len(parts) > 1 else item
         
-        # Truncate content for display
+
         display_text = content.strip()
         if len(display_text) > 100:
             display_text = display_text[:97] + "..."
         
-        # Check if this is an image by examining the content
+
         is_image = self.is_image_data(content)
         
         if is_image:
-            # For images, create item with image preview
+
             button = Button(
                 name="slot-button",
                 child=Box(
@@ -224,7 +223,7 @@ class ClipHistory(Box):
                     orientation="h",
                     spacing=10,
                     children=[
-                        Image(name="clip-icon", h_align="start"),  # Placeholder
+                        Image(name="clip-icon", h_align="start"),
                         Label(
                             name="clip-label",
                             label="[Image]",
@@ -238,16 +237,16 @@ class ClipHistory(Box):
                 tooltip_text="Image in clipboard",
                 on_clicked=lambda *_, id=item_id: self.paste_item(id),
             )
-            # Load image preview in background
+
             self._load_image_preview_async(item_id, button)
         else:
-            # For text, create regular item
+
             button = self.create_text_item_button(item_id, display_text)
         
-        # Add key press event handler for Enter key
+
         button.connect("key-press-event", lambda widget, event, id=item_id: self.on_item_key_press(widget, event, id))
         
-        # Make sure button can receive focus and key events
+
         button.set_can_focus(True)
         button.add_events(Gdk.EventMask.KEY_PRESS_MASK)
             
@@ -323,13 +322,13 @@ class ClipHistory(Box):
 
     def is_image_data(self, content):
         """Determine if clipboard content is likely an image"""
-        # Check for common image data patterns
+
         return (
             content.startswith("data:image/") or
             content.startswith("\x89PNG") or
             content.startswith("GIF8") or
-            content.startswith("\xff\xd8\xff") or  # JPEG
-            re.match(r'^\s*<img\s+', content) is not None or  # HTML image tag
+            content.startswith("\xff\xd8\xff") or
+            re.match(r'^\s*<img\s+', content) is not None or
             "binary" in content.lower() and any(ext in content.lower() for ext in ["jpg", "jpeg", "png", "bmp", "gif"])
         )
 
@@ -409,12 +408,12 @@ class ClipHistory(Box):
         """Update the selected item in the viewport"""
         children = self.viewport.get_children()
         
-        # Unselect current
+
         if self.selected_index != -1 and self.selected_index < len(children):
             current_button = children[self.selected_index]
             current_button.get_style_context().remove_class("selected")
             
-        # Select new
+
         if new_index != -1 and new_index < len(children):
             new_button = children[new_index]
             new_button.get_style_context().add_class("selected")
@@ -429,7 +428,7 @@ class ClipHistory(Box):
         if not children:
             return
             
-        # Allow starting selection from nothing
+
         if self.selected_index == -1 and delta == 1:
             new_index = 0
         else:
@@ -444,22 +443,21 @@ class ClipHistory(Box):
             adj = self.scrolled_window.get_vadjustment()
             alloc = button.get_allocation()
             if alloc.height == 0:
-                return False  # Retry if allocation isn't ready
+                return False
 
             y = alloc.y
             height = alloc.height
             page_size = adj.get_page_size()
             current_value = adj.get_value()
 
-            # Calculate visible boundaries
             visible_top = current_value
             visible_bottom = current_value + page_size
 
             if y < visible_top:
-                # Item above viewport - align to top
+
                 adj.set_value(y)
             elif y + height > visible_bottom:
-                # Item below viewport - align to bottom
+
                 new_value = y + height - page_size
                 adj.set_value(new_value)
             return False
@@ -471,7 +469,7 @@ class ClipHistory(Box):
         if not children or self.selected_index == -1 or self.selected_index >= len(self.clipboard_items):
             return
             
-        # Get the item ID from the first part before the tab
+
         item_line = self.clipboard_items[self.selected_index]
         item_id = item_line.split('\t', 1)[0]
         self.paste_item(item_id)
@@ -482,7 +480,7 @@ class ClipHistory(Box):
         if not children or self.selected_index == -1:
             return
             
-        # Get the item ID from the first part before the tab
+
         item_line = self.clipboard_items[self.selected_index]
         item_id = item_line.split('\t', 1)[0]
         self.delete_item(item_id)
@@ -490,7 +488,7 @@ class ClipHistory(Box):
     def on_item_key_press(self, widget, event, item_id):
         """Handle key press events on clipboard items"""
         if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-            # Copy item to clipboard and close
+
             self.paste_item(item_id)
             return True
         return False

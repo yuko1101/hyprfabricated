@@ -10,7 +10,6 @@ import config.data as data
 
 logger = logging.getLogger(__name__)
 
-
 class SystemTray(Box):
     def __init__(self, pixel_size: int = 20, refresh_interval: int = 1, **kwargs) -> None:
         orientation = Gtk.Orientation.HORIZONTAL if not data.VERTICAL else Gtk.Orientation.VERTICAL
@@ -28,11 +27,9 @@ class SystemTray(Box):
         self.buttons_by_id = {}
         self.items_by_id = {}
 
-        # Watcher
         self.watcher = Gray.Watcher()
         self.watcher.connect("item-added", self.on_watcher_item_added)
 
-        # Timer de seguridad para refresco cada segundo
         GLib.timeout_add_seconds(self.refresh_interval, self._refresh_all_items)
 
     def set_visible(self, visible: bool):
@@ -48,7 +45,7 @@ class SystemTray(Box):
             pm = Gray.get_pixmap_for_pixmaps(item.get_icon_pixmaps(), self.pixel_size)
             if pm:
                 return pm.as_pixbuf(self.pixel_size, GdkPixbuf.InterpType.HYPER)
-            # fallback a tema
+
             name = item.get_icon_name()
             theme = Gtk.IconTheme.new()
             path = item.get_icon_theme_path()
@@ -81,7 +78,7 @@ class SystemTray(Box):
             button.set_has_tooltip(False)
 
     def _refresh_all_items(self) -> bool:
-        # refresco de seguridad
+
         for ident, item in self.items_by_id.items():
             btn = self.buttons_by_id.get(ident)
             if btn:
@@ -93,7 +90,6 @@ class SystemTray(Box):
         if not item:
             return
 
-        # reemplazo si ya existía
         if identifier in self.buttons_by_id:
             self.buttons_by_id[identifier].destroy()
             del self.buttons_by_id[identifier]
@@ -103,19 +99,16 @@ class SystemTray(Box):
         self.buttons_by_id[identifier] = btn
         self.items_by_id[identifier] = item
 
-        # Conectar a cambios de propiedades: icon-pixmaps y icon-name
         item.connect("notify::icon-pixmaps",
                      lambda itm, pspec: self._refresh_item_ui(identifier, itm, btn))
         item.connect("notify::icon-name",
                      lambda itm, pspec: self._refresh_item_ui(identifier, itm, btn))
 
-        # Antiguo "updated", por si acaso
         try:
             item.connect("updated", lambda itm: self._refresh_item_ui(identifier, itm, btn))
         except TypeError:
             pass
 
-        # Remoción
         item.connect("removed", lambda itm: self.on_item_instance_removed(identifier, itm))
 
         self.add(btn)

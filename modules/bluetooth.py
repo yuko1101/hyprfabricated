@@ -40,7 +40,7 @@ class BluetoothDeviceSlot(CenterBox):
         ]
         self.end_children = self.connect_button
 
-        self.device.emit("changed")  # to update display status
+        self.device.emit("changed")
 
     def on_changed(self, *_):
         self.connection_label.set_markup(
@@ -102,8 +102,6 @@ class BluetoothConnections(Box):
         self.paired_box = Box(spacing=2, orientation="vertical")
         self.available_box = Box(spacing=2, orientation="vertical")
 
-        # Create a single content container with the required structure:
-        # [Paired label] [Paired devices list] [Available label] [Available devices list]
         content_box = Box(spacing=4, orientation="vertical")
         content_box.add(self.paired_box)
         content_box.add(Label(name="bluetooth-section", label="Available"))
@@ -126,7 +124,6 @@ class BluetoothConnections(Box):
             ),
         ]
 
-        # Trigger initial notifications to update status without delay.
         self.client.notify("scanning")
         self.client.notify("enabled")
 

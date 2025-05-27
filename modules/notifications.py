@@ -13,7 +13,7 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.widgets.wayland import WaylandWindow as Window  # Import Window
+from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import GdkPixbuf, GLib, Gtk
 from loguru import logger
 
@@ -21,7 +21,6 @@ import config.data as data
 import modules.icons as icons
 from widgets.rounded_image import CustomImage
 
-# Persistence directory and file (history)
 PERSISTENT_DIR = f"/tmp/{data.APP_NAME}/notifications"
 PERSISTENT_HISTORY_FILE = os.path.join(PERSISTENT_DIR, "notification_history.json")
 
@@ -128,18 +127,17 @@ class NotificationBox(Box):
         )
         self.notification = notification
         self.uuid = str(uuid.uuid4())
-        # If timeout_ms is explicitly 0 (historical), use 0.
-        # Otherwise, use the notification's timeout if available, else the default timeout_ms.
+
         if timeout_ms == 0:
             self.timeout_ms = 0
         else:
-            # Safely get timeout from the live notification object, default to -1 if not present
+
             live_timeout = getattr(self.notification, 'timeout', -1)
-            self.timeout_ms = live_timeout if live_timeout != -1 else timeout_ms # Use default if live_timeout is -1
+            self.timeout_ms = live_timeout if live_timeout != -1 else timeout_ms
         self._timeout_id = None
         self._container = None
         self.cached_image_path = None
-        # Only start the timeout timer if the calculated timeout is greater than 0
+
         if self.timeout_ms > 0:
             self.start_timeout()
 
@@ -439,8 +437,7 @@ class NotificationHistory(Box):
         self._cleanup_orphan_cached_images()
         self.schedule_midnight_update()
 
-        # List of apps for which notifications should be limited to one in history too
-        self.LIMITED_APPS_HISTORY = ["Spotify"] # Add your list of apps here, same as NotificationContainer if needed
+        self.LIMITED_APPS_HISTORY = ["Spotify"]
 
     def get_ordinal(self, n):
         if 11 <= (n % 100) <= 13:
@@ -502,12 +499,12 @@ class NotificationHistory(Box):
         GLib.idle_add(self._do_rebuild_with_separators)
 
     def _do_rebuild_with_separators(self):
-        children = list(self.notifications_list.get_children()) # Create a copy to avoid issues during removal
+        children = list(self.notifications_list.get_children())
         for child in children:
             self.notifications_list.remove(child)
 
         current_date_header = None
-        last_date_header = None # Keep track of the last date header added
+        last_date_header = None
         for container in sorted(self.containers, key=lambda x: x.arrival_time, reverse=True):
             arrival_time = container.arrival_time
             date_header = self.get_date_header(arrival_time)
@@ -515,12 +512,11 @@ class NotificationHistory(Box):
                 sep = self.create_date_separator(date_header)
                 self.notifications_list.add(sep)
                 current_date_header = date_header
-                last_date_header = date_header # Update last_date_header
+                last_date_header = date_header
             self.notifications_list.add(container)
 
-        # Remove the last date separator if there are no notifications left
         if not self.containers and last_date_header:
-            for child in list(self.notifications_list.get_children()): # Iterate over a copy
+            for child in list(self.notifications_list.get_children()):
                 if child.get_name() == "notif-date-sep":
                     self.notifications_list.remove(child)
 
@@ -548,7 +544,7 @@ class NotificationHistory(Box):
                 logger.error(f"Error deleting persistent history file: {e}")
         self.persistent_notifications = []
         self.containers = []
-        self.rebuild_with_separators() # Call rebuild after clearing to remove any stray separators
+        self.rebuild_with_separators()
 
     def _load_persistent_history(self):
         if not os.path.exists(PERSISTENT_DIR):
@@ -575,19 +571,15 @@ class NotificationHistory(Box):
             notif_box = container.notification_box
             notif_box.destroy(from_history_delete=True)
 
-        # Convertir note_id a cadena para asegurar la comparación, aunque ya debería serlo.
         target_note_id_str = str(note_id)
         
         new_persistent_notifications = []
         removed_from_list = False
         for note_in_list in self.persistent_notifications:
-            current_note_id_str = str(note_in_list.get("id")) # Asegurar que el ID de la lista también es cadena
+            current_note_id_str = str(note_in_list.get("id"))
             if current_note_id_str == target_note_id_str:
                 removed_from_list = True
-                # No añadir esta nota a la nueva lista (efectivamente eliminándola)
-                # Si solo se quiere eliminar la primera ocurrencia (aunque los IDs deberían ser únicos):
-                # una vez encontrada y marcada para no añadir, se podría romper el bucle si se garantiza unicidad.
-                # Por ahora, se asume que si hay duplicados (no debería), se eliminan todos.
+
                 continue
             new_persistent_notifications.append(note_in_list)
         
@@ -600,7 +592,7 @@ class NotificationHistory(Box):
         self._save_persistent_history()
         container.destroy()
         self.containers = [c for c in self.containers if c != container]
-        self.rebuild_with_separators() # Call rebuild after deleting to adjust separators
+        self.rebuild_with_separators()
 
     def _add_historical_notification(self, note):
         hist_notif = HistoricalNotification(
@@ -656,31 +648,31 @@ class NotificationHistory(Box):
             name="notification-summary",
             markup=hist_notif.summary,
             h_align="start",
-            # h_expand=True,
+
             ellipsization="end",
-            # max_chars_width=1,
+
         )
-        # self.hist_notif_summary_label.set_xalign(0.0)
+
         self.hist_notif_app_name_label = Label(
             name="notification-app-name",
             markup=f"{hist_notif.app_name}",
             h_align="start",
-            # h_expand=True,
+
             ellipsization="end",
-            # max_chars_width=1,
+
         )
-        # self.hist_notif_app_name_label.set_xalign(0.0)
+
         self.hist_notif_body_label = Label(
             name="notification-body",
             markup=hist_notif.body,
             h_align="start",
-            # h_expand=True,
+
             ellipsization="end",
             line_wrap="word-char",
-            # max_chars_width=1,
+
         ) if hist_notif.body else Box()
         self.hist_notif_body_label.set_single_line_mode(True) if hist_notif.body else None
-        # self.hist_notif_body_label.set_xalign(0.0) if hist_notif.body else None
+
         self.hist_notif_summary_box = Box(
             name="notification-summary-box",
             orientation="h",
@@ -731,7 +723,7 @@ class NotificationHistory(Box):
     def add_notification(self, notification_box):
         app_name = notification_box.notification.app_name
         if app_name in self.LIMITED_APPS_HISTORY:
-            self.clear_history_for_app(app_name) # Immediately clear history for this app
+            self.clear_history_for_app(app_name)
 
         if len(self.containers) >= 50:
             oldest_container = self.containers.pop()
@@ -749,8 +741,8 @@ class NotificationHistory(Box):
             if hasattr(container, "notification_box"):
                 notif_box = container.notification_box
             container.destroy()
-            self.containers.remove(container) # Ensure container is removed from list
-            self.rebuild_with_separators() # Rebuild separators after removing a notification
+            self.containers.remove(container)
+            self.rebuild_with_separators()
             self.update_no_notifications_label_visibility()
 
         container = Box(
@@ -899,7 +891,7 @@ class NotificationHistory(Box):
             logger.info("Orphan cached image cleanup finished. No orphan images found.")
 
     def update_no_notifications_label_visibility(self):
-        has_notifications = bool(self.containers) # Check if containers list is empty
+        has_notifications = bool(self.containers)
         self.no_notifications_box.set_visible(not has_notifications)
         self.notifications_list.set_visible(has_notifications)
 
@@ -907,7 +899,7 @@ class NotificationHistory(Box):
         """Clears all notifications in history for a specific app."""
         containers_to_remove = []
         persistent_notes_to_remove_ids = set()
-        for container in list(self.containers): # Iterate over a copy
+        for container in list(self.containers):
             if hasattr(container, "notification_box") and container.notification_box.notification.app_name == app_name:
                 containers_to_remove.append(container)
                 persistent_notes_to_remove_ids.add(container.notification_box.uuid)
@@ -924,7 +916,6 @@ class NotificationHistory(Box):
             container.notification_box.destroy(from_history_delete=True)
             container.destroy()
 
-        # Update persistent history
         self.persistent_notifications = [
             note for note in self.persistent_notifications
             if note.get("id") not in persistent_notes_to_remove_ids
@@ -934,7 +925,7 @@ class NotificationHistory(Box):
         self.update_no_notifications_label_visibility()
 
 class NotificationContainer(Box):
-    LIMITED_APPS = ["Spotify"] # Add your list of apps here
+    LIMITED_APPS = ["Spotify"]
 
     def __init__(self, notification_history_instance: NotificationHistory, revealer_transition_type: str = "slide-down"):
         super().__init__(name="notification-container-main", orientation="v", spacing=4)
@@ -986,7 +977,6 @@ class NotificationContainer(Box):
         self.navigation.add(self.close_all_button)
         self.navigation.add(self.next_button)
 
-        # Create the Revealer for navigation buttons
         self.navigation_revealer = Revealer(
             transition_type="slide-down", 
             transition_duration=200,
@@ -1099,7 +1089,6 @@ class NotificationContainer(Box):
         should_reveal = len(self.notifications) > 1
         self.navigation_revealer.set_reveal_child(should_reveal)
 
-
     def on_notification_closed(self, notification, reason):
         if self._is_destroying:
             return
@@ -1203,7 +1192,6 @@ class NotificationContainer(Box):
         notifications_to_close = self.notifications.copy()
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
-
 
 class NotificationPopup(Window):
     def __init__(self, **kwargs):
