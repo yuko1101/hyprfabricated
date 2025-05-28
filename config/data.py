@@ -139,6 +139,7 @@ else:
     UPDATER = "misc_updater", True
     OTHERPLAYERS = "misc_otherplayers", False
     PANEL_POSITION = PANEL_POSITION_DEFAULT
+    DESKTOP_WIDGETS = True
     NOTIF_POS = NOTIF_POS_DEFAULT
 
     BAR_COMPONENTS_VISIBILITY = {
