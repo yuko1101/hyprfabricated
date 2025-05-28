@@ -7,6 +7,7 @@ import gi
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
+from fabric.widgets.scrolledwindow import ScrolledWindow
 
 import config.data as data
 import modules.icons as icons
@@ -51,7 +52,7 @@ class InlineEditor(Gtk.Box):
         cancel_btn.get_style_context().add_class("flat")
         
 
-        sw = Gtk.ScrolledWindow()
+        sw = ScrolledWindow(name="scrolled-window", propagate_height=False, propagate_width=False)
         sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         sw.set_min_content_height(50)
         sw.add(self.text_view)
@@ -206,7 +207,7 @@ class KanbanColumn(Gtk.Frame):
         
         self.add_btn.connect("clicked", self.on_add_clicked)
         
-        scrolled = Gtk.ScrolledWindow(name="kanban-scroll")
+        scrolled = ScrolledWindow(name="scrolled-window", propagate_height=False, propagate_width=False)
         scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled.add(self.listbox)
         scrolled.set_vexpand(True)
