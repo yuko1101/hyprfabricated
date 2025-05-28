@@ -142,6 +142,11 @@ else:
     DESKTOP_WIDGETS = True
     NOTIF_POS = NOTIF_POS_DEFAULT
 
+    DESKTOP_WIDGETS = True
+    WEATHER_FORMAT = "C"
+    WEATHER_LOCATION = ""
+    QUOTE_TYPE = "stoic"
+
     BAR_COMPONENTS_VISIBILITY = {
         "button_apps": True,
         "systray": True,
