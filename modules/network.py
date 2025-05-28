@@ -24,7 +24,7 @@ class WifiAccessPointSlot(CenterBox):
         self.network_service = network_service
         self.wifi_service = wifi_service
 
-        ssid = ap_data.get("ssid", "SSID Unknown")
+        ssid = ap_data.get("ssid", "Unknown SSID")
         icon_name = ap_data.get("icon-name", "network-wireless-signal-none-symbolic")
 
         self.is_active = False
@@ -79,11 +79,11 @@ class NetworkConnections(Box):
             spacing=4,
             **kwargs,
         )
-        self.widgets = kwargs["widgets"]
+        self.widgets = kwargs.get("widgets")
         self.network_client = NetworkClient()
 
         self.status_label = Label(
-            label="Inicializando Wi-Fi...", h_expand=True, h_align="center"
+            label="Initializing Wi-Fi...", h_expand=True, h_align="center"
         )
 
         self.back_button = Button(
@@ -96,7 +96,7 @@ class NetworkConnections(Box):
         self.wifi_toggle_button = Button(
             name="wifi-toggle-button",
             child=self.wifi_toggle_button_icon,
-            tooltip_text="Turn Wi-Fi On/Off",
+            tooltip_text="Toggle Wi-Fi",
             on_clicked=self._toggle_wifi,
         )
 
@@ -106,14 +106,14 @@ class NetworkConnections(Box):
         self.refresh_button = Button(
             name="network-refresh",
             child=self.refresh_button_icon,
-            tooltip_text="Search Wi-Fi networks",
+            tooltip_text="Scan for Wi-Fi networks",
             on_clicked=self._refresh_access_points,
         )
 
         header_box = CenterBox(
             name="network-header",
             start_children=[self.back_button],
-            center_children=[Label(name="network-title", label="Wi-Fi networks")],
+            center_children=[Label(name="network-title", label="Wi-Fi Networks")],
             end_children=[
                 Box(orientation="horizontal", spacing=4, children=[self.refresh_button])
             ],
@@ -151,7 +151,7 @@ class NetworkConnections(Box):
                 self.status_label.set_label("Wi-Fi disabled.")
                 self.status_label.set_visible(True)
         else:
-            self.status_label.set_label("Dispositivo Wi-Fi no disponible.")
+            self.status_label.set_label("Wi-Fi device not available.")
             self.status_label.set_visible(True)
             self.wifi_toggle_button.set_sensitive(False)
             self.refresh_button.set_sensitive(False)
@@ -163,12 +163,10 @@ class NetworkConnections(Box):
             self.refresh_button.set_sensitive(enabled)
 
             if enabled:
-
                 self.wifi_toggle_button_icon.set_markup(icons.wifi_3)
             else:
-
                 self.wifi_toggle_button_icon.set_markup(icons.wifi_off)
-                self.status_label.set_label("Wi-Fi device not available.")
+                self.status_label.set_label("Wi-Fi disabled.")
                 self.status_label.set_visible(True)
                 self._clear_ap_list()
 
@@ -184,7 +182,7 @@ class NetworkConnections(Box):
 
     def _refresh_access_points(self, _=None):
         if self.network_client.wifi_device and self.network_client.wifi_device.enabled:
-            self.status_label.set_label("Looking for Wi-Fi networks...")
+            self.status_label.set_label("Scanning for Wi-Fi networks...")
             self.status_label.set_visible(True)
             self._clear_ap_list()
             self.network_client.wifi_device.scan()
