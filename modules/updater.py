@@ -151,7 +151,7 @@ class UpdateWindow(Gtk.Window):
         super().__init__(title="Hyprfabricated Updater")
         self.set_default_size(500, 480)
         self.set_border_width(12)
-        self.set_resizable(True)
+        self.set_resizable(False) # Changed from True to False
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_keep_above(True)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
