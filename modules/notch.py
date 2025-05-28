@@ -30,17 +30,6 @@ from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
 
 
-def truncate_title(title):
-    parts = title.rsplit(" - ", 1)
-    if len(parts) == 1:
-        parts = title.rsplit(" — ", 1)
-    return (
-        parts[1]
-        if len(parts) == 2 and parts[0] == ""
-        else parts[0] if len(parts) > 1 else title
-    )
-
-
 class Notch(Window):
     def __init__(self, **kwargs):
 
@@ -195,8 +184,7 @@ class Notch(Window):
             h_expand=True,
             h_align="fill",
             formatter=FormattedString(
-                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 64)}}",
-                truncate=truncate,
+                f"{{'Desktop' if not win_title or win_title == 'unknown' else win_title}}",
             ),
         )
 
@@ -204,9 +192,7 @@ class Notch(Window):
             name="active-window-box",
             h_expand=True,
             h_align="fill",
-            start_children=self.window_icon,
-            center_children=self.active_window,
-            end_children=None,
+            center_children=[self.window_icon, self.active_window],
         )
 
         self.active_window_box.connect(
