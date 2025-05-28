@@ -1,9 +1,7 @@
 {
-	"version": "3.3.0",
+	"version": "4.1.0",
 	"changelog": [
-		"Many fixes and improvements",
-		"Added New Type of workspace indicator",
-		"Imporved Motions and smoothness",
-		"Bug fixes"
+		"104 Commits since last release Read if you want changelogs",
+		"Completed Version of Hyprfaricated"
 	]
 }
