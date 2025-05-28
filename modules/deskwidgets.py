@@ -541,8 +541,8 @@ if data.DESKTOP_WIDGETS:
                         child=Box(
                             orientation="v",
                             children=[
-                                activation(),
-                                activationbot(),
+                                ActivationMainText(),
+                                ActivationSubText(),
                             ],
                         ),
                         all_visible=True,
