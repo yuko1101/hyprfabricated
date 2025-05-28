@@ -1,12 +1,10 @@
 from fabric.widgets.box import Box
-from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
-from fabric.widgets.wayland import WaylandWindow as Window
+from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.shapes import Corner
-import gi
-# gi.require_version('Gtk', '3.0')
-
+from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import GLib
+
 
 class MyCorner(Box):
     def __init__(self, corner):
@@ -15,6 +13,10 @@ class MyCorner(Box):
             children=Corner(
                 name="corner",
                 orientation=corner,
+                h_expand=False,
+                v_expand=False,
+                h_align="center",
+                v_align="center",
                 size=20,
             ),
         )

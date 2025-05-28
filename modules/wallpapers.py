@@ -1,20 +1,23 @@
-import os
-import hashlib
-import shutil
 import colorsys
-from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk
+import concurrent.futures
+import hashlib
+import os
+import shutil
+from concurrent.futures import ThreadPoolExecutor
+
+from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
-from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.label import Label
-from fabric.utils.helpers import exec_shell_command_async
-import modules.icons as icons
-import config.data as data
+from fabric.widgets.scrolledwindow import ScrolledWindow
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango
 from PIL import Image
-import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor
+
+import config.config
+import config.data as data
+import modules.icons as icons
 
 
 class WallpaperSelector(Box):
@@ -26,14 +29,7 @@ class WallpaperSelector(Box):
         if os.path.exists(old_cache_dir):
             shutil.rmtree(old_cache_dir)
 
-        super().__init__(
-            name="wallpapers",
-            spacing=4,
-            orientation="v",
-            h_expand=False,
-            v_expand=False,
-            **kwargs,
-        )
+        super().__init__(name="wallpapers", spacing=4, orientation="v", h_expand=False, v_expand=False, **kwargs)
         os.makedirs(self.CACHE_DIR, exist_ok=True)
 
         # Process old wallpapers: use os.scandir for efficiency and only loop
@@ -49,16 +45,12 @@ class WallpaperSelector(Box):
                         new_full_path = os.path.join(data.WALLPAPERS_DIR, new_name)
                         try:
                             os.rename(full_path, new_full_path)
-                            print(
-                                f"Renamed old wallpaper '{full_path}' to '{new_full_path}'"
-                            )
+                            print(f"Renamed old wallpaper '{full_path}' to '{new_full_path}'")
                         except Exception as e:
                             print(f"Error renaming file {full_path}: {e}")
 
         # Refresh the file list after potential renaming
-        self.files = sorted(
-            [f for f in os.listdir(data.WALLPAPERS_DIR) if self._is_image(f)]
-        )
+        self.files = sorted([f for f in os.listdir(data.WALLPAPERS_DIR) if self._is_image(f)])
         self.thumbnails = []
         self.thumbnail_queue = []
         self.executor = ThreadPoolExecutor(max_workers=4)  # Shared executor
@@ -81,13 +73,18 @@ class WallpaperSelector(Box):
             spacing=10,
             h_expand=True,
             v_expand=True,
+            h_align="fill",
+            v_align="fill",
             child=self.viewport,
+            propagate_width=False,
+            propagate_height=False,
         )
 
         self.search_entry = Entry(
             name="search-entry-walls",
             placeholder="Search Wallpapers...",
             h_expand=True,
+            h_align="fill",
             notify_text=lambda entry, *_: self.arrange_viewport(entry.get_text()),
             on_key_press_event=self.on_search_entry_key_press,
         )
@@ -114,9 +111,9 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
         # Load matugen state from the dedicated file
-        self.matugen_enabled = True  # Default to True
+        self.matugen_enabled = True # Default to True
         try:
-            with open(data.MATUGEN_STATE_FILE, "r") as f:
+            with open(data.MATUGEN_STATE_FILE, 'r') as f:
                 content = f.read().strip().lower()
                 if content == "false":
                     self.matugen_enabled = False
@@ -142,51 +139,40 @@ class WallpaperSelector(Box):
         self.mat_icon = Label(name="mat-label", markup=icons.palette)
 
         # Add the switcher to the header_box's start_children
-        self.header_box = CenterBox(
+        self.header_box = Box(
             name="header-box",
-            spacing=8,
+            spacing=4,
             orientation="h",
             # Removed color button and label from here
-            start_children=[self.matugen_switcher, self.mat_icon],
-            center_children=[self.search_entry],
-            end_children=[self.scheme_dropdown],
+            children=[self.matugen_switcher, self.mat_icon, self.search_entry, self.scheme_dropdown],
         )
 
         self.add(self.header_box)
 
         # Create the custom color selector components
         self.hue_slider = Gtk.Scale(
-            orientation=Gtk.Orientation.HORIZONTAL,  # Changed from VERTICAL
-            adjustment=Gtk.Adjustment(
-                value=0, lower=0, upper=360, step_increment=1, page_increment=10
-            ),
-            draw_value=False,  # Hide the default value text
+            orientation=Gtk.Orientation.HORIZONTAL, # Changed from VERTICAL
+            adjustment=Gtk.Adjustment(value=0, lower=0, upper=360, step_increment=1, page_increment=10),
+            draw_value=False, # Hide the default value text
             digits=0,
             # inverted=True, # Removed inverted for horizontal
-            name="hue-slider",  # For CSS styling
+            name="hue-slider", # For CSS styling
         )
 
         # Changed expand/align for horizontal orientation
         self.hue_slider.set_hexpand(True)
         self.hue_slider.set_halign(Gtk.Align.FILL)
-        self.hue_slider.set_vexpand(False)  # Ensure it doesn't expand vertically
-        self.hue_slider.set_valign(Gtk.Align.CENTER)  # Center vertically within its box
+        self.hue_slider.set_vexpand(False) # Ensure it doesn't expand vertically
+        self.hue_slider.set_valign(Gtk.Align.CENTER) # Center vertically within its box
 
-        self.apply_color_button = Button(
-            name="apply-color-button",
-            child=Label(name="apply-color-label", markup=icons.accept),
-        )
+        self.apply_color_button = Button(name="apply-color-button", child=Label(name="apply-color-label", markup=icons.accept))
         self.apply_color_button.connect("clicked", self.on_apply_color_clicked)
-        self.apply_color_button.set_vexpand(
-            False
-        )  # Ensure button doesn't expand vertically
-        self.apply_color_button.set_valign(Gtk.Align.CENTER)  # Center button vertically
+        self.apply_color_button.set_vexpand(False) # Ensure button doesn't expand vertically
+        self.apply_color_button.set_valign(Gtk.Align.CENTER) # Center button vertically
 
         self.custom_color_selector_box = Box(
-            orientation="h",
-            spacing=5,
-            name="custom-color-selector-box",  # Changed orientation to horizontal
-            h_align="center",  # Center the horizontal box
+            orientation="h", spacing=5, name="custom-color-selector-box", # Changed orientation to horizontal
+            h_align="center" # Center the horizontal box
         )
         self.custom_color_selector_box.add(self.hue_slider)
         self.custom_color_selector_box.add(self.apply_color_button)
@@ -194,15 +180,13 @@ class WallpaperSelector(Box):
 
         # Add the scrolled window (grid) and the custom color selector box directly
         # to the main WallpaperSelector box (which is already vertical)
-        self.pack_start(self.scrolled_window, True, True, 0)  # Add grid, expand
-        self.pack_start(
-            self.custom_color_selector_box, False, False, 0
-        )  # Add custom selector, don't expand
+        self.pack_start(self.scrolled_window, True, True, 0) # Add grid, expand
+        self.pack_start(self.custom_color_selector_box, False, False, 0) # Add custom selector, don't expand
 
         # Removed the old main_content_box and its add
 
         self._start_thumbnail_thread()
-        self.connect("map", self.on_map)  # Connect the map signal
+        self.connect("map", self.on_map) # Connect the map signal
         # Set initial sensitivity based on loaded state
         # self.scheme_dropdown.set_sensitive(self.matugen_enabled) # Ensure sensitivity is set correctly on load
         self.setup_file_monitor()  # Initialize file monitoring
@@ -278,17 +262,17 @@ class WallpaperSelector(Box):
         file_name = model[path][1]
         full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
         selected_scheme = self.scheme_dropdown.get_active_id()
-        current_wall = os.path.expanduser("~/.current.wall")
+        current_wall = os.path.expanduser(f"~/.current.wall")
         if os.path.isfile(current_wall):
             os.remove(current_wall)
         os.symlink(full_path, current_wall)
         if self.matugen_switcher.get_active():
             # Matugen is enabled: run the normal command.
-            exec_shell_command_async(f"matugen image {full_path} -t {selected_scheme}")
+            exec_shell_command_async(f'matugen image {full_path} -t {selected_scheme}')
         else:
             # Matugen is disabled: run the alternative swww command.
             exec_shell_command_async(
-                f"swww img {full_path} -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest"
+                f'swww img {full_path} -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
             )
 
     def on_scheme_changed(self, combo):
@@ -300,14 +284,8 @@ class WallpaperSelector(Box):
             if event.keyval in (Gdk.KEY_Up, Gdk.KEY_Down):
                 schemes_list = list(self.schemes.keys())
                 current_id = self.scheme_dropdown.get_active_id()
-                current_index = (
-                    schemes_list.index(current_id) if current_id in schemes_list else 0
-                )
-                new_index = (
-                    (current_index - 1) % len(schemes_list)
-                    if event.keyval == Gdk.KEY_Up
-                    else (current_index + 1) % len(schemes_list)
-                )
+                current_index = schemes_list.index(current_id) if current_id in schemes_list else 0
+                new_index = (current_index - 1) % len(schemes_list) if event.keyval == Gdk.KEY_Up else (current_index + 1) % len(schemes_list)
                 self.scheme_dropdown.set_active(new_index)
                 return True
             elif event.keyval == Gdk.KEY_Right:
@@ -348,7 +326,7 @@ class WallpaperSelector(Box):
                     path = Gtk.TreePath.new_from_indices([i])
                     row = self.viewport.get_item_row(path)
                     if row > base_row:
-                        estimated_cols = i  # The number of items in the first row
+                        estimated_cols = i # The number of items in the first row
                         break
 
                 # If loop finished without finding a new row, all items are in one row
@@ -360,7 +338,7 @@ class WallpaperSelector(Box):
                 # Fallback if get_item_row fails (e.g., widget not realized)
                 columns = 1
         elif columns <= 0 and total_items == 0:
-            columns = 1  # Should not happen due to early return, but safe
+             columns = 1 # Should not happen due to early return, but safe
 
         # Ensure columns is at least 1 after all checks
         columns = max(1, columns)
@@ -375,8 +353,7 @@ class WallpaperSelector(Box):
                 new_index = 0
             elif keyval in (Gdk.KEY_Up, Gdk.KEY_Left):
                 new_index = total_items - 1
-            if total_items == 0:
-                new_index = -1  # Handle edge case
+            if total_items == 0: new_index = -1 # Handle edge case
 
         else:
             # Calculate potential new index based on key press
@@ -398,40 +375,28 @@ class WallpaperSelector(Box):
             elif keyval == Gdk.KEY_Right:
                 # Only update if not in the last column ((index + 1) % columns != 0)
                 # and not the very last item (index < total_items - 1)
-                if (
-                    current_index < total_items - 1
-                    and (current_index + 1) % columns != 0
-                ):
+                if current_index < total_items - 1 and (current_index + 1) % columns != 0:
                     new_index = current_index + 1
 
         # Only update if the index actually changed and is valid
         if new_index != self.selected_index and 0 <= new_index < total_items:
-            self.update_selection(new_index)
-        elif (
-            total_items > 0
-            and self.selected_index == -1
-            and 0 <= new_index < total_items
-        ):
-            # Handle selecting the first item when starting from -1
-            self.update_selection(new_index)
+             self.update_selection(new_index)
+        elif total_items > 0 and self.selected_index == -1 and 0 <= new_index < total_items:
+             # Handle selecting the first item when starting from -1
+             self.update_selection(new_index)
 
     def update_selection(self, new_index: int):
         self.viewport.unselect_all()
         path = Gtk.TreePath.new_from_indices([new_index])
         self.viewport.select_path(path)
-        self.viewport.scroll_to_path(
-            path, False, 0.5, 0.5
-        )  # Ensure the selected icon is visible
+        self.viewport.scroll_to_path(path, False, 0.5, 0.5)  # Ensure the selected icon is visible
         self.selected_index = new_index
 
     def _start_thumbnail_thread(self):
         thread = GLib.Thread.new("thumbnail-loader", self._preload_thumbnails, None)
 
     def _preload_thumbnails(self, _data):
-        futures = [
-            self.executor.submit(self._process_file, file_name)
-            for file_name in self.files
-        ]
+        futures = [self.executor.submit(self._process_file, file_name) for file_name in self.files]
         concurrent.futures.wait(futures)
         GLib.idle_add(self._process_batch)
 
@@ -476,9 +441,7 @@ class WallpaperSelector(Box):
 
     @staticmethod
     def _is_image(file_name: str) -> bool:
-        return file_name.lower().endswith(
-            (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp")
-        )
+        return file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp'))
 
     def on_search_entry_focus_out(self, widget, event):
         if self.get_mapped():
@@ -494,7 +457,7 @@ class WallpaperSelector(Box):
         """Converts HSL color value to RGB HEX string."""
         # colorsys uses HLS, not HSL, and expects values between 0.0 and 1.0
         hue = h / 360.0
-        r, g, b = colorsys.hls_to_rgb(hue, l, s)  # Note the order: H, L, S
+        r, g, b = colorsys.hls_to_rgb(hue, l, s) # Note the order: H, L, S
         r_int, g_int, b_int = int(r * 255), int(g * 255), int(b * 255)
         return f"#{r_int:02X}{g_int:02X}{b_int:02X}"
 
@@ -510,25 +473,23 @@ class WallpaperSelector(Box):
         is_active = switch.get_active()
         self.matugen_enabled = is_active
         # self.scheme_dropdown.set_sensitive(is_active)
-        self.custom_color_selector_box.set_visible(not is_active)  # Toggle visibility
+        self.custom_color_selector_box.set_visible(not is_active) # Toggle visibility
 
         # Save the state to the dedicated file
         try:
-            with open(data.MATUGEN_STATE_FILE, "w") as f:
+            with open(data.MATUGEN_STATE_FILE, 'w') as f:
                 f.write(str(is_active))
         except Exception as e:
             print(f"Error writing matugen state file: {e}")
 
     def on_apply_color_clicked(self, button):
         """Applies the color selected by the hue slider via matugen."""
-        hue_value = self.hue_slider.get_value()  # Get value from 0-360
-        hex_color = self.hsl_to_rgb_hex(hue_value)  # Convert HSL(hue, 1.0, 0.5) to HEX
+        hue_value = self.hue_slider.get_value() # Get value from 0-360
+        hex_color = self.hsl_to_rgb_hex(hue_value) # Convert HSL(hue, 1.0, 0.5) to HEX
         print(f"Applying color from slider: H={hue_value}, HEX={hex_color}")
         selected_scheme = self.scheme_dropdown.get_active_id()
         # Run matugen with the chosen hex color and selected scheme
-        exec_shell_command_async(
-            f'matugen color hex "{hex_color}" -t {selected_scheme}'
-        )
+        exec_shell_command_async(f'matugen color hex "{hex_color}" -t {selected_scheme}')
         # Optionally save the chosen color to config if needed later
         # config.config.bind_vars["matugen_hex_color"] = hex_color
         # config.config.save_config() # Removed as save_config doesn't exist
