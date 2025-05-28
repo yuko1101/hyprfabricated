@@ -230,7 +230,7 @@ class Sysinfo(Box):
         return True
 
 
-class weather(Box):
+class WeatherWidget(Box):
     def __init__(self, **kwargs):
         super().__init__(
             layer="bottom",
@@ -252,9 +252,9 @@ class weather(Box):
                 Box(
                     orientation="v",
                     children=[
-                        Label(label="", h_align="start", name="headertxt1"),
-                        Label(label="", h_align="start", name="headertxt3"),
-                        Label(label="", h_align="start", name="headertxt2"),
+                        Label(label="", h_align="start", name="weather-location"),
+                        Label(label="", h_align="start", name="weather-update-time"),
+                        Label(label="", h_align="start", name="weather-condition"),
                     ],
                 ),
             ],
@@ -267,8 +267,8 @@ class weather(Box):
                 Box(
                     orientation="v",
                     children=[
-                        Label(label="", name="temptxt"),
-                        Label(label="", name="temptxtbt"),
+                        Label(label="", name="weather-current-temperature"),
+                        Label(label="", name="weather-feels-like-temperature"),
                     ],
                 ),
             ],
@@ -280,7 +280,7 @@ class weather(Box):
                 Box(
                     orientation="v",
                     children=[
-                        Label(label="", name="headertxt"),
+                        Label(label="", name="weather-emoji"),
                     ],
                 ),
             ],
@@ -368,7 +368,7 @@ def fetch_quote_async(callback):
     GLib.idle_add(lambda: fetch_quote(callback))
 
 
-class qoute(Label):
+class QuoteWidget(Label):
     def __init__(self, **kwargs):
         super().__init__(
             name="quote",
@@ -399,10 +399,10 @@ class qoute(Label):
         self.set_visible(True)
 
 
-class activation(Label):
+class ActivationMainText(Label):
     def __init__(self, **kwargs):
         super().__init__(
-            name="activation1",
+            name="activation-main-text",
             label="",
             anchor="bottom right",
             justification="left",
@@ -415,10 +415,10 @@ class activation(Label):
         self.set_label("Activate Linux")
 
 
-class activationbot(Label):
+class ActivationSubText(Label):
     def __init__(self, **kwargs):
         super().__init__(
-            name="activation2",
+            name="activation-sub-text",
             label="",
             anchor="bottom right",
             justification="left",
@@ -441,9 +441,9 @@ def create_widgets(config, widget_type):
         if config.get("widgets_date_visible", True):
             widgets.append(DateTime(formatters=["%I:%M"], name="clock"))
         if config.get("widgets_quote_visible", True):
-            widgets.append(qoute())
+            widgets.append(QuoteWidget())
         if config.get("widgets_weatherwid_visible", True):
-            widgets.append(weather())
+            widgets.append(WeatherWidget())
     else:
         if config.get("widgets_date_visible", True):
             widgets.append(
@@ -503,8 +503,8 @@ if data.DESKTOP_WIDGETS:
                         child=Box(
                             orientation="v",
                             children=[
-                                activation(),
-                                activationbot(),
+                                ActivationMainText(),
+                                ActivationSubText(),
                             ],
                         ),
                         all_visible=True,
