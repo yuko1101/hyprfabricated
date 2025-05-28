@@ -7,3 +7,4 @@ modules/tools.py
 #Testing
 config/dock.json
 config/dock.json.bak
+.aider*

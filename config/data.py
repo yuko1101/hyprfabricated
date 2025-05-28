@@ -30,7 +30,7 @@ CURRENT_HEIGHT = screen.get_height()
 
 
 WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
-CONFIG_FILE = get_relative_path('../config/config.json')
+CONFIG_FILE = get_relative_path("../config/config.json")
 MATUGEN_STATE_FILE = os.path.join(CONFIG_DIR, "matugen")
 
 
@@ -46,38 +46,39 @@ def load_config():
     """Load the configuration from config.json"""
     config_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
     config = {}
-    
+
     if os.path.exists(config_path):
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = json.load(f)
         except Exception as e:
             print(f"Error loading config: {e}")
-    
+
     return config
 
 
 if os.path.exists(CONFIG_FILE):
-    with open(CONFIG_FILE, 'r') as f:
+    with open(CONFIG_FILE, "r") as f:
         config = json.load(f)
-    WALLPAPERS_DIR = config.get('wallpapers_dir', WALLPAPERS_DIR_DEFAULT)
-    BAR_POSITION = config.get('bar_position', "Top")
+    WALLPAPERS_DIR = config.get("wallpapers_dir", WALLPAPERS_DIR_DEFAULT)
+    BAR_POSITION = config.get("bar_position", "Top")
     VERTICAL = BAR_POSITION in ["Left", "Right"]
-    CENTERED_BAR = config.get('centered_bar', False)
-    TERMINAL_COMMAND = config.get('terminal_command', "kitty -e")
-    DOCK_ENABLED = config.get('dock_enabled', True)
-    DOCK_ALWAYS_OCCLUDED = config.get('dock_always_occluded', False)
-    DOCK_ICON_SIZE = config.get('dock_icon_size', 28)
-    BAR_WORKSPACE_SHOW_NUMBER = config.get('bar_workspace_show_number', False)
-    BAR_WORKSPACE_USE_CHINESE_NUMERALS = config.get('bar_workspace_use_chinese_numerals', False)
-    BAR_THEME = config.get('bar_theme', "Pills")
-    DOCK_THEME = config.get('dock_theme', "Pills")
-    PANEL_THEME = config.get('panel_theme', "Pills")
+    CENTERED_BAR = config.get("centered_bar", False)
+    TERMINAL_COMMAND = config.get("terminal_command", "kitty -e")
+    DOCK_ENABLED = config.get("dock_enabled", True)
+    DOCK_ALWAYS_OCCLUDED = config.get("dock_always_occluded", False)
+    DOCK_ICON_SIZE = config.get("dock_icon_size", 28)
+    BAR_WORKSPACE_SHOW_NUMBER = config.get("bar_workspace_show_number", False)
+    BAR_WORKSPACE_USE_CHINESE_NUMERALS = config.get(
+        "bar_workspace_use_chinese_numerals", False
+    )
+    BAR_THEME = config.get("bar_theme", "Pills")
+    DOCK_THEME = config.get("dock_theme", "Pills")
+    PANEL_THEME = config.get("panel_theme", "Pills")
     UPDATER = config.get("misc_updater", True)
     OTHERPLAYERS = config.get("misc_otherplayers", False)
     PANEL_POSITION = config.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT)
     NOTIF_POS = config.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
-
 
     DESKTOP_WIDGETS = config.get("bar_desktop_widgets_visible", True)
     WEATHER_FORMAT = config.get("widgets_weather_format", "C")
@@ -113,10 +114,14 @@ if os.path.exists(CONFIG_FILE):
         "weatherwid": config.get("widgets_weather_visible", True),
         "sysinfo": config.get("widgets_sysinfo_visible", True),
     }
-    
-    BAR_METRICS_DISKS = config.get('bar_metrics_disks', ["/"])
-    METRICS_VISIBLE = config.get('metrics_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
-    METRICS_SMALL_VISIBLE = config.get('metrics_small_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
+
+    BAR_METRICS_DISKS = config.get("bar_metrics_disks", ["/"])
+    METRICS_VISIBLE = config.get(
+        "metrics_visible", {"cpu": True, "ram": True, "disk": True, "gpu": True}
+    )
+    METRICS_SMALL_VISIBLE = config.get(
+        "metrics_small_visible", {"cpu": True, "ram": True, "disk": True, "gpu": True}
+    )
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
     BAR_POSITION = "Top"
@@ -131,11 +136,10 @@ else:
     BAR_THEME = "Pills"
     DOCK_THEME = "Pills"
     PANEL_THEME = "Notch"
-    UPDATER = config.get("misc_updater", True)
-    OTHERPLAYERS = config.get("misc_otherplayers", False)
+    UPDATER = "misc_updater", True
+    OTHERPLAYERS = "misc_otherplayers", False
     PANEL_POSITION = PANEL_POSITION_DEFAULT
     NOTIF_POS = NOTIF_POS_DEFAULT
-
 
     BAR_COMPONENTS_VISIBILITY = {
         "button_apps": True,
