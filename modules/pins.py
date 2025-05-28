@@ -25,7 +25,7 @@ import modules.icons as icons
 SAVE_FILE = os.path.expanduser("~/.pins.json")
 
 icon_size = 80
-if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
+if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]:
     icon_size = 36
 
 def createSurfaceFromWidget(widget: Gtk.Widget) -> cairo.ImageSurface:
@@ -410,7 +410,7 @@ class Pins(Gtk.Box):
         self.pack_start(scrolled_window, True, True, 0)
 
 
-        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
+        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
             for row in range(10):
                 for col in range(3):
                     cell = Cell(self)

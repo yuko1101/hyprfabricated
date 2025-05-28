@@ -30,7 +30,7 @@ class Widgets(Box):
 
         vertical_layout = False
 
-        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
+        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
             vertical_layout = True
 
         self.notch = kwargs["notch"]

@@ -273,7 +273,7 @@ class Notch(Window):
             self.stack.add_style_class(data.BAR_POSITION.lower())
             self.stack.add_style_class(data.PANEL_POSITION.lower())
 
-        if is_panel_vertical:
+        if is_panel_vertical or (data.PANEL_POSITION in ["Start", "End"] and data.PANEL_THEME == "Panel"):
             self.compact.set_size_request(260, 40)
             self.launcher.set_size_request(320, 635)
             self.tmux.set_size_request(320, 635)

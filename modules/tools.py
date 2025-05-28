@@ -21,7 +21,7 @@ SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 class Toolbox(Box):
     def __init__(self, **kwargs):
         orientation = "h"
-        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
+        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
             orientation = "v"
 
         super().__init__(
