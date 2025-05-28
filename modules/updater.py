@@ -24,7 +24,7 @@ REPO_DIR = get_relative_path("../")
 
 # Fetch the remote version file using wget (or use curl)
 def fetch_remote_version():
-    subprocess.run(["wget", "-q", "-O", REMOTE_VERSION_FILE, REMOTE_URL], check=False)
+    subprocess.run(["curl", "-sL", REMOTE_URL, "-o", REMOTE_VERSION_FILE], check=False)
 
 
 # Read local version

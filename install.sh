@@ -15,7 +15,6 @@ PACKAGES=(
     gpu-screen-recorder
     grimblast
     hypridle
-    wget
     hyprlock
     hyprpicker
     hyprsunset
